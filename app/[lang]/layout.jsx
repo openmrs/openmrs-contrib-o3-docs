@@ -46,7 +46,14 @@ export default async function LangLayout({ children, params }) {
           editLink={dictionary.editPage}
           feedback={{ content: dictionary.feedback }}
           lastUpdated={<LastUpdated>{dictionary.lastUpdated}</LastUpdated>}
-          search={<Search placeholder={dictionary.searchPlaceholder} />}
+          search={
+            <Search
+              emptyResult={dictionary.searchEmptyResult}
+              errorText={dictionary.searchError}
+              loading={dictionary.searchLoading}
+              placeholder={dictionary.searchPlaceholder}
+            />
+          }
           nextThemes={{ defaultTheme: 'system' }}
           themeSwitch={{
             dark: dictionary.dark,
