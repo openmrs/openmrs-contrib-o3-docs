@@ -1,74 +1,142 @@
 # App shell
 
-Le terme "app shell" fait référence à une approche architecturale utilisée dans le développement d'applications web qui sépare l'infrastructure et l'interface utilisateur de l'application principale des données. L'app shell consiste généralement en un minimum de HTML, CSS et JavaScript nécessaires au rendu de l'interface utilisateur de l'application.
+Le terme `app shell` désigne une approche architecturale de développement d'applications web qui sépare l'infrastructure applicative et l'interface de base des données. L'app shell contient généralement le HTML, le CSS et le JavaScript minimaux nécessaires pour afficher l'interface de l'application.
 
-Dans O3, l'app shell fait référence au code contenu dans le paquetage `esm-app-shell`. Il gère tout depuis le moment où vous demandez une page jusqu'au moment où vous voyez le rendu de l'interface utilisateur. Le premier port d'appel à l'app-shell est le fichier `index.ejs`. Ce fichier est le point d'entrée de l'application et est responsable du rendu de l'app shell. O3 est une application à page unique basée sur un seul fichier HTML qui est généré à partir du fichier modèle `index.ejs`. Le modèle `index.ejs` est principalement du HTML statique avec quelques valeurs dynamiques qui sont interpolées dans le modèle au moment de la construction. Nous passons des choses comme:
+Dans O3, l'app shell correspond au code du paquet `esm-app-shell`. Il gère tout ce qui se passe entre le moment où vous demandez une page et le moment juste avant que quelque chose soit rendu dans l'interface. Le premier point d'entrée de l'app shell est le fichier `index.ejs`. Ce fichier est le point d'entrée de l'application et se charge de rendre l'app shell. O3 est une application monopage construite autour d'un seul fichier HTML généré depuis le template `index.ejs`. Ce template est principalement du HTML statique avec quelques valeurs dynamiques interpolées au moment du build. Nous y passons notamment:
 
 - La locale par défaut.
 - Le titre de la page.
 - Le favicon de l'application.
-- Une balise `<link>` qui est une référence à la carte d'importation.
-- Une balise `<script>` pour la carte d'importation.
-- Une balise `<link>` qui est une référence à un registre de toutes les pages et extensions agrégées à partir de tous les modules frontaux.
+- Une balise `<link>` qui référence l'import map.
+- Une balise `<script>` pour l'import map.
+- Une balise `<link>` qui référence un registre de toutes les pages et extensions agrégées depuis les modules frontend.
 - Une balise `<script>` pour le registre des routes.
 
-Le template contient aussi une référence à `openmrs.js`, le fichier principal généré par le bundle Webpack. Il crée une fonction `initializeSpa` et l’attache à l’objet `window`, la rendant disponible dans le scope global. Cette fonction est appelée depuis le template `index.ejs` et s’occupe d’initialiser l’application. Le template inclut aussi :
+Le template contient aussi une référence à `openmrs.js`, le fichier principal généré par le bundle Webpack. Il crée une fonction appelée `initializeSpa` et l'ajoute à l'objet `window`, ce qui la rend disponible dans le scope global. Cette fonction est appelée depuis le template `index.ejs` et démarre l'application. Le template contient aussi:
 
-- `<div>`s where containers for modals, inline notifications, toast notifications get rendered in the UI.
-- A loading spinner that gets rendered when frontend modules are getting loaded by the app shell.
-- An error state that gets rendered when the application fails to load.
+- Des `<div>` dans lesquels sont rendus les conteneurs de modales, notifications inline, notifications actionnables, snackbars et toasts.
+- Un indicateur de chargement affiché pendant que l'app shell charge les modules frontend.
+- Un état d'erreur affiché quand l'application n'arrive pas à se charger.
 
 ## initializeSpa
 
-La fonction `initializeSpa` :
+La fonction `initializeSpa`:
 
-- Appends some useful global variables to the window object, e.g. `openmrsSpaBase`, `spaBase`, `spaBasePath` and `spaVersion`.
-- Initializes the module loading mechanism by invoking the `run` function.
+- Met en place des fonctions utilitaires, comme `copyText` pour les messages d'erreur.
+- Configure des chemins et variables globaux sur l'objet `window`, par exemple `openmrsBase`, `spaBase`, `spaEnv`, `spaVersion` et `getOpenmrsSpaBase`.
+- Branche le chemin de base de la SPA en créant un élément `<base>` dans le `head` du document.
+- Initialise le partage de modules Webpack.
+- Initialise le mécanisme de chargement des modules en invoquant la fonction `run`.
 
 ### run()
 
-La fonction `run` est responsable de :
+La fonction `run` orchestre toute la séquence d'initialisation. Elle est responsable de:
 
-- Afficher le spinner de chargement. Ce spinner s’affiche jusqu’à ce que les modules aient fini de se charger.
-- Setting up breakpoints in the UI for `tablet`, `small-desktop` and `large-desktop` viewports.
-- Connecter les abonnements aux endroits appropriés dans le shell de l'application pour les toasts, les notifications en ligne et les modals.
+- Afficher l'indicateur de chargement. Il reste affiché jusqu'à la fin du chargement des modules.
+- Mettre en place les breakpoints d'interface pour les viewports `tablet`, `small-desktop` et `large-desktop`.
+- Brancher les souscriptions de l'app shell pour les toasts, notifications inline, notifications actionnables, snackbars et modales.
 - Appeler `setupApiModule` pour initialiser le schéma de configuration.
-- Appeler `registerCoreExtensions` qui implémente la fonctionnalité de breadcrumbs.
-- Appeler `setupApps`, qui gère réellement le chargement des modules.
+- Appeler `setupHistory` pour mettre en place le routage côté client.
+- Appeler `registerCoreExtensions`, qui implémente la fonctionnalité de fils d'Ariane.
+- Appeler `setupCoreConfig` pour initialiser la configuration core.
+- Appeler `setupApps`, qui charge réellement les modules.
+- Une fois les modules enregistrés, appeler `finishRegisteringAllApps` pour finaliser le processus d'enregistrement.
+- Si le mode hors ligne est activé, mettre en place les classes et handlers CSS hors ligne, puis enregistrer le service worker.
+- Charger la configuration depuis les `configUrls` fournis.
+- Appeler `runShell`, qui démarre single-spa et initialise l'internationalisation.
+- Gérer les échecs d'initialisation avec `handleInitFailure` si quelque chose se passe mal.
+- Nettoyer les feature flags obsolètes.
 
 ### setupApps()
 
-La fonction `setupApps` charge toutes les routes depuis le registre des routes puis invoque `registerApp()` pour chaque module et sa définition (dépendances backend, pages et extensions qu’il fournit). `registerApp()` :
+La fonction `setupApps` charge toutes les routes depuis le registre de routes. Elle lit les routes depuis:
+- Les balises `<script type="openmrs-routes">` dans le HTML, sous forme de JSON inline ou depuis une URL.
+- Les surcharges de routes stockées dans `localStorage`, utiles pour le développement et le débogage.
 
-- Enregistre un schéma de configuration implicite pour l’application.
+Après avoir chargé toutes les routes, elle invoque `registerApp()` sur chaque module et sa définition de module, c'est-à-dire ses dépendances backend, pages et extensions. `registerApp()`:
+
+- Enregistre un schéma de configuration implicite pour l'application.
 - Parcourt les extensions et les enregistre dans le registre des extensions.
-- Ajoute les pages à une variable globale, où elles sont ordonnées via la propriété `order`, qui détermine l’ordre de rendu dans le DOM. Nous créons un `<div>` pour chaque page et l’ajoutons au DOM. Cela garantit que l’ordre du DOM correspond à l’ordre des pages. Par exemple, la barre de navigation doit être rendue en premier, donc elle a un ordre de 0. Cela se fait dans la fonction `finishRenderingAllApps`, appelée après le chargement de tous les modules frontaux.
+- Parcourt les modales, workspaces, groupes de workspaces et feature flags, puis les enregistre.
+- Ajoute les pages à un tableau global. Une fois tous les modules enregistrés, `finishRegisteringAllApps` trie les pages alphabétiquement par nom d'app, puis crée un élément `<div>` dans le DOM pour chaque page. Ce div est créé dans le conteneur indiqué par la propriété `containerDomId` de la page, avec `omrs-apps-container` comme valeur par défaut. Cela garantit que single-spa dispose d'un élément DOM prédéterminé dans lequel monter chaque page, ce qui est nécessaire au bon fonctionnement du routage.
 
-Les pages et les extensions sont implémentées comme des objets Single‑spa, qui sont essentiellement des objets JavaScript définissant trois fonctions de cycle de vie :
+Les pages et extensions sont implémentées comme objets single-spa. Ce sont essentiellement des objets JavaScript qui définissent trois fonctions de cycle de vie:
 
-- `bootstrap` - Cette fonction est appelée une seule fois lors du premier chargement de l’application. Elle est responsable du chargement des dépendances nécessaires.
-- `mount` - Cette fonction est appelée lorsque la page est chargée pour la première fois. Elle est responsable du rendu de la page. Sous le capot, elle appelle typiquement `ReactDOM.createRoot()` et rend l'arbre React dans l'élément DOM qui correspond à la page.
-- `unmount` - Cette fonction est appelée lorsque la page est déchargée. Elle est responsable du nettoyage des ressources utilisées par la page.
+- `bootstrap` - appelée une seule fois lorsque l'application est chargée pour la première fois. Elle charge les dépendances dont l'application a besoin.
+- `mount` - appelée quand la page est chargée. Elle rend la page. En pratique, cela appelle généralement `ReactDOM.createRoot()` et rend l'arbre React dans l'élément DOM qui correspond à la page.
+- `unmount` - appelée quand la page est déchargée. Elle nettoie les ressources utilisées par la page.
 
-Les pages et les extensions utilisent la fonction `getLoader()` qui prend la définition de la page ou de l'extension et renvoie une fonction qui peut être utilisée pour charger la page ou l'extension. Si vous regardez le point d'entrée d'un module frontend (`src/index.ts`), vous verrez des exportations nommées qui invoquent la fonction `getAsyncLifecycle` ou `getSyncLifecycle`. Ces fonctions nous permettent d'envelopper les pages et les extensions dans un format qui peut être chargé par la bibliothèque React. Essentiellement, le composant React est enveloppé dans un `openmrsComponentDecorator` qui nous permet au framework de:
+Les pages et extensions sont chargées avec la fonction `loadLifeCycles()`, qui prend le nom de l'app et le nom du composant, puis retourne une Promise résolue en objet de lifecycle single-spa. Si vous regardez le point d'entrée d'un module frontend (`src/index.ts`), vous verrez des exports nommés qui invoquent soit `getAsyncLifecycle`, soit `getSyncLifecycle`. Ces fonctions permettent d'emballer des pages et extensions dans un format chargeable par single-spa. Le composant React est essentiellement enveloppé dans un `openmrsComponentDecorator` qui permet au framework de:
 
-- Gérer les erreurs si le rendu échoue de manière catastrophique.
-- Mettre en place un support de configuration pour le composant.
-- Mettre en place le support `i18n` pour le composant.
-- Mettre en place un système de suspension pour le composant qui prend par défaut la valeur `null`.
+- Gérer les erreurs si le rendu échoue de façon catastrophique.
+- Brancher la prise en charge de la configuration pour le composant.
+- Brancher la prise en charge de `i18n` pour le composant.
+- Brancher un fallback Suspense pour le composant, avec `null` par défaut.
 - Rendre le composant.
 
-Quand vous définissez une `page`, sa définition peut inclure une propriété `route` ou `routeRegex`. Single‑spa utilise l’emplacement indiqué par `route` ou `routeRegex` pour déterminer quelles pages rendre à cet endroit via la fonction `getActivityFn`. Dans O3, les pages sont essentiellement des applications single‑spa rendues dans un `<div>` prédéterminé. Les extensions utilisent le concept de `parcel` de single‑spa : elles ont les mêmes cycles de vie que les applications single‑spa, sauf qu’elles n’ont pas de `getActivityFn`. Cela signifie que single‑spa ne montera ou ne démontera jamais un parcel automatiquement. À la place, il faut lui indiquer manuellement quand monter ou démonter un parcel. Le système d’extensions existe pour déterminer quand une extension doit être chargée (et donc appeler `mount`) et déchargée (et donc appeler `unmount`). Chaque extension est montée via le composant `Extension` défini dans le framework. Ce composant rend l’extension (en appelant `mount`) et démonte le parcel quand il est démonté. Il définit un `<div>` avec un attribut `data-extension-id` dans lequel React rend le parcel. Le point clé : une fois que les `<div>` sont créés pour les pages et extensions, React prend le relais et rend le contenu dans le DOM.
+Quand vous définissez une `page`, sa définition peut avoir une propriété `route` ou `routeRegex`. Single-spa utilise l'emplacement référencé par `route` ou `routeRegex` pour déterminer quelles pages doivent être rendues à cet emplacement via la fonction `getActivityFn`. Dans O3, les pages sont essentiellement des applications single-spa avec une balise `<div>` prédéterminée dans laquelle elles sont rendues. Les extensions s'appuient sur le concept de `parcel` de single-spa. Elles ont exactement les mêmes lifecycles que les applications single-spa, mais elles n'ont pas de `getActivityFn`. Cela signifie que single-spa ne montera ou démontera jamais automatiquement un parcel. Il faut lui dire manuellement quand le monter ou le démonter. Le système d'extensions existe pour déterminer quand une extension doit être chargée, puis invoquer sa fonction `mount`, et quand elle doit être déchargée, puis invoquer sa fonction `unmount`. Chaque extension est montée via le composant `Extension` défini dans le framework. Ce composant rend l'extension en invoquant la fonction `mount` de single-spa, puis démonte le parcel quand le composant est démonté. Il définit un `<div>` avec une propriété `data-extension-id` dans lequel React rend le parcel. L'important à retenir est que, une fois les `<div>` créés pour les pages et extensions, React prend le relais et rend la page ou l'extension dans le DOM.
 
 ## Chargement des modules
 
-O3 charge les modules frontaux via les import maps SystemJS et la fédération de modules. L’app shell injecte une
-`systemjs-importmap` dans `index.ejs`, précharge la carte d’importation, puis l’utilise pour résoudre les URLs des
-modules.
+O3 charge les modules frontend avec des import maps SystemJS et Module Federation. L'app shell injecte une `systemjs-importmap` dans `index.ejs`, précharge l'import map, puis l'utilise pour résoudre les URLs des modules.
 
-La plupart des modules sont construits comme des bundles de fédération de modules. Pour chaque URL, l’app shell ajoute
-une balise `<script>`. Quand le script est chargé, il expose un conteneur Webpack (`init`/`get`) que l’app shell utilise
-pour obtenir les exports du module.
+La plupart des modules sont construits comme bundles Module Federation. Pour chaque URL de module, l'app shell ajoute une balise `<script>`. Quand le script se charge, il expose un conteneur Webpack (`init`/`get`) que l'app shell utilise pour charger les exports du module.
 
-Certains modules historiques ne sont pas des bundles de fédération de modules ; dans ce cas, l’app shell les charge comme
-des modules SystemJS via la carte d’importation.
+Certains modules anciens ne sont pas des bundles Module Federation. Dans ces cas, l'app shell les charge comme modules SystemJS simples via l'import map.
+
+## Séquence d'initialisation
+
+La séquence complète d'initialisation suit cet ordre:
+
+1. **Rendu du template**: le template `index.ejs` est rendu avec les valeurs dynamiques injectées au moment du build.
+2. **initializeSpa**: configure les variables et chemins globaux, puis appelle `run()`.
+3. **run()**: orchestre l'initialisation:
+   - Met en place l'infrastructure UI, dont breakpoints, notifications et modales.
+   - Initialise le module API et le schéma de configuration.
+   - Met en place l'historique de routage.
+   - Enregistre les extensions core, dont les fils d'Ariane.
+   - Charge et enregistre tous les modules frontend via `setupApps()`.
+   - Finalise l'enregistrement des modules.
+   - Met en place le support hors ligne si activé.
+   - Charge les fichiers de configuration.
+   - Démarre le routage single-spa via `runShell()`.
+   - Gère toute erreur d'initialisation.
+   - Nettoie les feature flags obsolètes.
+4. **runShell()**: finalise le démarrage:
+   - Met en place l'internationalisation (i18n).
+   - Enregistre le calendrier par défaut.
+   - Démarre single-spa avec `start()`, ce qui lance le routage et le rendu des pages.
+
+## Support hors ligne
+
+Quand le mode hors ligne est activé via l'option de configuration `offline`, l'app shell:
+
+- Enregistre un service worker (`service-worker.js`) pour le cache et les fonctionnalités hors ligne.
+- Met en place les classes CSS (`omrs-online` / `omrs-offline`) sur l'élément body selon la connectivité.
+- Enregistre des handlers hors ligne pour les changements de connectivité.
+- Active la capacité hors ligne pour la synchronisation des données.
+- Met en place le précaching des dépendances statiques pour l'utilisation hors ligne.
+
+## Gestion des erreurs
+
+Si l'initialisation échoue à n'importe quelle étape, la fonction `handleInitFailure`:
+
+- Capture l'erreur et affiche le template d'erreur depuis `index.ejs`.
+- Affiche un message d'erreur lisible par l'utilisateur avec un bouton de rechargement.
+- Journalise les détails de l'erreur dans la console.
+- Fournit un bouton de copie pour le message d'erreur.
+
+## Surcharges de routes
+
+Pour le développement et le débogage, vous pouvez surcharger les routes en les stockant dans `localStorage` avec des clés préfixées par `openmrs-routes:`. L'app shell charge ces surcharges et les fusionne avec les routes du registre. La valeur peut être:
+- Une chaîne JSON contenant l'objet de routes pour ce module.
+- Une URL pointant vers un fichier `routes.json` à récupérer.
+
+Cela permet aux développeurs de tester différentes versions ou configurations de modules sans reconstruire toute l'application. Par exemple:
+
+```javascript
+localStorage.setItem('openmrs-routes:@openmrs/esm-my-app', JSON.stringify({
+  pages: [/* ... */],
+  extensions: [/* ... */]
+}));
+```

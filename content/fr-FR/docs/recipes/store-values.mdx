@@ -86,6 +86,51 @@ userStore.setState((state) => ({ ...state, user: /* valeur provenant de quelque 
 
 La mise à jour du magasin en utilisant `setState()` mettra à jour toutes les variables souscrites au magasin, y compris (comme dans l'exemple) `user`.
 
+#### App context
+
+[App Context](https://github.com/openmrs/openmrs-esm-core/pull/976) est un mécanisme de partage d'état entre différentes parties de l'application. Il est conçu spécifiquement pour la communication entre composants dans l'application actuellement active. Contrairement aux global stores, qui persistent entre les rendus de composants, App Context est lié au cycle de vie de composants précis.
+
+Les cas d'utilisation courants d'App Context incluent:
+- Partager de l'état entre des composants qui existent dans différents arbres React.
+- Gérer un état temporaire partagé qui ne doit exister que pendant que certains composants sont actifs.
+- Coordonner différentes parties d'une fonctionnalité, par exemple partager les données du patient sélectionné entre des composants liés.
+
+Le framework fournit deux hooks pour travailler avec App Context:
+
+- [useDefineAppContext](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-react-utils/src/useDefineAppContext.ts) pour définir le contexte.
+- [useAppContext](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-react-utils/src/useAppContext.ts) pour accéder au contexte.
+
+##### Définir un contexte
+
+```tsx
+const [dateRange, setDateRange] = useState<Date[]>([
+  dayjs().startOf("day").toDate(),
+  new Date(),
+]);
+
+useDefineAppContext<DateFilterContext>("laboratory-date-filter", {
+  dateRange,
+  setDateRange,
+});
+```
+
+##### Accéder au contexte
+
+```tsx
+const { dateRange, setDateRange } = useAppContext<DateFilterContext>(
+  "laboratory-date-filter"
+) ?? {
+  // Valeurs de fallback utilisées quand l'app context est undefined
+  dateRange: "fallback-date-range",
+  setDateRange: "fallback setter function",
+};
+```
+
+**Quand utiliser App Context plutôt qu'un Global Store**
+
+- Utilisez **App Context** quand vous devez partager de l'état entre des composants qui ne doivent exister que pendant que ces composants sont actifs dans l'application.
+- Utilisez **Global Store** quand vous avez besoin que l'état persiste entre les rendus de composants ou pendant tout le cycle de vie de l'application.
+
 ### Stockage persistant
 
 Le stockage persistant fait référence à tout mécanisme de stockage qui persiste au-delà du rendu de la page unique.

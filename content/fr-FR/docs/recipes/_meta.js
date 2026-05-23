@@ -3,6 +3,7 @@ export default {
   "set-up-o3-instance": "Mise en place d'une instance d'O3",
   "create-a-frontend-module": "Création d'un module frontend",
   "create-a-distribution": "Création d'une distribution",
+  "deploy-to-production": "Déployer O3 en production",
   "add-a-left-panel-to-o3": "Ajout d'un panneau gauche",
   "add-links-to-the-home-page-left-panel": "Ajout de liens au panneau de gauche de la page d'accueil",
   "retrieve-and-post-data": "Récupérer et publier des données",

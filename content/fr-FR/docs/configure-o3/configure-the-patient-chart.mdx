@@ -137,6 +137,71 @@ Chaque configuration de type d'attribut de visite comprend :
 - `uuid` - L'UUID du type d'attribut de visite (requis)
 - `required` - Si le champ est requis dans le formulaire de visite (par défaut : `false`)
 - `displayInThePatientBanner` - S'il faut afficher la valeur de cet attribut dans la bannière du patient (par défaut : `true`)
+- `showWhenExpression` - (facultatif) Une expression JavaScript qui détermine quand afficher ce type d'attribut. L'expression a accès à un objet `visitAttributes` contenant toutes les valeurs actuelles des attributs de visite. Par exemple, `"visitAttributes['some-attribute-uuid'] === 'some-value'"` n'affichera cet attribut que lorsqu'un autre attribut a une valeur précise.
+
+**Exemple avec affichage conditionnel**:
+
+```json
+{
+  "@openmrs/esm-patient-chart-app": {
+    "visitAttributeTypes": [
+      {
+        "uuid": "57ea0cbb-064f-4d09-8cf4-e8228700491c",
+        "required": false,
+        "displayInThePatientBanner": true
+      },
+      {
+        "uuid": "aac48226-d143-4274-80e0-264db4e368ee",
+        "required": false,
+        "displayInThePatientBanner": false,
+        "showWhenExpression": "visitAttributes['57ea0cbb-064f-4d09-8cf4-e8228700491c'] === 'yes'"
+      }
+    ]
+  }
+}
+```
+
+### Affichage de l'emplacement des attributs de visite supplémentaires
+
+Si vous utilisez des extensions qui fournissent des attributs de visite supplémentaires, vous pouvez activer leur prise en charge:
+
+```json
+{
+  "@openmrs/esm-patient-chart-app": {
+    "showExtraVisitAttributesSlot": true
+  }
+}
+```
+
+Quand cette option est activée, le formulaire de démarrage de visite traite la soumission des attributs de visite supplémentaires provenant de l'emplacement d'extension `extra-visit-attributes-slot`.
+
+### Affichage des champs de file de service
+
+Si vous utilisez le module des files de service, vous pouvez afficher les champs de file de service dans le formulaire de démarrage de visite:
+
+```json
+{
+  "@openmrs/esm-patient-chart-app": {
+    "showServiceQueueFields": true
+  }
+}
+```
+
+Cela nécessite que le module `@openmrs/esm-service-queues-app` soit installé.
+
+### Désactivation des changements de lieu de visite
+
+Vous pouvez rendre le champ de lieu de visite en lecture seule dans le formulaire de démarrage de visite:
+
+```json
+{
+  "@openmrs/esm-patient-chart-app": {
+    "disableChangingVisitLocation": true
+  }
+}
+```
+
+Quand cette option est activée, les utilisateurs ne peuvent pas changer le lieu de visite depuis le formulaire. Il est seulement affiché.
 
 ## Configuration de la gestion des rencontres
 

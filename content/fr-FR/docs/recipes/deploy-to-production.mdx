@@ -1,0 +1,690 @@
+import { Callout } from "nextra/components";
+
+# Déployer O3 en production
+
+Ce guide couvre le déploiement d'une distribution O3 dans des environnements de production. Il se concentre sur un déploiement basé sur Docker avec l'architecture de l'application de référence, mais les principes s'appliquent aussi à d'autres méthodes de déploiement.
+
+## Prérequis
+
+Avant de déployer en production, assurez-vous d'avoir:
+
+- **Une distribution O3 construite** - voir [Créer une distribution](/docs/recipes/create-a-distribution) pour les détails.
+- **Docker et Docker Compose** installés sur votre serveur.
+- **Un nom de domaine** configuré avec un DNS pointant vers votre serveur, pour SSL.
+- **Un backend OpenMRS** configuré et accessible.
+- **Une base de données** MariaDB/MySQL configurée et accessible.
+- **Une stratégie de sauvegarde** pour votre base de données.
+
+### Exigences matérielles et logicielles
+
+**Exigences serveur minimales:**
+- **CPU**: 4 coeurs, 8+ recommandés pour la production
+- **RAM**: 8 Go minimum, 16 Go+ recommandés
+- **Stockage**: 100 Go+ SSD, davantage pour les sauvegardes de base de données et les logs
+- **Réseau**: connexion internet stable avec les ports 80/443 ouverts
+
+**Exigences logicielles:**
+- Docker 20.10+ et Docker Compose 2.0+
+- Système d'exploitation: Linux, Ubuntu 20.04+ LTS recommandé, ou macOS/Windows Server
+- Base de données: MariaDB 10.11+ ou MySQL 8.0+
+- Java: JDK 11+ pour le backend OpenMRS
+
+**Exigences d'équipe:**
+- Administrateur système à l'aise avec Docker et Linux
+- Administrateur de base de données pour MariaDB/MySQL
+- Implémenteur OpenMRS familier avec la configuration O3
+- Administrateur réseau pour la configuration SSL/DNS
+
+<Callout emoji="💡" type="info">
+Pour les exigences matérielles et logicielles détaillées, consultez le [Guide technique de l'implémenteur OpenMRS](https://openmrs.atlassian.net/wiki/spaces/docs/pages/535068683/Technical+Implementer+s+Guide).
+</Callout>
+
+## Vue d'ensemble de l'architecture
+
+L'application de référence utilise une architecture Docker multi-conteneurs:
+
+- **Gateway** - proxy inverse Nginx qui gère la terminaison SSL et route les requêtes.
+- **Frontend** - conteneur Nginx qui sert les fichiers statiques de la SPA O3.
+- **Backend** - conteneur backend OpenMRS.
+- **Database** - conteneur MariaDB pour la persistance des données.
+- **Certbot** (facultatif) - gestion des certificats SSL avec Let's Encrypt.
+
+## Méthodes de déploiement
+
+### Méthode 1: Docker Compose (recommandée)
+
+Docker Compose est le moyen le plus simple de déployer O3 en production. Il convient bien aux déploiements sur un seul serveur et aux installations petites à moyennes.
+
+#### Étape 1: Préparer votre distribution
+
+Assurez-vous d'avoir:
+- Des assets frontend construits, depuis `openmrs assemble` et `openmrs build`.
+- Des images Docker pour le backend et le frontend, ou des images préconstruites.
+- Des fichiers de configuration prêts.
+
+#### Étape 2: Configurer Docker Compose
+
+Créez un fichier `docker-compose.yml` basé sur l'application de référence:
+
+```yaml
+services:
+  gateway:
+    image: openmrs/openmrs-reference-application-3-gateway:${TAG:-qa}
+    restart: "unless-stopped"
+    depends_on:
+      - frontend
+      - backend
+    ports:
+      - "80:80"
+
+  frontend:
+    image: openmrs/openmrs-reference-application-3-frontend:${TAG:-qa}
+    restart: "unless-stopped"
+    environment:
+      SPA_PATH: /openmrs/spa
+      API_URL: /openmrs
+      SPA_CONFIG_URLS: /openmrs/spa/config-core_demo.json
+      SPA_DEFAULT_LOCALE: ${SPA_DEFAULT_LOCALE:-}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      timeout: 5s
+    depends_on:
+      - backend
+
+  backend:
+    image: openmrs/openmrs-reference-application-3-backend:${TAG:-qa}
+    restart: "unless-stopped"
+    depends_on:
+      - db
+    environment:
+      OMRS_CONFIG_MODULE_WEB_ADMIN: "true"
+      OMRS_CONFIG_AUTO_UPDATE_DATABASE: "false"
+      OMRS_CONFIG_CREATE_TABLES: "false"
+      OMRS_CONFIG_CONNECTION_SERVER: db
+      OMRS_CONFIG_CONNECTION_DATABASE: openmrs
+      OMRS_CONFIG_CONNECTION_USERNAME: ${OMRS_DB_USER:-openmrs}
+      OMRS_CONFIG_CONNECTION_PASSWORD: ${OMRS_DB_PASSWORD:-openmrs}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/openmrs"]
+      timeout: 5s
+    volumes:
+      - openmrs-data:/openmrs/data
+
+  db:
+    image: mariadb:10.11.7
+    restart: "unless-stopped"
+    command: "mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci"
+    environment:
+      MYSQL_DATABASE: openmrs
+      MYSQL_USER: ${OMRS_DB_USER:-openmrs}
+      MYSQL_PASSWORD: ${OMRS_DB_PASSWORD:-openmrs}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-openmrs}
+    healthcheck:
+      test: "mysql --user=${OMRS_DB_USER:-openmrs} --password=${OMRS_DB_PASSWORD:-openmrs} --execute \"SHOW DATABASES;\""
+      interval: 3s
+      timeout: 1s
+      retries: 5
+    volumes:
+      - db-data:/var/lib/mysql
+
+volumes:
+  openmrs-data: ~
+  db-data: ~
+```
+
+<Callout emoji="💡" type="info">
+**Remarque**: le port 443 (HTTPS) n'est exposé que lorsque vous utilisez le fichier compose SSL (`docker-compose.ssl.yml`). La configuration de base n'expose que le port 80. Pour une production avec SSL, vous utiliserez les deux fichiers compose ensemble.
+</Callout>
+
+#### Étape 3: Configurer les variables d'environnement
+
+Créez un fichier `.env` avec votre configuration de production:
+
+```bash
+# Configuration de la base de données
+OMRS_DB_USER=openmrs
+OMRS_DB_PASSWORD=your-secure-password-here
+MYSQL_ROOT_PASSWORD=your-root-password-here
+
+# Tags des images Docker (utilisez 'qa', 'latest' ou une version précise)
+TAG=qa
+
+# Configuration SSL (si vous utilisez Let's Encrypt)
+SSL_MODE=prod
+CERT_WEB_DOMAINS=your-domain.com,www.your-domain.com
+CERT_CONTACT_EMAIL=admin@your-domain.com
+```
+
+<Callout emoji="⚠️" type="warning">
+**Sécurité**: ne committez jamais de fichiers `.env` dans le contrôle de version. Utilisez des outils de gestion de secrets ou les variables d'environnement fournies par votre plateforme d'hébergement.
+</Callout>
+
+#### Étape 4: Configurer SSL/HTTPS
+
+En production, vous devriez toujours utiliser HTTPS. L'application de référence prend en charge les certificats Let's Encrypt.
+
+**Avec SSL activé:**
+
+```bash
+SSL_MODE=prod \
+CERT_WEB_DOMAINS=your-domain.com \
+CERT_CONTACT_EMAIL=admin@your-domain.com \
+docker compose -f docker-compose.yml -f docker-compose.ssl.yml up -d
+```
+
+**Prérequis importants pour SSL:**
+- Le DNS doit pointer vers votre serveur.
+- Les ports 80 et 443 doivent être ouverts dans votre pare-feu.
+- Le domaine doit être accessible en HTTP pour la validation Let's Encrypt.
+
+#### Étape 5: Déployer
+
+Démarrez les services:
+
+```bash
+docker compose up -d
+```
+
+Surveillez les logs:
+
+```bash
+# Voir tous les logs
+docker compose logs -f
+
+# Voir les logs d'un service précis
+docker compose logs -f backend
+docker compose logs -f frontend
+```
+
+### Méthode 2: Déploiement Docker personnalisé
+
+Si vous construisez des images Docker personnalisées ou déployez vers Kubernetes, vous devrez:
+
+1. **Construire votre image frontend** - créez un Dockerfile qui copie les fichiers SPA construits dans un conteneur nginx.
+2. **Configurer nginx** - mettez en place le routage et la configuration proxy appropriés.
+3. **Définir les variables d'environnement** - configurez le chemin SPA, l'URL API et les URLs de configuration.
+4. **Mettre en place les health checks** - implémentez des endpoints de vérification de santé.
+
+Exemple de Dockerfile pour le frontend:
+
+```dockerfile
+FROM nginx:alpine
+
+# Copy built SPA files
+COPY ./spa /usr/share/nginx/html
+
+# Copy nginx configuration
+COPY nginx.conf /etc/nginx/nginx.conf
+
+# Expose port
+EXPOSE 80
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --quiet --tries=1 --spider http://localhost/ || exit 1
+```
+
+### Méthode 3: Hébergement statique + proxy API
+
+Pour les déploiements cloud, par exemple AWS S3 + CloudFront ou Azure Blob Storage:
+
+1. **Téléversez les assets frontend** vers votre service d'hébergement statique.
+2. **Configurez le CDN** pour servir la SPA.
+3. **Mettez en place un proxy API** pour router les requêtes `/openmrs/*` vers votre backend.
+4. **Configurez CORS** sur votre backend pour autoriser les requêtes depuis votre domaine frontend.
+
+## Configuration de l'environnement
+
+### Configuration frontend
+
+Le conteneur frontend nécessite ces variables d'environnement:
+
+- **`SPA_PATH`** - chemin où la SPA est servie, par exemple `/openmrs/spa`.
+- **`API_URL`** - URL de l'API backend, par exemple `/openmrs` ou `https://api.example.com/openmrs`.
+- **`SPA_CONFIG_URLS`** - liste d'URLs de fichiers JSON de configuration séparées par des virgules, par exemple `/openmrs/spa/config-core_demo.json`.
+- **`SPA_DEFAULT_LOCALE`** - code de langue par défaut, par exemple `en` ou `fr`. Laissez vide pour utiliser la valeur par défaut du navigateur.
+
+### Configuration backend
+
+Variables d'environnement backend importantes:
+
+- **`OMRS_CONFIG_CONNECTION_SERVER`** - nom d'hôte de la base de données.
+- **`OMRS_CONFIG_CONNECTION_DATABASE`** - nom de la base de données.
+- **`OMRS_CONFIG_CONNECTION_USERNAME`** - utilisateur de la base de données.
+- **`OMRS_CONFIG_CONNECTION_PASSWORD`** - mot de passe de la base de données.
+- **`OMRS_CONFIG_AUTO_UPDATE_DATABASE`** - mettez `false` en production.
+- **`OMRS_CONFIG_CREATE_TABLES`** - mettez `false` en production.
+
+<Callout emoji="💡" type="info">
+En production, désactivez les mises à jour automatiques de base de données et la création de tables. Elles doivent être gérées par des migrations contrôlées.
+</Callout>
+
+## Configuration SSL/HTTPS
+
+### Utiliser Let's Encrypt (production)
+
+L'application de référence inclut une gestion automatique des certificats SSL via Certbot:
+
+```bash
+SSL_MODE=prod \
+CERT_WEB_DOMAINS=example.com,www.example.com \
+CERT_CONTACT_EMAIL=admin@example.com \
+docker compose -f docker-compose.yml -f docker-compose.ssl.yml up -d
+```
+
+**Le renouvellement des certificats** se fait automatiquement. Les certificats sont valides 90 jours et sont renouvelés lorsqu'il reste 30 jours. Le conteneur certbot exécute périodiquement une vérification de renouvellement.
+
+### Utiliser des certificats personnalisés
+
+Si vous avez vos propres certificats SSL:
+
+1. Placez les fichiers de certificat dans un volume accessible au conteneur gateway.
+2. Configurez nginx pour utiliser ces certificats.
+3. Mettez à jour la configuration nginx de la gateway.
+
+### Tester la configuration SSL
+
+Avant la mise en production, testez avec l'environnement staging de Let's Encrypt:
+
+```bash
+SSL_MODE=prod \
+SSL_STAGING=true \
+CERT_WEB_DOMAINS=example.com \
+CERT_CONTACT_EMAIL=admin@example.com \
+docker compose -f docker-compose.yml -f docker-compose.ssl.yml up -d
+```
+
+## Health checks et monitoring
+
+### Health checks des conteneurs
+
+Tous les services incluent des health checks:
+
+```bash
+# Vérifier l'état de santé des conteneurs
+docker compose ps
+
+# Voir les logs de health check
+docker inspect <container-name> | grep -A 10 Health
+```
+
+### Monitoring applicatif
+
+**Métriques importantes à surveiller:**
+
+1. **État des conteneurs** - vérifiez que tous les conteneurs sont en cours d'exécution.
+2. **Endpoints de health check** - surveillez `/openmrs` pour le backend et `/` pour le frontend.
+3. **Connexions à la base de données** - surveillez l'utilisation du pool de connexions.
+4. **Espace disque** - surveillez les volumes de base de données et de données.
+5. **Utilisation mémoire** - surveillez les limites mémoire des conteneurs.
+6. **Expiration des certificats SSL** - configurez des alertes pour le renouvellement.
+
+**Outils de monitoring:**
+- Health checks intégrés de Docker
+- Prometheus + Grafana
+- Outils APM
+- Agrégation de logs, par exemple ELK stack ou Loki
+
+### Logs
+
+**Voir les logs:**
+
+```bash
+# Tous les services
+docker compose logs -f
+
+# Service précis
+docker compose logs -f backend
+
+# 100 dernières lignes
+docker compose logs --tail=100 backend
+
+# Avec timestamps
+docker compose logs -f --timestamps backend
+```
+
+**Rotation des logs:**
+Configurez les drivers de logs Docker pour éviter les problèmes d'espace disque:
+
+```yaml
+services:
+  backend:
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+```
+
+## Sauvegarde et restauration
+
+### Sauvegardes de base de données
+
+**Sauvegardes automatisées:**
+
+```bash
+# Create backup script
+#!/bin/bash
+OMRS_DB_USER=${OMRS_DB_USER:-openmrs}
+OMRS_DB_PASSWORD=${OMRS_DB_PASSWORD:-openmrs}
+docker compose exec -T db mysqldump -u${OMRS_DB_USER} -p${OMRS_DB_PASSWORD} openmrs > backup-$(date +%Y%m%d-%H%M%S).sql
+```
+
+**Restaurer depuis une sauvegarde:**
+
+```bash
+# Restore database (replace with your actual values)
+OMRS_DB_USER=${OMRS_DB_USER:-openmrs}
+OMRS_DB_PASSWORD=${OMRS_DB_PASSWORD:-openmrs}
+docker compose exec -T db mysql -u${OMRS_DB_USER} -p${OMRS_DB_PASSWORD} openmrs < backup-20240101-120000.sql
+```
+
+**Bonnes pratiques:**
+- Planifiez des sauvegardes automatiques quotidiennes.
+- Stockez les sauvegardes hors serveur, par exemple S3 ou Azure Blob.
+- Testez régulièrement les procédures de restauration.
+- Conservez plusieurs générations de sauvegardes.
+
+### Sauvegardes des volumes
+
+Sauvegarder les volumes Docker:
+
+```bash
+# Backup volume (ensure container is running or use volume name)
+docker run --rm -v openmrs-data:/data -v $(pwd):/backup alpine tar czf /backup/openmrs-data-backup.tar.gz -C /data .
+
+# Restore volume
+docker run --rm -v openmrs-data:/data -v $(pwd):/backup alpine sh -c "cd /data && tar xzf /backup/openmrs-data-backup.tar.gz"
+```
+
+## Bonnes pratiques de sécurité
+
+### 1. Utiliser des mots de passe forts
+
+- Générez des mots de passe forts et uniques pour les utilisateurs de base de données.
+- Utilisez des gestionnaires de mots de passe ou des outils de gestion de secrets.
+- Faites une rotation régulière des mots de passe.
+
+### 2. Limiter l'exposition réseau
+
+- N'exposez que les ports nécessaires, 80 et 443.
+- Utilisez des règles de pare-feu pour restreindre l'accès.
+- Envisagez un VPN ou un réseau privé pour l'accès backend.
+
+### 3. Maintenir les images à jour
+
+- Mettez régulièrement à jour les images Docker vers les dernières versions.
+- Surveillez les avis de sécurité concernant les images de base.
+- Utilisez des tags de version précis, pas `latest`, en production.
+
+### 4. Sécuriser les secrets
+
+- Ne committez jamais de secrets dans le contrôle de version.
+- Utilisez Docker secrets ou une gestion externe des secrets.
+- Restreignez l'accès aux fichiers `.env` et aux secrets.
+
+### 5. Activer HTTPS
+
+- Utilisez toujours HTTPS en production.
+- Configurez les en-têtes HSTS.
+- Utilisez des configurations SSL/TLS robustes.
+
+### 6. Mises à jour régulières
+
+- Gardez Docker et Docker Compose à jour.
+- Mettez à jour les images de base régulièrement.
+- Surveillez les correctifs de sécurité.
+
+## Considérations de scalabilité
+
+### Scalabilité horizontale
+
+Pour les déploiements à fort trafic:
+
+1. **Load balancer** - utilisez un load balancer, par exemple nginx, HAProxy ou un load balancer cloud, devant plusieurs instances gateway.
+2. **Réplication de base de données** - mettez en place des réplicas de lecture.
+3. **Cache** - implémentez Redis ou Memcached pour les sessions et les données.
+4. **CDN** - utilisez un CDN pour les assets frontend statiques.
+
+### Scalabilité verticale
+
+Augmenter les ressources des conteneurs:
+
+```yaml
+services:
+  backend:
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+```
+
+## Dépannage
+
+### Les conteneurs ne démarrent pas
+
+**Vérifier les logs:**
+```bash
+docker compose logs <service-name>
+```
+
+**Problèmes courants:**
+- Échecs de connexion à la base de données - vérifiez les identifiants et la connectivité réseau.
+- Conflits de ports - assurez-vous que les ports 80/443 ne sont pas déjà utilisés.
+- Espace disque insuffisant - vérifiez l'espace disponible.
+- Limites mémoire - augmentez les limites mémoire des conteneurs si nécessaire.
+
+### Problèmes de certificats SSL
+
+**Le certificat ne se renouvelle pas:**
+```bash
+# Check certificate status
+docker compose -f docker-compose.yml -f docker-compose.ssl.yml exec certbot certbot certificates
+
+# Force renewal
+docker compose -f docker-compose.yml -f docker-compose.ssl.yml exec certbot certbot renew --force-renewal --webroot -w /var/www/certbot
+
+# Reload nginx after renewal
+docker compose -f docker-compose.yml -f docker-compose.ssl.yml exec gateway nginx -s reload
+```
+
+**Échecs de validation de domaine:**
+- Vérifiez que le DNS est correctement configuré.
+- Assurez-vous que le port 80 est accessible pour le challenge HTTP-01.
+- Vérifiez les règles de pare-feu.
+
+### Erreurs de connexion à la base de données
+
+**Vérifier la connectivité à la base:**
+```bash
+# Test connection from backend container (check if backend can reach db)
+docker compose exec backend ping -c 3 db
+
+# Check database is accepting connections
+docker compose exec db mysqladmin ping -h localhost -u${OMRS_DB_USER:-openmrs} -p${OMRS_DB_PASSWORD:-openmrs}
+```
+
+**Vérifier les logs de la base de données:**
+```bash
+docker compose logs db
+```
+
+### Le frontend ne se charge pas
+
+**Vérifier les assets frontend:**
+```bash
+# Check if files exist in container
+docker compose exec frontend ls -la /usr/share/nginx/html
+
+# Test nginx configuration
+docker compose exec gateway nginx -t
+```
+
+**Vérifier l'import map:**
+- Vérifiez que `importmap.json` est accessible.
+- Vérifiez que les URLs des modules sont correctes.
+- Assurez-vous que l'URL CDN/publique est correctement configurée.
+
+## Différencier les environnements
+
+Pour les déploiements de production, il est recommandé de maintenir des environnements séparés:
+
+### Développement (Dev)
+- Utilisé pour le développement actif et les tests.
+- Peut utiliser les modules tagués `next`.
+- Exigences de sécurité moins strictes.
+- Déploiements fréquents acceptables.
+
+### Assurance qualité (QA)
+- Reflète la configuration de production.
+- Utilise des versions stables, `latest` ou des versions précises.
+- Utilisé pour les tests avant production.
+- Doit correspondre au matériel et au logiciel de production.
+
+### Tests d'acceptation utilisateur (UAT)
+- Dernier environnement de test avant production.
+- Utilise des données proches de la production, anonymisées.
+- Environnement de validation par les parties prenantes.
+- Doit correspondre exactement à la configuration de production.
+
+### Production (Prod)
+- Système live utilisé par de vrais utilisateurs.
+- Utilise uniquement des versions stables et testées.
+- Sécurité et monitoring stricts.
+- Déploiements contrôlés et planifiés uniquement.
+
+**Bonnes pratiques:**
+- Ne déployez jamais directement en production sans tester en QA/UAT.
+- Gardez les environnements synchronisés, avec les mêmes versions et des configurations similaires.
+- Utilisez des fichiers de configuration propres à chaque environnement.
+- Documentez tous les changements et déploiements.
+
+## Déployer des mises à jour
+
+### Processus de mise à jour
+
+**Étape 1: Tester en QA/UAT**
+
+```bash
+# Update to new version in QA environment
+TAG=new-version docker compose pull
+TAG=new-version docker compose up -d
+```
+
+**Étape 2: Vérifier les fonctionnalités**
+- Exécutez des smoke tests.
+- Vérifiez les workflows critiques.
+- Vérifiez l'intégrité des données.
+- Surveillez les logs pour détecter les erreurs.
+
+**Étape 3: Déployer en production**
+
+```bash
+# Backup first
+./backup-database.sh
+
+# Update images
+TAG=new-version docker compose pull
+
+# Deploy with zero downtime (if possible)
+# Update frontend and gateway first (they're stateless)
+TAG=new-version docker compose up -d --no-deps gateway frontend
+
+# Then update backend (may require brief downtime)
+TAG=new-version docker compose up -d backend
+
+# Monitor closely
+docker compose logs -f
+```
+
+**Étape 4: Validation après déploiement**
+- Vérifiez que l'application est accessible.
+- Testez les workflows utilisateur critiques.
+- Surveillez les taux d'erreur.
+- Vérifiez les métriques de performance.
+
+<Callout emoji="⚠️" type="warning">
+Testez toujours les mises à jour dans les environnements QA/UAT avant de déployer en production. Pour plus de détails, consultez le [Guide technique de l'implémenteur OpenMRS sur les mises à jour et upgrades](https://openmrs.atlassian.net/wiki/spaces/docs/pages/535068683/Technical+Implementer+s+Guide).
+</Callout>
+
+## Validation après déploiement
+
+Après un déploiement en production, effectuez ces vérifications:
+
+### Vérifications d'intégrité des données
+
+**Vérifier la connectivité de la base de données:**
+```bash
+docker compose exec backend curl http://localhost:8080/openmrs/ws/rest/v1/systeminformation
+```
+
+**Vérifier les tables critiques:**
+- Vérifiez que les données patient sont accessibles.
+- Vérifiez l'intégrité des données d'encounter.
+- Validez les comptes utilisateurs.
+
+### Santé de l'application
+
+**Vérifier que le frontend se charge:**
+- Accédez à l'URL de l'application.
+- Vérifiez que l'import map se charge correctement.
+- Vérifiez que les modules se chargent sans erreurs.
+
+**Vérifier les endpoints API:**
+```bash
+# Test authentication
+curl -u admin:password https://your-domain.com/openmrs/ws/rest/v1/session
+
+# Test patient search
+curl -u admin:password https://your-domain.com/openmrs/ws/rest/v1/patient?q=test
+```
+
+### Validation des performances
+
+- Vérifiez les temps de chargement des pages.
+- Vérifiez les temps de réponse API.
+- Surveillez les performances des requêtes de base de données.
+- Vérifiez l'utilisation mémoire et CPU.
+
+## Procédures de rollback
+
+### Revenir sur un déploiement
+
+**Rollback rapide:**
+
+```bash
+# Stop current deployment
+docker compose down
+
+# Use previous image tag (or specific version)
+TAG=previous-version docker compose up -d
+
+# Or if you need to restore volumes too
+docker compose down -v
+TAG=previous-version docker compose up -d
+```
+
+**Rollback de base de données:**
+- Restaurez depuis une sauvegarde si des changements de schéma ont été faits.
+- Testez la procédure de rollback en staging d'abord.
+
+**Checklist de rollback:**
+1. Identifier le problème qui nécessite un rollback.
+2. Arrêter le déploiement courant.
+3. Restaurer la version précédente.
+4. Restaurer la sauvegarde de base de données si nécessaire.
+5. Vérifier le fonctionnement du système.
+6. Documenter la raison du rollback.
+
+## Ressources supplémentaires
+
+Pour une aide complète à l'implémentation, consultez:
+
+- [OpenMRS Technical Implementer's Guide](https://openmrs.atlassian.net/wiki/spaces/docs/pages/535068683/Technical+Implementer+s+Guide) - guide complet pour les implémenteurs OpenMRS
+- [Créer une distribution](/docs/recipes/create-a-distribution) - construire votre distribution O3
+- [Système de configuration](/docs/configuration-system) - configuration runtime
+- [Notes de release](/docs/changelog) - notes de déploiement propres aux versions

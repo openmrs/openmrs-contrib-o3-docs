@@ -243,6 +243,53 @@ C'est tout! Vous avez intégré avec succès React Hook Form avec Zod pour valid
 
 </Steps>
 
+## Définir des schémas en dehors des composants
+
+Dans certains cas, vous devrez peut-être définir votre schéma en dehors du composant. Cela inclut notamment:
+
+- Le partage de logique de validation entre plusieurs formulaires.
+- Des règles de validation qui doivent être dynamiques selon le contexte.
+- Les formulaires en plusieurs étapes.
+- La validation conditionnelle complexe.
+
+Dans ces scénarios, vous pouvez créer une fonction factory qui retourne le schéma. Par exemple:
+
+```tsx
+import { type TFunction } from "react-i18next";
+
+const createChangePasswordSchema = (t: TFunction) => {
+  return z
+    .object({
+      oldPassword: oldPasswordValidation,
+      newPassword: newPasswordValidation,
+      passwordConfirmation: passwordConfirmationValidation,
+    })
+    .refine((data) => data.newPassword === data.passwordConfirmation, {
+      message: t("passwordsDoNotMatch", "Passwords do not match"),
+      path: ["passwordConfirmation"],
+    });
+};
+
+// Définit un type pour les données du formulaire. Ce type peut être exporté et utilisé dans d'autres composants qui réutilisent le même schéma.
+export type ChangePasswordFormData = z.infer<ReturnType<typeof createChangePasswordSchema>>;
+
+// Plus bas dans le composant
+const ChangePasswordModal = () => {
+  const { t } = useTranslation();
+  const changePasswordSchema = createChangePasswordSchema(t);
+
+  const {
+    handleSubmit,
+    control,
+    formState: { errors },
+  } = useForm<ChangePasswordFormData>({
+    resolver: zodResolver(changePasswordSchema),
+  });
+};
+```
+
+Un avantage important de cette approche est que vous pouvez accéder à la fonction `t` depuis le corps du composant via la factory. Cela vous permet de traduire les messages d'erreur même si le schéma est défini en dehors du composant. Le principal compromis est une configuration initiale légèrement plus complexe, mais cela vaut généralement le coût pour la maintenabilité et la réutilisation.
+
 En combinant React Hook Form et Zod, vous pouvez créer un puissant système de validation de formulaires qui garantit l'intégrité des données et la sécurité des types dans vos applications React. Lisez-en plus sur [React Hook Form](https://react-hook-form.com/) et [Zod](https://zod.dev/) pour explorer toutes leurs capacités et fonctionnalités.
 
 ## Ressources supplémentaires

@@ -106,6 +106,16 @@ function setupOpenMRS() {
 export { setupOpenMRS, importTranslation, backendDependencies, version };
 ```
 
+## Factoriser les métadonnées statiques
+
+Chaque module frontend définit des métadonnées statiques ou dynamiques. Les métadonnées statiques incluent:
+
+- `backendDependencies` - les versions des dépendances backend dont le module dépend.
+- `pages` - les pages fournies par le module.
+- `extensions` - les extensions fournies par le module.
+
+Ces métadonnées sont statiques parce qu'elles ne changent pas à l'exécution. Ce sont aussi les métadonnées utilisées par l'app shell pour charger le module.
+
 Passons en revue les changements que nous devons apporter à ce fichier pour construire le fichier `routes.json` étape par étape.
 
 ### 1. Créer un fichier `routes.json`

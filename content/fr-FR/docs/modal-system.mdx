@@ -1,16 +1,16 @@
 import { Callout } from "nextra/components";
 
-# Le système de modale
+# Le système de modales
 
-Le système de modale fait partie du framework qui gère l'affichage des boîtes de dialogue modales, des avertissements et d'autres affichages similaires. Son principal objectif est de coordonner les modales entre différentes applications afin qu'une seule modale soit affichée pour l'utilisateur à la fois, sans que les autres modales ne soient supprimées.
+Le système de modales fait partie du framework. Il gère l'affichage des boîtes de dialogue modales, des avertissements et d'autres affichages similaires. Son objectif principal est de coordonner les modales entre différentes applications afin qu'une seule modale soit affichée à l'utilisateur à la fois, sans supprimer les autres modales.
 
-Pour utiliser le système de modale, votre application doit d'abord enregistrer la modale comme décrit ci-dessous. Une fois la modale enregistrée, appelez [`showModal`](/docs/framework-api-reference#showmodal) avec le nom de la modale et le framework l'affichera pour vous.
+Pour utiliser le système de modales, votre application doit d'abord enregistrer la modale comme décrit ci-dessous. Une fois la modale enregistrée, appelez [`showModal`](/docs/framework-api-reference#showmodal) avec le nom de la modale, et le framework l'affichera pour vous.
 
 ## Utilisation
 
 ### Implémentation de la modale
 
-`ModalHeader` et `ModalBody` doivent être au niveau supérieur du composant modale et enveloppés dans un `React.Fragment`.
+`ModalHeader` et `ModalBody` doivent être au niveau supérieur du composant de modale et enveloppés dans un `React.Fragment`.
 
 ```tsx
 const ModalComponent = ({ closeModal }) => {
@@ -31,18 +31,18 @@ const ModalComponent = ({ closeModal }) => {
 ```
 
 <Callout>
-	Ne pas envelopper votre modale dans un React Fragment entraînera un défilement vertical incorrect du corps de la modale.
+	Si vous n'enveloppez pas votre modale dans un React Fragment, le corps de la modale ne défilera pas correctement verticalement.
 </Callout>
 
 ### Enregistrement de la modale
 
-Enregistrez la modale par son nom dans la propriété `modals` du fichier `routes.json` et exportez-la dans le fichier `index.ts` de l'application qui définit la modale. Le `nom` doit être suffixé par `-modal`. Par exemple, si le nom de la modale est `delete-condition`, le `nom` doit être `delete-condition-modal`. Le `composant` doit être le nom du composant qui affiche la modale.
+Enregistrez la modale par son nom dans la propriété `modals` de `routes.json` et exportez-la dans le fichier `index.ts` de l'application qui la définit. Le `name` doit se terminer par `-modal`. Par exemple, si le nom de la modale est `delete-condition`, le `name` doit être `delete-condition-modal`. Le `component` doit être le nom du composant qui rend la modale.
 
 ```json filename="routes.json"
 "modals": [
 	{
-	  "name": "nom-de-votre-modale-modal",
-	  "component": "nomDuComposantModale"
+	  "name": "your-modal-name-modal",
+	  "component": "modalComponentName"
 	}
 ]
 ```
@@ -50,19 +50,75 @@ Enregistrez la modale par son nom dans la propriété `modals` du fichier `route
 ```ts filename="index.ts"
 import { getAsyncLifecycle } from '@openmrs/esm-framework';
 
-export const nomDuComposantModale = getAsyncLifecycle(
-  () => import('/chemin-vers-le-composant-modale/composant-modale.tsx'),
+export const modalComponentName = getAsyncLifecycle(
+  () => import('/path-to-the-modal-component/modal-component.tsx'),
   options,
 );
 ```
 
 ### Déclenchement de la modale
 
-Enfin, vous pouvez déclencher votre modale en appelant `showModal` avec tous les props que vous devez passer dans le composant modale. Dans l'exemple ci-dessous, nous avons passé `closeModal` comme prop au composant modale. La fonction dispose qui est retournée par `showModal` peut être appelée pour "disposer" ou forcer la fermeture de la modale.
+Enfin, vous pouvez déclencher votre modale en appelant `showModal` avec toutes les props que vous devez transmettre à la modale. La fonction retournée par `showModal` peut être appelée pour "dispose" la modale, c'est-à-dire la fermer de force. Dans l'exemple ci-dessous, nous passons `closeModal` comme prop au composant de modale. Cette prop appelle la fonction dispose quand la modale doit être fermée.
 
 ```ts 
-const dispose = showModal('nom-de-votre-modale-modal', {
+const dispose = showModal('your-modal-name-modal', {
 	closeModal: () => dispose(),
-	// autres props à passer dans le composant modale
+	// autres props à transmettre au composant de modale
 });
 ```
+
+<Callout type="info">
+	Remarque: le framework ajoute automatiquement une prop `close` aux props de votre composant de modale. Il est toutefois courant de passer explicitement `closeModal`, comme ci-dessus, afin que le nom de prop reste cohérent avec l'API du composant `ModalHeader` de Carbon.
+</Callout>
+
+## Considérations importantes
+
+### Empilement des modales
+
+Le système de modales prend en charge l'empilement de plusieurs modales. Quand une nouvelle modale est ouverte alors qu'une autre est déjà affichée, la nouvelle apparaît au-dessus et la précédente reste dans la pile, masquée. Fermer la modale du dessus révèle celle qui se trouve dessous. Cela permet des workflows de modales imbriquées sans perdre le contexte.
+
+### Le callback `onClose`
+
+La fonction `showModal` accepte un troisième paramètre optionnel, le callback `onClose`, appelé quand la modale est fermée:
+
+```ts
+const dispose = showModal('your-modal-name-modal', {
+	closeModal: () => dispose(),
+	// autres props
+}, () => {
+	// Ce callback est appelé quand la modale est fermée
+	console.log('Modal was closed');
+});
+```
+
+### Taille de la modale
+
+Vous pouvez contrôler la taille de la modale en passant une prop `size`. Les tailles disponibles sont `'xs'`, `'sm'`, `'md'` par défaut et `'lg'`:
+
+```ts
+const dispose = showModal('your-modal-name-modal', {
+	closeModal: () => dispose(),
+	size: 'sm', // ou 'xs', 'md', 'lg'
+});
+```
+
+### Gestion des erreurs
+
+Si vous tentez d'afficher une modale qui n'a pas été enregistrée, le framework signale une erreur dans la console mais ne lance pas d'exception. Assurez-vous que votre modale est correctement enregistrée dans `routes.json` avant d'appeler `showModal`.
+
+### Comportements automatiques
+
+Le système de modales gère automatiquement plusieurs comportements:
+
+- **Verrouillage du défilement du body**: quand une modale est ouverte, le défilement de la page est automatiquement verrouillé pour empêcher le défilement de l'arrière-plan.
+- **Gestion de la touche ESC**: appuyer sur ESC ferme la modale la plus haute.
+- **Gestion du focus**: le focus est géré automatiquement pour préserver l'accessibilité.
+
+### Les props `close` et `closeModal`
+
+Le framework ajoute automatiquement une prop `close` à votre composant de modale. C'est la fonction dispose retournée par `showModal`. Vous pouvez utiliser l'une ou l'autre:
+
+- `close` - la fonction dispose fournie automatiquement
+- `closeModal` - une prop personnalisée que vous passez, souvent utilisée pour correspondre à l'API Carbon
+
+Les deux ferment la modale, mais `closeModal` est plus couramment utilisée parce qu'elle correspond à l'API du composant `ModalHeader` du Carbon Design System.

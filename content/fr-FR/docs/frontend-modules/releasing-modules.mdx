@@ -1,58 +1,69 @@
-# Publication des modules frontend
+import { Callout } from "nextra/components";
 
-Après avoir atteint un seuil raisonnable de commits, ou après un certain temps, vous voudrez probablement publier votre logiciel sur le registre npm afin que les consommateurs puissent obtenir vos dernières versions stables.
+# Publier des modules frontend
 
-Nous travaillons avec un rythme de publication mensuel ou bimestriel pour O3, ce qui signifie que nous publions de nouvelles versions de nos modules frontend sur un cycle mensuel ou tous les deux mois. Ce rythme est susceptible de changer à mesure que nous acquérons plus d'expérience avec le processus.
+La [publication](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases) des modules frontend est une étape essentielle du processus de développement. Après un seuil raisonnable de commits, ou après un certain temps, vous voudrez probablement publier votre logiciel sur le registre npm afin que les consommateurs puissent l'installer. Ce guide décrit le processus de publication des modules frontend dans l'écosystème O3.
 
-La publication d'une version O3 implique deux étapes:
+<Callout type="info">
+  O3 suit actuellement une cadence de publication mensuelle ou bimestrielle. Cela signifie que nous essayons de publier de nouvelles versions de notre frontend dans notre [environnement QA](https://test3.openmrs.org/openmrs/spa) environ tous les mois ou tous les deux mois. La revue QA et les retours prennent généralement une semaine, après quoi nous promouvons la version vers notre [environnement de démo Production](https://o3.openmrs.org/openmrs/spa). Cette cadence peut évoluer à mesure que nous acquérons de l'expérience avec ce processus.
+</Callout>
 
-1. Augmenter vos versions de package local et pousser ces changements sur GitHub. Cette étape déclenchera le travail `pre-release` du CI.
-2. Couper une version en utilisant l'interface utilisateur des versions GitHub. Cette étape déclenche le travail `release` du CI.
+## Créer une release
 
-Si vous voulez publier une version de votre module, vous devez d'abord réfléchir à quelques points, notamment:
+<Callout type="info">
+  Veuillez lire la section [Notes importantes](#notes-importantes) à la fin de cette page. Elle couvre quelques étapes du processus de publication qui sont souvent oubliées.
+</Callout>
 
-- Le `type` de version - le [type de version de versionnement sémantique](https://docs.npmjs.com/about-semantic-versioning) auquel vos changements se conforment. Nos versions de publication utilisent la spécification semver, ce qui signifie que nous avons trois types de versions:
+Créer une release O3 implique deux étapes:
 
-  - `patch` - lorsque vous effectuez des corrections de bugs compatibles avec les versions précédentes.
-  - `minor` - lorsque vous ajoutez des fonctionnalités de manière compatible avec les versions précédentes.
-  - `major` - lorsque vous effectuez des modifications d'API incompatibles.
+1. Incrémenter les versions locales de vos packages et pousser ces changements vers GitHub. Cette étape déclenche le job CI `pre-release`.
+2. Créer une release depuis l'interface GitHub Releases. Cette étape déclenche le job CI `release`, qui publie le ou les packages sur le registre npm.
 
-  Par exemple, si le numéro de version le plus récemment publié pour un module frontend est `v1.0.0`:
+Si vous voulez publier une version de release de votre module, réfléchissez d'abord à quelques éléments, notamment:
 
-  - Une version `patch` augmenterait le numéro de version à `1.0.1`.
-  - Une version `minor` augmenterait le numéro de version à `1.1.0`.
-  - Une version `major` augmenterait le numéro de version à `2.0.0`.
+- Le `type` de release, c'est-à-dire le [type de versionnement sémantique](https://docs.npmjs.com/about-semantic-versioning) auquel vos changements correspondent. Nos versions suivent la spécification SemVer, avec trois types de release:
 
-Avec ces connaissances, vous pouvez rédiger un journal des modifications. Pour ce faire:
+  - `patch` - pour les corrections de bugs rétrocompatibles.
+  - `minor` - pour les ajouts de fonctionnalités rétrocompatibles.
+  - `major` - pour les changements d'API incompatibles.
 
-- Allez à la page `releases` de votre monorepo, et cliquez sur `Draft a new release`.
-- Cliquez sur le bouton `Choose a tag` dans l'interface utilisateur de la page des versions. Choisissez n'importe quelle balise, disons `v1.0.1` pour une version `patch` si la version la plus récente est `v1.0.0`. Nous changerons probablement cela peu après avoir examiné le journal des modifications. Définissez cette valeur comme titre de la version également. Ensuite, cliquez sur le bouton `Generate release notes`.
+  Par exemple, si la version la plus récente d'un module frontend est `v1.0.0`:
 
-Nous avons établi une convention au sein de O3 où les titres des PR contiennent une valeur de `type` de commit conventionnel qui décrit le type de changement que le PR apporte. Ceux-ci incluent:
+  - Une version `patch` incrémenterait la version vers `1.0.1`.
+  - Une version `minor` incrémenterait la version vers `1.1.0`.
+  - Une version `major` incrémenterait la version vers `2.0.0`.
 
-- `(feat)` pour les nouvelles fonctionnalités
-- `(fix)` pour les corrections de bugs
-- `(refactor)` pour les refactorisations
-- `(test)` pour les tests
-- `(docs)` pour la documentation
-- `(chore)` pour les tâches ménagères, comme la gestion des dépendances, la configuration des choses ou la mise à jour des workflows CI
-- `(BREAKING)` pour les modifications d'API incompatibles avec les versions précédentes.
+### Rédiger un changelog
 
-L'examen du journal des modifications généré avec ces types de commit à l'esprit devrait vous donner une bonne idée de l'augmentation de version sémantique que votre version devrait créer.
+Avec ces informations, vous pouvez rédiger un changelog. Pour cela:
 
-### Augmenter les versions
+- Allez sur la page `releases` de votre monorepo et cliquez sur `Draft a new release`.
+- Cliquez sur le bouton `Choose a tag` dans l'interface de la page releases. Choisissez n'importe quel tag, par exemple `v1.0.1` pour une release `patch` si la version la plus récente est `v1.0.0`. Nous changerons probablement cette valeur après la revue du changelog. Utilisez cette valeur comme titre de release également. Cliquez ensuite sur le bouton `Generate release notes`.
 
-À ce stade, vous pouvez passer à votre IDE pour lancer le processus de publication. En général, nous utilisons yarn pour versionner les modules frontend.
+Nous avons établi une convention dans O3 selon laquelle les titres de PR utilisent l'un de ces formats canoniques:
+
+- `(type) TICKET: Sentence case summary`
+- `(type) Sentence case summary`
+- `(BREAKING) TICKET: Sentence case summary`
+- `(BREAKING) Sentence case summary`
+
+Les valeurs `type` autorisées entre parenthèses sont `(feat)`, `(fix)`, `(chore)`, `(docs)`, `(test)` et `(BREAKING)`. Continuez à éviter `(refactor)`, et autorisez les titres de PR sans ticket quand il n'existe pas encore de ticket Jira. Les PR créées par des bots sont exemptées de cette vérification.
+
+Relire le changelog généré avec ces règles de titre en tête devrait vous donner une bonne idée du bump sémantique que la release doit produire. Pour la politique complète des titres de PR et des exemples valides ou invalides, consultez le [guide de contribution](/docs/frontend-modules/contributing#pull-requests).
+
+### Incrémenter les versions
+
+À ce stade, vous pouvez passer à votre IDE pour lancer le processus de release. Nous utilisons généralement `yarn` pour versionner les modules frontend.
 
 #### Monorepos
 
-Pour les monorepos, on utilise généralement le script `release` défini dans le `package.json` racine:
+Pour les monorepos, nous utilisons la commande `workspaces` pour incrémenter les versions de tous les packages du monorepo. Vous trouverez généralement un script `release` dans le `package.json` racine du monorepo qui ressemble à ceci:
 
 ```json
 "release": "yarn workspaces foreach --all --topological version"
 ```
 
-Pour une version `major`, par exemple:
+Ce script exécute la commande `version` sur tous les packages du workspace. Vous devrez ajouter le type de release à cette commande pour déclencher le bump. Par exemple, pour une release `major`, vous lanceriez:
 
 ```sh
 yarn release major
@@ -60,41 +71,71 @@ yarn release major
 
 Cette commande:
 
-- Exécute la commande `version` contre tous les packages de l'espace de travail et les fait passer à une version majeure. Par exemple, si la version actuelle est `1.0.0`, elle serait augmentée à `2.0.0`.
-- Indique à yarn de trier les packages avant d'exécuter les commandes afin qu'elles soient exécutées sur les packages dans l'ordre topologique (c'est-à-dire que les packages qui dépendent d'autres packages sont exécutés plus tard).
+- Exécute la commande `version` sur tous les packages du workspace et les incrémente vers une version majeure. Par exemple, si la version courante est `1.0.0`, elle devient `2.0.0`.
+- Demande à yarn de trier les packages avant d'exécuter les commandes afin qu'ils passent dans l'ordre topologique, c'est-à-dire que les packages qui dépendent d'autres packages passent plus tard.
 - Si vous devez éviter de versionner le `package.json` racine, ajoutez un `--exclude` explicite pour le nom du package racine.
 
-#### Dépôts mono-package
+#### Non-monorepos
 
-Pour les dépôts qui ne sont pas des monorepos, utilisez directement `version`:
+Pour les dépôts qui ne sont pas des monorepos, vous pouvez utiliser directement la commande `version`. Par exemple, pour incrémenter le package vers une release `major`, lancez:
 
 ```sh
 yarn version major
 ```
 
-Une fois ce processus terminé, vous devriez voir une diff dans votre éditeur qui inclut une augmentation de version pour tous les packages de votre monorepo. Exécutez `yarn` ou `yarn install` pour mettre à jour votre fichier `yarn.lock`. Validez ces changements avec le titre `(chore) Release vX.X.X` où `X.X.X` est un espace réservé pour le numéro de version. Voir un exemple de [ce commit](https://github.com/openmrs/openmrs-esm-patient-chart/pull/1279) qui fait passer `Patient Chart` à `v5.0.0`.
+<Callout type="info">
+**Bibliothèques utilisant d'anciennes versions de yarn**
 
-Une fois que votre commit de version est fusionné, le travail `pre-release` du workflow CI est déclenché et publie une version préliminaire taguée `next` sur npm. Cela permet de tester avant de publier `latest`. En coulisse, ce travail exécute le script `ci:publish-next`.
+Certains de nos projets utilisent des versions anciennes de yarn, comme yarn v1. Le [moteur de formulaires Angular](https://github.com/openmrs/openmrs-ngx-formentry) en est un exemple. Pour publier le moteur de formulaires Angular, vous lanceriez la commande suivante:
 
-Vous pouvez ensuite passer à votre navigateur et revenir à la page des versions du dépôt avec lequel vous travaillez. Examinez les notes de version générées par GitHub, puis mettez à jour le numéro de version et les tags de manière appropriée. Une fois que vous êtes satisfait que tout semble correct, cliquez sur le bouton `Publish release`. Cette étape devrait déclencher le workflow CI et, notamment, le travail `release`.
+```sh
+yarn version --new-version <major|minor|patch> --no-git-tag-version
+```
 
-En coulisse, ce travail exécute le script suivant:
+Veillez à suivre les instructions indiquées dans les [docs Cutting a release](https://github.com/openmrs/openmrs-ngx-formentry#cutting-a-new-release) pour éviter les mauvaises surprises.
+
+</Callout>
+
+### Étapes après le bump
+
+Une fois le versionnement terminé, vous devriez voir dans votre éditeur un diff contenant un bump de version pour tous les packages du dépôt. Lancez `yarn` ou `yarn install` pour mettre à jour votre fichier `yarn.lock`.
+
+Créez une nouvelle branche nommée `chore/release-vX.X.X`, où `X.X.X` est le numéro de version que vous publiez. Committez ces changements avec le titre `(chore) Release vX.X.X`. Voir cet exemple de [commit](https://github.com/openmrs/openmrs-esm-patient-chart/pull/1279) qui incrémente `Patient Chart` vers `v5.0.0`.
+
+Une fois le commit de release fusionné, le job `pre-release` du workflow CI se déclenche et publie une version pre-release taguée `next` sur npm. C'est utile pour les tests anticipés avant de publier `latest`. Sous le capot, ce job exécute le script `ci:publish-next`.
+
+### Publier sur GitHub
+
+Vous pouvez ensuite retourner dans votre navigateur sur la page releases du dépôt concerné. Relisez les notes de release générées par GitHub, puis mettez à jour le numéro de version et les tags comme il faut.
+
+<Callout type="info">
+  Les notes de release doivent suivre le format du [changelog O3](/docs/changelog). Ce format comprend un titre, une description et une liste de changements. Les principales catégories sont `Features`, `Bug Fixes`, `Breaking Changes`, `Refactors`, `Docs` et `Tests`. Chaque catégorie doit contenir une liste de changements. Il faudra peut-être un peu de travail pour que le changelog corresponde à ce format. Cela en vaut la peine, car cela facilite la revue des changements par le Release Manager et la préparation des notes de release pour la communauté.
+</Callout>
+
+Quand tout vous semble correct, cliquez sur le bouton `Publish release`. Cette étape doit déclencher le workflow CI et, notamment, le job `release`.
+
+Sous le capot, ce job exécute le script suivant:
 
 ```json
 "ci:publish": "yarn workspaces foreach --all --topological npm publish --access public --tag latest",
 ```
 
-Cette commande publie un nouveau package tagué `latest`. C'est la version installée par défaut par les consommateurs.
+Cette commande publie un nouveau package tagué `latest`. C'est la version que les consommateurs obtiendront par défaut quand ils installeront votre module frontend.
 
-En termes généraux, lorsqu'un PR est fusionné, un travail `pre-release` dans notre workflow principal GitHub Actions CI est déclenché. Ce travail publie une version du module frontend sur son registre npm correspondant tagué `next`.
+De façon générale, quand une PR est fusionnée, un job `pre-release` dans notre workflow GitHub Actions principal est déclenché. Ce job publie une version du module frontend correspondant sur son registre npm avec le tag `next`.
 
-Pour voir à quelle version le tag `latest` correspond pour un module frontend, allez à sa page de registre npm et cliquez sur le tag `version`. Recherchez la version la plus récente taguée `latest`.
+Pour voir à quelle version correspond le tag `latest` d'un module frontend, allez sur sa page npm et cliquez sur le tag `version`. Cherchez la version la plus récente taguée `latest`.
 
-### Différences selon les dépôts
+### Notes importantes
+
+- Lors du versionnement du [moteur de formulaires Angular](https://github.com/openmrs/openmrs-ngx-formentry), assurez-vous d'incrémenter à la fois la version dans le fichier `package.json` racine et la version dans le fichier `package.json` du dossier `projects/openmrs-esm-formentry`. La bibliothèque réellement publiée vient de ce dossier, il est donc important d'y incrémenter la version aussi. Plus d'informations se trouvent dans [cette section](https://github.com/openmrs/openmrs-ngx-formentry#cutting-a-new-release) du README.
+- Lors du versionnement de [Patient Chart](https://github.com/openmrs/openmrs-esm-patient-chart), assurez-vous d'incrémenter la peer dependency Common Lib dans chaque package qui en dépend. Voici un exemple de commit de release qui incrémente à la fois la version du package et la version de la peer dependency: [chore: Release v7.0.0](https://github.com/openmrs/openmrs-esm-patient-chart/pull/1639/files).
+
+### Différences propres aux dépôts
 
 Tous les dépôts ne câblent pas les releases de la même manière. Avant de publier, vérifiez:
 
-- Le `package.json` pour les scripts `release`, `ci:publish`, `ci:publish-next`, ou `ci:prepublish`.
-- `.github/workflows/ci.yml` pour voir quels tags sont publiés sur `push` vs `release`.
+- `package.json` pour les scripts `release`, `ci:publish`, `ci:publish-next` ou `ci:prepublish`.
+- `.github/workflows/ci.yml` pour voir quels tags sont publiés sur `push` et sur `release`.
 
-Suivez toujours les scripts définis dans le dépôt, même si les noms diffèrent de ce guide.
+Suivez toujours les scripts définis dans le dépôt, même si leurs noms diffèrent de ce guide.

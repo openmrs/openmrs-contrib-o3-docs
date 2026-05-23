@@ -1,13 +1,334 @@
-import { Callout } from "nextra/components";
+import { Callout, Steps } from "nextra/components";
 
 # Migration vers Rspack et Vitest
 
+Ce guide explique comment remplacer le bundler Webpack d'un module frontend par [Rspack](https://rspack.dev) et son runner de tests Jest par [Vitest](https://vitest.dev). Dans les dépôts OpenMRS à paquet unique, ces deux migrations ont généralement été livrées dans des PR proches l'une de l'autre. Ce guide les traite donc comme une seule intervention. Les monorepos les ont parfois réalisées à des moments différents. Voir la section [Considérations pour les monorepos](#considérations-pour-les-monorepos).
+
+Si votre module n'a pas encore été mis à niveau vers Core v6, commencez par cela. Voir [Migration vers Core v6](/docs/migrate-to-core-v6). Le guide Core v6 laisse volontairement votre module sur Jest et Webpack. Celui-ci reprend à partir de là.
+
 <Callout type="info">
-  Cette page n'est pas encore traduite en français. En attendant, veuillez consulter la [version anglaise](/en-US/docs/migrate-to-rspack-and-vitest) du guide.
+  Ce guide s'appuie sur les PR [`(chore) Migrate to rspack`](https://github.com/openmrs/openmrs-esm-laboratory-app/pull/759) et [`(chore) Migrate from jest to vitest`](https://github.com/openmrs/openmrs-esm-laboratory-app/pull/757) dans `openmrs-esm-laboratory-app`. Si vous préférez travailler à partir d'un diff réel plutôt que d'une checklist, ces deux PR constituent un bon modèle.
 </Callout>
 
-Ce guide explique comment migrer le bundler d'un module frontend de Webpack vers [Rspack](https://rspack.dev), et le runner de tests de Jest vers [Vitest](https://vitest.dev). Dans les dépôts OpenMRS à package unique, ces deux migrations ont généralement été livrées sous forme de PRs adjacentes (les monorepos les ont effectuées séparément).
+## Pourquoi migrer
 
-Si votre module n'est pas encore sur Core v6, commencez par là : voir [Migration vers Core v6](/docs/migrate-to-core-v6). Le guide Core v6 laisse délibérément votre module sur Jest et Webpack ; ce guide prend le relais.
+### Pourquoi Rspack plutôt que Webpack
 
-Pour les détails complets (raison de la migration, étapes, configuration, pièges courants, considérations monorepo, PRs de référence), reportez-vous à la [version anglaise](/en-US/docs/migrate-to-rspack-and-vitest).
+- **Builds plus rapides.** Rspack est basé sur Rust. Les [notes de migration Core v6](/docs/migrate-to-core-v6) rapportent environ 3 fois moins de temps de build en pratique et des builds sous la minute là où Webpack prenait plusieurs minutes. Les rebuilds incrémentaux en mode watch sont aussi nettement plus rapides.
+- **Builds séquentiels fiables.** Le pipeline Webpack de Core v5 rencontrait des épuisements mémoire lors de builds répétés. Voir le [contexte original dans le guide de migration Core v6](/docs/migrate-to-core-v6#background-why-this-migration-was-necessary). Rspack n'a pas cette pathologie.
+- **Configuration compatible Webpack.** Rspack accepte les plugins et la forme de configuration de Webpack. La migration est donc mécanique plutôt qu'une réécriture.
+- **Prise en charge native des modules ES.** Rspack gère les exports ESM du framework sans la tuyauterie de transformation personnalisée dont Webpack avait besoin.
+
+### Pourquoi Vitest plutôt que Jest
+
+- **Prise en charge native des modules ES.** Core v6 publie le framework comme modules ES. Historiquement, Jest avait besoin de `transformIgnorePatterns`, de règles `transform` personnalisées et de fichiers de mock doublés (`mock.tsx` et `mock-jest.tsx`) pour s'en sortir. Vitest lit l'ESM nativement et supprime la plupart de cet échafaudage.
+- **Exécution des tests plus rapide.** Vitest s'appuie sur le pipeline de transformation de Vite et partage les caches de graphe de dépendances entre les runs. Le mode watch est donc nettement plus rapide que celui de Jest.
+- **Alignement avec le framework.** `openmrs-esm-framework` a lui-même migré vers Vitest dans [`openmrs-esm-core#1591`](https://github.com/openmrs/openmrs-esm-core/pull/1591). Les apps sur Vitest partagent la même configuration, les mêmes mocks et le même comportement CI que le framework dont elles dépendent.
+- **Meilleure ergonomie développeur.** Stack traces plus claires, `vi.mocked(fn)` typé, relance en mode watch sous la seconde et couverture intégrée via `@vitest/coverage-v8` sans reporter Jest supplémentaire.
+
+## Pourquoi les faire ensemble
+
+Les deux migrations sont indépendantes en théorie, mais elles vont souvent ensemble en pratique parce que:
+
+- Elles sont toutes deux des remplacements d'outillage sans impact fonctionnel sur l'app.
+- Les reviewers ont tendance à les considérer comme une seule modernisation de la toolchain.
+- Rspack utilise le format de plugin et de configuration de Webpack. Le diff de configuration est donc petit, et l'associer au changement Vitest plus volumineux limite le nombre de PR.
+
+Vous pouvez les livrer en une seule PR ou en deux. `openmrs-esm-laboratory-app` les a livrées en deux PR adjacentes, ce qui est plus facile à relire.
+
+## Partie 1: Webpack vers Rspack
+
+Le CLI OpenMRS fournit une configuration Rspack par défaut (`openmrs/default-rspack-config`) qui reflète la configuration Webpack par défaut. La plupart des apps n'ont besoin que de renommer le fichier de configuration et de mettre à jour leurs scripts.
+
+<Steps>
+
+### Renommer le fichier de configuration
+
+Renommez `webpack.config.js` en `rspack.config.js` et importez la nouvelle configuration par défaut:
+
+```js filename="rspack.config.js"
+module.exports = require("openmrs/default-rspack-config");
+```
+
+Si votre app passe des overrides à la configuration par défaut, leur forme ne change pas. Rspack accepte le format de configuration de Webpack.
+
+### Mettre à jour les scripts package.json
+
+Remplacez `webpack` par `rspack` dans `build`, `serve` et `analyze`:
+
+```diff filename="package.json"
+  "scripts": {
+    "start": "openmrs develop",
+-   "serve": "webpack serve --mode=development",
+-   "build": "webpack --mode production",
+-   "analyze": "webpack --mode=production --env analyze=true",
++   "serve": "rspack serve --mode=development",
++   "build": "rspack --mode production",
++   "analyze": "rspack --mode=production --env analyze=true",
+  }
+```
+
+`start` reste sur `openmrs develop`. Le CLI OpenMRS détecte automatiquement quel bundler lancer en regardant les fichiers de configuration du module: si `rspack.config.js` est présent et que `webpack.config.js` a disparu, il démarre un serveur de développement Rspack. Sinon, il retombe sur Webpack. Renommer le fichier de configuration est donc ce qui fait basculer `yarn start` vers Rspack. Aucun flag n'est nécessaire. Vous pouvez aussi forcer le choix explicitement avec `openmrs develop --use-rspack` ou `--use-rspack=false`.
+
+### Supprimer la dépendance de types Webpack
+
+Supprimez `@types/webpack-env` de `devDependencies`. Si votre code utilise `require.context`, généralement pour les imports dynamiques de traductions, déclarez les types localement. Ajoutez ceci à `src/declarations.d.ts`:
+
+```ts filename="src/declarations.d.ts"
+declare interface RequireContext {
+  keys(): string[];
+  (id: string): unknown;
+  <T>(id: string): T;
+  resolve(id: string): string;
+  id: string;
+}
+
+declare namespace NodeJS {
+  interface Require {
+    context(directory: string, useSubdirectories?: boolean, regExp?: RegExp, mode?: string): RequireContext;
+  }
+}
+```
+
+### Vérifier
+
+```bash
+yarn install
+yarn build
+yarn start
+```
+
+`yarn build` devrait se terminer nettement plus vite que l'équivalent Webpack, et `yarn start` devrait servir votre module comme auparavant.
+
+</Steps>
+
+## Partie 2: Jest vers Vitest
+
+Vitest est compatible avec l'API de Jest pour les usages courants, mais la forme de configuration et quelques imports diffèrent. Prévoyez de toucher `package.json`, `vitest.config.ts`, votre fichier `setup-tests` et chaque fichier de test. Les remplacements `jest.*` vers `vi.*` sont mécaniques.
+
+<Steps>
+
+### Remplacer les dépendances
+
+Supprimez les paquets Jest et ajoutez les équivalents Vitest:
+
+```diff filename="package.json"
+-   "@swc/jest": "^0.2.26",
+-   "@testing-library/dom": "^8.20.0",
+-   "@testing-library/jest-dom": "^5.16.5",
++   "@testing-library/dom": "^10.4.1",
++   "@testing-library/jest-dom": "^6.8.0",
+-   "@types/jest": "^28.1.8",
++   "@vitest/coverage-v8": "^4.1.2",
++   "cross-env": "^10.1.0",
+-   "jest": "^28.1.3",
+-   "jest-cli": "^28.1.3",
+-   "jest-environment-jsdom": "^28.1.3",
++   "jsdom": "^28.0.0",
++   "vitest": "^4.1.2",
+```
+
+Quelques notes sur ces versions:
+
+- `@testing-library/jest-dom` doit être en `^6.x`. Les versions précédentes n'exposent pas l'import `/vitest` dont vous aurez besoin dans `setup-tests.ts`.
+- `@testing-library/dom` passe de 8.x à 10.x dans la même modernisation que `jest-dom@6`. Les deux n'ont pas de relation stricte de peer dependency, `jest-dom@6` n'en déclare pas, mais les apps OpenMRS migrées ont généralement mis les deux à jour ensemble.
+- `cross-env` sert à définir `TZ=UTC` pour les scripts de test. Vitest ne le fait pas pour vous, et les tests sensibles au temps seront flaky sans cela.
+
+### Mettre à jour les scripts de test
+
+```diff filename="package.json"
+-   "test": "jest --config jest.config.js --passWithNoTests --color",
+-   "coverage": "yarn test -- --coverage",
++   "test": "cross-env TZ=UTC vitest run --passWithNoTests",
++   "test:watch": "cross-env TZ=UTC vitest watch",
++   "coverage": "cross-env TZ=UTC vitest run --coverage --passWithNoTests",
+```
+
+### Ajouter `vitest.config.ts`
+
+Créez `vitest.config.ts` à la racine du dépôt:
+
+```ts filename="vitest.config.ts"
+import { fileURLToPath } from "node:url";
+import { defineConfig } from "vitest/config";
+
+const r = (relativePath: string) => fileURLToPath(new URL(relativePath, import.meta.url));
+
+export default defineConfig({
+  resolve: {
+    alias: [{ find: /^.*\.s?css$/, replacement: "identity-obj-proxy" }],
+  },
+  test: {
+    environment: "jsdom",
+    globals: true,
+    clearMocks: true,
+    setupFiles: ["./tools/setup-tests.ts"],
+    exclude: ["**/node_modules/**", "**/e2e/**", "**/dist/**"],
+    server: {
+      deps: {
+        inline: [/@openmrs/],
+      },
+    },
+    fakeTimers: {
+      toFake: [
+        "setTimeout",
+        "clearTimeout",
+        "setInterval",
+        "clearInterval",
+        "setImmediate",
+        "clearImmediate",
+        "requestAnimationFrame",
+        "cancelAnimationFrame",
+        "Date",
+      ],
+    },
+    alias: {
+      "@openmrs/esm-framework/src/internal": "@openmrs/esm-framework/mock",
+      "@openmrs/esm-framework": "@openmrs/esm-framework/mock",
+      "react-i18next": r("./__mocks__/react-i18next.js"),
+    },
+  },
+});
+```
+
+Quelques points à comprendre plutôt qu'à copier sans réflexion:
+
+- **`environment: 'jsdom'`.** C'est le choix dominant dans les modules O3 migrés. `laboratory-app`, `patient-chart`, `patient-management`, `form-builder`, `billing-app` et plusieurs autres l'utilisent. L'alternative est `'happy-dom'`, plus rapide mais avec une couverture d'API DOM plus étroite, notamment pour les APIs de layout, de mesure et de CSSOM. `openmrs-esm-core` utilise les deux selon les packages, et `openmrs-esm-template-app` utilise happy-dom par défaut. En cas de doute, commencez avec jsdom. Passez à happy-dom seulement si le temps d'exécution devient un vrai problème et que vos tests ne dépendent pas d'une API DOM non implémentée par happy-dom.
+- **Alias CSS.** La regex `^.*\.s?css$/` ancre les deux extrémités afin que tout le chemin d'import soit remplacé par `identity-obj-proxy`. Sans ces ancres, seule l'extension est capturée et Vitest n'arrive pas à résoudre le module.
+- **`fileURLToPath` pour les alias de chemins.** Utiliser directement `new URL(...).pathname` fonctionne sur macOS et Linux, mais sur Windows cela produit `/C:/...`, que le résolveur Vite rejette. `fileURLToPath` normalise le chemin.
+- **`server.deps.inline: [/@openmrs/]`.** Force Vite à traiter les paquets `@openmrs/*` dans son pipeline de transformation plutôt que de les traiter comme externes. Sans cela, les exports ES modules du framework ne se résolvent pas correctement dans les tests.
+- **`fakeTimers.toFake`.** Cette liste est plus étroite et testée dans OpenMRS. Par défaut, Vitest simule toutes les APIs de timer détectées par sinon, souvent `requestIdleCallback`, `cancelIdleCallback`, `performance` et `process.hrtime`, à l'exception de `nextTick` et `queueMicrotask`. La liste ci-dessus se limite aux timers que les tests OpenMRS utilisent réellement. Vous pouvez aussi omettre `fakeTimers` si le défaut plus large vous convient. Aucun des deux choix ne casse le scheduler React, car `queueMicrotask` et `nextTick` restent exclus.
+- **Alias du mock framework.** Les points d'entrée public et interne pointent tous deux vers `@openmrs/esm-framework/mock`. Les tests qui importent depuis le chemin interne, par exemple `@openmrs/esm-framework/src/internal`, reçoivent le même mock.
+- **Alias `react-i18next`.** Jest découvrait automatiquement `__mocks__/react-i18next.js` par convention. Vitest ne le fait pas. L'alias est ce qui le reconnecte. Si le mock i18n d'un module disparaît après la migration, c'est presque toujours la cause.
+- **`exclude` et e2e.** Les specs Playwright vivent généralement sous `e2e/` et sont lancées par un script `test-e2e` séparé. L'entrée `'**/e2e/**'` évite que Vitest tente de les évaluer.
+
+### Mettre à jour `setup-tests.ts`
+
+```diff filename="tools/setup-tests.ts"
+- import "@testing-library/jest-dom";
++ import "@testing-library/jest-dom/vitest";
++ import { afterEach } from "vitest";
++ import { cleanup } from "@testing-library/react";
++
++ afterEach(cleanup);
+
+  // Mock ResizeObserver which is not available in jsdom
+  global.ResizeObserver = class ResizeObserver {
+    // ...
+  };
+```
+
+L'import `/vitest` branche les matchers DOM sur `expect` de Vitest. Le `afterEach(cleanup)` explicite est défensif: `@testing-library/react` enregistre automatiquement le cleanup dès qu'un `afterEach` global est disponible, ce qui est vrai avec Vitest et `globals: true`. Le hook manuel est donc redondant en pratique. Il est conservé parce que c'est le modèle établi dans les dépôts OpenMRS et qu'il protège si un package met plus tard `globals: false` ou si `RTL_SKIP_AUTO_CLEANUP=true` arrive dans l'environnement.
+
+L'emplacement du fichier de setup varie selon les modules: `tools/setup-tests.ts` est le plus courant, mais vous verrez aussi `src/setup-tests.ts` et `test/setup.ts`. Gardez le chemin déjà utilisé par votre module et mettez seulement l'import à jour. Seule l'entrée `setupFiles` de `vitest.config.ts` doit connaître son emplacement.
+
+### Convertir chaque fichier de test
+
+Pour chaque fichier `*.test.ts(x)`:
+
+1. Ajoutez un import explicite depuis `vitest`. Même avec `globals: true`, les imports explicites donnent une meilleure autocomplétion et des types plus stricts:
+
+   ```diff
+   + import { beforeEach, describe, expect, it, vi } from "vitest";
+   ```
+
+   Importez seulement les symboles réellement utilisés par le fichier.
+
+2. Remplacez les appels d'API Jest:
+
+   | Jest | Vitest |
+   |---|---|
+   | `jest.fn()` | `vi.fn()` |
+   | `jest.mock(...)` | `vi.mock(...)` |
+   | `jest.mocked(...)` | `vi.mocked(...)` |
+   | `jest.spyOn(...)` | `vi.spyOn(...)` |
+   | `jest.requireActual(...)` | `vi.importActual(...)` (attention: maintenant async) |
+   | `jest.useFakeTimers()` | `vi.useFakeTimers()` |
+
+   Les quatre premiers sont de simples remplacements. `requireActual` est celui à surveiller: il est synchrone dans Jest mais asynchrone dans Vitest. La factory environnante doit donc devenir `async` et l'appel doit être `await`é.
+
+   Pour les assertions de type sur les mocks, préférez `vi.mocked(fn)` aux casts manuels quand c'est possible. Il conserve automatiquement la signature de la fonction d'origine. Si vous avez besoin d'un type explicite, `jest.MockedFunction<typeof fn>` devient `MockedFunction<typeof fn>` depuis `vitest`. Le type nu `jest.Mock<R, A>` ne se traduit pas directement: le `Mock` de Vitest prend un seul paramètre de type fonction (`Mock<T extends Procedure | Constructable>`). L'équivalent est donc `Mock<(...args: A) => R>`, ou, mieux, `vi.mocked(fn)`.
+
+3. Si le fichier utilise `jest.mock("@openmrs/esm-framework", () => ({ ...jest.requireActual(...), ... }))` pour surcharger partiellement le mock framework, l'équivalent Vitest est:
+
+   ```ts
+   vi.mock("@openmrs/esm-framework", async () => {
+     const actual = await vi.importActual<typeof import("@openmrs/esm-framework")>("@openmrs/esm-framework");
+     return {
+       ...actual,
+       useConfig: vi.fn(),
+     };
+   });
+   ```
+
+### Supprimer `jest.config.js`
+
+Quand tout passe, supprimez `jest.config.js`. Le dossier `__mocks__/` reste généralement en place, car la plupart de ses fichiers sont encore référencés par les entrées `alias` de `vitest.config.ts`, par exemple `react-i18next.js`. Supprimez seulement un fichier `__mocks__/` si rien dans `vitest.config.ts` ni dans vos tests ne pointe encore vers lui.
+
+### Vérifier
+
+```bash
+yarn install
+yarn test
+yarn typescript
+yarn lint
+```
+
+Les quatre commandes doivent être vertes. Lancez aussi `yarn test:watch` pour confirmer que le mode watch fonctionne.
+
+</Steps>
+
+## Pièges courants
+
+- **Les tests passent localement mais échouent dans CI sur Windows.** C'est presque toujours un problème d'alias de chemin. Utilisez `fileURLToPath` pour tout alias qui résout vers un chemin de fichier. Voir l'extrait `vitest.config.ts` ci-dessus.
+- **`expect(...).toBeInTheDocument is not a function`.** L'import `jest-dom` dans `setup-tests.ts` n'utilise pas le sous-chemin `/vitest`, ou `@testing-library/jest-dom` est encore en 5.x.
+- **`Cannot find module '@openmrs/esm-framework/mock'`.** Soit votre version de `@openmrs/esm-framework` est antérieure à la disposition de mocks doubles, voir [Migration vers Core v6](/docs/migrate-to-core-v6#fix-mock-import-paths), soit votre alias `vitest.config.ts` contient une faute.
+- **Les tests React échouent avec des erreurs scheduler obscures après l'activation des fake timers.** Vous avez probablement ajouté `queueMicrotask` ou `nextTick` à `fakeTimers.toFake` à la main. Les deux cassent le scheduler React. Le `toFake` par défaut de Vitest les exclut déjà. Il est donc généralement préférable de laisser `fakeTimers` non défini. Si vous fournissez une liste explicite, recopiez celle de l'extrait ci-dessus, sans `queueMicrotask` ni `nextTick`.
+- **Les imports `@openmrs/*` se résolvent vers le CJS construit plutôt que l'ESM.** Ajoutez `server.deps.inline: [/@openmrs/]` à la configuration Vitest.
+- **TypeScript se plaint que `require.context` n'existe plus après la suppression de `@types/webpack-env`.** Rspack prend en charge `require.context` à l'exécution exactement comme Webpack. Le site d'appel est donc correct. Ce qui a disparu, c'est la définition de type fournie par `@types/webpack-env`. Ajoutez la déclaration `RequireContext` de la Partie 1 dans `src/declarations.d.ts` pour restaurer les types.
+
+## Considérations pour les monorepos
+
+Si vous migrez un monorepo basé sur Turbo, par exemple `openmrs-esm-core`, `openmrs-esm-patient-chart` ou `openmrs-esm-patient-management`, les étapes ci-dessus s'appliquent par package, avec quelques points supplémentaires:
+
+- **La disposition des configs varie. Choisissez un modèle.** Deux modèles existent dans les monorepos OpenMRS:
+  - **Configurations par package** (`openmrs-esm-core`). Les packages qui ont besoin d'une configuration Vitest personnalisée la gardent localement. La plupart des packages avec tests ont leur propre `vitest.config.ts`, mais quelques-uns, par exemple `packages/framework/esm-context`, déclarent un script `vitest run` et utilisent les valeurs par défaut. La racine orchestre seulement via Turbo. `packages/apps/esm-login-app/vitest.config.ts` est un exemple minimal.
+  - **Configuration unique à la racine** (`openmrs-esm-patient-chart`, `openmrs-esm-patient-management`). Un seul `vitest.config.ts` à la racine collecte les tests de tous les packages, avec seuils de couverture et alias partagés. Les `package.json` des packages déclarent simplement `"test": "vitest run"` et héritent du reste.
+
+  Les deux fonctionnent. Choisissez celui qui correspond au reste de votre outillage: par package si vos packages diffèrent beaucoup, configuration unique si vous voulez gérer les seuils et mocks partagés en un seul endroit.
+- **Inputs des tâches Turbo.** Mettez à jour les `inputs` de la tâche `test` dans `turbo.json` pour que le cache soit invalidé quand la configuration Vitest ou le fichier de setup change. Le modèle dans `openmrs-esm-core/turbo.json` liste `vitest.config.ts`, `setup-tests.ts`, `__mocks__/**`, `mock.ts` et `mock-jest.ts*`. Reprenez cette idée et retirez toute entrée restante vers `jest.config.js`.
+- **Vérifier tout le workspace.** Après migration, lancez `yarn turbo verify` ou `yarn turbo lint typescript test` à la racine du dépôt pour confirmer qu'il n'y a pas de régression.
+- **Packages `@openmrs/*` internes au workspace.** L'entrée `server.deps.inline: [/@openmrs/]` couvre déjà les packages workspace. Le protocole workspace de Yarn les résout sous `node_modules/@openmrs/*`, et la règle inline force Vite à les transformer plutôt qu'à les traiter comme externes. Pas besoin de configuration supplémentaire.
+- **Yarn linker.** Les monorepos OpenMRS utilisent Yarn 4 avec `nodeLinker: node-modules`, pas PnP. Les règles de résolution Node standard s'appliquent et vous n'avez pas besoin de contournement PnP. L'ancien `transformIgnorePatterns: ["/node_modules/(?!@openmrs|.+\\.pnp\\.[^\\/]+$)"]` des configs Jest peut être supprimé. L'exception `.pnp` est inutile dans un workspace lié en `node-modules`.
+- **Mocks partagés entre packages.** Si un `vitest.config.ts` par package doit aliaser un mock qui vit à la racine du dépôt ou dans un package voisin, utilisez `fileURLToPath(new URL('../../__mocks__/...', import.meta.url))` plutôt qu'un chemin relatif nu. `import.meta.url` se résout par rapport à la configuration consommatrice, donc l'alias fonctionne quel que soit l'endroit d'où Vitest est lancé.
+- **Agrégation de couverture.** Avec des configs par package, chaque package émet son propre rapport et les combiner demande `--merge-reports` de Vitest 4 depuis la racine. Voir la [documentation Vitest sur merge-reports](https://vitest.dev/guide/coverage#merging-reports). Avec une configuration unique à la racine, la couverture est déjà globale et vous obtenez des seuils unifiés gratuitement. Voir les configs racine de `patient-chart` et `patient-management` pour des exemples avec `statements/branches/functions/lines: 80`.
+
+Voir la section [PR de référence](#pr-de-référence) ci-dessous pour des migrations canoniques depuis `openmrs-esm-core`, `openmrs-esm-patient-chart` et `openmrs-esm-patient-management`.
+
+## PR de référence
+
+### Modules à paquet unique
+
+Les deux PR de chaque paire ont été relues et fusionnées indépendamment:
+
+- [`openmrs-esm-laboratory-app#759`](https://github.com/openmrs/openmrs-esm-laboratory-app/pull/759) - Webpack vers Rspack
+- [`openmrs-esm-laboratory-app#757`](https://github.com/openmrs/openmrs-esm-laboratory-app/pull/757) - Jest vers Vitest
+- [`openmrs-esm-form-builder#1199`](https://github.com/openmrs/openmrs-esm-form-builder/pull/1199) et [`#1198`](https://github.com/openmrs/openmrs-esm-form-builder/pull/1198) - même paire, avec une forme d'app légèrement différente
+
+### Monorepos
+
+**`openmrs-esm-core`** (configs par package):
+
+- [`#1417`](https://github.com/openmrs/openmrs-esm-core/pull/1417) - Migration vers Rspack partout
+- [`#1591`](https://github.com/openmrs/openmrs-esm-core/pull/1591) - Migration de tout le repo vers Vitest
+
+**`openmrs-esm-patient-chart`** (un seul `vitest.config.ts` racine):
+
+- [`#3104`](https://github.com/openmrs/openmrs-esm-patient-chart/pull/3104) - Migration vers Rspack
+- [`#3301`](https://github.com/openmrs/openmrs-esm-patient-chart/pull/3301) - Migration de Jest vers Vitest
+
+**`openmrs-esm-patient-management`** (un seul `vitest.config.ts` racine):
+
+- [`#2176`](https://github.com/openmrs/openmrs-esm-patient-management/pull/2176) - migration groupée, qui déplace aussi tous les packages vers Rspack. Le titre de la PR parle de la suppression de `patient-common-lib`, mais la migration Rspack est décrite dans le corps.
+- [`#2273`](https://github.com/openmrs/openmrs-esm-patient-management/pull/2273) - nettoyage de suivi: suppression des dépendances directes `rspack` et `webpack`
+- [`#2532`](https://github.com/openmrs/openmrs-esm-patient-management/pull/2532) - Migration de Jest vers Vitest

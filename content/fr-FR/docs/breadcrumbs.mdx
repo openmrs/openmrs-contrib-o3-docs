@@ -1,11 +1,18 @@
-# Les fils d'Ariane
+# Fils d'Ariane
 
-Les miettes de pain sont un modèle de conception d'interface utilisateur qui aide les utilisateurs à comprendre où ils se trouvent dans un site web ou une application. Il s'agit d'une aide à la navigation qui affiche une piste hiérarchique de liens depuis la page d'accueil jusqu'à la page actuelle. Les fils d'Ariane sont généralement affichés horizontalement près du haut de la page et utilisent le symbole plus grand que `/` pour indiquer la hiérarchie.
+Les fils d'Ariane sont un modèle d'interface utilisateur qui aide les utilisateurs à comprendre leur emplacement actuel dans un site web ou une application. Ils fournissent une aide à la navigation sous forme de piste hiérarchique de liens depuis la page d'accueil jusqu'à la page actuelle. Les fils d'Ariane sont généralement affichés horizontalement près du haut de la page et utilisent des séparateurs, souvent des chevrons, pour indiquer la hiérarchie.
 
-Dans OpenMRS, les miettes de pain sont implémentées dans le fichier `index.ts` en utilisant les fonctions `registerBreadcrumb` ou `registerBreadcrumbs` exportées par le paquetage `@openmrs/esm-framework`.
-La fonction `registerBreadcrumb` prend un objet avec deux propriétés: `path` et `title`. La propriété `path` est le chemin URL de la page, et la propriété `title` est le texte qui sera affiché dans le fil d'Ariane. Lorsqu'un utilisateur navigue vers la page enregistrée, le fil d'Ariane s'affiche avec le titre spécifié.
+Dans OpenMRS, les fils d'Ariane sont implémentés dans le fichier `index.ts` au moyen des fonctions `registerBreadcrumb` ou `registerBreadcrumbs` exportées par le paquet `@openmrs/esm-framework`.
 
-Voici un exemple de fil d'Ariane simple pour une page (Core v5+) :
+La fonction `registerBreadcrumb` prend un objet avec les propriétés suivantes:
+- `path` (obligatoire): le chemin URL de la page
+- `title` (obligatoire): le texte affiché dans le fil d'Ariane. Il peut s'agir d'une chaîne, d'une fonction qui retourne une chaîne ou d'une fonction qui retourne une Promise résolue en chaîne. Les fonctions reçoivent les paramètres de route comme argument.
+- `parent` (facultatif): le chemin du fil d'Ariane parent, utilisé pour créer une piste hiérarchique
+- `matcher` (facultatif): une chaîne ou une RegExp qui détermine si le fil d'Ariane doit être affiché. Si omis, la valeur de `path` est utilisée comme matcher. C'est utile pour les routes dynamiques avec paramètres, par exemple `/patient/:patientUuid`.
+
+Quand un utilisateur navigue vers une page enregistrée, le système de fils d'Ariane affiche automatiquement la piste appropriée selon le chemin courant.
+
+Voici un exemple de fil d'Ariane simple pour une page (Core v5+):
 
 ```ts
 import { registerBreadcrumb } from "@openmrs/esm-framework";
@@ -13,16 +20,16 @@ import { registerBreadcrumb } from "@openmrs/esm-framework";
 export function startupApp() {
   registerBreadcrumb({
     path: `${window.spaBase}/myPage`,
-    title: "Ma première page",
+    title: "My First Page",
   });
 }
 ```
 
-Le fil d'Ariane sera affiché à l'utilisateur sous la forme `Ma première page`.
+Quand un utilisateur navigue vers `/myPage`, le fil d'Ariane affiche: **My First Page**
 
-Les fils d'Ariane peuvent également représenter une piste de liens hiérarchiques depuis la page d'accueil du site jusqu'aux sous-pages. Pour cela, utilisez la propriété `parent` pour indiquer ce qui doit être le fil d'Ariane parent.
+Les fils d'Ariane peuvent aussi représenter une piste de liens hiérarchiques depuis la page d'accueil du site vers des sous-pages. Pour l'implémenter, utilisez la propriété `parent` pour indiquer quel fil d'Ariane doit être le parent.
 
-Voici un exemple de fils d'Ariane avec des ancêtres/sous-pages (Core v5+) :
+Voici un exemple de fils d'Ariane avec ancêtres et sous-pages (Core v5+):
 
 ```ts
 import { registerBreadcrumbs } from "@openmrs/esm-framework";
@@ -31,7 +38,7 @@ export function startupApp() {
   registerBreadcrumbs([
     {
       path: `${window.spaBase}/myPage`,
-      title: "Ma première page",
+      title: "My First Page",
     },
     {
       path: `${window.spaBase}/myPage/subpage1`,
@@ -47,12 +54,74 @@ export function startupApp() {
 }
 ```
 
-Le fil d'Ariane sera affiché à l'utilisateur sous la forme `Ma première page` `Ma première page / Sous-page 1` `Ma première page / Sous-page 2 `
+Quand un utilisateur navigue vers différentes pages, les fils d'Ariane affichent:
+- Sur `/myPage`: **My First Page**
+- Sur `/myPage/subpage1`: **My First Page** > **Subpage 1**
+- Sur `/myPage/subpage2`: **My First Page** > **Subpage 2**
 
-Voici un exemple d'utilisation des fils d'Ariane dans votre composant:
+## Fils d'Ariane dynamiques avec paramètres de route
+
+Vous pouvez créer des fils d'Ariane dynamiques qui utilisent les paramètres de route. La fonction `title` reçoit un tableau des paramètres de route correspondants. Par exemple, pour afficher l'UUID d'un patient dans le fil d'Ariane:
 
 ```ts
-<ExtensionSlot name={slotName} />
+import { registerBreadcrumb } from "@openmrs/esm-framework";
+
+export function startupApp() {
+  registerBreadcrumb({
+    path: `${window.spaBase}/patient/:patientUuid`,
+    matcher: `${window.spaBase}/patient/:patientUuid`, // Facultatif: définit explicitement le matcher
+    title: (params) => {
+      // params est un tableau des paramètres de route correspondants
+      // Pour /patient/:patientUuid, params[0] serait la valeur patientUuid
+      return `Patient ${params[0]}`;
+    },
+    parent: `${window.spaBase}/patients`,
+  });
+}
 ```
 
-Les miettes de pain sont implémentées comme une extension fournie par l'app-shell.
+Pour des scénarios plus complexes, vous pouvez récupérer des données de façon asynchrone:
+
+```ts
+import { registerBreadcrumb } from "@openmrs/esm-framework";
+
+export function startupApp() {
+  registerBreadcrumb({
+    path: `${window.spaBase}/patient/:patientUuid`,
+    title: async (params) => {
+      const patientUuid = params[0];
+      // Récupérer les données patient et retourner son nom
+      const patient = await fetchPatient(patientUuid);
+      return patient.name;
+    },
+    parent: `${window.spaBase}/patients`,
+  });
+}
+```
+
+## Utiliser les fils d'Ariane dans votre composant
+
+Les fils d'Ariane sont rendus automatiquement par l'app shell comme extension dans le `breadcrumbs-slot`. Pour afficher les fils d'Ariane dans le composant de votre page, incluez simplement l'extension slot:
+
+```tsx
+import { ExtensionSlot } from "@openmrs/esm-framework";
+
+export default function MyPage() {
+  return (
+    <>
+      <ExtensionSlot name="breadcrumbs-slot" />
+      {/* Le contenu de votre page */}
+    </>
+  );
+}
+```
+
+L'extension des fils d'Ariane est enregistrée automatiquement par l'app shell. Vous n'avez donc pas besoin de l'enregistrer vous-même. Il suffit d'inclure le composant `<ExtensionSlot>` dans votre page pour afficher la piste de navigation.
+
+## Comportement des fils d'Ariane
+
+- Les fils d'Ariane sont filtrés automatiquement selon le chemin courant. Seuls ceux qui correspondent à la route courante sont affichés.
+- La piste suit la hiérarchie des parents et affiche tous les ancêtres jusqu'à la page courante.
+- S'il y a plus de 4 éléments dans la piste, les éléments du milieu sont repliés et remplacés par "..." afin de garder un affichage compact.
+- Les titres de fils d'Ariane qui sont des fonctions affichent un indicateur de chargement pendant la résolution du titre.
+- Les fils d'Ariane sont des liens cliquables qui naviguent vers leurs chemins respectifs.

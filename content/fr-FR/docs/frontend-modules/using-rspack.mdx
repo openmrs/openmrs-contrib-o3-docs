@@ -2,10 +2,119 @@ import { Callout } from "nextra/components";
 
 # Utilisation de Rspack
 
+Les applications frontend OpenMRS sont construites avec [Rspack](https://rspack.dev), en utilisant une configuration standard fournie par `openmrs-esm-core` via le paquet d'outillage [`rspack-config`](https://github.com/openmrs/openmrs-esm-core/tree/main/packages/tooling/rspack-config). Cette configuration standardise la façon dont les modules sont construits afin que chaque application de la distribution respecte les mêmes règles de fédération, de partage et de chargement.
+
+Vous n'êtes pas obligé d'utiliser la configuration par défaut. Les applications peuvent fournir leur propre `rspack.config.js`. Elle reste toutefois fortement recommandée. Cette page explique comment fonctionne la configuration par défaut et quelles contraintes une configuration personnalisée doit quand même respecter.
+
 <Callout type="info">
-  Cette page n'est pas encore traduite en français. En attendant, veuillez consulter la [version anglaise](/en-US/docs/frontend-modules/using-rspack) du guide.
+  Rspack accepte le format de configuration de Webpack. Tout ce qui est décrit sur cette page s'applique donc aussi aux applications qui utilisent encore Webpack. Les quelques applications qui n'ont pas encore migré récupèrent les mêmes valeurs par défaut via `openmrs/default-webpack-config`. Voir [Vous utilisez encore Webpack ?](#vous-utilisez-encore-webpack) plus bas.
 </Callout>
 
-Les apps frontend OpenMRS sont construites avec [Rspack](https://rspack.dev) en utilisant une configuration standard fournie par `openmrs-esm-core`. Rspack accepte le format de configuration de Webpack ; les rares modules encore sur Webpack utilisent la même configuration par défaut via `openmrs/default-webpack-config`.
+## Mise en place
 
-Pour les détails complets (Module Federation, dépendances partagées, recettes de personnalisation, exception du module Angular `esm-form-entry-app`), reportez-vous à la [version anglaise](/en-US/docs/frontend-modules/using-rspack).
+La configuration minimale, et celle que la plupart des applications utilisent, tient en une ligne:
+
+```js filename="rspack.config.js"
+module.exports = require("openmrs/default-rspack-config");
+```
+
+Cette ligne délègue tout à la configuration par défaut décrite ci-dessous.
+
+## Module Federation
+
+Le frontend O3 utilise [Module Federation](https://module-federation.io), introduit à l'origine dans Webpack 5 et pris en charge par Rspack via la même API de plugin. Module Federation permet à des applications déployées indépendamment de partager du code à l'exécution, au lieu de tout embarquer au moment du build. C'est ce qui rend possible le modèle microfrontend d'O3. Le dépôt [module-federation-examples](https://github.com/module-federation/module-federation-examples) répertorie la plupart des modèles.
+
+O3 utilise plus précisément le modèle des **conteneurs distants dynamiques**. Cela signifie que les dépendances et la liste des modules disponibles sont résolues à l'exécution. L'app shell n'a donc pas besoin de connaître à l'avance les applications et bibliothèques présentes dans la distribution. Notre configuration s'inspire fortement des [exemples de remotes dynamiques](https://github.com/module-federation/module-federation-examples/tree/master/advanced-api) maintenus par l'équipe Module Federation.
+
+Conséquence importante: un module frontend chargé par l'app shell ne doit pas déclarer de point d'entrée explicite. Tout ce qui n'est pas l'app shell lui-même est chargé comme remote dynamique.
+
+## Le type de bibliothèque `var`
+
+A l'exécution, chaque module frontend est construit avec [`output.library.type: 'var'`](https://webpack.js.org/configuration/output/#outputlibrarytype). Le type `var` expose le module comme une propriété globale dont le nom correspond au nom du paquet, avec `@`, `/` et `-` remplacés par des underscores:
+
+```js
+name.replace(/[\/\-@]/g, "_");
+// "@openmrs/esm-patient-chart-app" -> "_openmrs_esm_patient_chart_app"
+```
+
+Cette transformation est importante, car l'app shell a besoin d'un identifiant JavaScript valide pour accéder au module et récupérer son API de fédération.
+
+## Le module exposé `./start`
+
+Chaque module fédéré qui expose des extensions ou des pages pour l'app shell doit exposer un module nommé `"./start"`. Ce module doit exporter:
+
+- `importTranslation`
+- `startupApp()`
+- Les exports de composants référencés depuis `routes.json`
+
+Dans la configuration Rspack par défaut, cela est câblé en exposant le fichier `index.ts` du module sous le nom `"./start"`. Si vous chargez vous-même du code avec `importDynamic` depuis `@openmrs/esm-framework`, vous pouvez viser un autre module exposé. Mais tout ce qui est exposé ailleurs doit être enregistré manuellement avant que l'app shell puisse l'utiliser.
+
+## Liste de compatibilité
+
+Si vous écrivez un `rspack.config.js` personnalisé, tout module destiné à fonctionner dans l'app shell doit respecter les contraintes suivantes:
+
+- `output.library.type` vaut `var`.
+- `output.library.name` suit la règle de transformation des noms OpenMRS (`@openmrs/esm-foo` -> `_openmrs_esm_foo`).
+- Le remote expose un module `./start` que l'app shell peut charger.
+
+## Dépendances partagées
+
+Module Federation permet de partager les dépendances afin qu'elles soient chargées une seule fois dans toute la distribution, même si chaque module frontend est déployé indépendamment.
+
+Dans la configuration Rspack d'OpenMRS, chaque entrée de `peerDependencies` dans le `package.json` d'une application est traitée comme une bibliothèque fédérée partagée. Toutes les dépendances partagées sont configurées comme **singletons**. En d'autres termes, nous choisissons délibérément de ne pas prendre en charge plusieurs versions d'une même bibliothèque à l'exécution. Les raisons sont les suivantes:
+
+1. Les dépendances de base comme React, React DOM et React Router doivent être des singletons, car elles utilisent de l'état global non versionné, par exemple `__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED`. Avoir deux copies de React dans une même page est un bug.
+2. Forcer une seule version de `@carbon/react` partout garde l'interface visuellement et fonctionnellement cohérente entre les modules. Le coût est qu'une mise à jour d'une dépendance de base doit se faire sur toute la distribution à la fois. Nous pourrons réexaminer ce compromis plus tard.
+
+Toutes les dépendances partagées sont chargées dans le scope `default`, et le nom partagé correspond au chemin d'import. Par exemple, React est partagé sous le nom `react` et importé comme `react`.
+
+## Personnaliser le build
+
+La configuration par défaut exporte un ensemble d'objets mutables qui sont fusionnés dans la configuration Rspack finale. Pour surcharger un comportement, importez la configuration, modifiez l'export pertinent, puis réexportez:
+
+```js filename="rspack.config.js"
+const config = require("openmrs/default-rspack-config");
+config.cssRuleConfig.rules = [myCustomRule];
+module.exports = config;
+```
+
+Les points de surcharge disponibles sont:
+
+| Export | Ce dans quoi il est fusionné |
+|---|---|
+| `overrides` | Configuration Rspack de haut niveau (fusion profonde ; les tableaux sont concaténés) |
+| `additionalConfig` | Configuration Rspack de haut niveau (les clés remplacent les valeurs existantes) |
+| `scriptRuleConfig` | Règle de loader pour les fichiers `.js` / `.jsx` / `.ts` / `.tsx` |
+| `cssRuleConfig` | Règle de loader pour les fichiers `.css` |
+| `scssRuleConfig` | Règle de loader pour les fichiers `.scss` |
+| `assetRuleConfig` | Règle de loader pour les ressources statiques |
+| `watchConfig` | `watchOptions` |
+| `optimizationConfig` | `optimization` |
+
+Choisissez le point de surcharge le plus étroit possible. Si vous devez seulement indiquer au loader de traiter un chemin supplémentaire dans `node_modules`, modifiez `scriptRuleConfig` plutôt que de réassigner toute la configuration de haut niveau. Les déclarations de ces hooks se trouvent dans le [code source de rspack-config](https://github.com/openmrs/openmrs-esm-core/tree/main/packages/tooling/rspack-config/src/index.ts) si vous avez besoin d'inspecter leurs formes exactes.
+
+### Recettes courantes
+
+#### `esm-patient-common-lib`
+
+La configuration par défaut suppose que tout ce qui se trouve dans `node_modules` est déjà du JavaScript simple. Nous évitons donc de le passer dans le loader SWC. Cela garde les builds rapides et convient à toute bibliothèque publiée sur npm comme JavaScript.
+
+L'exception est `esm-patient-common-lib`, une bibliothèque partagée du patient chart qui n'a pas d'étape de build et livre du TypeScript brut. Les applications hors du monorepo patient chart qui la consomment via npm doivent étendre leur `rspack.config.js` pour appliquer le loader à `node_modules/@openmrs/esm-patient-common-lib`. Les applications à l'intérieur du monorepo patient chart ne sont pas concernées, car le protocole workspace de Yarn résout la bibliothèque vers le code source et notre configuration la récupère via le chemin workspace plutôt que via `node_modules`.
+
+#### `esm-form-entry-app`
+
+Le module frontend de saisie de formulaires est une application Angular qui encapsule le [moteur de formulaires Angular](/docs/key-repositories#moteur-de-formulaire-angular). Contrairement à tous les autres modules frontend, il se construit encore avec **Webpack** et non Rspack, car il dépend de [`@angular-architects/module-federation`](https://github.com/angular-architects/module-federation-plugin), qui n'a pas encore été porté vers Rspack. Le plugin modifie la [configuration workspace Angular](https://github.com/openmrs/openmrs-esm-patient-chart/blob/main/packages/esm-form-entry-app/angular.json) pour ajouter une propriété `extraWebpackConfig` aux cibles `build` et `serve`, pointant vers une [configuration Webpack personnalisée](https://github.com/openmrs/openmrs-esm-patient-chart/blob/main/packages/esm-form-entry-app/webpack.config.js) qui:
+
+- Configure `ModuleFederationPlugin` pour exposer l'application form entry comme module remote.
+- Déclare les dépendances partagées à partir des `peerDependencies` de l'application form entry.
+- Expose `src/index.ts` comme point d'entrée de fédération.
+
+C'est acceptable en pratique, car Module Federation est interopérable entre bundlers. Un remote construit avec Webpack peut être consommé par un host construit avec Rspack, et inversement.
+
+## Vous utilisez encore Webpack ?
+
+Un petit nombre de modules n'ont pas encore migré vers Rspack. Tant qu'ils restent sur Webpack:
+
+- La configuration par défaut est fournie sous le nom [`openmrs/default-webpack-config`](https://github.com/openmrs/openmrs-esm-core/tree/main/packages/tooling/webpack-config). Utilisez-la dans `webpack.config.js` exactement comme les applications Rspack utilisent `openmrs/default-rspack-config`.
+- Tout ce qui est décrit sur cette page s'applique: Module Federation, le type de bibliothèque `var`, la convention `./start`, la politique de dépendances partagées singletons et les hooks de surcharge sont indépendants du bundler.
+- Lorsque vous êtes prêt à basculer, consultez [Migration vers Rspack et Vitest](/docs/migrate-to-rspack-and-vitest). Le remplacement de configuration est mécanique.
