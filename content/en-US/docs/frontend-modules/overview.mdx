@@ -13,13 +13,18 @@ Frontend modules are the fundamental building blocks for creating applications i
 
 These components would be defined in the frontend module's `src` directory. Components exported from `src/index.ts` are registered with the app shell and can be used in the application. They would get displayed on the screen when the user navigates to the appropriate pages. The app shell decides what to load based on your distribution's import map (generated from `spa-assemble-config.json`).
 
+<Callout type="info">
+  If you are creating a new module rather than trying to understand an existing one, start with the [Creating a frontend module](/docs/recipes/create-a-frontend-module) recipe. This overview explains the moving parts; the recipe walks through the `create-o3-app` and template-app workflows.
+</Callout>
+
 ## Critical concepts (don’t skip these)
 
-Here are three high‑impact concepts that are easy to miss:
+Here are four high-impact concepts that are easy to miss:
 
 1. **Distribution wiring (what actually loads):** `spa-assemble-config.json` defines which frontend modules and versions are included in your distro. That file generates the import map, and the app shell only loads what the import map contains. If a module isn’t in the import map, it won’t load.
 2. **Registration flow (why pages/extensions show up):** `src/index.ts` exports and `routes.json` work together. The app shell reads `routes.json` and the named exports from `index.ts`, then registers pages and extensions. If these don’t line up, nothing renders.
 3. **Version tags (why your change isn’t visible):** `latest` and `next` are different. Your distro only loads the version tag you put in `spa-assemble-config.json`.
+4. **Runtime conditions (why something loads but still does not render):** `routes.json` can declare backend dependencies, privileges, feature flags, and online/offline behavior. A module can be present in the import map and still hide an extension if one of those conditions is not met.
 
 ## Mental model (how frontend modules really work)
 
@@ -104,7 +109,7 @@ Each frontend module is an npm package, typically with a name ending in `-app`. 
 
 O3 distributions consist of a set of frontend modules that are shipped together. For example, the frontend modules
 shipped with the community demo [reference application](https://dev3.openmrs.org/openmrs) are described in this
-[spa-assemble-config.json](https://github.com/openmrs/openmrs-esm-core/blob/main/spa-assemble-config.json) file. This is
+[spa-assemble-config.json](https://github.com/openmrs/openmrs-distro-referenceapplication/blob/main/frontend/spa-assemble-config.json) file. This is
 where you decide which versions (next, latest, or a fixed version) end up in your import map.
 
 In other words: **the version tag you choose in `spa-assemble-config.json` becomes the version your app shell loads**.
@@ -125,33 +130,41 @@ Every frontend module must have:
 
 ### Manifest file (package.json)
 
-Each frontend module has a root-level `package.json` file that defines its dependencies and metadata. Below is a snippet of the `package.json` file from the form builder frontend module:
+Each frontend module has a root-level `package.json` file that defines its dependencies and metadata. Below is a shortened snippet from the current Template frontend module:
 
 ```json
 {
-  "name": "@openmrs/esm-form-builder-app",
-  "version": "2.0.1",
+  "name": "@openmrs/esm-template-app",
+  "version": "4.0.0",
   "license": "MPL-2.0",
-  "description": "OpenMRS ESM Form Builder App",
-  "browser": "dist/openmrs-esm-form-builder-app.js",
+  "description": "An OpenMRS seed application for building microfrontends",
+  "browser": "dist/openmrs-esm-template-app.js",
   "main": "src/index.ts",
   "source": true,
   "scripts": {
     "start": "openmrs develop",
-    "serve": "webpack serve --mode=development",
-    "build": "webpack --mode production",
-    "analyze": "webpack --mode=production --env.analyze=true",
-    "lint": "TIMING=1 eslint src --ext js,jsx,ts,tsx",
-    "prettier": "prettier --write \"src/**/*.{ts,tsx}\"",
+    "serve": "rspack serve --mode=development",
+    "build": "rspack --mode production",
+    "analyze": "rspack --mode=production --env analyze=true",
+    "lint": "eslint src --ext js,jsx,ts,tsx --max-warnings 0",
     "typescript": "tsc",
-    "test": "jest --config jest.config.js",
+    "test": "cross-env TZ=UTC vitest run --passWithNoTests",
+    "test:watch": "cross-env TZ=UTC vitest watch",
     "test-e2e": "playwright test",
     "verify": "turbo lint typescript coverage",
-    "coverage": "yarn test --coverage --passWithNoTests",
-    "postinstall": "husky install",
-    "extract-translations": "i18next 'src/**/*.component.tsx' --config ./i18next-parser.config.js",
-    "ci:bump-form-engine-lib": "yarn up @openmrs/openmrs-form-engine-lib@next"
-  }
+    "coverage": "cross-env TZ=UTC vitest run --coverage --passWithNoTests",
+    "extract-translations": "i18next 'src/**/*.component.tsx' --config ./tools/i18next-parser.config.js"
+  },
+  "peerDependencies": {
+    "@openmrs/esm-framework": "9.x",
+    "react": "18.x",
+    "react-i18next": "16.x"
+  },
+  "devDependencies": {
+    "@openmrs/esm-framework": "next",
+    "openmrs": "next"
+  },
+  "packageManager": "yarn@4.10.3"
 }
 ```
 
@@ -160,6 +173,8 @@ Some key things to note from looking at this file include:
 - The `name` property which defines the name of the module. This property is used as the module’s unique identifier in the [import map](/docs/core-concepts#import-map).
 - The `browser` property which points to the entry point of the built bundle that gets served (what the app shell loads at runtime).
 - The `main` property which defines the [entry point](#the-application-entry-point-indexts) of the frontend module’s source code, which is typically `src/index.ts`.
+- The OpenMRS runtime packages are usually peer dependencies for consumers and `next` dev dependencies for local development.
+- Current React frontend modules use Rspack and Vitest by default. Older modules may still have Webpack or Jest scripts while they are being migrated.
 
 ### The application entry point (`index.ts`)
 
@@ -237,6 +252,15 @@ The `routes.json` file is used to set up the frontend module's static metadata. 
 - The `backend` dependencies that frontend module requires. This is an object that tells the frontend application what OpenMRS server modules the frontend module depends on, and what versions. If these dependencies are not met, administrators will be alerted
 
 The structure of this static file is dictated by the OpenMRS Routes standard [JSON schema](https://json.openmrs.org/routes.schema.json).
+
+Before shipping a new page or extension, check whether `routes.json` should also declare:
+
+- `backendDependencies` or `optionalBackendDependencies` for required backend modules.
+- `privileges` for role-based access to an extension.
+- `featureFlags` and per-extension `featureFlag` values for work that should be hidden until enabled.
+- `online` and `offline` flags for components that should render differently when offline support is enabled.
+
+For deeper details on extension metadata, see the [Extension system](/docs/extension-system) guide. For distribution-level backend and config behavior, see the [Configuration overview](/docs/configure-o3/overview).
 
 ### Extensions and extension slots (how modules plug into each other)
 

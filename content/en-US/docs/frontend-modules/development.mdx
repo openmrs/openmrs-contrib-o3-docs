@@ -39,10 +39,10 @@ Where the argument following `--sources` is the relative path to the frontend mo
 It is possible to run multiple frontend modules simultaneously. For example, if you're making changes to the [Order Basket](https://zeroheight.com/23a080e38/p/71ad91-order-basket), you'll likely want to test those changes against the Medications and Orders frontend modules. To do that, you'd run:
 
 ```sh
-yarn start --sources packages/esm-patient-medications packages/esm-patient-orders-app
+yarn start --sources packages/esm-patient-medications-app packages/esm-patient-orders-app
 ```
 
-This should fire up a Webpack dev server running local copies of the Medications and Orders frontend modules. Any local changes should propagate to the dev server in your browser.
+This should fire up a bundler dev server running local copies of the Medications and Orders frontend modules. Current React modules use Rspack, while a few legacy modules may still use Webpack. Any local changes should propagate to the dev server in your browser.
 
 By default, the dev server will run on port 8080. If you wish to run the server on a different port, you can pass a port number as the argument to the `--port` flag. For example, to run a dev server for the Vitals frontend module on port 7000, you'd run:
 
@@ -55,7 +55,7 @@ This will start the app shell at `http://localhost:7000/openmrs/spa` and serve t
 <Callout type="info">
   **`openmrs` tooling deep dive**
 
-`yarn start` is a shorthand for running the [openmrs CLI](https://github.com/openmrs/openmrs-esm-core/tree/main/packages/tooling/openmrs). More specifically, it's aliased to run `openmrs develop`, which compiles the app shell and runs it against a given OpenMRS backend. It spins up a Webpack dev server on port 8080 and proxies requests to the default backend, which is hosted at https://dev3.openmrs.org. This dev server will by default run local copies of the frontend modules you specify and override their import map entries. All the other frontend modules run on that dev server should be the latest versions from the community dev3 server. With `openmrs develop`, you can also:
+`yarn start` is a shorthand for running the [openmrs CLI](https://github.com/openmrs/openmrs-esm-core/tree/main/packages/tooling/openmrs). More specifically, it's aliased to run `openmrs develop`, which serves the app shell and runs it against a given OpenMRS backend. It starts a local dev server on port 8080 and proxies requests to the default backend, which is hosted at https://dev3.openmrs.org. This dev server will by default run local copies of the frontend modules you specify and override their import map entries. All the other frontend modules run on that dev server should be the latest versions from the community dev3 server. With `openmrs develop`, you can also:
 
 - Specify an alternative backend server (other than the community dev3 server) and proxy requests to it. For example, to run the Vitals app and proxy requests to the O3 QA dev environment's backend, you can run:
 
@@ -102,12 +102,12 @@ cd openmrs-esm-core
 yarn start --sources packages/apps/esm-implementer-tools-app --port=7000
 ```
 
-This should fire up a dev server on port 7001 (the next available port after 7000). To see the actual bundled JavaScript code for the app, navigate to http://localhost:7001/openmrs-esm-implementer-tools-app.js in your browser. This URL is the entry point for the app shell to load the implementer tools app. It's important that the URL points to the correct location of the bundled JavaScript code. Often, you might want to specify a different port number to ensure that the URL points to the correct location rather than the default port or whatever port the tooling assigns.
+This starts the app shell on port 7000 and serves the Implementer tools bundle from the next available port, usually 7001. To see the actual bundled JavaScript code for the app, navigate to http://localhost:7001/openmrs-esm-implementer-tools-app.js in your browser. This URL is the entry point for the app shell to load the implementer tools app. It's important that the URL points to the correct location of the bundled JavaScript code. Often, you might want to specify a different port number to ensure that the URL points to the correct location rather than the default port or whatever port the tooling assigns.
 
 <Callout type="info">
 **Port numbers**
 
-By default, the Webpack dev server runs on port 8080. If you're running multiple dev servers, the next available port is assigned to the next dev server. For example, if you're running a dev server on port 8080 and you start another dev server, it will run on port 8081. If you start another dev server, it will run on port 8082, and so on. This is also important to note when setting up import map overrides. If you're running a frontend module using `yarn start` on port 8080, the URL to the bundled JavaScript code will be http://localhost:8081/openmrs-esm-form-builder-app.js. The name of this URL corresponds to the name used in the [browser](https://github.com/openmrs/openmrs-esm-form-builder/blob/main/package.json#L6) entry in the `package.json` file of the frontend module you're running. If you're running a frontend module on a different port, you'll need to adjust the URL accordingly.
+By default, `yarn start` starts the app shell on port 8080 and serves each local module bundle from the next available ports. For example, with the app shell on `http://localhost:8080/openmrs/spa`, a Form Builder bundle is usually available at http://localhost:8081/openmrs-esm-form-builder-app.js. The name of this URL corresponds to the name used in the [browser](https://github.com/openmrs/openmrs-esm-form-builder/blob/main/package.json#L6) entry in the `package.json` file of the frontend module you're running. If you pass a custom app shell port such as `--port=7000`, open the app shell at `http://localhost:7000/openmrs/spa` and use the next port, usually `7001`, for the bundled JavaScript URL.
 
 Note that if you're running multiple frontend modules simultaneously using `yarn start`, the app shell will run on port 8080 and the frontend modules will run on the next available ports. That is, the packages will run on port 8081, 8082, and so on, if available. However, if you're running each frontend module individually with a custom `--port`, the module will typically be served on the next available port after the one you chose.
 
@@ -142,7 +142,7 @@ You should now see your changes to the Implementer tools and Primary navigation 
 
 The `esm-patient-common-lib` is a library of common components and utilities used primarily by the patient chart in O3. You might want to make changes to the library and test those changes against a local dev server. To achieve that, you can do the following:
 
-- Launch the `package.json` file for the frontend module you want to work on. Look for the `esm-patient-common-lib` dependency in the `peerDependencies` section. Remove that entry and run `yarn` to install dependencies.
+- Open the `package.json` file for the frontend module you want to work on. Look for the `esm-patient-common-lib` dependency in the `peerDependencies` section. Remove that entry and run `yarn` to install dependencies.
 - Run your local dev server using `yarn start`. For example, for the labs app, run:
 
   ```sh
@@ -154,7 +154,7 @@ The `esm-patient-common-lib` is a library of common components and utilities use
 
 ## Running the app shell locally
 
-Most of the time, this should be all a developer needs to do to get a local dev server running. One notable departure, however, is running the `app shell`. You’ll need to run the shell directly if you want to:
+Running individual modules with `yarn start` is usually enough to get a local dev server running. One notable departure, however, is running the `app shell`. You’ll need to run the shell directly if you want to:
 
 - Make changes to the `styleguide` frontend module and test them out locally.
 - Test out changes to the following applications:
@@ -210,35 +210,46 @@ Common blockers to watch for:
 - **Expected URLs:** The app shell runs at `/openmrs/spa` and your local module may be served from a different port.
 - **Feature flags:** If you’re not seeing a new UI, check whether it’s behind a feature flag in the Implementer Tools' feature flag menu.
 
+## Data fetching and mutations
+
+Most frontend module work eventually touches backend data. Prefer the O3 framework utilities and the local repo's existing resource hooks:
+
+- Use `openmrsFetch` with SWR hooks instead of calling `fetch` directly. `openmrsFetch` handles OpenMRS authentication, request headers, and error handling.
+- Use framework base URLs such as `restBaseUrl` and `fhirBaseUrl` rather than hard-coding `/ws/rest/v1` or FHIR paths throughout components.
+- Keep data access in resource files or custom hooks, then return the SWR state (`data`, `error`, `isLoading` or `isValidating`, and `mutate`) to components.
+- After a successful mutation, update the relevant SWR cache with `mutate` so the UI does not need a full reload.
+
+For examples, see the [Retrieve and post data](/docs/recipes/retrieve-and-post-data) recipe and the [Data fetching](/docs/coding-conventions/data-fetching), [Loading states](/docs/coding-conventions/loading-states), and [Mutations and effects](/docs/coding-conventions/mutations-and-side-effects) coding conventions.
+
 ## How can I develop against a restricted environment?
 
 In general, you can develop against another environment using the `--backend` flag. If the other environment is guarded, e.g., by an IP or network restriction then this is something you need to take care of on your local machine. In case the guarded environment is restricted via some SSO mechanism using a cookie you could use the `--add-cookie` flag to achieve this. As an example, look at the access for a development server from the ICRC:
 
 ```sh
-npx openmrs start --backend "https://emr-v2.test.icrc.org/" --add-cookie "MRHSession=1234..."
+yarn start --backend "https://emr-v2.test.icrc.org/" --add-cookie "MRHSession=1234..."
 ```
 
-The cookie must be obtained by you and strongly depends on the backend used.
+The cookie must be obtained by you and strongly depends on the backend used. Use `npx openmrs start` with the same flags when you only need to launch the app shell outside a frontend module repo.
 
 ## Should I write tests?
 
-Yes, absolutely! We have a test suite for the frontend modules in the monorepo. Depending on the repo, we use [Jest](https://jestjs.io/) or [Vitest](https://vitest.dev/), and [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) for React components. Check the module’s `package.json` to see which test runner is configured. See the [unit and integration testing guide](/docs/frontend-modules/unit-and-integration-testing) and the [end-to-end testing guide](/docs/frontend-modules/end-to-end-testing) for more on how to write tests. Consider adding E2E tests for your changes as well. Going through the testing guide as well as the tests in the codebase should give you a good sense of how to write tests.
+Yes, absolutely. Current modules are moving toward [Vitest](https://vitest.dev/) and [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) for React component tests, though some older repos may still use [Jest](https://jestjs.io/). Check the module’s `package.json` to see which test runner is configured. See the [unit and integration testing guide](/docs/frontend-modules/unit-and-integration-testing) and the [end-to-end testing guide](/docs/frontend-modules/end-to-end-testing) for more on how to write tests. Consider adding E2E tests for high-value workflows. Reading nearby tests in the codebase is usually the fastest way to match the repo’s conventions.
 
 ## Pushing your changes to GitHub
 
-Once you’re done working on a feature or fix, you’ll want to push your changes to GitHub and file a PR. To do this, package your changes in a commit. We have guidelines for writing commit messages in our [contributing guide](/docs/frontend-modules/contributing).
+Once you’re done working on a feature or fix, you’ll want to push your changes to GitHub and file a PR. To do this, commit your changes. We have guidelines for writing commit messages in our [contributing guide](/docs/frontend-modules/contributing).
 
 Creating a commit should trigger some pre-commit hooks. Typically, part of the work these hooks do involves running `yarn run extract-translations`. This task fires up `turborepo` and runs the `extract-translations` task in each package in the monorepo. This task extracts translation keys and strings and updates the default locale’s translations file, `en.json` in the `translations` directory of your frontend module. This is useful for internationalization. After the pre-commit hooks run, you then want to push your changes to GitHub. Doing so will trigger a `pre-push` hook that will typically run the following tasks in parallel using `turborepo`:
 
 - `typescript` - checks your application’s types.
-- `lint` - runs a lint check using Prettier.
+- `lint` - runs ESLint, usually with warnings treated as failures.
 - `test` - runs tests (Jest or Vitest, depending on the repo).
 
 If any of these tasks fail, the push should fail. The terminal should display the error message(s) that caused the push to fail. You’ll need to fix the error(s) and push again. Once the push succeeds, you can go to the GitHub repo related to your package and file a pull request.
 
 ## Maintaining dependencies
 
-Maintaining up-to-date dependencies is important to leverage the latest features, performance improvements and security patches. Yarn 3 provides a handy interactive tool to help you keep your dependencies up to date. To use it, run the following command:
+Maintaining up-to-date dependencies is important to leverage the latest features, performance improvements and security patches. Most current frontend repos use Yarn 4, but always check the `packageManager` field in `package.json` because older repos may differ. Yarn provides an interactive tool to help you keep dependencies up to date. To use it, run the following command:
 
 ```sh
 yarn upgrade-interactive
@@ -262,7 +273,7 @@ If you’re running Linux, you may see the following error the first time you ru
 
 ### I see errors about missing APIs when I run the app
 
-If your dev server is throwing errors about missing APIs or functions, it's likely because you're running outdated versions of the framework or core tooling. This means that new functionality was likely added to [Core](https://github.com/openmrs/openmrs-esm-patient-chart) that your local dev server doesn't have. New pre-release versions of the [openmrs](https://npmjs.com/package/openmrs) CLI and [@openmrs/esm-framework](https://npmjs.com/package/@openmrs/esm-framework) get published each time a pull request is merged in Core. To ensure you have the latest versions of these packages, run:
+If your dev server is throwing errors about missing APIs or functions, it's likely because you're running outdated versions of the framework or core tooling. This means that new functionality was likely added to [Core](https://github.com/openmrs/openmrs-esm-core) that your local dev server doesn't have. New pre-release versions of the [openmrs](https://npmjs.com/package/openmrs) CLI and [@openmrs/esm-framework](https://npmjs.com/package/@openmrs/esm-framework) get published each time a pull request is merged in Core. To ensure you have the latest versions of these packages, run:
 
 ```sh
 yarn up openmrs@next @openmrs/esm-framework@next
@@ -278,20 +289,20 @@ This command will update the versions of the packages specified in your manifest
 
 ### I'm getting a `ERR_OSSL_EVP_UNSUPPORTED` error when running `yarn run build`
 
-If you're running or building the `form-entry` package (an Angular wrapper around the AMPATH Form Engine) using Node v18, you may see the following error:
+If you're running or building the `form-entry` package, an Angular wrapper around the AMPATH Form Engine, with a Node/OpenSSL combination that rejects legacy hash algorithms, you may see the following error:
 
 ```sh
 Error: error:0308010C:digital envelope routines::unsupported
     at new Hash (node:internal/crypto/hash:71:19)
     at Object.createHash (node:crypto:133:10)
-    at BulkUpdateDecorator.hashFactory (/Users/denniskigen/code/openmrs/openmrs-esm-patient-chart/node_modules/@angular-devkit/build-angular/node_modules/webpack/lib/util/createHash.js:145:18)
-    at BulkUpdateDecorator.update (/Users/denniskigen/code/openmrs/openmrs-esm-patient-chart/node_modules/@angular-devkit/build-angular/node_modules/webpack/lib/util/createHash.js:46:50)
-    at RawSource.updateHash (/Users/denniskigen/code/openmrs/openmrs-esm-patient-chart/node_modules/webpack-sources/lib/RawSource.js:77:8)
-    at NormalModule._initBuildHash (/Users/denniskigen/code/openmrs/openmrs-esm-patient-chart/node_modules/@angular-devkit/build-angular/node_modules/webpack/lib/NormalModule.js:880:17)
-    at handleParseResult (/Users/denniskigen/code/openmrs/openmrs-esm-patient-chart/node_modules/@angular-devkit/build-angular/node_modules/webpack/lib/NormalModule.js:946:10)
-    at /Users/denniskigen/code/openmrs/openmrs-esm-patient-chart/node_modules/@angular-devkit/build-angular/node_modules/webpack/lib/NormalModule.js:1040:4
-    at processResult (/Users/denniskigen/code/openmrs/openmrs-esm-patient-chart/node_modules/@angular-devkit/build-angular/node_modules/webpack/lib/NormalModule.js:755:11)
-    at /Users/denniskigen/code/openmrs/openmrs-esm-patient-chart/node_modules/@angular-devkit/build-angular/node_modules/webpack/lib/NormalModule.js:819:5 {
+    at BulkUpdateDecorator.hashFactory (/path/to/openmrs-esm-patient-chart/node_modules/@angular-devkit/build-angular/node_modules/webpack/lib/util/createHash.js:145:18)
+    at BulkUpdateDecorator.update (/path/to/openmrs-esm-patient-chart/node_modules/@angular-devkit/build-angular/node_modules/webpack/lib/util/createHash.js:46:50)
+    at RawSource.updateHash (/path/to/openmrs-esm-patient-chart/node_modules/webpack-sources/lib/RawSource.js:77:8)
+    at NormalModule._initBuildHash (/path/to/openmrs-esm-patient-chart/node_modules/@angular-devkit/build-angular/node_modules/webpack/lib/NormalModule.js:880:17)
+    at handleParseResult (/path/to/openmrs-esm-patient-chart/node_modules/@angular-devkit/build-angular/node_modules/webpack/lib/NormalModule.js:946:10)
+    at /path/to/openmrs-esm-patient-chart/node_modules/@angular-devkit/build-angular/node_modules/webpack/lib/NormalModule.js:1040:4
+    at processResult (/path/to/openmrs-esm-patient-chart/node_modules/@angular-devkit/build-angular/node_modules/webpack/lib/NormalModule.js:755:11)
+    at /path/to/openmrs-esm-patient-chart/node_modules/@angular-devkit/build-angular/node_modules/webpack/lib/NormalModule.js:819:5 {
   opensslErrorStack: [ 'error:03000086:digital envelope routines::initialization error' ],
   library: 'digital envelope routines',
   reason: 'unsupported',
@@ -317,12 +328,7 @@ ERROR in src/components/search-history/search-history.component.tsx:9:3
 TS2305: Module '"@carbon/react"' has no exported member 'Pagination'.
 ```
 
-To fix these, you need to update Carbon's ambient type declarations. To do so, add the following entries to your `declarations.d.ts` file:
-
-```ts
-declare module "@carbon/react";
-declare type SideNavProps = {};
-```
+Do not add a blanket `declare module "@carbon/react";` workaround. Modern `@carbon/react` ships its own types, and a blanket ambient declaration can hide real type errors. Check the installed Carbon version, review the Carbon release notes for renamed or removed exports, update imports to the supported component names, and reinstall dependencies so TypeScript resolves the package's bundled types.
 
 ### I'm getting merge conflicts in my `yarn.lock` file
 
@@ -334,7 +340,7 @@ git checkout HEAD yarn.lock && yarn
 
 ### The `verify` job is failing on GitHub Actions for my PR
 
-You likely have a lint or typescript error in your code. ESLint is setup to fail when it flags warnings. Run `yarn turbo lint` locally to the specific lint error in your IDE. For TypeScript errors, you should see the error in the CI log. If not, run `yarn turbo typescript` locally.
+You likely have a lint or typescript error in your code. ESLint is setup to fail when it flags warnings. Run `yarn turbo lint` locally to see the specific lint error in your IDE. For TypeScript errors, you should see the error in the CI log. If not, run `yarn turbo typescript` locally.
 
 ### I'm getting `502` errors from attempting to fetch the session when running a local dev server
 
@@ -354,10 +360,10 @@ If you see an `Unhandled promise rejection` error when running a dev server or a
 When testing changes to Core by running `yarn run:shell` from the `esm-core` directory, you'll typically want to run `yarn turbo build` to ensure that you are running the latest changes. You might run into errors like the following when running the Webpack build:
 
 ```sh
-error:0308010C:digital envelope routines::unsupported
+FATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory
 ```
 
-To do so, run the following command:
+To increase the memory limit for the Node.js process, run:
 
 ```sh
 export NODE_OPTIONS=--max-old-space-size=8192

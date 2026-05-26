@@ -39,10 +39,10 @@ L'argument qui suit `--sources` est le chemin relatif du module frontend à exé
 Il est possible d'exécuter plusieurs modules frontend en même temps. Par exemple, si vous modifiez l'[Order Basket](https://zeroheight.com/23a080e38/p/71ad91-order-basket), vous voudrez probablement tester ces changements avec les modules Medications et Orders. Pour cela:
 
 ```sh
-yarn start --sources packages/esm-patient-medications packages/esm-patient-orders-app
+yarn start --sources packages/esm-patient-medications-app packages/esm-patient-orders-app
 ```
 
-Cette commande démarre un serveur de développement Webpack avec des copies locales des modules Medications et Orders. Les changements locaux devraient se propager au serveur de développement dans votre navigateur.
+Cette commande démarre un serveur de développement du bundler avec des copies locales des modules Medications et Orders. Les modules React actuels utilisent Rspack, tandis que quelques modules plus anciens peuvent encore utiliser Webpack. Les changements locaux devraient se propager au serveur de développement dans votre navigateur.
 
 Par défaut, le serveur de développement s'exécute sur le port 8080. Pour utiliser un autre port, passez un numéro de port à l'option `--port`. Par exemple, pour exécuter le module Vitals sur le port 7000:
 
@@ -55,7 +55,7 @@ Cela démarre l'app shell sur `http://localhost:7000/openmrs/spa` et sert le mod
 <Callout type="info">
   **Détail sur l'outillage `openmrs`**
 
-`yarn start` est un raccourci pour lancer le [CLI openmrs](https://github.com/openmrs/openmrs-esm-core/tree/main/packages/tooling/openmrs). Plus précisément, il exécute `openmrs develop`, qui compile l'app shell et l'exécute contre un backend OpenMRS donné. Il démarre un serveur de développement Webpack sur le port 8080 et proxifie les requêtes vers le backend par défaut, hébergé sur https://dev3.openmrs.org. Ce serveur lance par défaut les copies locales des modules frontend que vous indiquez et surcharge leurs entrées dans l'import map. Tous les autres modules frontend exécutés sur ce serveur devraient être les dernières versions du serveur communautaire dev3. Avec `openmrs develop`, vous pouvez aussi:
+`yarn start` est un raccourci pour lancer le [CLI openmrs](https://github.com/openmrs/openmrs-esm-core/tree/main/packages/tooling/openmrs). Plus précisément, il exécute `openmrs develop`, qui sert l'app shell et l'exécute contre un backend OpenMRS donné. Il démarre un serveur de développement local sur le port 8080 et proxifie les requêtes vers le backend par défaut, hébergé sur https://dev3.openmrs.org. Ce serveur lance par défaut les copies locales des modules frontend que vous indiquez et surcharge leurs entrées dans l'import map. Tous les autres modules frontend exécutés sur ce serveur devraient être les dernières versions du serveur communautaire dev3. Avec `openmrs develop`, vous pouvez aussi:
 
 - Spécifier un autre serveur backend et proxifier les requêtes vers lui. Par exemple, pour exécuter l'app Vitals et proxifier vers le backend de l'environnement QA O3:
 
@@ -101,12 +101,12 @@ cd openmrs-esm-core
 yarn start --sources packages/apps/esm-implementer-tools-app --port=7000
 ```
 
-Cela devrait démarrer un serveur de développement sur le port 7001, le prochain port disponible après 7000. Pour voir le JavaScript bundlé de l'app, ouvrez http://localhost:7001/openmrs-esm-implementer-tools-app.js dans votre navigateur. Cette URL est le point d'entrée que l'app shell utilise pour charger l'app implementer tools. Il est important qu'elle pointe vers le bon emplacement du JavaScript bundlé. Vous voudrez souvent préciser un port différent pour vous assurer que l'URL pointe vers le bon serveur plutôt que vers le port par défaut ou celui assigné par l'outillage.
+Cela démarre l'app shell sur le port 7000 et sert le bundle Implementer tools depuis le port disponible suivant, généralement 7001. Pour voir le JavaScript bundlé de l'app, ouvrez http://localhost:7001/openmrs-esm-implementer-tools-app.js dans votre navigateur. Cette URL est le point d'entrée que l'app shell utilise pour charger l'app implementer tools. Il est important qu'elle pointe vers le bon emplacement du JavaScript bundlé. Vous voudrez souvent préciser un port différent pour vous assurer que l'URL pointe vers le bon serveur plutôt que vers le port par défaut ou celui assigné par l'outillage.
 
 <Callout type="info">
 **Numéros de port**
 
-Par défaut, le serveur de développement Webpack s'exécute sur le port 8080. Si vous lancez plusieurs serveurs de développement, le prochain port disponible est assigné au serveur suivant. Par exemple, si un serveur tourne sur 8080 et que vous en lancez un autre, il tournera sur 8081. Le suivant utilisera 8082, et ainsi de suite. C'est important pour les surcharges d'import map. Si vous lancez un module frontend avec `yarn start` sur le port 8080, l'URL du JavaScript bundlé sera http://localhost:8081/openmrs-esm-form-builder-app.js. Le nom de cette URL correspond au nom utilisé dans l'entrée [browser](https://github.com/openmrs/openmrs-esm-form-builder/blob/main/package.json#L6) du `package.json` du module frontend. Si vous exécutez un module sur un autre port, ajustez l'URL en conséquence.
+Par défaut, `yarn start` démarre l'app shell sur le port 8080 et sert chaque bundle de module local depuis les ports disponibles suivants. Par exemple, avec l'app shell sur `http://localhost:8080/openmrs/spa`, un bundle Form Builder est généralement disponible à http://localhost:8081/openmrs-esm-form-builder-app.js. Le nom de cette URL correspond au nom utilisé dans l'entrée [browser](https://github.com/openmrs/openmrs-esm-form-builder/blob/main/package.json#L6) du `package.json` du module frontend. Si vous passez un port d'app shell personnalisé comme `--port=7000`, ouvrez l'app shell à `http://localhost:7000/openmrs/spa` et utilisez le port suivant, généralement `7001`, pour l'URL du JavaScript bundlé.
 
 Notez que si vous lancez plusieurs modules frontend simultanément avec `yarn start`, l'app shell tournera sur le port 8080 et les modules frontend sur les ports suivants disponibles, par exemple 8081, 8082, etc. Si vous lancez chaque module individuellement avec un `--port` personnalisé, le module est généralement servi sur le prochain port disponible après celui que vous avez choisi.
 
@@ -153,7 +153,7 @@ Vous devriez maintenant voir vos changements dans Implementer tools et Primary n
 
 ## Exécuter l'app shell localement
 
-La plupart du temps, les étapes précédentes suffisent à lancer un serveur de développement local. L'une des exceptions notables est l'exécution directe de l'`app shell`. Vous devrez lancer le shell directement si vous voulez:
+L'exécution de modules individuels avec `yarn start` suffit généralement à lancer un serveur de développement local. L'une des exceptions notables est l'exécution directe de l'`app shell`. Vous devrez lancer le shell directement si vous voulez:
 
 - Modifier le module frontend `styleguide` et tester ces changements localement.
 - Tester des changements dans les applications suivantes:
@@ -209,19 +209,30 @@ Blocages courants à surveiller:
 - **URLs attendues:** L'app shell s'exécute à `/openmrs/spa` et votre module local peut être servi depuis un autre port.
 - **Feature flags:** Si vous ne voyez pas une nouvelle interface, vérifiez si elle est derrière un feature flag dans le menu feature flags des Implementer Tools.
 
+## Récupération de données et mutations
+
+La plupart des travaux sur un module frontend finissent par toucher des données backend. Préférez les utilitaires du framework O3 et les hooks de ressources déjà présents dans le dépôt:
+
+- Utilisez `openmrsFetch` avec des hooks SWR plutôt qu'un appel direct à `fetch`. `openmrsFetch` gère l'authentification OpenMRS, les en-têtes de requête et les erreurs.
+- Utilisez les URLs de base du framework, comme `restBaseUrl` et `fhirBaseUrl`, plutôt que de coder `/ws/rest/v1` ou les chemins FHIR partout dans les composants.
+- Gardez l'accès aux données dans des fichiers de ressources ou des hooks personnalisés, puis retournez l'état SWR (`data`, `error`, `isLoading` ou `isValidating`, et `mutate`) aux composants.
+- Après une mutation réussie, mettez à jour le cache SWR concerné avec `mutate` pour éviter un rechargement complet de l'interface.
+
+Pour des exemples, consultez la recette [Récupérer et publier des données](/docs/recipes/retrieve-and-post-data), ainsi que les conventions [Récupération des données](/docs/coding-conventions/data-fetching), [États de chargement](/docs/coding-conventions/loading-states) et [Mutations et effets secondaires](/docs/coding-conventions/mutations-and-side-effects).
+
 ## Comment développer contre un environnement restreint?
 
 En général, vous pouvez développer contre un autre environnement avec l'option `--backend`. Si cet environnement est protégé, par exemple par une restriction IP ou réseau, vous devrez régler cela sur votre machine locale. Si l'environnement est protégé par un mécanisme SSO qui utilise un cookie, vous pouvez utiliser l'option `--add-cookie`. Par exemple, pour accéder à un serveur de développement de l'ICRC:
 
 ```sh
-npx openmrs start --backend "https://emr-v2.test.icrc.org/" --add-cookie "MRHSession=1234..."
+yarn start --backend "https://emr-v2.test.icrc.org/" --add-cookie "MRHSession=1234..."
 ```
 
-Le cookie doit être obtenu par vous et dépend fortement du backend utilisé.
+Le cookie doit être obtenu par vous et dépend fortement du backend utilisé. Utilisez `npx openmrs start` avec les mêmes options lorsque vous avez seulement besoin de lancer l'app shell en dehors d'un dépôt de module frontend.
 
 ## Dois-je écrire des tests?
 
-Oui, absolument. Nous avons une suite de tests pour les modules frontend du monorepo. Selon le dépôt, nous utilisons [Jest](https://jestjs.io/) ou [Vitest](https://vitest.dev/), ainsi que [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) pour les composants React. Consultez le `package.json` du module pour voir quel runner est configuré. Voir le guide de [tests unitaires et d'intégration](/docs/frontend-modules/unit-and-integration-testing) et le guide de [tests de bout en bout](/docs/frontend-modules/end-to-end-testing) pour plus d'informations. Envisagez aussi d'ajouter des tests E2E pour vos changements. Lire le guide de tests et les tests existants dans la base de code vous donnera une bonne idée de la façon d'en écrire.
+Oui, absolument. Les modules actuels vont vers [Vitest](https://vitest.dev/) et [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) pour les tests de composants React, même si certains dépôts plus anciens utilisent encore [Jest](https://jestjs.io/). Consultez le `package.json` du module pour voir quel runner est configuré. Voir le guide de [tests unitaires et d'intégration](/docs/frontend-modules/unit-and-integration-testing) et le guide de [tests de bout en bout](/docs/frontend-modules/end-to-end-testing) pour plus d'informations. Envisagez aussi d'ajouter des tests E2E pour les workflows importants. Lire les tests voisins dans la base de code est souvent le moyen le plus rapide d'aligner vos tests sur les conventions du dépôt.
 
 ## Pousser vos changements vers GitHub
 
@@ -230,14 +241,14 @@ Une fois votre fonctionnalité ou correction terminée, vous voudrez pousser vos
 Créer un commit déclenche généralement des hooks pre-commit. Une partie de leur travail consiste souvent à exécuter `yarn run extract-translations`. Cette tâche lance `turborepo` et exécute `extract-translations` dans chaque package du monorepo. Elle extrait les clés et chaînes de traduction et met à jour le fichier de traductions de la locale par défaut, `en.json`, dans le dossier `translations` de votre module frontend. C'est utile pour l'internationalisation. Après l'exécution des hooks pre-commit, vous voudrez pousser vos changements vers GitHub. Le push déclenchera un hook pre-push qui exécute généralement ces tâches en parallèle avec `turborepo`:
 
 - `typescript` - vérifie les types de votre application.
-- `lint` - lance un contrôle lint avec Prettier.
+- `lint` - lance ESLint, généralement avec les warnings traités comme des échecs.
 - `test` - lance les tests, avec Jest ou Vitest selon le dépôt.
 
 Si l'une de ces tâches échoue, le push devrait échouer. Le terminal affichera les messages d'erreur responsables. Corrigez-les puis poussez à nouveau. Une fois le push réussi, vous pouvez ouvrir une pull request dans le dépôt GitHub lié à votre package.
 
 ## Maintenir les dépendances
 
-Maintenir les dépendances à jour est important pour bénéficier des dernières fonctionnalités, améliorations de performance et correctifs de sécurité. Yarn 3 fournit un outil interactif pratique pour cela:
+Maintenir les dépendances à jour est important pour bénéficier des dernières fonctionnalités, améliorations de performance et correctifs de sécurité. La plupart des dépôts frontend actuels utilisent Yarn 4, mais vérifiez toujours le champ `packageManager` dans `package.json`, car certains dépôts plus anciens diffèrent. Yarn fournit un outil interactif pratique pour cela:
 
 ```sh
 yarn upgrade-interactive
@@ -261,7 +272,7 @@ Si vous êtes sous Linux, vous pouvez voir cette erreur la première fois que vo
 
 ### Je vois des erreurs d'API manquantes quand je lance l'app
 
-Si votre serveur de développement affiche des erreurs liées à des APIs ou fonctions manquantes, vous utilisez probablement des versions obsolètes du framework ou de l'outillage core. Cela signifie souvent qu'une nouvelle fonctionnalité a été ajoutée à [Core](https://github.com/openmrs/openmrs-esm-patient-chart) et que votre serveur local ne l'a pas encore. De nouvelles versions pre-release du CLI [openmrs](https://npmjs.com/package/openmrs) et de [@openmrs/esm-framework](https://npmjs.com/package/@openmrs/esm-framework) sont publiées à chaque merge de PR dans Core. Pour obtenir les dernières versions:
+Si votre serveur de développement affiche des erreurs liées à des APIs ou fonctions manquantes, vous utilisez probablement des versions obsolètes du framework ou de l'outillage core. Cela signifie souvent qu'une nouvelle fonctionnalité a été ajoutée à [Core](https://github.com/openmrs/openmrs-esm-core) et que votre serveur local ne l'a pas encore. De nouvelles versions pre-release du CLI [openmrs](https://npmjs.com/package/openmrs) et de [@openmrs/esm-framework](https://npmjs.com/package/@openmrs/esm-framework) sont publiées à chaque merge de PR dans Core. Pour obtenir les dernières versions:
 
 ```sh
 yarn up openmrs@next @openmrs/esm-framework@next
@@ -277,20 +288,20 @@ Cette commande met les paquets à jour, restaure les versions `next` dans le man
 
 ### J'obtiens une erreur `ERR_OSSL_EVP_UNSUPPORTED` quand je lance `yarn run build`
 
-Si vous exécutez ou construisez le package `form-entry`, un wrapper Angular autour d'AMPATH Form Engine, avec Node v18, vous pouvez voir l'erreur suivante:
+Si vous exécutez ou construisez le package `form-entry`, un wrapper Angular autour d'AMPATH Form Engine, avec une combinaison Node/OpenSSL qui refuse les anciens algorithmes de hash, vous pouvez voir l'erreur suivante:
 
 ```sh
 Error: error:0308010C:digital envelope routines::unsupported
     at new Hash (node:internal/crypto/hash:71:19)
     at Object.createHash (node:crypto:133:10)
-    at BulkUpdateDecorator.hashFactory (/Users/denniskigen/code/openmrs/openmrs-esm-patient-chart/node_modules/@angular-devkit/build-angular/node_modules/webpack/lib/util/createHash.js:145:18)
-    at BulkUpdateDecorator.update (/Users/denniskigen/code/openmrs/openmrs-esm-patient-chart/node_modules/@angular-devkit/build-angular/node_modules/webpack/lib/util/createHash.js:46:50)
-    at RawSource.updateHash (/Users/denniskigen/code/openmrs/openmrs-esm-patient-chart/node_modules/webpack-sources/lib/RawSource.js:77:8)
-    at NormalModule._initBuildHash (/Users/denniskigen/code/openmrs/openmrs-esm-patient-chart/node_modules/@angular-devkit/build-angular/node_modules/webpack/lib/NormalModule.js:880:17)
-    at handleParseResult (/Users/denniskigen/code/openmrs/openmrs-esm-patient-chart/node_modules/@angular-devkit/build-angular/node_modules/webpack/lib/NormalModule.js:946:10)
-    at /Users/denniskigen/code/openmrs/openmrs-esm-patient-chart/node_modules/@angular-devkit/build-angular/node_modules/webpack/lib/NormalModule.js:1040:4
-    at processResult (/Users/denniskigen/code/openmrs/openmrs-esm-patient-chart/node_modules/@angular-devkit/build-angular/node_modules/webpack/lib/NormalModule.js:755:11)
-    at /Users/denniskigen/code/openmrs/openmrs-esm-patient-chart/node_modules/@angular-devkit/build-angular/node_modules/webpack/lib/NormalModule.js:819:5 {
+    at BulkUpdateDecorator.hashFactory (/path/to/openmrs-esm-patient-chart/node_modules/@angular-devkit/build-angular/node_modules/webpack/lib/util/createHash.js:145:18)
+    at BulkUpdateDecorator.update (/path/to/openmrs-esm-patient-chart/node_modules/@angular-devkit/build-angular/node_modules/webpack/lib/util/createHash.js:46:50)
+    at RawSource.updateHash (/path/to/openmrs-esm-patient-chart/node_modules/webpack-sources/lib/RawSource.js:77:8)
+    at NormalModule._initBuildHash (/path/to/openmrs-esm-patient-chart/node_modules/@angular-devkit/build-angular/node_modules/webpack/lib/NormalModule.js:880:17)
+    at handleParseResult (/path/to/openmrs-esm-patient-chart/node_modules/@angular-devkit/build-angular/node_modules/webpack/lib/NormalModule.js:946:10)
+    at /path/to/openmrs-esm-patient-chart/node_modules/@angular-devkit/build-angular/node_modules/webpack/lib/NormalModule.js:1040:4
+    at processResult (/path/to/openmrs-esm-patient-chart/node_modules/@angular-devkit/build-angular/node_modules/webpack/lib/NormalModule.js:755:11)
+    at /path/to/openmrs-esm-patient-chart/node_modules/@angular-devkit/build-angular/node_modules/webpack/lib/NormalModule.js:819:5 {
   opensslErrorStack: [ 'error:03000086:digital envelope routines::initialization error' ],
   library: 'digital envelope routines',
   reason: 'unsupported',
@@ -316,12 +327,7 @@ ERROR in src/components/search-history/search-history.component.tsx:9:3
 TS2305: Module '"@carbon/react"' has no exported member 'Pagination'.
 ```
 
-Pour les corriger, mettez à jour les déclarations de types ambiantes de Carbon. Ajoutez ces entrées dans `declarations.d.ts`:
-
-```ts
-declare module "@carbon/react";
-declare type SideNavProps = {};
-```
+N'ajoutez pas de contournement global comme `declare module "@carbon/react";`. Les versions modernes de `@carbon/react` fournissent leurs propres types, et une déclaration ambiante globale peut masquer de vraies erreurs TypeScript. Vérifiez la version Carbon installée, consultez les notes de version Carbon pour les exports renommés ou supprimés, mettez à jour les imports avec les noms de composants pris en charge, puis réinstallez les dépendances pour que TypeScript résolve les types fournis par le package.
 
 ### J'obtiens des conflits de merge dans mon fichier `yarn.lock`
 
@@ -352,10 +358,10 @@ Si vous voyez une erreur `Unhandled promise rejection` en lançant un serveur de
 Quand vous testez des changements de Core avec `yarn run:shell` depuis le dossier `esm-core`, vous voudrez généralement lancer `yarn turbo build` pour vous assurer d'exécuter les derniers changements. Vous pouvez rencontrer des erreurs comme:
 
 ```sh
-error:0308010C:digital envelope routines::unsupported
+FATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory
 ```
 
-Dans ce cas, lancez:
+Pour augmenter la limite mémoire du processus Node.js, lancez:
 
 ```sh
 export NODE_OPTIONS=--max-old-space-size=8192

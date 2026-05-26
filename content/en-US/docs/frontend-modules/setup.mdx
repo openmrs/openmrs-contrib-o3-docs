@@ -5,8 +5,8 @@
 To work on the O3 frontend, you will need to have the following tools and technologies set up:
 
 - **Git** - We use git for version control.
-- **Node.js** - We use Node for compiling and bundling frontend code. We don’t use Node for running the backend or server. We recommend using the active `LTS` version and using [nvm](https://github.com/nvm-sh/nvm) to manage multiple versions of Node.
-- **Yarn** - We primarily use Yarn `v3` as our package manager.
+- **Node.js** - We use Node for compiling and bundling frontend code. We don’t use Node for running the backend or server. Use the Node version expected by the repo you are working in, usually documented in `.nvmrc`, `.node-version`, CI config, or the repo README. If the repo does not specify one, use the active `LTS` version and manage Node versions with [nvm](https://github.com/nvm-sh/nvm) or a similar tool.
+- **Yarn** - Most current frontend repos use Yarn `v4`, but some older repos still use Yarn `v3` or Yarn `v1`. Check the `packageManager` field in the repo's `package.json` and use the matching version.
 - **OpenMRS backend access** - You’ll need access to an OpenMRS backend (dev3 or local) for `yarn start` to work.
 
 ## Code organization

@@ -17,13 +17,18 @@ Les modules frontend sont les blocs de construction fondamentaux pour créer des
 
 Ce module frontend pourrait alors être chargé dans l'app shell et affiché dans le dossier du patient. Les composants exportés depuis `src/index.ts` sont enregistrés par l'app shell et peuvent être utilisés dans l'application. Les modules frontend dans O3 sont généralement construits en utilisant React. Comme nous utilisons [single-spa](https://single-spa.js.org/) sous le capot, d'autres frameworks sont possibles, mais ils sont moins courants. Par exemple, le module frontend [Angular form engine](/docs/key-repositories#angular-form-engine) est écrit en Angular et est un wrapper autour du [AMPATH form engine](https://ampath-forms.vercel.app/). En ce sens, l'app shell est agnostique du framework. En pratique, les fonctionnements de bas niveau de l'app shell ont été abstraits de telle manière que les ingénieurs frontend peuvent se concentrer sur le comportement des modules plutôt que sur le framework.
 
+<Callout type="info">
+  Si vous créez un nouveau module plutôt que de comprendre un module existant, commencez par la recette [Création d'un module frontend](/docs/recipes/create-a-frontend-module). Cette vue d'ensemble explique les pièces en jeu; la recette décrit les flux avec `create-o3-app` et l'application template.
+</Callout>
+
 ## Concepts critiques (à ne pas manquer)
 
-Voici trois concepts clés qu’on oublie facilement :
+Voici quatre concepts clés qu'on oublie facilement:
 
 1. **Câblage de la distro (ce qui se charge réellement) :** `spa-assemble-config.json` définit quels modules frontend et quelles versions sont inclus dans votre distro. Ce fichier génère l’import map, et l’app shell ne charge que ce que l’import map contient. Si un module n’est pas dans l’import map, il ne se chargera pas.
 2. **Flux d’enregistrement (pourquoi pages/extensions s’affichent) :** `src/index.ts` et `routes.json` fonctionnent ensemble. L’app shell lit `routes.json` et les exports nommés de `index.ts`, puis enregistre les pages et les extensions. S’ils ne correspondent pas, rien ne s’affiche.
 3. **Tags de version (pourquoi vos changements ne sont pas visibles) :** `latest` et `next` sont différents. Votre distro ne charge que le tag indiqué dans `spa-assemble-config.json`.
+4. **Conditions runtime (pourquoi quelque chose se charge mais ne s'affiche pas):** `routes.json` peut déclarer des dépendances backend, des privilèges, des feature flags et un comportement online/offline. Un module peut être présent dans l'import map et ne pas afficher une extension si l'une de ces conditions n'est pas remplie.
 
 ## Modèle mental (comment les modules frontend fonctionnent réellement)
 
@@ -96,7 +101,7 @@ Chaque module frontend est un package npm, généralement avec un nom se termina
 - 🟡 **"latest" = Dernière version publiée.** "latest" se réfère toujours à la version la plus récente publiée d'un ESM (par exemple, 3.2.0). Bien que vous puissiez utiliser la version "latest" de n'importe quel ESM, vous avez plus de contrôle en spécifiant le numéro de version exact de chaque ESM que vous utilisez.
 - 🟢✅ **vX.X.X = Une version spécifique.** Un numéro de version se réfère toujours à une version spécifique de chaque ESM. Par exemple, 3.2.0 ou 3.2.1-pre.1067 sont des versions spécifiques de l'ESM @openmrs/esm-api, bien que cette dernière soit une pré-version.
 
-Ces tags sont choisis dans votre `spa-assemble-config.json`, qui alimente l'import map de votre distribution.
+Ces tags sont choisis dans votre `spa-assemble-config.json`, qui alimente l'import map de votre distribution. La configuration de l'application de référence communautaire vit dans [`frontend/spa-assemble-config.json`](https://github.com/openmrs/openmrs-distro-referenceapplication/blob/main/frontend/spa-assemble-config.json).
 
 En d’autres termes: **le tag de version choisi dans `spa-assemble-config.json` devient la version chargée par l’app shell**.
 
@@ -118,33 +123,41 @@ Chaque module frontend doit avoir:
 
 ### Fichier manifeste (package.json)
 
-Chaque module frontend a un fichier `package.json` de niveau racine qui définit ses dépendances et ses métadonnées. Voici un extrait du fichier `package.json` du module frontend form builder:
+Chaque module frontend a un fichier `package.json` de niveau racine qui définit ses dépendances et ses métadonnées. Voici un extrait raccourci de l'application Template actuelle:
 
 ```json
 {
-  "name": "@openmrs/esm-form-builder-app",
-  "version": "2.0.1",
+  "name": "@openmrs/esm-template-app",
+  "version": "4.0.0",
   "license": "MPL-2.0",
-  "description": "OpenMRS ESM Form Builder App",
-  "browser": "dist/openmrs-esm-form-builder-app.js",
+  "description": "An OpenMRS seed application for building microfrontends",
+  "browser": "dist/openmrs-esm-template-app.js",
   "main": "src/index.ts",
   "source": true,
   "scripts": {
     "start": "openmrs develop",
-    "serve": "webpack serve --mode=development",
-    "build": "webpack --mode production",
-    "analyze": "webpack --mode=production --env.analyze=true",
-    "lint": "TIMING=1 eslint src --ext js,jsx,ts,tsx",
-    "prettier": "prettier --write 'src/**/*.{ts,tsx}'",
+    "serve": "rspack serve --mode=development",
+    "build": "rspack --mode production",
+    "analyze": "rspack --mode=production --env analyze=true",
+    "lint": "eslint src --ext js,jsx,ts,tsx --max-warnings 0",
     "typescript": "tsc",
-    "test": "jest --config jest.config.js",
+    "test": "cross-env TZ=UTC vitest run --passWithNoTests",
+    "test:watch": "cross-env TZ=UTC vitest watch",
     "test-e2e": "playwright test",
     "verify": "turbo lint typescript coverage",
-    "coverage": "yarn test --coverage --passWithNoTests",
-    "postinstall": "husky install",
-    "extract-translations": "i18next 'src/**/*.component.tsx' --config ./i18next-parser.config.js",
-    "ci:bump-form-engine-lib": "yarn up @openmrs/openmrs-form-engine-lib@next"
-  }
+    "coverage": "cross-env TZ=UTC vitest run --coverage --passWithNoTests",
+    "extract-translations": "i18next 'src/**/*.component.tsx' --config ./tools/i18next-parser.config.js"
+  },
+  "peerDependencies": {
+    "@openmrs/esm-framework": "9.x",
+    "react": "18.x",
+    "react-i18next": "16.x"
+  },
+  "devDependencies": {
+    "@openmrs/esm-framework": "next",
+    "openmrs": "next"
+  },
+  "packageManager": "yarn@4.10.3"
 }
 ```
 
@@ -153,6 +166,8 @@ Voici quelques éléments clés à retenir de l'examen de ce fichier:
 - La propriété `name` qui définit le nom du module. Cette propriété est utilisée comme identifiant unique du module dans la [import map](/docs/core-concepts#import-map).
 - La propriété `browser` qui pointe vers le point d'entrée du bundle construit (ce que l'app shell charge au runtime).
 - La propriété `main` qui définit le [point d'entrée](#the-application-entry-point-indexts) du code source du module frontend, qui est typiquement `src/index.ts`.
+- Les paquets runtime OpenMRS sont généralement des peer dependencies pour les consommateurs et des dev dependencies en `next` pour le développement local.
+- Les modules frontend React actuels utilisent Rspack et Vitest par défaut. Des modules plus anciens peuvent encore avoir des scripts Webpack ou Jest pendant leur migration.
 
 ### Le point d'entrée de l'application (`index.ts`)
 
@@ -230,6 +245,15 @@ Le fichier `routes.json` est utilisé pour configurer les métadonnées statique
 - Les dépendances `backend` que le module frontend requiert. C'est un objet qui indique à l'application frontend quels sont les modules du serveur OpenMRS dont le module frontend dépend, et de quelles versions. Si ces dépendances ne sont pas respectées, les administrateurs seront alertés
 
 La structure de ce fichier statique est dictée par le standard OpenMRS Routes [JSON schema](https://json.openmrs.org/routes.schema.json).
+
+Avant de livrer une nouvelle page ou extension, vérifiez si `routes.json` doit aussi déclarer:
+
+- `backendDependencies` ou `optionalBackendDependencies` pour les modules backend requis.
+- `privileges` pour l'accès par rôle à une extension.
+- `featureFlags` et des valeurs `featureFlag` par extension pour les fonctionnalités à masquer tant qu'elles ne sont pas activées.
+- Les flags `online` et `offline` pour les composants qui doivent se comporter différemment quand le support hors ligne est activé.
+
+Pour plus de détails sur les métadonnées d'extension, consultez le guide [Système d'extension](/docs/extension-system). Pour le comportement des dépendances backend et de la configuration côté distribution, consultez la [vue d'ensemble de la configuration](/docs/configure-o3/overview).
 
 ### Extensions et extension slots (comment les modules s’assemblent)
 

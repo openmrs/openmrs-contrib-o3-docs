@@ -2,7 +2,11 @@ import { Callout, Steps } from "nextra/components";
 
 # Création d'un module frontal
 
-Le module frontal [Template](https://github.com/openmrs/openmrs-esm-template-app) peut être utilisé comme point de départ pour créer un nouveau module frontal. Pour créer un nouveau module frontal, vous pouvez soit forker le dépôt Template, soit le cloner et le copier dans le nouveau dépôt.
+OpenMRS dispose d'un générateur dans [`openmrs/create-o3-app`](https://github.com/openmrs/create-o3-app) pour créer des modules O3. Il peut créer des modules autonomes, des modules dans un monorepo existant et de nouveaux monorepos avec les conventions O3 habituelles déjà configurées. Il nécessite Node.js 20 ou plus récent. Le module frontal [Template](https://github.com/openmrs/openmrs-esm-template-app) reste utile comme référence stable ou comme solution manuelle.
+
+<Callout type="warning">
+  Ne lancez pas `npx create-o3-app`. Le package `create-o3-app` non scopé sur npm est un projet tiers sans rapport. Le générateur OpenMRS est publié sous le nom scopé `@openmrs/create-o3-app`. Tant que ce package n'est pas disponible sur npm, construisez le générateur depuis les sources comme ci-dessous.
+</Callout>
 
 ## Exemple : Création d'un nouveau module frontal
 
@@ -19,15 +23,43 @@ Le processus pour cela serait le suivant :
 
 ### Étape 1
 
-Allez sur le dépôt GitHub de l'application seed [Template](https://github.com/openmrs/openmrs-esm-template-app) et cliquez sur le bouton `Use this template`. Choisissez `Create a new repository` et suivez les instructions pour créer un nouveau dépôt. Dans ce cas, nous nommerons le nouveau dépôt `openmrs-esm-active-prescriptions`. Une fois créé, clonez le nouveau dépôt sur votre machine locale.
+Clonez et construisez le générateur OpenMRS:
+
+```sh
+git clone https://github.com/openmrs/create-o3-app.git
+cd create-o3-app
+npm install
+npm run build
+cd ..
+```
+
+Lancez ensuite la commande de génération depuis le répertoire où le nouveau dossier de module doit être créé. Pour cet exemple, créez un module autonome nommé `active-prescriptions`:
+
+```sh
+node create-o3-app/dist/index.js active-prescriptions --standalone --package-name "@openmrs/esm-active-prescriptions-app" --route "/active-prescriptions" --route-component "ActivePrescriptions"
+```
+
+Si vous préférez accepter les valeurs par défaut et répondre aux prompts qui s'appliquent au répertoire courant, lancez `node create-o3-app/dist/index.js active-prescriptions`.
+
 <Callout emoji="ℹ️" type="info">
   Pourquoi le préfixe `esm`?
   Les modules frontaux ont la convention d'être préfixés par `esm`. Voir la note sur [les modules frontaux](/docs/frontend-modules/overview).
 </Callout>
 
+<Callout emoji="ℹ️" type="info">
+  Si vous devez partir directement du dépôt Template, ouvrez l'application seed [Template](https://github.com/openmrs/openmrs-esm-template-app), cliquez sur `Use this template`, choisissez `Create a new repository`, puis clonez le nouveau dépôt sur votre machine locale.
+</Callout>
+
 ### Étape 2
 
-Vous voudrez `cd` dans votre répertoire de projet et exécuter `yarn up openmrs@next @openmrs/esm-framework@next` pour mettre à jour les bibliothèques principales d'OpenMRS. Ensuite, exécutez `yarn` pour installer les dépendances du projet.
+Entrez dans votre répertoire de projet et installez les dépendances si le CLI ne l'a pas déjà fait:
+
+```sh
+cd openmrs-esm-active-prescriptions-app
+yarn
+```
+
+Lancez `yarn up openmrs@next @openmrs/esm-framework@next` si vous devez récupérer les dernières bibliothèques core d'OpenMRS.
 
 Exécutez `yarn start` pour lancer l'application. Pour exécuter l'application sur un port spécifique, vous pouvez ajouter le suffixe `--port portNumber` à la commande start.
 
@@ -49,51 +81,37 @@ TL;DR : la commande `yarn start` exécute en fait `openmrs develop` qui, selon u
 
 ### Étape 3
 
-Ensuite, nous suivrons les étapes dans le README pour adapter le code à nos besoins. Cela inclura les étapes suivantes :
+Ensuite, vérifiez les fichiers générés et adaptez-les à vos besoins. Si vous avez utilisé `create-o3-app`, la plupart de ces valeurs devraient déjà correspondre aux options ou aux réponses données au CLI. Si vous avez utilisé le Template directement, vous devrez renommer les valeurs du template vous-même. Vérifiez les points suivants:
 
 - Remplacer toutes les instances de `template` par `active-prescriptions`.
-- Mettre à jour le point d'entrée de l'application dans `src/index.ts` comme approprié, y compris les éléments suivants :
+- Vérifier les métadonnées du module:
 
-  - Changer le `moduleName` en `@openmrs/esm-active-prescriptions-app`.
-  - Changer le `featureName` de `root-world` à une chaîne vide. Vous le changerez plus tard pour une valeur plus utile.
+  - `src/constants.ts` doit exporter `moduleName = "@openmrs/esm-active-prescriptions-app"`.
+  - `src/index.ts` doit passer ce `moduleName` dans les options de lifecycle.
+  - Si le point d'entrée généré contient encore un `featureName` de placeholder, remplacez-le par une valeur plus utile pour ce module.
   - Assurez-vous d'avoir une fonction `startupApp()` qui appelle `defineConfigSchema()` si votre module a une configuration. Pour les modules Core v5+, cela est requis pour que les schémas de configuration soient correctement enregistrés.
 
 - Mettre à jour la route vers le module frontal.
 
-  - Nous avons besoin d'une URL de route pour accéder au module frontal. Celle-ci est spécifiée dans `src/routes.json` dans la propriété `pages`. Vous verrez qu'un composant `root` a la route `root`, c'est notre `root.component.tsx`.
- ```json filename="src/routes.json"
-  "$schema": "https://json.openmrs.org/routes.schema.json",
-  "backendDependencies": {
-    "fhir2": ">=1.2",
-    "webservices.rest": "^2.24.0"
-  },
-  "extensions": [
-    {
-      "name": "Red box",
-      "component": "redBox",
-      "slot": "Boxes"
-    },
-    {
-      "name": "Blue box",
-      "component": "blueBox",
-      "slot": "Boxes"
-    },
-        {
-      "name": "Brand box",
-      "component": "blueBox",
-      "slot": "Boxes"
-    }
-  ],
-  "pages": [
-    {
-      "component": "root",
-      "route": "active-prescriptions"
-    }
-  ]
+  - Nous avons besoin d'une URL de route pour accéder au module frontal. Celle-ci est spécifiée dans `src/routes.json` dans la propriété `pages`. `create-o3-app` enregistre la route générée contre le lifecycle exporté `root`, et `root.component.tsx` rend le composant de route.
+
+  ```json filename="src/routes.json"
+  {
+    "$schema": "https://json.openmrs.org/routes.schema.json",
+    "pages": [
+      {
+        "route": "active-prescriptions",
+        "component": "root",
+        "online": true,
+        "offline": true
+      }
+    ],
+    "extensions": []
+  }
   ```
 
-Maintenant que la route est configurée, elle peut être accessible via `http://localhost:8080/openmrs/spa/active-prescriptions`, ce qui afficherait le modèle de l'application template. 
-Le modèle contient des ressources utiles sur les fonctionnalités clés du framework O3 qui vous aideront probablement dans le développement de votre module frontal. Pour commencer à modifier le code du template, vous pouvez suivre les instructions dans le `README.md` du [dépôt template](https://github.com/openmrs/openmrs-esm-template-app/blob/main/README.md). 
+Maintenant que la route est configurée, elle peut être accessible via `http://localhost:8080/openmrs/spa/active-prescriptions`, ce qui devrait afficher le boilerplate généré pour la nouvelle app.
+Le boilerplate contient des ressources utiles sur les fonctionnalités clés du framework O3 qui vous aideront probablement dans le développement de votre module frontal. Pour comprendre le template sous-jacent, vous pouvez lire le `README.md` du [dépôt template](https://github.com/openmrs/openmrs-esm-template-app/blob/main/README.md).
 
 ### Étape 4
 
@@ -105,9 +123,10 @@ Profitez ! Vous devriez maintenant avoir un module frontal personnalisé que vou
 
 Le processus de création d'un nouveau module frontal dans un monorepo est presque identique à celui de la création dans un polyrepo, avec quelques ajustements :
 
-1. Placez le contenu du Template dans un nouveau répertoire sous `packages/`. Pour notre exemple ci-dessus, nous créerions un nouveau répertoire appelé `packages/esm-referrals-queue` et déplacerions le contenu du Template dedans.
-2. Supprimez les fichiers de configuration déjà présents au niveau de l'espace de travail. Il s'agit de fichiers et de dossiers tels que `.github` et `.eslintrc`.
-3. Supprimez les `devDependencies` du nouveau module frontal dans le `package.json`
+1. Depuis la racine du monorepo, lancez `node /path/to/create-o3-app/dist/index.js referrals-queue --monorepo` et répondez aux prompts. En mode non interactif, le CLI utilise `packages/apps/esm-referrals-queue` par défaut.
+2. Si vous copiez le Template manuellement, placez son contenu dans un nouveau répertoire sous `packages/`. Pour notre exemple ci-dessus, nous créerions un nouveau répertoire appelé `packages/esm-referrals-queue` et déplacerions le contenu du Template dedans.
+3. Supprimez les fichiers de configuration déjà présents au niveau de l'espace de travail. Il s'agit de fichiers et de dossiers tels que `.github` et `.eslintrc`.
+4. Supprimez les `devDependencies` du nouveau module frontal dans le `package.json`
    qui sont déjà dans les `devDependencies` du `package.json` au niveau de l'espace de travail.
 
 C'est tout !

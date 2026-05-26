@@ -2,7 +2,11 @@ import { Callout, Steps } from "nextra/components";
 
 # Creating a frontend module
 
-The [Template](https://github.com/openmrs/openmrs-esm-template-app) frontend module can be used as a starting point for creating a new frontend module. To create a new frontend module, you can either fork the Template repository or clone and copy it over to the new repository.
+OpenMRS has a generator at [`openmrs/create-o3-app`](https://github.com/openmrs/create-o3-app) for scaffolding O3 modules. It can generate standalone modules, modules inside existing monorepos, and new monorepos with the usual O3 conventions already wired up. It requires Node.js 20 or newer. The [Template](https://github.com/openmrs/openmrs-esm-template-app) frontend module is still useful as a stable reference or as a manual fallback.
+
+<Callout type="warning">
+  Do not run `npx create-o3-app`. The unscoped `create-o3-app` package on npm is an unrelated third-party project. The OpenMRS generator is published under the scoped name `@openmrs/create-o3-app`. Until that package is available on npm, build the generator from source as shown below.
+</Callout>
 
 ## Example: Creating a new frontend module
 
@@ -19,15 +23,43 @@ The process for doing that would be as follows:
 
 ### Step 1
 
-Go to the GitHub repository for the [Template](https://github.com/openmrs/openmrs-esm-template-app) seed app and click the `Use this template` button. Choose `Create a new repository` and follow the instructions to create a new repository. In this case, we'll name the new repository `openmrs-esm-active-prescriptions`. Once created, clone the new repository to your local machine.
+Clone and build the OpenMRS generator:
+
+```sh
+git clone https://github.com/openmrs/create-o3-app.git
+cd create-o3-app
+npm install
+npm run build
+cd ..
+```
+
+Then run the scaffold command from the directory where you want the new module folder to be created. For this example, create a standalone module named `active-prescriptions`:
+
+```sh
+node create-o3-app/dist/index.js active-prescriptions --standalone --package-name "@openmrs/esm-active-prescriptions-app" --route "/active-prescriptions" --route-component "ActivePrescriptions"
+```
+
+If you prefer to accept the defaults and answer any prompts that apply to your current directory, run `node create-o3-app/dist/index.js active-prescriptions`.
+
 <Callout emoji="ℹ️" type="info">
   Why the `esm` prefix?
   Frontend modules have a convention of being prefixed with `esm`. See the note about [frontend modules](/docs/frontend-modules/overview).
 </Callout>
 
+<Callout emoji="ℹ️" type="info">
+  If you need to work from the Template repository directly, go to the [Template](https://github.com/openmrs/openmrs-esm-template-app) seed app, click `Use this template`, choose `Create a new repository`, and clone the new repository to your local machine.
+</Callout>
+
 ### Step 2
 
-You'll want to `cd` into your project directory and run `yarn up openmrs@next @openmrs/esm-framework@next` to update the OpenMRS core libraries. Then run `yarn` to install the project dependencies.
+You'll want to `cd` into your project directory and install dependencies if the CLI did not already do so:
+
+```sh
+cd openmrs-esm-active-prescriptions-app
+yarn
+```
+
+Run `yarn up openmrs@next @openmrs/esm-framework@next` if you need to pull in the latest OpenMRS core libraries.
 
 Run `yarn start` to get the app running. To run the app in a specific port you can add the suffix `--port portNumber` to the start command.
 
@@ -48,51 +80,37 @@ TLDR; the `yarn start` command actually runs `openmrs develop` which according t
 
 ### Step 3
 
-Next, we'll follow the steps in the README to adapt the code to our needs. That'll include the following steps:
+Next, review the generated files and adapt them to your needs. If you used `create-o3-app`, most of these values should already match the flags or prompts you gave the CLI. If you used the Template directly, you'll need to rename the template values yourself. Check the following:
 
-- Replace all instances of `template` with `active-prescriptions`.
-- Update the app entry point at `src/index.ts` as appropriate, including the following:
+- Replace any remaining instances of `template` with `active-prescriptions`.
+- Confirm the module metadata:
 
-  - Change the `moduleName` to `@openmrs/esm-active-prescriptions-app`.
-  - Change the `featureName` from `root-world` to a blank string. You'll change this to a more useful value later on.
+  - `src/constants.ts` should export `moduleName = "@openmrs/esm-active-prescriptions-app"`.
+  - `src/index.ts` should pass that `moduleName` into the lifecycle options.
+  - If the generated entry point still has a placeholder `featureName`, change it to a more useful value for this module.
   - Ensure you have a `startupApp()` function that calls `defineConfigSchema()` if your module has configuration. For Core v5+ modules, this is required for configuration schemas to be registered properly.
 
 - Update the route to the frontend module.
 
-  - We need a route URL to access the frontend module. This is specified in `src/routes.json` in the `pages` property. You would see that a component `root` has the route `root`, this is our `root.component.tsx`.
+  - We need a route URL to access the frontend module. This is specified in `src/routes.json` in the `pages` property. `create-o3-app` registers the generated route against the exported `root` lifecycle, and `root.component.tsx` renders the route component.
+
   ```json filename="src/routes.json"
-  "$schema": "https://json.openmrs.org/routes.schema.json",
-  "backendDependencies": {
-    "fhir2": ">=1.2",
-    "webservices.rest": "^2.24.0"
-  },
-  "extensions": [
-    {
-      "name": "Red box",
-      "component": "redBox",
-      "slot": "Boxes"
-    },
-    {
-      "name": "Blue box",
-      "component": "blueBox",
-      "slot": "Boxes"
-    },
-        {
-      "name": "Brand box",
-      "component": "blueBox",
-      "slot": "Boxes"
-    }
-  ],
-  "pages": [
-    {
-      "component": "root",
-      "route": "active-prescriptions"
-    }
-  ]
+  {
+    "$schema": "https://json.openmrs.org/routes.schema.json",
+    "pages": [
+      {
+        "route": "active-prescriptions",
+        "component": "root",
+        "online": true,
+        "offline": true
+      }
+    ],
+    "extensions": []
+  }
   ```
 
-Now that the route is setup, it can be accessed via `http://localhost:8080/openmrs/spa/active-prescriptions`, which would show the boilerplate for the template app. 
-The boilerplate has useful resources about key features of the O3 framework that will likely help you in the development of your frontend module. To start changing the template code, you can follow the instructions in the `README.md` of the [template repository](https://github.com/openmrs/openmrs-esm-template-app/blob/main/README.md). 
+Now that the route is setup, it can be accessed via `http://localhost:8080/openmrs/spa/active-prescriptions`, which should show the generated boilerplate for the new app.
+The boilerplate has useful resources about key features of the O3 framework that will likely help you in the development of your frontend module. To understand the underlying template, you can read the `README.md` of the [template repository](https://github.com/openmrs/openmrs-esm-template-app/blob/main/README.md).
 
 ### Step 4
 
@@ -104,9 +122,10 @@ Profit! You should now have a custom frontend module that you can use in your Op
 
 The process for creating a new frontend module in a monorepo is nearly identical to the one for creating one in a polyrepo with a few tweaks:
 
-1. Put the contents of the Template into a new directory under `packages/`. For our example above, we'd create a new directory called `packages/esm-referrals-queue` and move the contents of Template into it.
-2. Remove configuration files that are already present at the workspace level. These include files and folders such as `.github` and `.eslintrc`.
-3. Remove `devDependencies` from the new frontend module's `package.json`
+1. From the monorepo root, run `node /path/to/create-o3-app/dist/index.js referrals-queue --monorepo` and answer the prompts. In non-interactive mode, the CLI defaults to `packages/apps/esm-referrals-queue`.
+2. If you copy the Template manually instead, put its contents into a new directory under `packages/`. For our example above, we'd create a new directory called `packages/esm-referrals-queue` and move the contents of Template into it.
+3. Remove configuration files that are already present at the workspace level. These include files and folders such as `.github` and `.eslintrc`.
+4. Remove `devDependencies` from the new frontend module's `package.json`
    which are already in the `devDependencies` of the `package.json` at
    the workspace level.
 
