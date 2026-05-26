@@ -15,27 +15,36 @@ how modules are loaded and configured. The diagram below shows the main building
   />
 </div>
 
-**Diagram notes (for clarity):** The “distribution manifest” refers to the distro config
-`spa-assemble-config.json`, which produces the import map. Modules load at runtime from URLs in that import map (often a
-CDN or a local dev server), not directly from the npm registry. “Webpack dev server (proxy)” represents the local dev
-proxy; many packages now use Rspack, but the idea is the same.
+**Diagram notes (for clarity):** `spa-assemble-config.json` is used during distro assembly to download frontend module
+packages and produce the two runtime artifacts the app shell reads: `importmap.json` and `routes.registry.json`. Modules
+do not load directly from npm at runtime. They load from bundle URLs in the import map, or from local dev server URLs when
+import map and route overrides are active.
 
 The major pieces in the O3 frontend architecture are:
 
 - The [app shell](/docs/core-concepts#app-shell) - the base layer that coordinates startup and runtime behavior.
 - [Frontend modules](/docs/core-concepts#frontend-modules) - composable UI building blocks.
-- The [import map](/docs/core-concepts#import-map) - a JSON file that tells the app shell what modules to load and where to load them from.
+- The [import map](/docs/core-concepts#import-map) - a JSON file that maps module names to module bundle URLs.
+- The [routes registry](/docs/core-concepts#routes-registry) - a JSON file that tells the app shell which pages,
+  extensions, modals, workspaces, and feature flags modules provide.
 - The [core framework](/docs/core-concepts#core-framework) - shared libraries and APIs used by frontend modules.
 
 ## Where this lives in code
 
-If you want to see these pieces in the reference implementation, the
-[`openmrs-esm-core`](https://github.com/openmrs/openmrs-esm-core) monorepo groups them as follows:
+Two repositories are especially useful when you want to trace these concepts in real code. The
+[`openmrs-esm-core`](https://github.com/openmrs/openmrs-esm-core) monorepo contains the runtime and tooling:
 
 - **App shell**: [`packages/shell/esm-app-shell`](https://github.com/openmrs/openmrs-esm-core/tree/main/packages/shell/esm-app-shell)
 - **Core framework** (aggregated): [`packages/framework/esm-framework`](https://github.com/openmrs/openmrs-esm-core/tree/main/packages/framework/esm-framework)
 - **Framework libraries** (individual packages): [`packages/framework/*`](https://github.com/openmrs/openmrs-esm-core/tree/main/packages/framework)
 - **Core frontend modules**: [`packages/apps/*`](https://github.com/openmrs/openmrs-esm-core/tree/main/packages/apps)
+- **Map readers and dynamic loading**: [`packages/framework/esm-dynamic-loading`](https://github.com/openmrs/openmrs-esm-core/tree/main/packages/framework/esm-dynamic-loading)
+- **Route and extension registration**: [`packages/framework/esm-routes`](https://github.com/openmrs/openmrs-esm-core/tree/main/packages/framework/esm-routes)
+- **Distro assembly tooling**: [`packages/tooling/openmrs`](https://github.com/openmrs/openmrs-esm-core/tree/main/packages/tooling/openmrs)
+
+The [`openmrs-distro-referenceapplication`](https://github.com/openmrs/openmrs-distro-referenceapplication) repository
+shows how a real distro uses that tooling. Its `frontend/spa-assemble-config.json` chooses frontend modules and versions,
+while `frontend/spa-build-config.json` points the built app shell at the generated import map and routes registry.
 
 ## App shell
 
@@ -43,9 +52,14 @@ The app shell is the host application that boots O3 and coordinates loading and 
 [RFC-26](https://github.com/openmrs/openmrs-rfc-frontend/blob/e745ee9c37b2ca0ae6f4fc93259724e61bfac82e/text/0026-activation-distribution.md),
 it handles:
 
-- **Startup:** prepares `index.html`, loads the import map, and wires module routes/activators.
+- **Startup:** renders `index.html`, loads the import map and routes registry, and wires module loading/routing.
 - **Runtime services:** defines breakpoints, subscriptions (modals, toasts, inline notifications), and offline support.
 - **Platform wiring:** initializes global state and sets up the configuration and extension systems.
+
+At startup, the app shell does not eagerly execute every frontend module. It sets up core UI services, reads
+`<script type="systemjs-importmap">` and `<script type="openmrs-routes">` tags from `index.html`, registers the metadata
+declared in the routes registry, loads configuration, and then starts single-spa. Module code is fetched later, when a
+route, extension, modal, or workspace actually needs one of that module's exported lifecycle functions.
 
 Learn more: [App shell deep dive](/docs/app-shell)
 
@@ -54,21 +68,24 @@ Learn more: [App shell deep dive](/docs/app-shell)
 [Frontend modules](/docs/frontend-modules/overview) are the units of functionality that make up the O3 UI. Think of each
 module as a mini‑app that owns a slice of the interface (for example, the patient chart or the primary navigation).
 
-O3 treats these modules as `microfrontends` (popularized by [single-spa](https://single-spa.js.org)). The app shell loads
-modules from the import map and calls each module’s **activator** (entry point) to register routes and extensions.
-Modules export lifecycle functions that follow the interface defined in
+O3 treats these modules as `microfrontends` (popularized by [single-spa](https://single-spa.js.org)). The app shell reads
+the routes registry generated from each selected module's route metadata, registers the declared pages, extensions, modals,
+workspaces, and feature flags, then loads the module's exported lifecycle functions from the import map when UI code is
+needed. If a module exports `startupApp()`, the app shell calls it once before loading that module's component lifecycle
+functions. Modules export lifecycle functions shaped for single-spa, following the interface defined in
 [RFC-26](https://github.com/openmrs/openmrs-rfc-frontend/blob/e745ee9c37b2ca0ae6f4fc93259724e61bfac82e/text/0026-activation-distribution.md).
-In most distros, that import map is generated from `spa-assemble-config.json`.
-Extensions are plug‑in UI blocks that modules register into named slots.
+In most distros, the import map and routes registry are generated during distro assembly from `spa-assemble-config.json`
+and the selected modules' packaged route metadata.
+Extensions are plug‑in UI blocks that modules define for named slots.
 
 Anatomy essentials (files you’ll touch most often):
 
 - `package.json` - module metadata, scripts, and dependencies
-- `src/index.ts` - entry point that registers routes and extensions
-- `routes.json` - static route metadata for the app shell
-- `config-schema.ts` - where the module’s configuration properties live
+- `src/index.ts` - entry point that exports lifecycle functions and setup code
+- `src/routes.json` - static route metadata for the app shell
+- `src/config-schema.ts` - where the module’s configuration properties live
 
-Frontend modules are loaded on demand by the app shell when they’re needed, which improves initial load performance.
+Frontend module code is loaded on demand by the app shell when it’s needed, which improves initial load performance.
 
 Frontend modules can live in standalone repositories or in domain-focused monorepos when multiple modules share a domain.
 For example, patient-management modules (registration, queues, appointments, bed management, etc.) are grouped in the
@@ -82,7 +99,7 @@ Next:
 
 - [Frontend modules overview](/docs/frontend-modules/overview)
 - [Anatomy of a frontend module](/docs/frontend-modules/overview#anatomy-of-a-frontend-module)
-- [Version tags (`next` vs `latest`)](/docs/frontend-modules/overview)
+- [Version tags (`next` vs `latest`)](/docs/frontend-modules/overview#versions-of-frontend-modules-explained)
 
 ## Import map
 
@@ -93,12 +110,12 @@ to resolve and load module bundles.
 
 In practice, import maps are generated and served by a distro (not the app shell). For example, the import map for the
 O3 community [reference application](https://dev3.openmrs.org/openmrs/spa) is served at
-`/openmrs/spa/importmap.json`, and its source lives in the OpenMRS
-[distro config repository](https://github.com/openmrs/openmrs-distro-referenceapplication/blob/212eb93547e9946621e749c98b3eb2a0048252f0/frontend/spa-build-config.json#L4).
+`/openmrs/spa/importmap.json`, and the module/version list that generates it lives in
+[`frontend/spa-assemble-config.json`](https://github.com/openmrs/openmrs-distro-referenceapplication/blob/main/frontend/spa-assemble-config.json).
 Most distros follow the same approach.
 
 To view your distro's import map in the browser, navigate to `/openmrs/spa/importmap.json` (or your distro’s SPA base
-path), where you'll see something like:
+path), where you'll see a simplified excerpt like:
 
 ```json
 {
@@ -107,40 +124,78 @@ path), where you'll see something like:
     "@openmrs/esm-login-app": "./openmrs-esm-login-app-4.3.2-pre.671/openmrs-esm-login-app.js",
     "@openmrs/esm-primary-navigation-app": "./openmrs-esm-primary-navigation-app-4.3.2-pre.671/openmrs-esm-primary-navigation-app.js",
     "@openmrs/esm-patient-chart-app": "./openmrs-esm-patient-chart-app-4.3.1-pre.1352/openmrs-esm-patient-chart-app.js"
-    // ... more modules
   }
 }
 ```
 
-The keys in this object are module `name`s (unique identifiers), and the values are the relative paths to the frontend
-modules. The app shell reads this map at runtime and registers each module in the browser. Most modules are Module
-Federation bundles, and some legacy modules are loaded as plain SystemJS scripts. See the
-[App shell deep dive](/docs/app-shell) for the loading mechanics.
+The keys in this object are module `name`s (unique identifiers), and the values are bundle URLs. These URLs are often
+relative paths in assembled distros, but local development overrides can point at absolute URLs such as a local dev server.
+The app shell reads the import map at runtime when it needs to load a module's code. Current O3 frontend modules are
+loaded as Module Federation containers: the app shell appends a script tag for the bundle URL, then calls the container's
+`init` and `get` methods to load exported lifecycle functions. See the [App shell deep dive](/docs/app-shell) for the
+loading mechanics.
 
-Learn more: [Configuration system](/docs/configuration-system)
+Learn more: [Module loading](/docs/frontend-modules/loading-modules)
+
+## Routes registry
+
+The routes registry is a JSON object that maps module names to the static metadata from those modules' `routes.json`
+files. The app shell reads it at startup to register:
+
+- Pages and their routes
+- Extensions and the slots they attach to
+- Modals, workspaces, workspace groups, and feature flags
+
+During distro assembly, `openmrs assemble` extracts each selected frontend module, reads its packaged `routes.json`, and
+writes the combined registry to `routes.registry.json`. In local development, `openmrs develop` reads `src/routes.json`
+directly and serves a generated registry for the running dev app.
+
+This is intentionally separate from the import map. The import map answers “where is this module's JavaScript bundle?”
+The routes registry answers “what pages, extensions, and other UI entry points does this module provide?” A module usually
+needs entries in both places before its UI can render.
 
 ## How O3 loads modules (quick mental model)
 
-1. The app shell boots and preloads the import map.
-2. It resolves module URLs and registers module bundles in the browser.
-3. It calls each module’s activator to register routes and extensions.
-4. The router mounts modules as users navigate.
+1. The app shell boots and preloads the import map and routes registry.
+2. It reads the routes registry and registers the declared pages, extensions, modals, workspaces, and feature flags.
+3. When a route, extension, modal, or workspace needs code, it resolves that module's URL from the import map and loads its exported lifecycle functions.
+4. The router mounts pages as users navigate, and extension slots mount extensions when their host UI renders.
 
 ## If you need to change…
 
-- **Which modules load (and versions)** → edit the distro’s `spa-assemble-config.json` (import map source).
-- **How modules load globally** → app shell behavior/configuration.
-- **What a module does** → the module’s own repo (UI, routes, extensions, config).
+- **Which modules and versions are included in a distro** → edit the distro’s `spa-assemble-config.json`.
+- **Which pages or extensions a module provides** → edit the module's `src/routes.json`.
+- **How modules load globally** → app shell and dynamic-loading behavior.
+- **What a module does after it loads** → the module’s own repo (UI, lifecycle exports, config, and business logic).
 
 ## Core framework
 
-The O3 framework is packaged as a JavaScript library in the
-[NPM registry](https://www.npmjs.com/package/@openmrs/esm-framework). Most app code imports from
-`@openmrs/esm-framework` to use these services:
+The O3 framework is the shared runtime library that frontend modules build on. It is published as
+[`@openmrs/esm-framework`](https://www.npmjs.com/package/@openmrs/esm-framework), but in the source repo it is made of
+many focused packages under `packages/framework/*`. The aggregate package re-exports the public APIs from those packages
+so modules can usually import from one place:
 
-- **Platform services:** configuration, routes, state, extensions, and feature flags.
-- **UX and navigation:** navigation, breadcrumbs, and offline support.
-- **Developer utilities:** API helpers, globals, and general utilities.
+```ts
+import { openmrsFetch, useConfig, ExtensionSlot, showToast } from "@openmrs/esm-framework";
+```
+
+Think of the framework as the contract between the app shell and frontend modules. The app shell decides which modules are
+available and when their code should load. The framework gives those modules the APIs they use after they are loaded.
+
+The most important pieces are:
+
+- **Backend and session APIs:** `openmrsFetch`, REST base URLs, backend dependency checks, current user/session helpers,
+  patient and visit utilities, and event subscriptions.
+- **Runtime metadata systems:** configuration schemas, extension registration, extension slots, feature flags, global
+  stores, app context, and expression evaluation.
+- **Rendering and lifecycle helpers:** React hooks, `Extension` and `ExtensionSlot` components, lifecycle helpers such as
+  `getSyncLifecycle` and `getAsyncLifecycle`, and utilities that bridge React components into single-spa lifecycles.
+- **Shared UX services:** styleguide components, navigation and breadcrumbs, modals, workspaces, toasts, snackbars,
+  notifications, translations, and offline support.
+
+For module authors, the rule of thumb is: use the framework for cross-cutting O3 behavior instead of inventing local
+versions of fetch wrappers, global state, extension wiring, config loading, or notification UI. If you need to change how
+those shared systems behave globally, that usually belongs in `openmrs-esm-core`, not in an individual frontend module.
 
 Learn more: [Framework API reference](/docs/framework-api-reference)
 
