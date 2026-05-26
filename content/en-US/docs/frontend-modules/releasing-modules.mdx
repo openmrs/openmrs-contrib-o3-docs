@@ -19,10 +19,10 @@ import { Callout } from "nextra/components";
   oft-overlooked steps in the release process.
 </Callout>
 
-Cutting an O3 release involves two steps:
+Cutting an O3 release normally has two publishing stages:
 
-1. Bumping your local package versions and pushing those changes to GitHub. This step will trigger the CI's `pre-release` job.
-2. Cutting a release using the GitHub releases UI. This step triggers the `release` CI job, which publishes the package(s) to the npm registry.
+1. Open and merge a release PR that bumps local package versions. The merge to `main` triggers the CI `pre_release` job, or the equivalent branch of the shared release workflow, and publishes a pre-release build tagged `next`.
+2. Create a release using the GitHub Releases UI. The `release` event triggers CI to publish the package(s) to npm with the `latest` tag.
 
 If you want to publish a release version of your module, you need to think about a few things first, including:
 
@@ -107,7 +107,7 @@ Once you're done versioning, you should see a diff in your editor that includes 
 
 Create a new branch named `chore/release-vX.X.X` where `X.X.X` is the version number you are releasing. Commit these changes with the title `(chore) Release vX.X.X`. See an example of [this commit](https://github.com/openmrs/openmrs-esm-patient-chart/pull/1279) that bumps `Patient Chart` to `v5.0.0`.
 
-Once your release commit is merged, the CI workflow's `pre-release` job gets triggered and publishes a pre-release version tagged `next` on npm. This is useful for early testing before you publish `latest`. Under the hood, this job runs the `ci:publish-next` script.
+Once your release commit is merged into `main`, CI publishes a pre-release version tagged `next` on npm. This is useful for early testing before you publish `latest`. The exact script name is repo-specific: `openmrs-esm-core` uses `ci:publish-next`, many frontend module repos use `ci:prepublish`, and some repos pass the command into the shared `release-frontend-module` workflow.
 
 ### Releasing on GitHub
 
@@ -116,22 +116,22 @@ You can then switch to your browser and head back to the releases page of the re
 <Callout type="info">
   Release notes should match the format of the [O3 changelog](/docs/changelog). This format includes a title, a
   description, and a list of changes. The main categories of changes are `Features`, `Bug Fixes`, `Breaking Changes`,
-  `Refactors`, `Docs` and `Tests`. Each category should have a list of changes under it. You might need to do a bit more
+  `Chores`, `Docs`, and `Tests`. Each category should have a list of changes under it. You might need to do a bit more
   work to get the changelog to match this format. It's worth the effort, as it makes it easier for the Release Manager
   to review the changes and prepare release notes for the community.
 </Callout>
 
 Once you are satisfied that everything looks OK, click the `Publish release` button. This step should trigger the CI workflow and, notably, the `release` job.
 
-Under the hood, that job runs the following script:
+For many monorepos, that job runs a publish script similar to this:
 
 ```json
-"ci:publish": "yarn workspaces foreach --all --topological npm publish --access public --tag latest",
+"ci:publish": "yarn workspaces foreach --all --topological --exclude @openmrs/esm-patient-management npm publish --access public --tag latest"
 ```
 
-This command publishes a new package tagged `latest`. This is the version consumers will get by default when they install your frontend module.
+Single-package repos may instead call `yarn npm publish --access public` directly, and monorepos often exclude the root workspace from publishing. The important invariant is the npm dist-tag: pre-release automation publishes `next`, while a GitHub release publishes `latest`.
 
-Broadly speaking, when a PR is merged, a `pre-release` job in our primary GitHub Actions CI workflow gets triggered. This job publishes a version of the frontend module to its corresponding npm registry tagged `next`.
+The `latest` tag is the version consumers get by default when they install your frontend module.
 
 To see what version the `latest` tag corresponds to for a frontend module, go to its npm registry page and click on the `version` tag. Look out for the most recent version tagged `latest`.
 
@@ -145,6 +145,6 @@ To see what version the `latest` tag corresponds to for a frontend module, go to
 Not every repo wires releases the same way. Before releasing, check:
 
 - `package.json` for `release`, `ci:publish`, `ci:publish-next`, or `ci:prepublish` scripts.
-- `.github/workflows/ci.yml` to see which tags are published on `push` vs `release`.
+- `.github/workflows/ci.yml`, `.github/workflows/node.js.yml`, or a shared workflow reference to see which tags are published on `push` vs `release`.
 
 Always follow the scripts defined in that repo, even if names differ from this guide.

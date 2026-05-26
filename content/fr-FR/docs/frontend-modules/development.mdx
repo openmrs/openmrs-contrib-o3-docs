@@ -6,7 +6,7 @@ Après avoir [configuré](/docs/frontend-modules/setup) un module frontend local
 
 ## Installer les dépendances
 
-Dans la plupart des cas, nous utilisons la dernière version de [yarn](https://yarnpkg.com/getting-started) comme gestionnaire de paquets. Pour installer les dépendances, allez généralement dans votre copie locale du module frontend sur lequel vous voulez travailler, puis lancez `yarn`, qui est un raccourci pour `yarn install`. Par exemple, pour travailler sur le module frontend [Patient Chart](https://github.com/openmrs/openmrs-esm-patient-chart):
+La plupart des dépôts frontend épinglent leur gestionnaire de paquets dans `package.json` et, pour les dépôts Yarn Berry, dans `.yarnrc.yml`. Utilisez la version de Yarn déclarée par le dépôt, puis allez dans votre copie locale du module frontend sur lequel vous voulez travailler et lancez `yarn`, qui est un raccourci pour `yarn install`. Par exemple, pour travailler sur le module frontend [Patient Chart](https://github.com/openmrs/openmrs-esm-patient-chart):
 
 ```sh
 cd openmrs-esm-patient-chart
@@ -36,6 +36,12 @@ yarn start --sources packages/esm-patient-vitals-app
 
 L'argument qui suit `--sources` est le chemin relatif du module frontend à exécuter.
 
+Si le workspace peut résoudre les packages par nom, vous pouvez aussi utiliser `--packages` au lieu des chemins de fichiers:
+
+```sh
+yarn start --packages @openmrs/esm-patient-vitals-app
+```
+
 Il est possible d'exécuter plusieurs modules frontend en même temps. Par exemple, si vous modifiez l'[Order Basket](https://zeroheight.com/23a080e38/p/71ad91-order-basket), vous voudrez probablement tester ces changements avec les modules Medications et Orders. Pour cela:
 
 ```sh
@@ -55,7 +61,7 @@ Cela démarre l'app shell sur `http://localhost:7000/openmrs/spa` et sert le mod
 <Callout type="info">
   **Détail sur l'outillage `openmrs`**
 
-`yarn start` est un raccourci pour lancer le [CLI openmrs](https://github.com/openmrs/openmrs-esm-core/tree/main/packages/tooling/openmrs). Plus précisément, il exécute `openmrs develop`, qui sert l'app shell et l'exécute contre un backend OpenMRS donné. Il démarre un serveur de développement local sur le port 8080 et proxifie les requêtes vers le backend par défaut, hébergé sur https://dev3.openmrs.org. Ce serveur lance par défaut les copies locales des modules frontend que vous indiquez et surcharge leurs entrées dans l'import map. Tous les autres modules frontend exécutés sur ce serveur devraient être les dernières versions du serveur communautaire dev3. Avec `openmrs develop`, vous pouvez aussi:
+`yarn start` est un raccourci pour lancer le [CLI openmrs](https://github.com/openmrs/openmrs-esm-core/tree/main/packages/tooling/openmrs). Plus précisément, il exécute `openmrs develop`, qui sert l'app shell et l'exécute contre un backend OpenMRS donné. Il démarre un serveur de développement local sur le port 8080 et proxifie les requêtes vers le backend par défaut, hébergé sur https://dev3.openmrs.org. Ce serveur lance les copies locales des modules frontend indiqués et surcharge à la fois leurs entrées dans l'import map et leurs entrées dans le registre de routes. Les autres modules frontend viennent de l'import map et du registre de routes exposés par le backend sélectionné, dev3 par défaut. Avec `openmrs develop`, vous pouvez aussi:
 
 - Spécifier un autre serveur backend et proxifier les requêtes vers lui. Par exemple, pour exécuter l'app Vitals et proxifier vers le backend de l'environnement QA O3:
 
@@ -64,8 +70,8 @@ Cela démarre l'app shell sur `http://localhost:7000/openmrs/spa` et sert le mod
   ```
 
 - Spécifier un chemin serveur cible différent, avec `/openmrs/spa` par défaut.
-- Spécifier une URL d'API différente, avec `openmrs` par défaut.
-- Spécifier une import map personnalisée.
+- Spécifier une URL d'API différente, avec `/openmrs/` par défaut.
+- Spécifier une import map ou un registre de routes personnalisé.
 
 Pour en savoir plus sur la commande `develop`, lisez son [implémentation](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/tooling/openmrs/src/commands/develop.ts).
 
@@ -73,10 +79,12 @@ Pour en savoir plus sur la commande `develop`, lisez son [implémentation](https
 
 ## Utiliser les surcharges d'import map
 
-O3 détermine où charger le code des modules frontend à partir de l'[import map](/docs/core-concepts#import-map) fournie à l'app shell. L'import map est un objet JSON qui associe des spécificateurs de module à des URLs. Vous pouvez trouver l'import map de votre distribution O3 en ouvrant `/openmrs/spa/importmap.json` dans votre navigateur. Le module frontend [Devtools](https://github.com/openmrs/openmrs-esm-core/tree/main/packages/apps/esm-devtools-app) fournit une interface pour surcharger les entrées de l'import map. Vous pouvez l'utiliser pendant le développement local pour charger des copies de vos modules frontend depuis votre serveur de développement local. Par exemple, si vous lancez un [serveur local avec l'app shell](#exécuter-lapp-shell-localement), vous pouvez surcharger en même temps des entrées d'import map pour plusieurs modules frontend issus de plusieurs projets. C'est utile quand vous travaillez sur une fonctionnalité qui traverse plusieurs modules.
+O3 détermine où charger le code des modules frontend à partir de l'[import map](/docs/core-concepts#import-map) fournie à l'app shell. L'import map est un objet JSON qui associe des spécificateurs de module à des URLs. Vous pouvez trouver l'import map de votre distribution O3 en ouvrant `/openmrs/spa/importmap.json` dans votre navigateur. L'app shell lit aussi `/openmrs/spa/routes.registry.json` pour découvrir les métadonnées de routes et d'extensions de chaque module.
+
+Le module frontend [Devtools](https://github.com/openmrs/openmrs-esm-core/tree/main/packages/apps/esm-devtools-app) fournit une interface pour surcharger les entrées de l'import map. Quand vous surchargez l'URL d'un module, Devtools ajoute aussi un override de route map correspondant qui pointe vers le `routes.json` placé à côté du bundle local. Vous pouvez l'utiliser pendant le développement local pour charger des copies de vos modules frontend depuis votre serveur de développement local. Par exemple, si vous lancez un [serveur local avec l'app shell](#exécuter-lapp-shell-localement), vous pouvez surcharger plusieurs modules frontend issus de plusieurs projets en même temps. C'est utile quand vous travaillez sur une fonctionnalité qui traverse plusieurs modules.
 
 <Callout type="warning">
-  Les surcharges d'import map ne fonctionnent pas sur le serveur dev3 à cause de restrictions de sécurité. Nous travaillerons à les assouplir plus tard. Pour l'instant, vous ne pouvez utiliser les surcharges d'import map que sur un serveur de développement local.
+  Les surcharges d'import map et de routes ne fonctionnent pas sur le serveur dev3 à cause de restrictions de sécurité. Nous travaillerons à les assouplir plus tard. Pour l'instant, vous ne pouvez utiliser ces overrides que sur un serveur de développement local.
 </Callout>
 
 ### Exemple: exécuter les modules Implementer tools et Primary navigation contre l'app shell
@@ -129,9 +137,9 @@ Sur le serveur de développement qui exécute l'app shell, connectez-vous et all
 localStorage.setItem('openmrs:devtools', 'true')
 ```
 
-Rechargez la page. Une nouvelle icône devrait apparaître en bas à droite. Cliquez dessus pour ouvrir le panneau des surcharges d'import map. Vous pouvez maintenant surcharger les entrées d'import map des modules frontend de votre distribution avec des copies locales. Ajoutez une surcharge pour l'app Implementer tools en la cherchant dans le champ `Search modules`. Saisissez l'URL du JavaScript bundlé dans le champ `URL`.
+Rechargez la page. Une nouvelle icône devrait apparaître en bas à droite. Cliquez dessus pour ouvrir le panneau des surcharges d'import map. Vous pouvez maintenant surcharger les modules frontend de votre distribution avec des copies locales. Ajoutez une surcharge pour l'app Implementer tools en la cherchant dans le champ `Search modules`. Saisissez l'URL du JavaScript bundlé dans le champ `URL`.
 
-Pour Implementer tools sur le port 7000, l'URL serait http://localhost:7001/openmrs-esm-implementer-tools-app.js. Cliquez sur `Apply` pour ajouter la surcharge. Faites ensuite la même chose pour Primary navigation. L'URL de Primary navigation sur le port 9000 serait http://localhost:9001/openmrs-esm-primary-navigation-app.js. Cliquez sur `Apply`. Les changements devraient prendre effet immédiatement. Si vous rechargez la page, l'icône devrait devenir rouge pour signaler que des surcharges d'import map sont actives.
+Pour Implementer tools sur le port 7000, l'URL serait http://localhost:7001/openmrs-esm-implementer-tools-app.js. Cliquez sur `Apply` pour ajouter la surcharge. Faites ensuite la même chose pour Primary navigation. L'URL de Primary navigation sur le port 9000 serait http://localhost:9001/openmrs-esm-primary-navigation-app.js. Cliquez sur `Apply`. Si le module a déjà été chargé, ou si vous avez changé son `routes.json`, rechargez la page pour que l'app shell relise le nouvel instantané d'import map et de route map. Après rechargement, l'icône Devtools devrait devenir rouge pour signaler que des overrides sont actifs.
 
 Vous devriez maintenant voir vos changements dans Implementer tools et Primary navigation se propager dans l'app shell. Vous pouvez tester vos changements dans le contexte de l'app shell.
 
@@ -158,7 +166,7 @@ L'exécution de modules individuels avec `yarn start` suffit généralement à l
 - Modifier le module frontend `styleguide` et tester ces changements localement.
 - Tester des changements dans les applications suivantes:
 
-  - `devtools` - utilisée pour configurer les surcharges d'import map.
+  - `devtools` - utilisée pour configurer les surcharges d'import map et de routes.
   - `implementer tools` - utilisée pour configurer les extensions et composants d'interface à la volée.
   - `login` - la page de connexion de l'application de référence.
   - `offline tools` - le tableau de bord des outils hors ligne.
@@ -205,7 +213,7 @@ Si vous prenez un ticket et voulez avancer efficacement, ce flux fonctionne gén
 Blocages courants à surveiller:
 
 - **Accès backend/authentification:** Vous aurez besoin d'un backend OpenMRS fonctionnel, dev3 ou local. Si la connexion échoue, vérifiez que vous utilisez des identifiants valides pour cet environnement.
-- **Surcharges d'import map:** Si un changement n'apparaît pas, vérifiez les surcharges devtools et faites un hard refresh pour vider les import maps en cache.
+- **Surcharges d'import map et de routes:** Si un changement n'apparaît pas, vérifiez les surcharges Devtools et faites un hard refresh pour que l'app shell relise l'import map et le registre de routes.
 - **URLs attendues:** L'app shell s'exécute à `/openmrs/spa` et votre module local peut être servi depuis un autre port.
 - **Feature flags:** Si vous ne voyez pas une nouvelle interface, vérifiez si elle est derrière un feature flag dans le menu feature flags des Implementer Tools.
 
@@ -232,13 +240,13 @@ Le cookie doit être obtenu par vous et dépend fortement du backend utilisé. U
 
 ## Dois-je écrire des tests?
 
-Oui, absolument. Les modules actuels vont vers [Vitest](https://vitest.dev/) et [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) pour les tests de composants React, même si certains dépôts plus anciens utilisent encore [Jest](https://jestjs.io/). Consultez le `package.json` du module pour voir quel runner est configuré. Voir le guide de [tests unitaires et d'intégration](/docs/frontend-modules/unit-and-integration-testing) et le guide de [tests de bout en bout](/docs/frontend-modules/end-to-end-testing) pour plus d'informations. Envisagez aussi d'ajouter des tests E2E pour les workflows importants. Lire les tests voisins dans la base de code est souvent le moyen le plus rapide d'aligner vos tests sur les conventions du dépôt.
+Oui, absolument. Les modules React actuels utilisent généralement [Vitest](https://vitest.dev/) et [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) pour les tests de composants, même si certains dépôts plus anciens utilisent encore [Jest](https://jestjs.io/). Consultez le `package.json` du module pour voir quel runner est configuré. Voir le guide de [tests unitaires et d'intégration](/docs/frontend-modules/unit-and-integration-testing) et le guide de [tests de bout en bout](/docs/frontend-modules/end-to-end-testing) pour plus d'informations. Envisagez aussi d'ajouter des tests E2E pour les workflows importants. Lire les tests voisins dans la base de code est souvent le moyen le plus rapide d'aligner vos tests sur les conventions du dépôt.
 
 ## Pousser vos changements vers GitHub
 
 Une fois votre fonctionnalité ou correction terminée, vous voudrez pousser vos changements vers GitHub et ouvrir une PR. Pour cela, regroupez vos changements dans un commit. Nous avons des recommandations pour les messages de commit dans le [guide de contribution](/docs/frontend-modules/contributing).
 
-Créer un commit déclenche généralement des hooks pre-commit. Une partie de leur travail consiste souvent à exécuter `yarn run extract-translations`. Cette tâche lance `turborepo` et exécute `extract-translations` dans chaque package du monorepo. Elle extrait les clés et chaînes de traduction et met à jour le fichier de traductions de la locale par défaut, `en.json`, dans le dossier `translations` de votre module frontend. C'est utile pour l'internationalisation. Après l'exécution des hooks pre-commit, vous voudrez pousser vos changements vers GitHub. Le push déclenchera un hook pre-push qui exécute généralement ces tâches en parallèle avec `turborepo`:
+Créer un commit déclenche généralement des hooks pre-commit. Une partie de leur travail consiste souvent à exécuter `yarn run extract-translations`. Cette tâche lance `turborepo` et exécute `extract-translations` dans chaque package du monorepo. Elle extrait les clés et chaînes de traduction et met à jour le fichier de traductions de la locale par défaut, généralement `en.json` dans le dossier `translations` de votre module frontend. Committez les changements de traduction générés avec le code qui les introduit. Après l'exécution des hooks pre-commit, vous voudrez pousser vos changements vers GitHub. Le push déclenchera un hook pre-push qui exécute généralement ces tâches en parallèle avec `turborepo`:
 
 - `typescript` - vérifie les types de votre application.
 - `lint` - lance ESLint, généralement avec les warnings traités comme des échecs.
@@ -254,16 +262,17 @@ Maintenir les dépendances à jour est important pour bénéficier des dernière
 yarn upgrade-interactive
 ```
 
-Cette commande liste les dépendances pouvant être mises à jour. Vous pouvez naviguer dans la liste avec les flèches du clavier. En général, évitez les mises à jour majeures, qui peuvent introduire des changements incompatibles. Les dépendances liées à OpenMRS, comme `openmrs` et `@openmrs/esm-framework`, doivent rester épinglées sur `next`. Le reste peut généralement être mis à jour vers la dernière version. Après avoir sélectionné les dépendances à mettre à jour, appuyez sur `Enter`. Testez ensuite vos changements pour vérifier que rien n'est cassé. Assurez-vous que l'app tourne, que les tests passent et que le build fonctionne. Si tout va bien, committez les changements et poussez-les vers GitHub.
+Cette commande liste les dépendances pouvant être mises à jour. Vous pouvez naviguer dans la liste avec les flèches du clavier. En général, évitez les mises à jour majeures sauf si vous traitez volontairement des changements incompatibles. Gardez les dépendances d'outillage OpenMRS comme `openmrs` et `@openmrs/esm-framework` épinglées sur `next` dans `devDependencies`, mais conservez les plages semver prises en charge déjà utilisées dans `peerDependencies`. Le reste peut généralement être mis à jour vers la dernière version compatible. Après avoir sélectionné les dépendances à mettre à jour, appuyez sur `Enter`, puis testez l'app, lancez les tests pertinents et vérifiez que le build fonctionne.
 
 ## Dépannage
 
 ### J'obtiens beaucoup d'erreurs liées à des dépendances manquantes
 
-Si vous travaillez depuis un fork, il se peut qu'il manque les derniers changements de `main`. Pour mettre votre fork à jour:
+Si vous travaillez depuis un fork, votre branche peut ne pas contenir les derniers changements de `main`. Récupérez le dépôt upstream, puis mettez votre branche à jour depuis `upstream/main` avec le flux normal du dépôt. Par exemple:
 
 ```sh
-git pull upstream main --rebase
+git fetch upstream
+git merge upstream/main
 ```
 
 ### J'obtiens une erreur `Error: ENOSPC: System limit for number of file watchers reached`
@@ -278,13 +287,13 @@ Si votre serveur de développement affiche des erreurs liées à des APIs ou fon
 yarn up openmrs@next @openmrs/esm-framework@next
 ```
 
-Cette commande peut modifier les versions indiquées dans votre manifeste (`package.json`). Si c'est le cas, revenez aux versions `next` avant de committer. Vous devrez peut-être relancer `yarn` pour installer les nouvelles versions après ces changements. Ensuite, le serveur de développement devrait fonctionner. Ne committez que le `yarn.lock` mis à jour. Comme vous lancerez souvent cette commande en travaillant sur O3, vous pouvez envisager d'ajouter un alias dans `.zshrc` ou `.bashrc`:
+Cette commande peut modifier les versions indiquées dans votre manifeste (`package.json`). Si c'est le cas, gardez les dépendances d'outillage OpenMRS comme `openmrs` et `@openmrs/esm-framework` épinglées sur `next` avant de committer. Les plages de `peerDependencies` doivent rester alignées sur celles déjà utilisées par le dépôt. Vous devrez peut-être relancer `yarn` après avoir ajusté le manifeste pour que le lockfile reflète les packages publiés les plus récents. Relisez toujours le diff de `package.json` avant de committer. Si les seuls changements du manifeste sont des résolutions temporaires vers `next`, certains contributeurs utilisent un alias comme celui-ci:
 
 ```sh
-alias bump-core-tooling="yarn up openmrs@next @openmrs/esm-framework@next && git checkout package.json && yarn"
+alias bump-core-tooling="yarn up openmrs@next @openmrs/esm-framework@next && git restore package.json && yarn"
 ```
 
-Cette commande met les paquets à jour, restaure les versions `next` dans le manifeste, puis installe les nouvelles versions. Relisez les changements de `package.json` et restaurez les versions `next` avant de committer.
+N'utilisez cet alias que si vous n'avez aucune modification intentionnelle de `package.json` à préserver.
 
 ### J'obtiens une erreur `ERR_OSSL_EVP_UNSUPPORTED` quand je lance `yarn run build`
 
@@ -331,11 +340,14 @@ N'ajoutez pas de contournement global comme `declare module "@carbon/react";`. L
 
 ### J'obtiens des conflits de merge dans mon fichier `yarn.lock`
 
-Pour résoudre les conflits dans `yarn.lock`, lancez:
+Si le conflit concerne seulement le fichier généré `yarn.lock` et que vos manifestes de packages sont corrects, régénérez le lockfile depuis votre branche:
 
 ```sh
-git checkout HEAD yarn.lock && yarn
+git restore --source=HEAD -- yarn.lock
+yarn
 ```
+
+N'utilisez pas cette commande si vous devez préserver les changements entrants du lockfile sans les régénérer.
 
 ### Le job `verify` échoue dans GitHub Actions pour ma PR
 
@@ -351,11 +363,11 @@ Cette erreur signifie très probablement que vous devez ajouter `@openmrs/esm-pa
 
 ### J'obtiens une erreur `Oops! An unhandled promise rejection occurred` au chargement du serveur de développement
 
-Si vous voyez une erreur `Unhandled promise rejection` en lançant un serveur de développement ou une instance de production O3, cela signifie souvent qu'un module ne se charge pas correctement. La console devtools du navigateur contiendra probablement un message d'erreur sur le module concerné. Commencez par vérifier qu'il n'y a pas de surcharges obsolètes dans le panneau d'import map overrides. Pour corriger l'erreur, ouvrez le panneau Implementer Tools et cliquez sur `Reset all overrides`. Rechargez ensuite la page. L'erreur devrait disparaître. Vous pouvez aussi inspecter le local storage du navigateur et supprimer les surcharges que vous y trouvez. Rechargez toujours la page après cela.
+Si vous voyez une erreur `Unhandled promise rejection` en lançant un serveur de développement ou une instance de production O3, cela signifie souvent qu'un module ne se charge pas correctement. La console devtools du navigateur contiendra probablement un message d'erreur sur le module concerné. Commencez par vérifier qu'il n'y a pas d'overrides obsolètes d'import map ou de routes dans Devtools. Pour corriger l'erreur, ouvrez le panneau Implementer Tools et cliquez sur `Reset all overrides`. Rechargez ensuite la page. L'erreur devrait disparaître. Vous pouvez aussi inspecter le local storage du navigateur et supprimer les surcharges que vous y trouvez. Rechargez toujours la page après cela.
 
 ### Je rencontre des problèmes de mémoire en construisant Core
 
-Quand vous testez des changements de Core avec `yarn run:shell` depuis le dossier `esm-core`, vous voudrez généralement lancer `yarn turbo build` pour vous assurer d'exécuter les derniers changements. Vous pouvez rencontrer des erreurs comme:
+Quand vous testez des changements de Core avec `yarn run:shell` depuis le dossier `esm-core`, vous voudrez généralement lancer `yarn turbo build` pour vous assurer d'exécuter les derniers changements. Vous pouvez rencontrer des erreurs comme celle-ci pendant le build frontend:
 
 ```sh
 FATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory
@@ -369,10 +381,16 @@ export NODE_OPTIONS=--max-old-space-size=8192
 
 Cette commande augmente la limite mémoire du processus Node.js à 8 Go. Cela peut affecter les performances du système. N'augmentez la limite que si nécessaire.
 
-Vous pouvez aussi lancer:
+Nettoyer les fichiers générés peut aussi aider. Utilisez cette option en dernier recours et prévisualisez d'abord ce qui serait supprimé:
+
+```sh
+git clean -fdxn
+```
+
+La vraie commande de nettoyage supprime les fichiers et dossiers non suivis ou ignorés de votre répertoire de travail, y compris les artefacts de build, les dossiers `node_modules` et les fichiers temporaires qui causent parfois des problèmes de build. Elle ne réinitialise pas les fichiers suivis, mais elle peut quand même supprimer des fichiers locaux utiles.
 
 ```sh
 git clean -fdx
 ```
 
-Cette commande supprime les fichiers et dossiers non suivis de votre répertoire de travail et réinitialise l'index Git. Elle peut aider à résoudre les problèmes de build en nettoyant les artefacts, dossiers `node_modules` et fichiers temporaires qui causent parfois des problèmes. Utilisez-la en dernier recours: elle supprime irréversiblement des fichiers dans votre répertoire de travail. Assurez-vous de ne rien avoir d'important à préserver.
+Ne lancez `git clean -fdx` qu'après avoir confirmé que la simulation ne contient rien d'important.

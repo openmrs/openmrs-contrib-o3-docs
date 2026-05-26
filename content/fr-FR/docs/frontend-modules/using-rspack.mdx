@@ -41,13 +41,13 @@ Cette transformation est importante, car l'app shell a besoin d'un identifiant J
 
 ## Le module exposé `./start`
 
-Chaque module fédéré qui expose des extensions ou des pages pour l'app shell doit exposer un module nommé `"./start"`. Ce module doit exporter:
+Chaque module fédéré qui expose des contributions pour l'app shell doit exposer un module nommé `"./start"`. Ce module exposé doit généralement exporter:
 
-- `importTranslation`
-- `startupApp()`
-- Les exports de composants référencés depuis `routes.json`
+- Les exports de lifecycle référencés depuis `routes.json`
+- `startupApp()` quand le module a besoin d'une configuration unique avant son premier lifecycle
+- `importTranslation` quand le module fournit des fichiers de traduction
 
-Dans la configuration Rspack par défaut, cela est câblé en exposant le fichier `index.ts` du module sous le nom `"./start"`. Si vous chargez vous-même du code avec `importDynamic` depuis `@openmrs/esm-framework`, vous pouvez viser un autre module exposé. Mais tout ce qui est exposé ailleurs doit être enregistré manuellement avant que l'app shell puisse l'utiliser.
+Dans la configuration Rspack par défaut, cela est câblé en exposant le fichier `index.ts` du module sous le nom `"./start"`. Si vous chargez vous-même du code avec `importDynamic` depuis `@openmrs/esm-framework`, vous pouvez viser un autre module exposé. Le chargeur de routes et d'extensions de l'app shell utilise toutefois `./start` par défaut.
 
 ## Liste de compatibilité
 
@@ -56,6 +56,7 @@ Si vous écrivez un `rspack.config.js` personnalisé, tout module destiné à fo
 - `output.library.type` vaut `var`.
 - `output.library.name` suit la règle de transformation des noms OpenMRS (`@openmrs/esm-foo` -> `_openmrs_esm_foo`).
 - Le remote expose un module `./start` que l'app shell peut charger.
+- Le module `./start` exporte chaque lifecycle de composant nommé dans le `routes.json` du module.
 
 ## Dépendances partagées
 
@@ -107,7 +108,7 @@ Le module frontend de saisie de formulaires est une application Angular qui enca
 
 - Configure `ModuleFederationPlugin` pour exposer l'application form entry comme module remote.
 - Déclare les dépendances partagées à partir des `peerDependencies` de l'application form entry.
-- Expose `src/index.ts` comme point d'entrée de fédération.
+- Expose `src/index.ts` comme module de fédération `./start`.
 
 C'est acceptable en pratique, car Module Federation est interopérable entre bundlers. Un remote construit avec Webpack peut être consommé par un host construit avec Rspack, et inversement.
 

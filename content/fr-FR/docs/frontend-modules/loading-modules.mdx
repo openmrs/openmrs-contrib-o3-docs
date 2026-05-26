@@ -1,10 +1,19 @@
 # Chargement des modules frontaux dans le shell de l'application
 
-Les modules frontaux dans O3 sont chargés dynamiquement dans l'app shell en utilisant [Webpack Module Federation (MF)](https://webpack.js.org/concepts/module-federation/). La fédération de modules permet de partager du code à l'exécution entre des applications déployées indépendamment, ce qui rend possibles les microfrontends O3.
+Les modules frontaux dans O3 sont chargés dynamiquement dans l'app shell avec [Module Federation](https://module-federation.io). La plupart des modules React actuels sont construits avec Rspack, tandis que quelques modules anciens ou spécialisés utilisent encore Webpack. Les deux produisent des conteneurs Module Federation que l'app shell peut charger au runtime.
 
-Le shell de l'application décide **quoi** charger à partir de l'import map de la distribution (générée depuis `spa-assemble-config.json` pendant l'assemblage de la distro). L'import map est fournie sous forme d'import map SystemJS (`type="systemjs-importmap"`), que SystemJS utilise pour résoudre les noms de modules en URL avant que l'app shell ne les charge.
+L'app shell utilise deux artefacts de distribution générés pendant l'assemblage de la distro:
 
-En bref: **SystemJS résout les URLs, et Module Federation charge le code**. Cette séparation permet de charger les modules à la demande et de garder un bundle initial plus léger.
+- Le **registre de routes** (`routes.registry.json`) indique à l'app shell quelles pages, extensions, modals, workspaces, feature flags et conditions runtime chaque module déclare.
+- L'**import map** (`importmap.json`) associe chaque nom de module à l'URL du bundle JavaScript à récupérer quand le code du module est nécessaire.
+
+L'import map est exposée à la page via une balise script `type="systemjs-importmap"`, mais le runtime O3 actuel lit cette balise directement avec le package framework de chargement dynamique. SystemJS n'est pas la pièce qui résout les URLs des modules frontend au runtime.
+
+Le registre de routes est exposé via des balises script `type="openmrs-routes"`. Ces balises peuvent pointer vers une URL `routes.registry.json` ou contenir des données de routes inline, et le runtime les fusionne avant d'enregistrer les apps.
+
+En bref: **le registre de routes enregistre les contributions UI, l'import map fournit les URLs des bundles, et Module Federation charge le code**. Cette séparation permet à O3 d'enregistrer l'UI au démarrage, de charger le code des modules à la demande et de garder le bundle initial de l'app shell plus léger.
+
+Ce guide se concentre sur ce contrat de chargement au runtime. Pour écrire le point d'entrée du module et `routes.json`, consultez [Vue d'ensemble](/docs/frontend-modules/overview). Pour les overrides locaux, consultez [Développement](/docs/frontend-modules/development). Pour la configuration du bundler, consultez [Utilisation de Rspack](/docs/frontend-modules/using-rspack).
 
 ## Exemple de flux
 
@@ -21,11 +30,15 @@ Voici un exemple minimal du chemin de chargement d’un module:
    }
    ```
 
-3. SystemJS résout le nom du module vers cette URL.
-4. L’app shell charge le conteneur distant depuis cette URL via Module Federation et appelle `init`/`get`.
+3. Le build de la distro produit aussi une entrée `routes.registry.json` à partir du `routes.json` de ce module.
+4. Au démarrage, l'app shell lit les données de routes dans les balises script `type="openmrs-routes"` et enregistre les pages, extensions, modals, workspaces et feature flags du module.
+5. Quand une route, un slot d'extension, une modal ou un workspace a besoin d'un des composants du module, l'app shell cherche l'URL du module dans l'import map.
+6. Le chargeur dynamique ajoute un élément `<script>` pour cette URL.
+7. Le script chargé expose un conteneur Module Federation, puis l'app shell appelle `init`/`get` pour charger le module exposé `./start`.
+8. Le module `./start` fournit l'export de lifecycle nommé dans `routes.json`; si le module définit `startupApp()`, O3 l'exécute une fois avant de charger ce lifecycle.
 
 ## Fédération de modules
 
-Comme mentionné précédemment, notre système de chargement de modules est basé sur la fédération de modules. O3 utilise un modèle de **conteneurs dynamiques à distance**. Le point d'entrée de l'application est l'app shell, et la liste des modules distants à charger est fournie via l'import map.
+Comme mentionné précédemment, notre système de chargement de modules est basé sur Module Federation. O3 utilise un modèle de **conteneurs distants dynamiques**. Le point d'entrée de l'application est l'app shell, et la liste des URLs de bundles distants est fournie via l'import map.
 
-Chaque module ("remote") est fourni avec un nom et une URL. Pour chaque URL, l'app shell ajoute un élément `<script>` au DOM. Comme ces scripts utilisent le type de bibliothèque `var` de Webpack, ils créent une variable globale qui expose l'interface du conteneur Webpack (`init` et `get`). L'app shell appelle ces méthodes pour charger les exports du module.
+Chaque module ("remote") est fourni avec un nom et une URL. Pour chaque URL, l'app shell ajoute un élément `<script>` au DOM. Comme ces scripts utilisent le type de bibliothèque `var`, ils créent une variable globale qui expose l'interface du conteneur (`init` et `get`). L'app shell appelle ces méthodes pour charger l'export `./start` du module, généralement câblé sur le fichier `src/index.ts`.

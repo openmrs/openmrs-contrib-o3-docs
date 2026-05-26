@@ -9,7 +9,7 @@ De manière générale, en ce qui concerne les tests des composants dans O3, il 
 
 1. **Tests unitaires** - vérifient que des éléments individuels et isolés de fonctionnalité fonctionnent comme prévu.
 2. **Tests d'intégration** - vérifient que plusieurs unités fonctionnent ensemble en harmonie.
-3. **Tests de bout en bout (e2e)** - un robot assistant qui se comporte comme un utilisateur pour cliquer dans l'application et vérifier qu'elle fonctionne correctement.
+3. **Tests de bout en bout (e2e)** - une automatisation de navigateur qui se comporte comme un utilisateur pour cliquer dans l'application et vérifier qu'elle fonctionne correctement.
 
 Lors du travail avec un module frontend, ses tests unitaires (et parfois d'intégration) accompagnants seront généralement colocalisés dans un fichier nommé **\*.test.tsx**. Ces tests suivent généralement le modèle suivant:
 
@@ -22,11 +22,11 @@ Lors du travail avec un module frontend, ses tests unitaires (et parfois d'inté
   donner confiance.
 </Callout>
 
-## Migration du test runner
+## État des test runners
 
-Nous sommes en train de migrer de **Jest** vers **Vitest**, et ce changement se déploie progressivement dans les modules frontend.
+Les modules frontend React actuels utilisent **Vitest** par défaut. Certains dépôts plus anciens utilisent encore **Jest**, donc vérifiez le `package.json` du module avant de copier des commandes ou une configuration de mocks depuis un autre dépôt.
 
-Justification de la migration :
+Pourquoi le projet évolue vers Vitest :
 
 - Exécutions plus rapides des tests et meilleur mode watch.
 - Meilleure compatibilité avec ESM et l’écosystème Vite.
@@ -40,7 +40,7 @@ Les fichiers de setup s’appellent généralement `setupTests.ts` ou `setup-tes
 
 ## Exemple: Tester un module frontend
 
-Nous allons parcourir un exemple de suite de tests pour comprendre l'approche adoptée. Dans ce cas, nous utiliserons le module frontend [module-management](https://github.com/openmrs/openmrs-esm-module-management-app). Cette application prend la page `Gérer le module` de l'application de référence OpenMRS 2.x et la repense pour fonctionner dans O3. Elle fournit une interface permettant aux utilisateurs de gérer les modules backend. Elle liste tous les modules installés et permet aux administrateurs de contrôler l'exécution des modules via les actions exposées `Démarrer`, `Arrêter` et `Décharger`. Les utilisateurs peuvent également consulter des informations détaillées sur les modules listés.
+Nous allons parcourir un exemple de suite de tests pour comprendre l'approche adoptée. Dans ce cas, nous utiliserons le module frontend [module-management](https://github.com/openmrs/openmrs-esm-module-management-app). C'est un module plus ancien basé sur Jest, donc la syntaxe utilise `jest`; les modules Vitest actuels suivent la même forme de test, mais utilisent `vi` pour les mocks. Cette application prend la page `Manage Module` de l'application de référence OpenMRS 2.x et la repense pour fonctionner dans O3. Elle fournit une interface permettant aux utilisateurs de gérer les modules backend. Elle liste tous les modules installés et permet aux administrateurs de contrôler l'exécution des modules via les actions exposées `Start`, `Stop` et `Unload`. Les utilisateurs peuvent également consulter des informations détaillées sur les modules listés.
 
 Examinons comment nous pourrions tester le composant `ModuleManagement`. En regardant son code, nous pouvons voir qu'il fait plusieurs choses:
 
@@ -80,55 +80,55 @@ Ce code simule la fonction `openmrsFetch`, en remplaçant son implémentation pa
 Ensuite, nous voulons rendre le composant:
 
 ```ts
-await waitForElementToBeRemoved(() => [...screen.queryAllByRole(/progressbar/i)], {
-  timeout: 4000,
-});
+renderModuleManagement();
+
+await waitForLoadingToFinish();
 ```
 
-Ce code demande à Jest d'attendre jusqu'à ce que le chargeur soit retiré de l'interface utilisateur. Cela imite l'attente de la résolution d'une requête backend. Ensuite, nous voulons commencer à écrire nos assertions:
+Ce code demande au test runner d'attendre jusqu'à ce que le chargeur soit retiré de l'interface utilisateur. Cela imite l'attente de la résolution d'une requête backend. Ensuite, nous voulons commencer à écrire nos assertions:
 
 ```ts
 expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
 expect(screen.queryByRole("table")).not.toBeInTheDocument();
-expect(screen.getByText(/il n'y a aucun module à afficher/i)).toBeInTheDocument();
+expect(screen.getByText(/there are no modules to display/i)).toBeInTheDocument();
 ```
 
 Ces assertions:
 
 1. Affirment qu'un élément DOM avec le rôle `progressbar` ne devrait pas être dans le document.
 2. Affirment que le DOM ne contient pas d'élément avec le rôle `table`.
-3. Affirment que le texte `Il n'y a aucun module à afficher` est rendu dans le document.
+3. Affirment que le texte `There are no modules to display` est rendu dans le document.
 
 À tout moment, vous pouvez exécuter des tests en appelant `yarn test` ou `yarn turbo test` (si `turbo` est configuré).
 
 Pour évaluer l'état d'erreur, vous pourriez écrire:
 
 ```ts
-it("rend une vue d'état d'erreur s'il y a eu un problème lors de la récupération des données du module", async () => {
+it("renders an error state view if there was a problem fetching module data", async () => {
   const error = {
-    message: "Erreur Interne du Serveur",
+    message: "Internal Server Error",
     response: {
       status: 500,
-      statusText: "Erreur Interne du Serveur",
+      statusText: "Internal Server Error",
     },
   };
 
-  // Sucre syntaxique pour `mockedOpenmrsFetch.mockReturnValue(Promise.resolve(error))`
+  // Syntactic sugar for `mockedOpenmrsFetch.mockReturnValue(Promise.resolve(error))`
   mockedOpenmrsFetch.mockRejectedValueOnce(error);
 
   renderModuleManagement();
 
-  // Attendre que l'état de chargement disparaisse de l'écran
+  // Wait for the loading state to disappear from the screen
   await waitForLoadingToFinish();
 
-  expect(screen.getByText(/désolé, il y a eu un problème lors de la récupération des modules/i)).toBeInTheDocument();
+  expect(screen.getByText(/sorry, there was a problem fetching modules/i)).toBeInTheDocument();
 });
 ```
 
 Pour tester le chemin heureux, nous pourrions écrire le test suivant:
 
 ```ts
-it("rend des informations détaillées sur le module", async () => {
+it("renders detailed information about the module", async () => {
   const user = userEvent.setup();
 
   const testModules = [
@@ -176,25 +176,25 @@ it("rend des informations détaillées sur le module", async () => {
     },
   ];
 
-  // Renvoie l'objet `testModules` défini ci-dessus dans la réponse API. La propriété `data` imbriquée ci-dessous correspond à la propriété `data` renvoyée par l'appel du hook `useSWR`
+  // Return the `testModules` object defined above in the API response. The nested `data` property below corresponds to the `data` property returned from calling the `useSWR` hook
   mockedOpenmrsFetch.mockReturnValueOnce({
     data: { results: testModules },
   });
 
   renderModuleManagement();
 
-  // Attendre que l'état de chargement disparaisse de l'écran
+  // Wait for the loading state to disappear from the screen
   await waitForLoadingToFinish();
 
   expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
-  expect(screen.getByRole("button", { name: /ajouter \/ mettre à niveau les modules/i })).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: /rechercher dans les extensions/i })).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: /vérifier les mises à jour/i })).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: /tout démarrer/i })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /add \/ upgrade modules/i })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /search from addons/i })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /check for updates/i })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /start all/i })).toBeInTheDocument();
   expect(screen.getByRole("table")).toBeInTheDocument();
-  expect(screen.getByRole("heading", { name: /gérer les modules/i })).toBeInTheDocument();
-  expect(screen.getByRole("searchbox", { name: /filtrer le tableau/i })).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: /effacer la recherche/i })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: /manage modules/i })).toBeInTheDocument();
+  expect(screen.getByRole("searchbox", { name: /filter table/i })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /clear search input/i })).toBeInTheDocument();
 
   const modules = testModules.map((module) => module);
 
@@ -203,15 +203,15 @@ it("rend des informations détaillées sur le module", async () => {
     expect(screen.getByText(module.description)).toBeInTheDocument();
   });
 
-  const expectedColumnHeaders = [/statut/, /nom/, /auteur/, /version/, /Description/];
+  const expectedColumnHeaders = [/status/, /name/, /author/, /version/, /description/];
 
   expectedColumnHeaders.forEach((row) => {
     expect(screen.getByRole("columnheader", { name: new RegExp(row, "i") })).toBeInTheDocument();
   });
 
-  const searchbox = screen.getByRole("searchbox", { name: /filtrer le tableau/i });
+  const searchbox = screen.getByRole("searchbox", { name: /filter table/i });
 
-  // rechercher le module Serializer
+  // search for the Serializer module
   await user.type(searchbox, "Seri");
 
   expect(screen.getByText(/Serialization Xstream/i)).toBeInTheDocument();
@@ -219,12 +219,12 @@ it("rend des informations détaillées sur le module", async () => {
 
   await user.clear(searchbox);
 
-  // rechercher quelque chose qui n'existe pas dans la liste des modules
-  await user.type(searchbox, "module-super-inédit");
+  // search for something that doesn't exist in the module list
+  await user.type(searchbox, "super-duper-unreleased-module");
 
   expect(screen.queryByText(/Serialization Xstream/i)).not.toBeInTheDocument();
   expect(screen.queryByText(/Initializer/i)).not.toBeInTheDocument();
-  expect(screen.getByText(/aucun module correspondant trouvé/i)).toBeInTheDocument();
+  expect(screen.getByText(/no matching modules found/i)).toBeInTheDocument();
 });
 ```
 
@@ -323,6 +323,17 @@ beforeEach(() => {
 
 // Vos tests vont ici...
 ```
+
+Voici un exemple réel de pull request qui a ajouté de nouveaux stubs au mock du framework: https://github.com/openmrs/openmrs-esm-core/pull/1105.
+
+Lorsque vous ajoutez de nouveaux stubs, suivez ces règles:
+
+- **Choisissez le bon fichier de mock**: ajoutez les stubs au mock qui correspond au package contenant la fonctionnalité originale:
+   - Pour une fonctionnalité de `@openmrs/esm-extensions`, ajoutez le stub dans l'implémentation `@openmrs/esm-extensions/mock`.
+   - Pour une fonctionnalité de `@openmrs/esm-api`, ajoutez le stub dans l'implémentation `@openmrs/esm-api/mock`.
+   - Pour une fonctionnalité de `@openmrs/esm-state`, ajoutez le stub dans l'implémentation `@openmrs/esm-state/mock`.
+   - Et ainsi de suite...
+- **Suivez les modèles existants**: suivez les modèles déjà présents dans le fichier de mock.
 
 ### Annoter les mocks avec des informations de type
 

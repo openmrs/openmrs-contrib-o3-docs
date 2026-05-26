@@ -18,7 +18,7 @@ npx playwright install
 Nous recommandons:
 
 - D'installer le plugin Playwright officiel pour [VS Code](https://playwright.dev/docs/getting-started-vscode) pour exécuter et déboguer vos tests.
-- D'exécuter les tests avec `npx playwright test`.
+- D'exécuter les tests via le script du dépôt, généralement `yarn test-e2e`, ou avec `npx playwright test` quand le dépôt n'a pas de script wrapper.
 - De suivre les [bonnes pratiques](https://playwright.dev/docs/best-practices) Playwright pour garder des tests fiables et maintenables.
 
 ## Rédaction de tests
@@ -46,7 +46,7 @@ e2e
     ^ Contains support files that are required to run E2E tests, e.g. docker-compose files.
 ```
 
-Lorsque vous voulez écrire un nouveau scénario de test, commencez par créer une nouvelle spécification dans `./specs`.
+Lorsque vous voulez écrire un nouveau scénario de test, commencez par créer une nouvelle spécification dans `e2e/specs`.
 Selon vos besoins, vous pouvez créer de nouvelles fixtures et/ou de nouveaux modèles d'objets de page. Pour voir des exemples, jetez un oeil au code existant et observez comment ces concepts fonctionnent ensemble.
 
 Les fichiers spec utilisent souvent un style BDD. Dans ce style, nous utilisons les appels `test.step` de Playwright et une voix utilisateur avec le "I". Pour plus d'informations sur la syntaxe BDD, consultez https://cucumber.io/docs/gherkin/reference/. L'extrait ci-dessous illustre ce style:
@@ -159,11 +159,11 @@ Reportez-vous à [cette documentation](https://playwright.dev/docs/debug) pour s
 
 ## Artifacts de test
 
-Lorsque les tests échouent, Playwright peut générer des traces, des captures d'écran et des vidéos selon la configuration. Ces artifacts sont généralement écrits sous l'espace de travail `e2e` dans les répertoires de sortie configurés pour le dépôt. Vérifiez la configuration Playwright du dépôt si vous devez modifier ou localiser ces chemins.
+Lorsque les tests échouent, Playwright peut générer des traces, des captures d'écran, des vidéos et un rapport HTML selon la configuration. Dans les dépôts frontend O3 actuels, GitHub Actions téléverse généralement `playwright-report/` comme artifact. Les traces et vidéos sont écrites dans les répertoires de sortie configurés dans la configuration Playwright du dépôt.
 
-## Afficher les rapports de test depuis GitHub Actions et Bamboo
+## Afficher les rapports de test depuis GitHub Actions et les anciens plans Bamboo
 
-Pour télécharger le rapport à partir d'une action GitHub ou d'un plan Bamboo, procédez comme suit:
+Pour télécharger le rapport depuis une exécution GitHub Actions, ou depuis un ancien plan Bamboo qui exécute encore ces tests, procédez comme suit:
 
 1. Allez dans la section artefact de l'action/du plan et localisez le fichier de rapport.
 2. Téléchargez le fichier de rapport et décompressez-le à l'aide de l'outil de votre choix.
@@ -195,7 +195,7 @@ L'automatisation des tests de bout en bout (E2E) à l'aide des actions GitHub co
 
 ### Environnement de test Dockerisé
 
-Nos tests E2E sont exécutés dans un environnement dockerisé pour chaque pull request et commit dans les dépôts O3.
+Nos tests E2E sont exécutés dans un environnement dockerisé pour chaque pull request et chaque push vers `main` dans les dépôts qui définissent un workflow GitHub Actions E2E.
 Cette approche offre plusieurs avantages par rapport aux méthodes traditionnelles:
 
 - **Dépendance réduite au serveur Dev3:** En utilisant un environnement dockerisé, les tests E2E ne dépendent pas de l'état ou de la disponibilité du serveur Dev3.
@@ -215,20 +215,20 @@ Pour améliorer l'efficacité du processus de test E2E, nous avons mis en œuvre
    Il n'est donc pas nécessaire de générer des données lors de la configuration initiale de l'environnement de test.
    Par conséquent, le temps de configuration est considérablement réduit, ce qui permet une création rapide de l'instance de test.
 
-2. **Frontend léger et dynamique:** Pour exécuter les tests automatisés, une version dynamique et légère du frontend est utilisée.
-   Cette version inclut uniquement les applications et les changements présents dans le dépôt actuel, ainsi que des applications essentielles comme la navigation principale.
-   Cette image frontale est construite pendant le workflow GitHub Actions des tests E2E.
+2. **Frontend léger et dynamique:** Pour exécuter les tests automatisés, le workflow GitHub Actions construit une image frontend légère à partir d'un `spa-assemble-config.json` généré.
+   Cette configuration empaquette les apps du dépôt courant et ajoute les apps de base nécessaires au script de support E2E de ce dépôt, comme la navigation principale, la page d'accueil, le dossier patient ou le bandeau patient.
 
 Les images Docker pré-remplies du backend et de la base de données, ainsi que l'image frontale légère construite dynamiquement,
 sont combinées dans la même pile docker-compose et utilisées pour configurer l'environnement de test E2E.
 
 #### Détails supplémentaires de la mise en œuvre
 
-**Génération d'images Docker:** Les images Docker pré-remplies sont créées et poussées vers Docker Hub
-à travers une étape Bamboo dédiée dans le job Bamboo [REFAPP-D3X](https://ci.openmrs.org/browse/REFAPP-D3X).
-Cette étape implique un script qui récupère les dernières versions du frontend et du backend.
-Il s'exécute ensuite et attend la génération des données avant de construire les images Docker `:nightly-with-data` du backend et de la base de données.
-Ces images sont ensuite poussées vers Docker Hub. Plus de détails sont disponibles [ici](https://talk.openmrs.org/t/using-pre-filled-docker-images-for-running-e2e-tests/40003).
+**Génération d'images Docker:** Les workflows GitHub Actions E2E actuels consomment les images pré-remplies
+`openmrs/openmrs-reference-application-3-backend:nightly-with-data` et
+`openmrs/openmrs-reference-application-3-db:nightly-with-data` dans leur stack docker-compose.
+Ces images sont produites en dehors du dépôt de module frontend, historiquement via une étape Bamboo dédiée dans le job
+[REFAPP-D3X](https://ci.openmrs.org/browse/REFAPP-D3X). Plus de détails sont disponibles
+[ici](https://talk.openmrs.org/t/using-pre-filled-docker-images-for-running-e2e-tests/40003).
 
 ## Dépannage
 
@@ -238,7 +238,7 @@ Si vous ne pouvez pas déboguer les tests en [mode UI](https://playwright.dev/do
 yarn test-e2e --headed --debug
 ```
 
-Cette approche devrait éviter les problèmes causés par Webpack et les modifications de fichiers statiques.
+Cette approche devrait éviter les problèmes causés par le file watching du bundler et les modifications de fichiers statiques.
 
 Si votre serveur de dev continue à se recharger en boucle parce que Playwright écrit des artifacts dans un dossier surveillé, une solution locale courante consiste à définir `outputDir` en dehors du module frontend dans `playwright.config.ts`. C’est un problème connu lié au file watching. Pensez à annuler ce changement avant de committer.
 

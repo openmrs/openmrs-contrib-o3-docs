@@ -18,7 +18,7 @@ npx playwright install
 We recommend:
 
 - Installing the official Playwright [VS Code plugin](https://playwright.dev/docs/getting-started-vscode) for UI test running and debugging.
-- Running tests with `npx playwright test`.
+- Running tests through the repo script, usually `yarn test-e2e`, or with `npx playwright test` when a repo has no wrapper script.
 - Following Playwright's [best practices](https://playwright.dev/docs/best-practices) to keep tests reliable and maintainable.
 
 ## Writing tests
@@ -45,7 +45,7 @@ e2e
     ^ Contains support files that are required to run E2E tests, e.g. docker-compose files.
 ```
 
-When you want to write a new test case, start by creating a new spec in `./specs`.
+When you want to write a new test case, start by creating a new spec in `e2e/specs`.
 Depending on what you want to achieve, you might want to create new fixtures and/or
 page object models. To see examples, have a look at the existing code to see how these
 different concepts play together.
@@ -160,11 +160,11 @@ Refer to [this documentation](https://playwright.dev/docs/debug) on how to debug
 
 ## Test artifacts
 
-When tests fail, Playwright can generate traces, screenshots, and videos depending on your configuration. These artifacts are usually written under the `e2e` workspace in the test output directories configured for the repo. Check the repo's Playwright config if you need to change or locate the paths.
+When tests fail, Playwright can generate traces, screenshots, videos, and an HTML report depending on your configuration. In current O3 frontend repos, GitHub Actions usually uploads `playwright-report/` as an artifact. Traces and videos are written to the output directories configured in that repo's Playwright config.
 
-## View test reports from GitHub Actions and Bamboo
+## View test reports from GitHub Actions and legacy Bamboo plans
 
-To download the report from the GitHub action/Bamboo plan, follow these steps:
+To download the report from the GitHub Actions run, or from an older Bamboo plan that still runs these tests, follow these steps:
 
 1. Go to the artifact section of the action/plan and locate the report file.
 2. Download the report file and unzip it using a tool of your choice.
@@ -196,7 +196,7 @@ Automating end-to-end (E2E) tests through GitHub Actions provides an efficient w
 
 ### Dockerized test environment
 
-Our E2E tests are executed in a dockerized environment for each pull request and commit to the O3 repositories.
+Our E2E tests are executed in a dockerized environment for each pull request and push to `main` in repos that define an E2E GitHub Actions workflow.
 This approach offers several advantages over traditional methods:
 
 - **Reduced Dependency on Dev3 Server:** By using a dockerized environment, the E2E tests do not depend on the status or availability of the Dev3 server.
@@ -216,20 +216,20 @@ To enhance the efficiency of the E2E testing process, we have implemented severa
    This eliminates the need to generate data during the initial setup of the testing environment.
    Consequently, the setup time is significantly reduced, enabling quick creation of the test instance.
 
-2. **Dynamic lightweight frontend:** To execute automated tests, a dynamic lightweight version of the frontend is used.
-   This version includes only the apps and changes present in the current repository, along with essential apps like the primary navigation app.
-   This frontend image is built during the E2E tests' GitHub Actions workflow.
+2. **Dynamic lightweight frontend:** To execute automated tests, the GitHub Actions workflow builds a lightweight frontend image from a generated `spa-assemble-config.json`.
+   That config packs the apps from the current repository and adds the core apps required by that repo's E2E support script, such as primary navigation, home, patient chart, or patient banner.
 
 The pre-filled backend and database Docker images, along with the dynamically built lightweight frontend image,
 are combined within the same docker-compose stack and used for setting up the E2E test environment.
 
 #### Additional implementation details
 
-**Docker image generation:** The pre-filled Docker images are created and pushed to Docker Hub
-through a dedicated Bamboo stage within the [REFAPP-D3X](https://ci.openmrs.org/browse/REFAPP-D3X) Bamboo job.
-This stage involves a script that retrieves the latest versions of both the frontend and backend.
-It then runs and waits for data generation before building the `:nightly-with-data` Docker images of the backend and database.
-These images are subsequently pushed to Docker Hub. More details are available [here](https://talk.openmrs.org/t/using-pre-filled-docker-images-for-running-e2e-tests/40003).
+**Docker image generation:** Current GitHub Actions E2E workflows consume the pre-filled
+`openmrs/openmrs-reference-application-3-backend:nightly-with-data` and
+`openmrs/openmrs-reference-application-3-db:nightly-with-data` images in their docker-compose stack.
+Those images are produced outside the frontend module repo, historically through a dedicated Bamboo stage within the
+[REFAPP-D3X](https://ci.openmrs.org/browse/REFAPP-D3X) Bamboo job. More details are available
+[here](https://talk.openmrs.org/t/using-pre-filled-docker-images-for-running-e2e-tests/40003).
 
 ## Troubleshooting
 
@@ -239,7 +239,7 @@ If you can't debug tests in [UI mode](https://playwright.dev/docs/test-ui-mode) 
 yarn test-e2e --headed --debug
 ```
 
-This approach should avoid issues caused by Webpack and static file changes.
+This approach should avoid issues caused by bundler file watching and static file changes.
 
 If your dev server still reloads endlessly because Playwright is writing artifacts into a watched directory, a common local workaround is to point `outputDir` outside the frontend module in `playwright.config.ts`. This is a known issue with file watching. Make sure to revert that change before committing.
 

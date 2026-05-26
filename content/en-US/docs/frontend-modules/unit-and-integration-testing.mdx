@@ -9,7 +9,7 @@ Broadly speaking, when it comes to testing components in O3, there are three cat
 
 1. **Unit tests** - verify that individual, isolated pieces of functionality work as expected.
 2. **Integration tests** - verify that several units work together in harmony.
-3. **End-to-end (e2e) tests** - a helper robot that behaves like a user to click around the app and verify that it functions correctly.
+3. **End-to-end (e2e) tests** - browser automation that behaves like a user to click around the app and verify that it functions correctly.
 
 When working with a frontend module, its accompanying unit (and, sometimes, integration) tests will typically be colocated in a file named **\*.test.tsx**. These tests typically follow the following pattern:
 
@@ -22,11 +22,11 @@ When working with a frontend module, its accompanying unit (and, sometimes, inte
   you.
 </Callout>
 
-## Test runner migration
+## Test runner landscape
 
-We are currently migrating from **Jest** to **Vitest**, and that rollout is happening gradually across frontend modules.
+Current React frontend modules use **Vitest** by default. Some older repos still use **Jest**, so check the module's `package.json` before copying commands or mock setup from another repo.
 
-Rationale for the migration:
+Why the project has been moving toward Vitest:
 
 - Faster test runs and a smoother watch mode.
 - Better alignment with ESM and the broader Vite ecosystem.
@@ -40,7 +40,7 @@ Setup files are usually named `setupTests.ts` or `setup-tests.ts`, and they’re
 
 ## Example: Testing a frontend module
 
-We’re going to walk through an example test suite to understand the approach taken. In this case, we’ll use the [module-management](https://github.com/openmrs/openmrs-esm-module-management-app) frontend module. This application takes the `Manage Module` page from the OpenMRS 2.x reference application and redesigns it to work within O3. It provides an interface for users to manage backend modules. It lists all the installed modules and allows admins to control the execution of modules via the exposed `Start`, `Stop` and `Unload` actions. Users can also view detailed information about the listed modules.
+We’re going to walk through an example test suite to understand the approach taken. In this case, we’ll use the [module-management](https://github.com/openmrs/openmrs-esm-module-management-app) frontend module. This is an older Jest-based module, so the syntax uses `jest`; current Vitest modules follow the same testing shape but use `vi` for mocks. This application takes the `Manage Module` page from the OpenMRS 2.x reference application and redesigns it to work within O3. It provides an interface for users to manage backend modules. It lists all the installed modules and allows admins to control the execution of modules via the exposed `Start`, `Stop` and `Unload` actions. Users can also view detailed information about the listed modules.
 
 Let’s look at how we could test the `ModuleManagement` component. Looking at its code, we can see that it does several things:
 
@@ -80,12 +80,12 @@ This code mocks out the `openmrsFetch` function, stubbing out its implementation
 Next, we want to render the component:
 
 ```ts
-await waitForElementToBeRemoved(() => [...screen.queryAllByRole(/progressbar/i)], {
-  timeout: 4000,
-});
+renderModuleManagement();
+
+await waitForLoadingToFinish();
 ```
 
-This code asks Jest to wait until the loader gets removed from the UI. This mimics waiting for a backend request to resolve. Next, we want to start writing our assertions:
+This code asks the test runner to wait until the loader gets removed from the UI. This mimics waiting for a backend request to resolve. Next, we want to start writing our assertions:
 
 ```ts
 expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
@@ -203,7 +203,7 @@ it("renders detailed information about the module", async () => {
     expect(screen.getByText(module.description)).toBeInTheDocument();
   });
 
-  const expectedColumnHeaders = [/status/, /name/, /author/, /version/, /Description/];
+  const expectedColumnHeaders = [/status/, /name/, /author/, /version/, /description/];
 
   expectedColumnHeaders.forEach((row) => {
     expect(screen.getByRole("columnheader", { name: new RegExp(row, "i") })).toBeInTheDocument();
@@ -327,20 +327,20 @@ beforeEach(() => {
 // Your tests go here...
 ```
 
-Here's an example of a real-world pull request that added new stubs to the framework mock: https://github.com/openmrs/openmrs-esm-core/pull/1105. 
+Here's an example of a real-world pull request that added new stubs to the framework mock: https://github.com/openmrs/openmrs-esm-core/pull/1105.
 
 When adding new stubs, follow these guidelines:
 
 - **Choose the correct mock file**: Add stubs to the mock file that corresponds to the package containing the original functionality:
-   - For `@openmrs/esm-extensions` functionality → add to `@openmrs/esm-extensions/mock.tsx`
-   - For `@openmrs/esm-api` functionality → add to `@openmrs/esm-api/mock.tsx`
-   - For `@openmrs/esm-module-management` functionality → add to `@openmrs/esm-module-management/mock.tsx`
+   - For `@openmrs/esm-extensions` functionality, add the stub to the `@openmrs/esm-extensions/mock` implementation.
+   - For `@openmrs/esm-api` functionality, add the stub to the `@openmrs/esm-api/mock` implementation.
+   - For `@openmrs/esm-state` functionality, add the stub to the `@openmrs/esm-state/mock` implementation.
    - And so on...
 - **Follow existing patterns**: Follow existing patterns in the mock file.
 
 ### Annotating mocks with type information
 
-Wherever possible, prefer using the test runner's `mocked` function (`jest.mocked` for Jest or `vi.mocked` for Vitest) to get type information for your mocks. This will help you catch type errors early and make your tests more robust. 
+Wherever possible, prefer using the test runner's `mocked` function (`jest.mocked` for Jest or `vi.mocked` for Vitest) to get type information for your mocks. This will help you catch type errors early and make your tests more robust.
 
 <Callout emoji="⚠️" type="warning">
   **Important**: The `mocked` function is type-only and does not perform runtime mocking. The module must be mocked separately via your test configuration (as shown in the [Mocking patterns](#mocking-patterns) section above) using `jest.mock()`, `vi.mock()`, or the module name mapper configuration.

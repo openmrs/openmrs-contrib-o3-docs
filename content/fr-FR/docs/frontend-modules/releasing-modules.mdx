@@ -14,10 +14,10 @@ La [publication](https://docs.github.com/en/repositories/releasing-projects-on-g
   Veuillez lire la section [Notes importantes](#notes-importantes) à la fin de cette page. Elle couvre quelques étapes du processus de publication qui sont souvent oubliées.
 </Callout>
 
-Créer une release O3 implique deux étapes:
+Créer une release O3 comporte généralement deux étapes de publication:
 
-1. Incrémenter les versions locales de vos packages et pousser ces changements vers GitHub. Cette étape déclenche le job CI `pre-release`.
-2. Créer une release depuis l'interface GitHub Releases. Cette étape déclenche le job CI `release`, qui publie le ou les packages sur le registre npm.
+1. Ouvrir puis fusionner une PR de release qui incrémente les versions locales des packages. Le merge vers `main` déclenche le job CI `pre_release`, ou la branche équivalente du workflow de release partagé, et publie une version pre-release taguée `next`.
+2. Créer une release depuis l'interface GitHub Releases. L'événement `release` déclenche CI, qui publie le ou les packages sur npm avec le tag `latest`.
 
 Si vous voulez publier une version de release de votre module, réfléchissez d'abord à quelques éléments, notamment:
 
@@ -102,27 +102,27 @@ Une fois le versionnement terminé, vous devriez voir dans votre éditeur un dif
 
 Créez une nouvelle branche nommée `chore/release-vX.X.X`, où `X.X.X` est le numéro de version que vous publiez. Committez ces changements avec le titre `(chore) Release vX.X.X`. Voir cet exemple de [commit](https://github.com/openmrs/openmrs-esm-patient-chart/pull/1279) qui incrémente `Patient Chart` vers `v5.0.0`.
 
-Une fois le commit de release fusionné, le job `pre-release` du workflow CI se déclenche et publie une version pre-release taguée `next` sur npm. C'est utile pour les tests anticipés avant de publier `latest`. Sous le capot, ce job exécute le script `ci:publish-next`.
+Une fois le commit de release fusionné dans `main`, CI publie une version pre-release taguée `next` sur npm. C'est utile pour les tests anticipés avant de publier `latest`. Le nom exact du script dépend du dépôt: `openmrs-esm-core` utilise `ci:publish-next`, beaucoup de dépôts de modules frontend utilisent `ci:prepublish`, et certains dépôts passent la commande au workflow partagé `release-frontend-module`.
 
 ### Publier sur GitHub
 
 Vous pouvez ensuite retourner dans votre navigateur sur la page releases du dépôt concerné. Relisez les notes de release générées par GitHub, puis mettez à jour le numéro de version et les tags comme il faut.
 
 <Callout type="info">
-  Les notes de release doivent suivre le format du [changelog O3](/docs/changelog). Ce format comprend un titre, une description et une liste de changements. Les principales catégories sont `Features`, `Bug Fixes`, `Breaking Changes`, `Refactors`, `Docs` et `Tests`. Chaque catégorie doit contenir une liste de changements. Il faudra peut-être un peu de travail pour que le changelog corresponde à ce format. Cela en vaut la peine, car cela facilite la revue des changements par le Release Manager et la préparation des notes de release pour la communauté.
+  Les notes de release doivent suivre le format du [changelog O3](/docs/changelog). Ce format comprend un titre, une description et une liste de changements. Les principales catégories sont `Features`, `Bug Fixes`, `Breaking Changes`, `Chores`, `Docs` et `Tests`. Chaque catégorie doit contenir une liste de changements. Il faudra peut-être un peu de travail pour que le changelog corresponde à ce format. Cela en vaut la peine, car cela facilite la revue des changements par le Release Manager et la préparation des notes de release pour la communauté.
 </Callout>
 
 Quand tout vous semble correct, cliquez sur le bouton `Publish release`. Cette étape doit déclencher le workflow CI et, notamment, le job `release`.
 
-Sous le capot, ce job exécute le script suivant:
+Dans beaucoup de monorepos, ce job exécute un script de publication qui ressemble à ceci:
 
 ```json
-"ci:publish": "yarn workspaces foreach --all --topological npm publish --access public --tag latest",
+"ci:publish": "yarn workspaces foreach --all --topological --exclude @openmrs/esm-patient-management npm publish --access public --tag latest"
 ```
 
-Cette commande publie un nouveau package tagué `latest`. C'est la version que les consommateurs obtiendront par défaut quand ils installeront votre module frontend.
+Les dépôts à package unique peuvent plutôt appeler directement `yarn npm publish --access public`, et les monorepos excluent souvent le workspace racine de la publication. L'invariant important est le dist-tag npm: l'automatisation de pre-release publie `next`, tandis qu'une release GitHub publie `latest`.
 
-De façon générale, quand une PR est fusionnée, un job `pre-release` dans notre workflow GitHub Actions principal est déclenché. Ce job publie une version du module frontend correspondant sur son registre npm avec le tag `next`.
+Le tag `latest` correspond à la version que les consommateurs obtiennent par défaut quand ils installent votre module frontend.
 
 Pour voir à quelle version correspond le tag `latest` d'un module frontend, allez sur sa page npm et cliquez sur le tag `version`. Cherchez la version la plus récente taguée `latest`.
 
@@ -136,6 +136,6 @@ Pour voir à quelle version correspond le tag `latest` d'un module frontend, all
 Tous les dépôts ne câblent pas les releases de la même manière. Avant de publier, vérifiez:
 
 - `package.json` pour les scripts `release`, `ci:publish`, `ci:publish-next` ou `ci:prepublish`.
-- `.github/workflows/ci.yml` pour voir quels tags sont publiés sur `push` et sur `release`.
+- `.github/workflows/ci.yml`, `.github/workflows/node.js.yml` ou une référence à un workflow partagé pour voir quels tags sont publiés sur `push` et sur `release`.
 
 Suivez toujours les scripts définis dans le dépôt, même si leurs noms diffèrent de ce guide.

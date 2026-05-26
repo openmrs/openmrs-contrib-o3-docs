@@ -41,13 +41,13 @@ The mangling matters because the app shell needs a valid JavaScript identifier t
 
 ## The `./start` exposed module
 
-Every federated module that exposes extensions or pages for the app shell must expose a module named `"./start"`, which is expected to export:
+Every federated module that exposes app-shell contributions must expose a module named `"./start"`. That exposed module is normally expected to export:
 
-- `importTranslation`
-- `startupApp()`
-- Component exports referenced from `routes.json`
+- Component lifecycle exports referenced from `routes.json`
+- `startupApp()` when the module needs one-time setup before its first lifecycle runs
+- `importTranslation` when the module provides translation files
 
-In the default Rspack config, this is wired up by exposing the module's `index.ts` as `"./start"`. If you load code yourself with `importDynamic` from `@openmrs/esm-framework`, you can point at a different exposed module, but anything exposed elsewhere needs to be registered manually before the app shell can use it.
+In the default Rspack config, this is wired up by exposing the module's `index.ts` as `"./start"`. If you load code yourself with `importDynamic` from `@openmrs/esm-framework`, you can point at a different exposed module. The app shell's route and extension loader, however, uses `./start` by default.
 
 ## Compatibility checklist
 
@@ -56,6 +56,7 @@ If you are writing a custom `rspack.config.js`, the constraints any working app 
 - `output.library.type` is `var`.
 - `output.library.name` follows the OpenMRS name-mangling rule (`@openmrs/esm-foo` → `_openmrs_esm_foo`).
 - The remote exposes a `./start` module for the app shell to load.
+- The `./start` module exports every component lifecycle named by that module's `routes.json`.
 
 ## Shared dependencies
 
@@ -107,7 +108,7 @@ The form entry frontend module is an Angular app that wraps the [Angular form en
 
 - Sets up `ModuleFederationPlugin` to expose the form entry app as a remote module.
 - Declares shared dependencies based on the form entry app's `peerDependencies`.
-- Exposes `src/index.ts` as the federation entry point.
+- Exposes `src/index.ts` as the `./start` federation module.
 
 This is fine in practice because Module Federation is interoperable across bundlers — a Webpack-built remote can be consumed by an Rspack-built host, and vice versa.
 
