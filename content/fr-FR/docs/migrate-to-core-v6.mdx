@@ -1,4 +1,4 @@
-import { Steps } from "nextra/components";
+import { Callout, Steps } from "nextra/components";
 
 # Migrer vers Core v6
 
@@ -13,6 +13,14 @@ yarn why @openmrs/esm-framework
 ```
 
 Si vous utilisez déjà Core v6 ou supérieur, vous n'avez pas besoin de migrer. Sinon, lisez la suite pour apprendre comment migrer.
+
+<Callout type="info">
+  Cette page documente la migration historique vers Core v6. Elle met les modules à niveau pour consommer les packages
+  framework en ESM tout en gardant les configurations Webpack et Jest existantes fonctionnelles. Pour l'outillage actuel
+  Rspack et Vitest, poursuivez avec [Migrer vers Rspack et Vitest](/docs/migrate-to-rspack-and-vitest). Pour de nouveaux
+  modules, commencez par [Créer un module frontend](/docs/recipes/create-a-frontend-module), qui utilise le générateur
+  publié `@openmrs/create-o3-app`.
+</Callout>
 
 ## Contexte : Pourquoi cette migration était nécessaire
 
@@ -38,7 +46,7 @@ Les améliorations clés incluent :
 - **Meilleure performance TypeScript** – utilise des fichiers `.d.ts` générés au lieu d'analyser le TypeScript source.
 - **Architecture ESM moderne** – support natif des modules ES avec un meilleur tree-shaking et des limites d'import plus claires pour les applications.
 - **Structure de package améliorée** – séparation plus claire des API Core et au niveau de l'application, la plupart du code de l'application importe maintenant depuis `@openmrs/esm-framework`.
-- **Outil amélioré** – migration de Jest vers Vitest pour une exécution de tests plus rapide et une meilleure compatibilité ESM.
+- **Chemin d'outillage plus clair** – cette migration prépare les modules à la migration suivante vers Rspack et Vitest, qui donne une exécution des tests plus rapide et une meilleure compatibilité ESM.
 
 Pour tirer parti de ces améliorations, vous devrez migrer vos modules frontend existants vers cette version pré-release de Core ou supérieure. Ce guide vous guidera tout au long du processus.
 
@@ -461,4 +469,3 @@ Le travail de migration que vous faites maintenant paie des dividendes en cycles
 
 - Migrer tous les modules frontend vers le nouveau système de build basé sur Rspack.
 - Migrer tous les modules frontend de l'utilisation de Jest vers Vitest.
-

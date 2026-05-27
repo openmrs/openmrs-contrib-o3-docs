@@ -1,4 +1,4 @@
-import { Steps } from "nextra/components";
+import { Callout, Steps } from "nextra/components";
 
 # Migrating to Core v6
 
@@ -13,6 +13,14 @@ yarn why @openmrs/esm-framework
 ```
 
 If you're already on Core v6 or higher, you don't need to migrate. Otherwise, read on to learn how to migrate.
+
+<Callout type="info">
+  This page documents the historical Core v6 migration. It updates modules enough to consume the ESM framework packages
+  while keeping existing Webpack and Jest setups working. For the current Rspack and Vitest toolchain, continue with
+  [Migrating to Rspack and Vitest](/docs/migrate-to-rspack-and-vitest). For new modules, start with
+  [Creating a frontend module](/docs/recipes/create-a-frontend-module), which uses the published
+  `@openmrs/create-o3-app` generator.
+</Callout>
 
 ## Background: Why this migration was necessary
 
@@ -38,7 +46,7 @@ The key improvements include:
 - **Better TypeScript performance** – uses generated `.d.ts` files instead of parsing source TypeScript.
 - **Modern ESM architecture** – native ES module support with improved tree-shaking and clearer import boundaries for apps.
 - **Improved package structure** – clearer separation of core and application-level APIs, with most app code now importing from `@openmrs/esm-framework`.
-- **Enhanced tooling** – migration from Jest to Vitest for faster test execution and better ESM compatibility.
+- **Clearer tooling path** – this migration prepares modules for the follow-up Rspack and Vitest migration, which gives faster test execution and better ESM compatibility.
 
 To leverage these improvements, you'll need to migrate your existing frontend modules to this pre-release version of Core or higher. This guide will walk you through the process of doing so.
 
