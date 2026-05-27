@@ -2,55 +2,63 @@
 
 Workspaces are side panels that slide in from the right side of the screen, typically used for forms and detailed views in the patient chart. They provide a consistent way to display contextual information and forms without navigating away from the current page.
 
-- Workspace forms should extend `DefaultPatientWorkspaceProps` from `@openmrs/esm-patient-common-lib` to ensure consistent props and behavior:
+- New workspaces should use Workspace v2. For general workspaces, type the component with `Workspace2DefinitionProps` from `@openmrs/esm-framework`. For patient chart workspaces, use `PatientWorkspace2DefinitionProps` from `@openmrs/esm-patient-common-lib` so the component receives the patient chart group props:
 
   ```tsx
-  import { type DefaultPatientWorkspaceProps } from '@openmrs/esm-patient-common-lib';
+  import { Workspace2 } from '@openmrs/esm-framework';
+  import { type PatientWorkspace2DefinitionProps } from '@openmrs/esm-patient-common-lib';
 
-  interface MyWorkspaceProps extends DefaultPatientWorkspaceProps {
-    // Add workspace-specific props here
+  interface MyWorkspaceProps {
     itemId?: string;
   }
 
-  const MyWorkspace: React.FC<MyWorkspaceProps> = ({
+  export default function MyWorkspace({
     closeWorkspace,
-    closeWorkspaceWithSavedChanges,
-    patientUuid,
-    promptBeforeClosing,
-    itemId,
-  }) => {
-    // Workspace implementation
-  };
+    workspaceProps,
+    groupProps,
+  }: PatientWorkspace2DefinitionProps<MyWorkspaceProps, object>) {
+    const { itemId } = workspaceProps ?? {};
+    const patientUuid = groupProps?.patientUuid;
+    const hasUnsavedChanges = false;
+
+    return (
+      <Workspace2 title={t('myWorkspace', 'My workspace')} hasUnsavedChanges={hasUnsavedChanges}>
+        {/* Use patientUuid and itemId to render workspace content */}
+      </Workspace2>
+    );
+  }
   ```
 
-- Always implement `promptBeforeClosing` to warn users when they try to close a workspace with unsaved changes. This should be called in a `useEffect` that watches the form's dirty state:
+- Use the `hasUnsavedChanges` prop on `Workspace2` to warn users before they close a workspace with unsaved changes. For forms, wire this to React Hook Form's `isDirty` state:
 
   ```tsx
   const {
     formState: { isDirty },
   } = useForm(...);
 
-  useEffect(() => {
-    promptBeforeClosing(() => isDirty);
-  }, [isDirty, promptBeforeClosing]);
+  return (
+    <Workspace2 title={t('editItem', 'Edit item')} hasUnsavedChanges={isDirty}>
+      {/* Form content */}
+    </Workspace2>
+  );
   ```
 
   For non-form workspaces, you can use any condition that indicates unsaved changes:
 
   ```tsx
-  useEffect(() => {
-    promptBeforeClosing(() => hasUnsavedChanges);
-  }, [hasUnsavedChanges, promptBeforeClosing]);
+  <Workspace2 title={t('editFlags', 'Edit flags')} hasUnsavedChanges={pendingChanges.size > 0}>
+    {/* Workspace content */}
+  </Workspace2>
   ```
 
-- Use `closeWorkspaceWithSavedChanges` when data is successfully saved, and `closeWorkspace` when the user cancels or when closing without saving:
+- Use `closeWorkspace({ discardUnsavedChanges: true })` after data is successfully saved, and `closeWorkspace()` when the user cancels or closes without saving:
 
   ```tsx
   const handleSave = async () => {
     try {
       await saveData();
       mutate(); // Update SWR cache
-      closeWorkspaceWithSavedChanges(); // Indicates successful save
+      closeWorkspace({ discardUnsavedChanges: true });
       showSnackbar({ title: t('saved', 'Saved successfully') });
     } catch (error) {
       showSnackbar({
@@ -67,20 +75,41 @@ Workspaces are side panels that slide in from the right side of the screen, typi
   </Button>
   ```
 
-- Workspace components should be registered using `getAsyncLifecycle` for code splitting, or `getSyncLifecycle` if they need to be available immediately:
+- Export the workspace lifecycle from `index.ts`, then register the workspace and its window in `routes.json`. The `component` value in `routes.json` must match the exported lifecycle name:
 
   ```tsx
-  // Async - loaded on demand
   export const myWorkspace = getAsyncLifecycle(
     () => import('./my-workspace.workspace'),
     options
   );
+  ```
 
-  // Sync - included in main bundle
-  export const myWorkspace = getSyncLifecycle(
-    MyWorkspaceComponent,
-    options
-  );
+  ```json
+  {
+    "workspaces2": [
+      {
+        "name": "my-workspace",
+        "component": "myWorkspace",
+        "window": "my-workspace-window"
+      }
+    ],
+    "workspaceWindows2": [
+      {
+        "name": "my-workspace-window",
+        "group": "patient-chart",
+        "width": "narrow",
+        "canMaximize": true
+      }
+    ]
+  }
+  ```
+
+- Use `launchWorkspace2` to open Workspace v2 workspaces. If the workspace requires an active visit, use the patient common helpers such as `useLaunchWorkspaceRequiringVisit` when appropriate:
+
+  ```tsx
+  import { launchWorkspace2 } from '@openmrs/esm-framework';
+
+  launchWorkspace2('my-workspace', { itemId });
   ```
 
 - Workspace files should use the `.workspace.tsx` suffix to clearly indicate their purpose and enable proper translation key extraction.
@@ -108,4 +137,3 @@ Workspaces are side panels that slide in from the right side of the screen, typi
     ? { name: existingItem.name, ...existingItem }
     : { name: '', ...emptyDefaults };
   ```
-

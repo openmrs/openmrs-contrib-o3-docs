@@ -86,13 +86,24 @@ Modals are dialog boxes that appear on top of the current page, typically used f
   };
   ```
 
-- Modal components should be registered using `getAsyncLifecycle` for code splitting:
+- Export modal components with `getAsyncLifecycle` for code splitting, then register them in the `modals` section of `routes.json`. The `showModal` name must match the `name` value in `routes.json`, and `component` must match the exported lifecycle name:
 
   ```tsx
   export const deleteItemModal = getAsyncLifecycle(
     () => import('./delete-item.modal'),
     options
   );
+  ```
+
+  ```json
+  {
+    "modals": [
+      {
+        "name": "delete-item-modal",
+        "component": "deleteItemModal"
+      }
+    ]
+  }
   ```
 
 - Use appropriate button kinds for modal actions:
@@ -110,4 +121,3 @@ Modals are dialog boxes that appear on top of the current page, typically used f
     </Button>
   </ModalFooter>
   ```
-

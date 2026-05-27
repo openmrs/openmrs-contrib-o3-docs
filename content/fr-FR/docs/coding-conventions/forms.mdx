@@ -94,9 +94,8 @@
   <Button
     type="submit"
     disabled={isSubmitting}
-    renderIcon={isSubmitting ? InlineLoading : Save}
   >
-    {isSubmitting ? t('saving', 'Enregistrement...') : t('save', 'Enregistrer')}
+    {isSubmitting ? <InlineLoading description={t('saving', 'Enregistrement...')} /> : t('save', 'Enregistrer')}
   </Button>
   ```
 
@@ -121,45 +120,57 @@
   });
   ```
 
-- Pour les formulaires d'espace de travail, utilisez `DefaultPatientWorkspaceProps` de `@openmrs/esm-patient-common-lib` pour garantir des props cohérentes dans tous les formulaires d'espace de travail patient :
+- Pour les formulaires Workspace v2 dans le dossier patient, utilisez `PatientWorkspace2DefinitionProps` de `@openmrs/esm-patient-common-lib` et enveloppez le contenu du formulaire dans `Workspace2` :
 
   ```tsx
-  import { type DefaultPatientWorkspaceProps } from '@openmrs/esm-patient-common-lib';
+  import { Workspace2 } from '@openmrs/esm-framework';
+  import { type PatientWorkspace2DefinitionProps } from '@openmrs/esm-patient-common-lib';
 
-  interface MyFormProps extends DefaultPatientWorkspaceProps {
-    // Ajoutez des props supplémentaires spécifiques à votre formulaire
+  interface MyFormProps {
+    encounterUuid?: string;
   }
 
-  const MyForm: React.FC<MyFormProps> = ({
+  export default function MyForm({
     closeWorkspace,
-    closeWorkspaceWithSavedChanges,
-    patientUuid,
-    promptBeforeClosing,
-  }) => {
-    // Implémentation du formulaire
-  };
+    workspaceProps,
+    groupProps,
+  }: PatientWorkspace2DefinitionProps<MyFormProps, object>) {
+    const patientUuid = groupProps?.patientUuid;
+    const encounterUuid = workspaceProps?.encounterUuid;
+    const {
+      formState: { isDirty },
+    } = useForm();
+
+    return (
+      <Workspace2 title={t('myForm', 'Mon formulaire')} hasUnsavedChanges={isDirty}>
+        {/* Utilisez patientUuid et encounterUuid pour afficher le formulaire */}
+      </Workspace2>
+    );
+  }
   ```
 
-- Utilisez `promptBeforeClosing` pour avertir les utilisateurs lorsqu'ils tentent de fermer un espace de travail avec des modifications non enregistrées. Ceci doit être appelé dans un `useEffect` qui surveille l'état `isDirty` du formulaire :
+- Utilisez la prop `hasUnsavedChanges` de `Workspace2` pour avertir les utilisateurs lorsqu'ils tentent de fermer un formulaire d'espace de travail avec des modifications non enregistrées :
 
   ```tsx
   const {
     formState: { isDirty },
   } = useForm(...);
 
-  useEffect(() => {
-    promptBeforeClosing(() => isDirty);
-  }, [isDirty, promptBeforeClosing]);
+  return (
+    <Workspace2 title={t('editItem', "Modifier l'élément")} hasUnsavedChanges={isDirty}>
+      {/* Contenu du formulaire */}
+    </Workspace2>
+  );
   ```
 
-- Utilisez `closeWorkspaceWithSavedChanges` lorsque le formulaire est soumis avec succès, et `closeWorkspace` lorsque l'utilisateur annule :
+- Utilisez `closeWorkspace({ discardUnsavedChanges: true })` après une soumission réussie, et `closeWorkspace()` lorsque l'utilisateur annule :
 
   ```tsx
   const onSubmit = async (data: FormData) => {
     try {
       await saveData(data);
       mutate(); // Mettre à jour le cache SWR
-      closeWorkspaceWithSavedChanges(); // Utiliser ceci en cas de succès
+      closeWorkspace({ discardUnsavedChanges: true });
       showSnackbar({ title: t('saved', 'Enregistré avec succès') });
     } catch (error) {
       showSnackbar({
@@ -202,4 +213,3 @@
     />
   )}
   ```
-

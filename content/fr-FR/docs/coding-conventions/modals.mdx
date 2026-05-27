@@ -86,13 +86,24 @@ Les modales sont des boîtes de dialogue qui apparaissent au-dessus de la page a
   };
   ```
 
-- Les composants modaux doivent être enregistrés en utilisant `getAsyncLifecycle` pour le code splitting :
+- Exportez les composants modaux avec `getAsyncLifecycle` pour le code splitting, puis enregistrez-les dans la section `modals` de `routes.json`. Le nom passé à `showModal` doit correspondre à la valeur `name` dans `routes.json`, et `component` doit correspondre au nom du cycle de vie exporté :
 
   ```tsx
   export const deleteItemModal = getAsyncLifecycle(
     () => import('./delete-item.modal'),
     options
   );
+  ```
+
+  ```json
+  {
+    "modals": [
+      {
+        "name": "delete-item-modal",
+        "component": "deleteItemModal"
+      }
+    ]
+  }
   ```
 
 - Utilisez les types de boutons appropriés pour les actions modales :
@@ -110,4 +121,3 @@ Les modales sont des boîtes de dialogue qui apparaissent au-dessus de la page a
     </Button>
   </ModalFooter>
   ```
-

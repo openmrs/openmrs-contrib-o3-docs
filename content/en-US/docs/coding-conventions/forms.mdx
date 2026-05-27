@@ -94,9 +94,8 @@
   <Button
     type="submit"
     disabled={isSubmitting}
-    renderIcon={isSubmitting ? InlineLoading : Save}
   >
-    {isSubmitting ? t('saving', 'Saving...') : t('save', 'Save')}
+    {isSubmitting ? <InlineLoading description={t('saving', 'Saving...')} /> : t('save', 'Save')}
   </Button>
   ```
 
@@ -121,45 +120,57 @@
   });
   ```
 
-- For workspace forms, use `DefaultPatientWorkspaceProps` from `@openmrs/esm-patient-common-lib` to ensure consistent props across all patient workspace forms:
+- For Workspace v2 forms in the patient chart, use `PatientWorkspace2DefinitionProps` from `@openmrs/esm-patient-common-lib` and wrap the form content in `Workspace2`:
 
   ```tsx
-  import { type DefaultPatientWorkspaceProps } from '@openmrs/esm-patient-common-lib';
+  import { Workspace2 } from '@openmrs/esm-framework';
+  import { type PatientWorkspace2DefinitionProps } from '@openmrs/esm-patient-common-lib';
 
-  interface MyFormProps extends DefaultPatientWorkspaceProps {
-    // Add any additional props specific to your form
+  interface MyFormProps {
+    encounterUuid?: string;
   }
 
-  const MyForm: React.FC<MyFormProps> = ({
+  export default function MyForm({
     closeWorkspace,
-    closeWorkspaceWithSavedChanges,
-    patientUuid,
-    promptBeforeClosing,
-  }) => {
-    // Form implementation
-  };
+    workspaceProps,
+    groupProps,
+  }: PatientWorkspace2DefinitionProps<MyFormProps, object>) {
+    const patientUuid = groupProps?.patientUuid;
+    const encounterUuid = workspaceProps?.encounterUuid;
+    const {
+      formState: { isDirty },
+    } = useForm();
+
+    return (
+      <Workspace2 title={t('myForm', 'My form')} hasUnsavedChanges={isDirty}>
+        {/* Use patientUuid and encounterUuid to render the form */}
+      </Workspace2>
+    );
+  }
   ```
 
-- Use `promptBeforeClosing` to warn users when they try to close a workspace with unsaved changes. This should be called in a `useEffect` that watches the form's `isDirty` state:
+- Use the `hasUnsavedChanges` prop on `Workspace2` to warn users when they try to close a workspace form with unsaved changes:
 
   ```tsx
   const {
     formState: { isDirty },
   } = useForm(...);
 
-  useEffect(() => {
-    promptBeforeClosing(() => isDirty);
-  }, [isDirty, promptBeforeClosing]);
+  return (
+    <Workspace2 title={t('editItem', 'Edit item')} hasUnsavedChanges={isDirty}>
+      {/* Form content */}
+    </Workspace2>
+  );
   ```
 
-- Use `closeWorkspaceWithSavedChanges` when the form is successfully submitted, and `closeWorkspace` when the user cancels:
+- Use `closeWorkspace({ discardUnsavedChanges: true })` after a successful submit, and `closeWorkspace()` when the user cancels:
 
   ```tsx
   const onSubmit = async (data: FormData) => {
     try {
       await saveData(data);
       mutate(); // Update SWR cache
-      closeWorkspaceWithSavedChanges(); // Use this on success
+      closeWorkspace({ discardUnsavedChanges: true });
       showSnackbar({ title: t('saved', 'Saved successfully') });
     } catch (error) {
       showSnackbar({
@@ -202,4 +213,3 @@
     />
   )}
   ```
-
