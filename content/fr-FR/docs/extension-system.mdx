@@ -213,8 +213,10 @@ L'état est fourni en tant que paramètre aux composants `ExtensionSlot` ou `Ext
 
 Lorsque vous fournissez des enfants personnalisés à `ExtensionSlot` (soit comme nœud React, soit comme fonction), vous devez utiliser le composant `<Extension />` pour marquer où chaque extension doit être rendue. Le composant `Extension` est un helper React qui rend une seule instance d'extension dans un slot.
 
+Si `ExtensionSlot` a des enfants personnalisés, transmettez l'état à `<Extension state={...} />`. Fournir à la fois `children` et `state` directement à `ExtensionSlot` déclenchera une erreur.
+
 ```tsx
-import { ExtensionSlot, Extension } from "@openmrs/esm-react-utils";
+import { ExtensionSlot, Extension } from "@openmrs/esm-framework";
 
 // Avec un wrapper personnalisé
 <ExtensionSlot name="patient-header-slot">
@@ -297,13 +299,15 @@ Vous pouvez filtrer quelles extensions sont rendues en utilisant la prop `select
 
 **Rendu personnalisé avec des enfants fonction :**
 
-Vous pouvez personnaliser le rendu de chaque extension en passant une fonction comme enfants. La fonction reçoit l'objet extension et tout état passé au slot :
+Vous pouvez personnaliser le rendu de chaque extension en passant une fonction comme enfants. La fonction reçoit l'objet extension assignée. Si vos extensions ont besoin d'état, capturez cet état depuis votre composant et transmettez-le à `<Extension state={...} />` :
 
 ```tsx
+const slotState = { patientUuid };
+
 <ExtensionSlot name="dashboard-slot">
-  {(extension, state) => (
+  {(extension) => (
     <div className={`widget widget-${extension.meta?.size || 'medium'}`}>
-      <Extension state={state} />
+      <Extension state={slotState} />
     </div>
   )}
 </ExtensionSlot>
@@ -338,7 +342,7 @@ attach("patient-header-slot", "vitals-widget#instance1");
 attach("patient-header-slot", "vitals-widget#instance2");
 ```
 
-Les IDs d'extension peuvent inclure un suffixe `#` optionnel pour distinguer plusieurs instances de la même extension dans un slot. Par exemple, `"vitals-widget#primary"` et `"vitals-widget#secondary"` sont deux instances distinctes de l'extension `"vitals-widget"`.
+Les IDs d'extension peuvent inclure un suffixe `#` optionnel pour distinguer plusieurs instances de la même extension dans un slot. Par exemple, `"vitals-widget#primary"` et `"vitals-widget#secondary"` sont deux instances distinctes de l'extension `"vitals-widget"`. Lorsque vous configurez, retirez ou ordonnez une instance, utilisez l'ID complet avec le suffixe `#`.
 
 Ceci est utile pour :
 - Les slots dynamiques qui sont créés au moment de l'exécution (par exemple, les slots d'espace de travail)
@@ -392,7 +396,7 @@ Les extensions déclarées dans `routes.json` sont enregistrées via `registerEx
 
 Les slots peuvent lire `meta` via `useExtensionSlotMeta()` et s’en servir pour ajuster leur mise en page : les dashboards lisent par exemple les demandes de colonnes, les entêtes patients lisent les dimensions des badges, etc. `meta` est une métadonnée de définition, tandis que la configuration de l'extension est exposée séparément via la valeur `config` de l'extension assignée et via `useConfig()` dans l'extension.
 
-Pour aller plus loin (par exemple quand les helpers par défaut ne suffisent pas), consultez `registerExtensionSlot`, `renderExtension` et `getAssignedExtensions` dans `@openmrs/esm-extensions`, et `useExtensionSlotMeta` dans `@openmrs/esm-react-utils`, afin de comprendre comment les stores, configurations et vérifications de connectivité interagissent.
+Pour aller plus loin (par exemple quand les helpers par défaut ne suffisent pas), consultez `registerExtensionSlot`, `renderExtension`, `getAssignedExtensions` et `useExtensionSlotMeta` depuis `@openmrs/esm-framework`, afin de comprendre comment les stores, configurations et vérifications de connectivité interagissent.
 
 ## Dépannage
 
@@ -410,16 +414,17 @@ Si votre extension n’apparaît pas :
 1. Exposez le composant dans `src/index.ts` :
 
    ```ts
-   import { getSyncLifecycle } from "@openmrs/esm-react-utils";
-   import { createLeftPanelLink } from "./left-panel-link";
+   import { getSyncLifecycle } from "@openmrs/esm-framework";
+   import { createDashboardLink } from "./createDashboardLink";
+   import { dashboardMeta } from "./dashboard.meta";
 
-   export const patientListLink = getSyncLifecycle(
-     createLeftPanelLink({ name: "patient-lists" }),
-     {
-       featureName: "patient-lists-link",
-       moduleName: "@openmrs/esm-patient-lists",
-     }
-   );
+   const moduleName = "@openmrs/esm-patient-list-management-app";
+   const options = {
+     featureName: "patient list",
+     moduleName,
+   };
+
+   export const patientListDashboardLink = getSyncLifecycle(createDashboardLink(dashboardMeta), options);
    ```
 
    Note : Le wrapper `getSyncLifecycle` est requis pour convertir votre composant React en un cycle de vie compatible avec les extensions. L'objet options doit inclure `featureName` et `moduleName`.
@@ -430,18 +435,22 @@ Si votre extension n’apparaît pas :
    {
      "extensions": [
        {
-         "component": "patientListLink",
-         "slot": "patient-lists-dashboard-slot",
-         "name": "patient-lists-home-link",
-         "order": 4
+         "name": "patient-lists-dashboard-link",
+         "component": "patientListDashboardLink",
+         "slot": "homepage-dashboard-slot",
+         "meta": {
+           "name": "patient-lists",
+           "slot": "patient-lists-dashboard-slot",
+           "title": "Patient lists"
+         }
        }
      ]
    }
    ```
 
-3. Vérifiez qu'un module hôte rend le slot, par exemple `<ExtensionSlot name="patient-lists-dashboard-slot" />`.
+3. Vérifiez qu'un module hôte rend le slot cible, par exemple `<ExtensionSlot name="homepage-dashboard-slot" />`.
 4. Les administrateurs peuvent ensuite ajuster le tableau `order` du slot ou utiliser les tableaux `add`/`remove` via le système de configuration pour contrôler quelles extensions apparaissent et dans quel ordre.
-5. Pour réutiliser la même extension dans un autre slot, appelez `attach("autre-slot", "patient-lists-home-link")` à l'exécution, ou ajoutez l'extension au tableau `add` de l'autre slot dans la configuration.
+5. Pour réutiliser la même extension dans un autre slot, appelez `attach("autre-slot", "patient-lists-dashboard-link")` à l'exécution, ou ajoutez l'extension au tableau `add` de l'autre slot dans la configuration.
 
 ## Ressources supplémentaires
 
@@ -477,7 +486,7 @@ Explorons ces quatre éléments en profondeur.
 
 Pour (1), on utilise le mécanisme de colisage de single-spa.
 
-Pour (2), vous pouvez utiliser la fonction registerExtensionSlot avec renderExtension. Pour les frameworks tels que React, des composants d'aide peuvent exister (par exemple, ExtensionSlot).
+Pour (2), vous pouvez utiliser la fonction `registerExtensionSlot` avec `renderExtension`. Pour les modules React, les helpers `ExtensionSlot` et `Extension` sont exportés par `@openmrs/esm-framework`.
 
 Pour (3), vous définissez les extensions dans le fichier `routes.json` de votre application (recommandé pour Core v5+). Voici un exemple :
 
@@ -516,7 +525,7 @@ Le runtime utilise l'état "assigned" pour déterminer quelles extensions rendre
 
 ### Rendu
 
-Les extensions sont rendues en suivant leurs fonctions de cycle de vie exportées. Les fonctions `getAsyncLifecycle` et `getSyncLifecycle` de `@openmrs/esm-react-utils` sont des couches de commodité qui exportent ces fonctions de cycle de vie, reliées ensemble avec `single-spa-react`. Utilisez `getAsyncLifecycle` pour les composants qui doivent être chargés de manière paresseuse, et `getSyncLifecycle` pour les composants déjà disponibles de manière synchrone.
+Les extensions sont rendues en suivant leurs fonctions de cycle de vie exportées. Les fonctions `getAsyncLifecycle` et `getSyncLifecycle` de `@openmrs/esm-framework` sont des couches de commodité qui exportent ces fonctions de cycle de vie, reliées ensemble avec `single-spa-react`. Utilisez `getAsyncLifecycle` pour les composants qui doivent être chargés de manière paresseuse, et `getSyncLifecycle` pour les composants déjà disponibles de manière synchrone.
 
 En bref:
 
@@ -543,4 +552,4 @@ Note : Bien que le système de types permette à `online` et `offline` d'être d
 Les **props du composant** incluent :
 - `_meta` : L'objet de métadonnées de l'extension
 - `_extensionContext` : Informations sur l'extension et son slot (ID d'extension, nom du slot, noms des modules)
-- Toutes les props supplémentaires passées au composant `ExtensionSlot` (via la prop `state`)
+- Toutes les props supplémentaires passées via la prop `state` de `ExtensionSlot`, ou via `<Extension state={...} />` lorsque des enfants personnalisés sont utilisés

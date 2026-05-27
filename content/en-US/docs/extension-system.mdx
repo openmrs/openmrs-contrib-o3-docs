@@ -213,8 +213,10 @@ State is provided as a parameter to the `ExtensionSlot` or `Extension` component
 
 When you provide custom children to `ExtensionSlot` (either as a React node or a function), you must use the `<Extension />` component to mark where each extension should be rendered. The `Extension` component is a React helper that renders a single extension instance within a slot.
 
+If `ExtensionSlot` has custom children, pass slot state to `<Extension state={...} />`. Passing both `children` and `state` directly to `ExtensionSlot` will throw.
+
 ```tsx
-import { ExtensionSlot, Extension } from "@openmrs/esm-react-utils";
+import { ExtensionSlot, Extension } from "@openmrs/esm-framework";
 
 // With custom wrapper
 <ExtensionSlot name="patient-header-slot">
@@ -297,13 +299,15 @@ You can filter which extensions are rendered using the `select` prop, which acce
 
 **Custom rendering with function children:**
 
-You can customize how each extension is rendered by passing a function as children. The function receives the extension object and any state passed to the slot:
+You can customize how each extension is rendered by passing a function as children. The function receives the assigned extension object. If your extensions need state, close over that state from your component and pass it to `<Extension state={...} />`:
 
 ```tsx
+const slotState = { patientUuid };
+
 <ExtensionSlot name="dashboard-slot">
-  {(extension, state) => (
+  {(extension) => (
     <div className={`widget widget-${extension.meta?.size || 'medium'}`}>
-      <Extension state={state} />
+      <Extension state={slotState} />
     </div>
   )}
 </ExtensionSlot>
@@ -338,7 +342,7 @@ attach("patient-header-slot", "vitals-widget#instance1");
 attach("patient-header-slot", "vitals-widget#instance2");
 ```
 
-Extension IDs can include an optional `#` suffix to distinguish multiple instances of the same extension within a slot. For example, `"vitals-widget#primary"` and `"vitals-widget#secondary"` are two distinct instances of the `"vitals-widget"` extension.
+Extension IDs can include an optional `#` suffix to distinguish multiple instances of the same extension within a slot. For example, `"vitals-widget#primary"` and `"vitals-widget#secondary"` are two distinct instances of the `"vitals-widget"` extension. When configuring, removing, or ordering an instance, use the full ID including the `#` suffix.
 
 This is useful for:
 - Dynamic slots that are created at runtime (e.g., workspace slots)
@@ -392,7 +396,7 @@ Extensions declared in `routes.json` are registered via `registerExtension`. (Th
 
 Slots can read `meta` through `useExtensionSlotMeta()` and use it to adjust layouts—dashboards read column requests, patient headers read badge sizes, etc. `meta` is definition metadata, while extension configuration is exposed separately through the assigned extension's `config` value and `useConfig()` inside the extension.
 
-For hooks into slot state if the default helpers are not enough, consult `registerExtensionSlot`, `renderExtension`, and `getAssignedExtensions` in `@openmrs/esm-extensions`, and `useExtensionSlotMeta` in `@openmrs/esm-react-utils`, so you understand how the stores, configs, and connectivity checks interact.
+For hooks into slot state if the default helpers are not enough, consult `registerExtensionSlot`, `renderExtension`, `getAssignedExtensions`, and `useExtensionSlotMeta` from `@openmrs/esm-framework`, so you understand how the stores, configs, and connectivity checks interact.
 
 ## Troubleshooting
 
@@ -410,16 +414,17 @@ If your extension isn’t showing up:
 1. Export the extension component in `src/index.ts`:
 
    ```ts
-   import { getSyncLifecycle } from "@openmrs/esm-react-utils";
-   import { createLeftPanelLink } from "./left-panel-link";
+   import { getSyncLifecycle } from "@openmrs/esm-framework";
+   import { createDashboardLink } from "./createDashboardLink";
+   import { dashboardMeta } from "./dashboard.meta";
 
-   export const patientListLink = getSyncLifecycle(
-     createLeftPanelLink({ name: "patient-lists" }),
-     {
-       featureName: "patient-lists-link",
-       moduleName: "@openmrs/esm-patient-lists",
-     }
-   );
+   const moduleName = "@openmrs/esm-patient-list-management-app";
+   const options = {
+     featureName: "patient list",
+     moduleName,
+   };
+
+   export const patientListDashboardLink = getSyncLifecycle(createDashboardLink(dashboardMeta), options);
    ```
 
    Note: The `getSyncLifecycle` wrapper is required to convert your React component into an extension-compatible lifecycle. The options object must include `featureName` and `moduleName`.
@@ -430,18 +435,22 @@ If your extension isn’t showing up:
    {
      "extensions": [
        {
-         "component": "patientListLink",
-         "slot": "patient-lists-dashboard-slot",
-         "name": "patient-lists-home-link",
-         "order": 4
+         "name": "patient-lists-dashboard-link",
+         "component": "patientListDashboardLink",
+         "slot": "homepage-dashboard-slot",
+         "meta": {
+           "name": "patient-lists",
+           "slot": "patient-lists-dashboard-slot",
+           "title": "Patient lists"
+         }
        }
      ]
    }
    ```
 
-3. Ensure a host renders the slot, e.g., `<ExtensionSlot name="patient-lists-dashboard-slot" />`.
+3. Ensure a host renders the target slot, e.g., `<ExtensionSlot name="homepage-dashboard-slot" />`.
 4. Admins can later tweak the slot's `order` array or use `add`/`remove` arrays via the configuration system to control which extensions appear and in what order.
-5. To reuse the same extension in another slot, either call `attach("another-slot", "patient-lists-home-link")` at runtime, or add the extension to the other slot's `add` array in the configuration.
+5. To reuse the same extension in another slot, either call `attach("another-slot", "patient-lists-dashboard-link")` at runtime, or add the extension to the other slot's `add` array in the configuration.
 
 ## Additional Resources
 
@@ -477,7 +486,7 @@ Let’s explore these four things in depth.
 
 For (1), extensions are implemented using single-spa [parcels](https://single-spa.js.org/docs/parcels-overview).
 
-For (2) you can use the `registerExtensionSlot()` function together with `renderExtension()`. For frameworks such as React, helper components may exist (e.g., `ExtensionSlot`).
+For (2) you can use the `registerExtensionSlot()` function together with `renderExtension()`. For React modules, the `ExtensionSlot` and `Extension` helpers are exported from `@openmrs/esm-framework`.
 
 For (3), you define extensions in your application's `routes.json` file (recommended for Core v5+). An example:
 
@@ -516,7 +525,7 @@ The runtime uses the "assigned" state to determine which extensions to render. T
 
 ### Rendering
 
-Extensions are rendered by following their exported lifecycle functions. The `getAsyncLifecycle` and `getSyncLifecycle` functions from `@openmrs/esm-react-utils` are convenience layers that export these lifecycle functions wired together with `single-spa-react`. Use `getAsyncLifecycle` for components that need to be lazy-loaded, and `getSyncLifecycle` for components that are already available synchronously.
+Extensions are rendered by following their exported lifecycle functions. The `getAsyncLifecycle` and `getSyncLifecycle` functions from `@openmrs/esm-framework` are convenience layers that export these lifecycle functions wired together with `single-spa-react`. Use `getAsyncLifecycle` for components that need to be lazy-loaded, and `getSyncLifecycle` for components that are already available synchronously.
 
 In a nutshell:
 
@@ -543,4 +552,4 @@ Note: While the type system allows `online` and `offline` to be objects, this fe
 **Component props** include:
 - `_meta`: The extension's metadata object
 - `_extensionContext`: Information about the extension and its slot (extension ID, slot name, module names)
-- Any additional props passed to the `ExtensionSlot` component (via the `state` prop)
+- Any additional props passed via the `ExtensionSlot` `state` prop, or via `<Extension state={...} />` when custom children are used
