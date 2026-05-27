@@ -25,8 +25,8 @@ Workspace v2 résout ces problèmes avec une hiérarchie à trois niveaux :
 
 Avant de migrer, il est utile de comprendre comment les trois niveaux sont liés :
 
-1. Un **groupe de workspaces** est déclaré dans `workspaceGroups2` et initialisé à l'exécution en appelant `launchWorkspaceGroup2`. Cela rend le menu d'actions (siderail). Un seul groupe peut être ouvert à la fois.
-2. Une **fenêtre de workspace** est déclarée dans `workspaceWindows2` et appartient à un groupe. Chaque fenêtre correspond à un bouton du menu d'actions. Le bouton du menu d'actions est enregistré comme une extension dont **l'ID d'extension doit correspondre au nom de la fenêtre**. C'est ainsi que `ActionMenuButton2` sait quelle fenêtre il contrôle.
+1. Un **groupe de workspaces** est déclaré dans `workspaceGroups2` et initialisé à l'exécution en appelant `launchWorkspaceGroup2`. Si le groupe possède des fenêtres avec icônes, il rend le menu d'actions (siderail). Un seul groupe peut être ouvert à la fois.
+2. Une **fenêtre de workspace** est déclarée dans `workspaceWindows2` et appartient à un groupe. Une fenêtre avec une `icon` correspond à un bouton du menu d'actions. L'icône est enregistrée comme une extension dont **l'ID d'extension doit correspondre au nom de la fenêtre**. C'est ainsi que `ActionMenuButton2` sait quelle fenêtre il contrôle.
 3. Un **workspace** est déclaré dans `workspaces2` et appartient à une fenêtre. Les workspaces sont les panneaux de contenu réels. Une fenêtre peut contenir une pile de workspaces (parent + enfants).
 
 Les **props de groupe** fournissent un contexte partagé (ex. patient actuel, visite) à tous les workspaces du groupe. Les **props de fenêtre** et les **props de workspace** sont scopées à leurs niveaux respectifs. Lorsque l'une de ces props change de manière incompatible, le système invite l'utilisateur à fermer les workspaces avec des modifications non enregistrées.
@@ -83,7 +83,7 @@ Différences clés :
 - Les propriétés `title` et `type` sont supprimées des définitions de workspace. Les titres sont désormais définis par le composant wrapper `<Workspace2>`.
 - Chaque workspace doit spécifier la `window` à laquelle il appartient.
 - Chaque fenêtre doit spécifier le `group` auquel elle appartient.
-- Les groupes peuvent optionnellement configurer les propriétés `overlay`, `closeable`, `persistence` et `scopePattern`.
+- Les groupes peuvent optionnellement configurer les propriétés `overlay`, `persistence` et `scopePattern`.
 
 <Callout type="info">
   Si les workspaces de votre application appartiennent à un groupe possédé par une autre application (ex. le groupe `patient-chart`), vous n'avez besoin de déclarer que `workspaces2` et `workspaceWindows2`. Vous n'avez pas besoin de déclarer `workspaceGroups2` — c'est la responsabilité de l'application qui possède le groupe.
@@ -97,6 +97,7 @@ Les fenêtres supportent les propriétés optionnelles suivantes :
 |---|---|---|
 | `canMaximize` | `boolean` | Si la fenêtre peut être maximisée |
 | `group` | `string` | **Obligatoire.** Le groupe auquel cette fenêtre appartient |
+| `icon` | `string` | Composant d'icône de menu d'actions exporté pour cette fenêtre |
 | `order` | `number` | Ordre d'affichage dans le menu d'actions |
 | `width` | `"narrow" \| "wider" \| "extra-wide"` | Largeur du panneau de workspace |
 
@@ -106,14 +107,13 @@ Les groupes supportent les propriétés optionnelles suivantes :
 
 | Propriété | Type | Description |
 |---|---|---|
-| `closeable` | `boolean` | Si le groupe peut être fermé par l'utilisateur |
 | `overlay` | `boolean` | Si les workspaces se rendent en overlay |
-| `persistence` | `"app-wide" \| "closable"` | Mode de persistance du cycle de vie |
+| `persistence` | `"app-wide" \| "closable"` | Mode de persistance du cycle de vie. Utilisez `"closable"` pour rendre le menu d'actions du groupe avec un bouton de fermeture. |
 | `scopePattern` | `string` | Modèle d'URL définissant où les workspaces persistent |
 
 ### Initialiser le groupe de workspaces (propriétaires de groupe uniquement)
 
-Si votre application possède un groupe de workspaces (c'est-à-dire que le groupe est défini dans votre `routes.json`), vous devez appeler `launchWorkspaceGroup2` pour l'initialiser. Cela se fait typiquement dans le composant racine de votre application et provoque le rendu du menu d'actions (siderail).
+Si votre application possède un groupe de workspaces (c'est-à-dire que le groupe est défini dans votre `routes.json`), vous devez appeler `launchWorkspaceGroup2` pour l'initialiser. Cela se fait typiquement dans le composant racine de votre application. Si le groupe possède des fenêtres avec icônes, son initialisation rend aussi son menu d'actions disponible.
 
 ```tsx
 import { launchWorkspaceGroup2 } from "@openmrs/esm-framework";
@@ -237,13 +237,15 @@ launchWorkspace2(
   "start-visit-workspace-form",
   { openedFrom: "patient-chart-start-visit" }, // props du workspace
   {}, // props de la fenêtre
-  { patient, patientUuid: patient.id, visitContext: null }, // props du groupe
+  { patient, patientUuid: patient.id, visitContext: null, mutateVisitContext }, // props du groupe
 );
 ```
 
 ### Mettre à jour les boutons du menu d'actions
 
 Remplacez `ActionMenuButton` par `ActionMenuButton2`. Le nouveau composant remplace `handler` et `type` par un objet `workspaceToLaunch`. Il gère également automatiquement la visibilité de la fenêtre — cliquer sur le bouton masquera, restaurera ou lancera le workspace selon l'état actuel.
+
+Référencez le composant de bouton depuis la propriété `icon` de la fenêtre propriétaire dans `workspaceWindows2`. Le framework enregistre cette icône comme une extension dont l'ID est le nom de la fenêtre.
 
 **Avant (v1) :**
 

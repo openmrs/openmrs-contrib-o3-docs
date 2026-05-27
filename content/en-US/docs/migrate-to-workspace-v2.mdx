@@ -25,8 +25,8 @@ Workspace v2 addresses these with a three-level hierarchy:
 
 Before migrating, it helps to understand how the three levels relate:
 
-1. A **workspace group** is declared in `workspaceGroups2` and initialized at runtime by calling `launchWorkspaceGroup2`. This renders the action menu (siderail). Only one group can be open at a time.
-2. A **workspace window** is declared in `workspaceWindows2` and belongs to a group. Each window corresponds to an action menu button. The action menu button is registered as an extension whose **extension ID must match the window name**. This is how `ActionMenuButton2` knows which window it controls.
+1. A **workspace group** is declared in `workspaceGroups2` and initialized at runtime by calling `launchWorkspaceGroup2`. If the group has windows with icons, it renders the action menu (siderail). Only one group can be open at a time.
+2. A **workspace window** is declared in `workspaceWindows2` and belongs to a group. A window with an `icon` corresponds to an action menu button. The icon is registered as an extension whose **extension ID must match the window name**. This is how `ActionMenuButton2` knows which window it controls.
 3. A **workspace** is declared in `workspaces2` and belongs to a window. Workspaces are the actual content panels. A window can contain a stack of workspaces (parent + children).
 
 **Group props** provide shared context (e.g. current patient, visit) to all workspaces in the group. **Window props** and **workspace props** are scoped to their respective levels. When any of these props change in an incompatible way, the system prompts the user to close workspaces with unsaved changes.
@@ -83,7 +83,7 @@ Key differences:
 - The `title` and `type` properties are removed from workspace definitions. Titles are now set by the `<Workspace2>` wrapper component.
 - Each workspace must specify a `window` it belongs to.
 - Each window must specify a `group` it belongs to.
-- Groups can optionally configure `overlay`, `closeable`, `persistence`, and `scopePattern` properties.
+- Groups can optionally configure `overlay`, `persistence`, and `scopePattern` properties.
 
 <Callout type="info">
   If your app's workspaces belong to a group owned by another app (e.g. the `patient-chart` group), you only need to declare `workspaces2` and `workspaceWindows2`. You do not need to declare `workspaceGroups2` — that's the responsibility of the app that owns the group.
@@ -97,6 +97,7 @@ Windows support the following optional properties:
 |---|---|---|
 | `canMaximize` | `boolean` | Whether the window can be maximized |
 | `group` | `string` | **Required.** The group this window belongs to |
+| `icon` | `string` | Exported action-menu icon component for this window |
 | `order` | `number` | Display order in the action menu |
 | `width` | `"narrow" \| "wider" \| "extra-wide"` | Width of the workspace panel |
 
@@ -106,14 +107,13 @@ Groups support the following optional properties:
 
 | Property | Type | Description |
 |---|---|---|
-| `closeable` | `boolean` | Whether the group can be closed by the user |
 | `overlay` | `boolean` | Whether workspaces render as overlays |
-| `persistence` | `"app-wide" \| "closable"` | Lifecycle persistence mode |
+| `persistence` | `"app-wide" \| "closable"` | Lifecycle persistence mode. Use `"closable"` to render the group action menu with a close button. |
 | `scopePattern` | `string` | URL pattern defining where workspaces persist |
 
 ### Initialize the workspace group (group owners only)
 
-If your app owns a workspace group (i.e. the group is declared in your `routes.json`), you need to call `launchWorkspaceGroup2` to initialize it. This is typically done in your app's root component and is what causes the action menu (siderail) to render.
+If your app owns a workspace group (i.e. the group is declared in your `routes.json`), you need to call `launchWorkspaceGroup2` to initialize it. This is typically done in your app's root component. If the group has windows with icons, initializing the group also makes its action menu available.
 
 ```tsx
 import { launchWorkspaceGroup2 } from "@openmrs/esm-framework";
@@ -237,13 +237,15 @@ launchWorkspace2(
   "start-visit-workspace-form",
   { openedFrom: "patient-chart-start-visit" }, // workspace props
   {}, // window props
-  { patient, patientUuid: patient.id, visitContext: null }, // group props
+  { patient, patientUuid: patient.id, visitContext: null, mutateVisitContext }, // group props
 );
 ```
 
 ### Update action menu buttons
 
 Replace `ActionMenuButton` with `ActionMenuButton2`. The new component replaces `handler` and `type` with a `workspaceToLaunch` object. It also handles toggling window visibility automatically — clicking the button will hide, restore, or launch the workspace depending on the current state.
+
+Reference the button component from the owning window's `icon` property in `workspaceWindows2`. The framework registers that icon as an extension whose ID is the window name.
 
 **Before (v1):**
 
