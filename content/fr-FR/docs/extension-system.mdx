@@ -278,7 +278,7 @@ Les extensions peuvent être rendues conditionnellement en fonction des drapeaux
 }
 ```
 
-Si la propriété `featureFlag` est spécifiée, l'extension ne sera rendue que lorsque ce drapeau de fonctionnalité est activé. Les drapeaux de fonctionnalité peuvent être activés/désactivés directement depuis l'application Implementer Tools, qui fournit une interface visuelle pour activer et désactiver les drapeaux de fonctionnalité. Une fois qu'un drapeau de fonctionnalité est enregistré (via `registerFeatureFlag`), il apparaît automatiquement dans les Implementer Tools avec un interrupteur, permettant aux administrateurs de l'activer ou de le désactiver sans modifications de code.
+Si la propriété `featureFlag` est spécifiée, l'extension ne sera rendue que lorsque ce drapeau de fonctionnalité est activé. Enregistrez le flag dans le tableau `featureFlags` du `routes.json` du module, ou depuis le code avec `registerFeatureFlag`. Les flags enregistrés apparaissent dans les Implementer Tools avec des interrupteurs, et les implémenteurs peuvent les activer globalement avec la configuration de l'app shell.
 
 ### Rendu avancé des slots
 

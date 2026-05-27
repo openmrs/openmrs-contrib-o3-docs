@@ -99,9 +99,9 @@ export function startupApp() {
 }
 ```
 
-## Utiliser les fils d'Ariane dans votre composant
+## Rendre les fils d'Ariane
 
-Les fils d'Ariane sont rendus automatiquement par l'app shell comme extension dans le `breadcrumbs-slot`. Pour afficher les fils d'Ariane dans le composant de votre page, incluez simplement l'extension slot:
+`registerBreadcrumb` et `registerBreadcrumbs` enregistrent uniquement les données des fils d'Ariane. Une page doit quand même rendre une interface de fil d'Ariane. Les apps O3 actuelles le font généralement avec un `breadcrumbs-slot` partagé, mais ce slot doit recevoir une extension de fil d'Ariane depuis la distribution ou depuis le module qui possède la mise en page.
 
 ```tsx
 import { ExtensionSlot } from "@openmrs/esm-framework";
@@ -116,7 +116,7 @@ export default function MyPage() {
 }
 ```
 
-L'extension des fils d'Ariane est enregistrée automatiquement par l'app shell. Vous n'avez donc pas besoin de l'enregistrer vous-même. Il suffit d'inclure le composant `<ExtensionSlot>` dans votre page pour afficher la piste de navigation.
+Si vous créez une nouvelle mise en page, vérifiez qu'un élément de la distro fournit réellement l'extension de fil d'Ariane pour `breadcrumbs-slot`; sinon le slot ne rendra rien.
 
 ## Comportement des fils d'Ariane
 

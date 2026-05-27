@@ -51,7 +51,7 @@ Enregistrez la modale par son nom dans la propriété `modals` de `routes.json` 
 import { getAsyncLifecycle } from '@openmrs/esm-framework';
 
 export const modalComponentName = getAsyncLifecycle(
-  () => import('/path-to-the-modal-component/modal-component.tsx'),
+  () => import('./path-to-the-modal-component/modal-component'),
   options,
 );
 ```
@@ -112,7 +112,7 @@ Le système de modales gère automatiquement plusieurs comportements:
 
 - **Verrouillage du défilement du body**: quand une modale est ouverte, le défilement de la page est automatiquement verrouillé pour empêcher le défilement de l'arrière-plan.
 - **Gestion de la touche ESC**: appuyer sur ESC ferme la modale la plus haute.
-- **Gestion du focus**: le focus est géré automatiquement pour préserver l'accessibilité.
+- **Visibilité de la pile**: seule la modale au sommet est visible; les modales ouvertes précédemment restent montées mais masquées jusqu'à la fermeture de celle du dessus.
 
 ### Les props `close` et `closeModal`
 

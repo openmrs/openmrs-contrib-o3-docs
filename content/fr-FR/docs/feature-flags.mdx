@@ -4,7 +4,7 @@ import Image from "next/image";
 
 Les fonctionnalités en cours de développement peuvent être cachées derrière des feature flags. C’est utile pour des fonctionnalités complexes qui nécessitent du temps et plusieurs itérations avant d’être entièrement prêtes.
 
-Un feature flag peut être activé ou désactivé depuis l’onglet « Feature Flags » des Implementer Tools. Le flag est activé ou désactivé pour cet utilisateur, dans son navigateur. Les feature flags ne sont pas persistés côté serveur : ils ne permettent donc pas de déploiement progressif, et ne sont pas accessibles aux non‑administrateurs. Pour les utilisateurs sans accès aux Implementer Tools, les éléments masqués par des feature flags ne sont tout simplement pas disponibles.
+Un feature flag peut être activé ou désactivé depuis l’onglet « Feature Flags » des Implementer Tools. Ce choix est stocké pour l'utilisateur actuel, dans son navigateur. Les feature flags peuvent aussi être activés pour tout le monde avec la clé de configuration de l'app shell `Enabled feature flags`; voir l'[aperçu de la configuration O3](/docs/configure-o3#feature-flags) pour la configuration côté implémenteur.
 
 L’API des feature flags se trouve dans les [API Docs](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#feature-flags-functions).
 
@@ -12,19 +12,21 @@ L’API des feature flags se trouve dans les [API Docs](https://github.com/openm
 
 Supposons que vous ayez construit une page pour une clinique d’optométrie laser et que vous ajoutiez une fonctionnalité pour un service à venir : offrir des yeux laser. Cette fonctionnalité est contenue dans le composant `LaserEyeInstallation`. Nous allons créer un feature flag appelé `laser-eyes`, qui permettra aux administrateurs de prévisualiser le composant avant son déploiement pour tout le monde.
 
-Il y a deux étapes : enregistrer le feature flag avec `registerFeatureFlag`, puis l’utiliser avec `useFeatureFlag`. On commence par enregistrer le flag dans la fonction `startupApp` du module frontend sur lequel on travaille.
+Il y a deux étapes : enregistrer le feature flag, puis l’utiliser avec `useFeatureFlag`. Pour les modules Core v5+, privilégiez la déclaration du feature flag dans `routes.json`, afin qu'il soit disponible dès le traitement du registre de routes.
 
-```ts
-import { registerFeatureFlag } from "@openmrs/esm-framework";
-
-export function startupApp() {
-  registerFeatureFlag(
-    "laser-eyes",
-    "Laser Eye Installation Service",
-    "Adds a form and relevant patient diagnostic information relating to the planned Laser Eye Installation Service to the laser optometry clinic management page."
-  );
+```json filename="routes.json"
+{
+  "featureFlags": [
+    {
+      "flagName": "laser-eyes",
+      "label": "Laser Eye Installation Service",
+      "description": "Adds a form and relevant patient diagnostic information relating to the planned Laser Eye Installation Service to the laser optometry clinic management page."
+    }
+  ]
 }
 ```
+
+Si vous devez enregistrer un flag depuis le code, `registerFeatureFlag(flagName, label, description)` reste disponible dans `@openmrs/esm-framework`.
 
 Le feature flag apparaîtra alors dans les Implementer Tools comme ci‑dessous :
 
@@ -58,7 +60,7 @@ export default function LaserOptometryClinicManagement() {
 }
 ```
 
-Vous pouvez maintenant déployer des changements dans l’app d’optométrie laser qui incluent ce code en cours, sans que les utilisateurs ne voient la fonctionnalité masquée par le flag. Les administrateurs, eux, pourront ouvrir les Implementer Tools et activer/désactiver le feature flag « Laser Eye Installation Service » afin de prévisualiser la fonctionnalité.
+Vous pouvez maintenant déployer des changements dans l’app d’optométrie laser qui incluent ce code en cours, sans que les utilisateurs ne voient la fonctionnalité masquée par le flag. Les administrateurs peuvent ouvrir les Implementer Tools et activer le feature flag « Laser Eye Installation Service » dans leur navigateur pour prévisualiser la fonctionnalité. Les implémenteurs peuvent ensuite activer le même flag pour tout le monde via la configuration de l'app shell.
 
 Voici une vidéo explicative sur les feature flags par Brandon :
 

@@ -246,7 +246,7 @@ Feature flags can be enabled via configuration files (in addition to toggling th
 }
 ```
 
-Feature flags configured this way are enabled for all users, unlike the Implementer Tools toggle which only affects the current user's browser session. Note that feature flags must first be registered by the module that defines them (via `registerFeatureFlag` in code) before they can be enabled via configuration.
+Feature flags configured this way are enabled for all users, unlike the Implementer Tools toggle which only affects the current user's browser session. Note that feature flags must first be registered by the module that defines them, preferably in the module's `featureFlags` array in `routes.json`, before they can be enabled via configuration.
 
 **Important**: Config files must be accessible via HTTP/HTTPS. The SPA will attempt to fetch them using `fetch()`, so they must be served by a web server (nginx, Apache, etc.) or a CDN. Local file paths will not work.
 

@@ -37,7 +37,7 @@ La fonction `run` orchestre toute la séquence d'initialisation. Elle est respon
 - Brancher les souscriptions de l'app shell pour les toasts, notifications inline, notifications actionnables, snackbars et modales.
 - Appeler `setupApiModule` pour initialiser le schéma de configuration.
 - Appeler `setupHistory` pour mettre en place le routage côté client.
-- Appeler `registerCoreExtensions`, qui implémente la fonctionnalité de fils d'Ariane.
+- Appeler `registerCoreExtensions`, un hook historique pour les extensions possédées par l'app shell. L'app shell actuel n'y enregistre pas les fils d'Ariane.
 - Appeler `setupCoreConfig` pour initialiser la configuration core.
 - Appeler `setupApps`, qui charge réellement les modules.
 - Une fois les modules enregistrés, appeler `finishRegisteringAllApps` pour finaliser le processus d'enregistrement.
@@ -78,11 +78,17 @@ Quand vous définissez une `page`, sa définition peut avoir une propriété `ro
 
 ## Chargement des modules
 
-O3 charge les modules frontend avec des import maps SystemJS et Module Federation. L'app shell injecte une `systemjs-importmap` dans `index.ejs`, précharge l'import map, puis l'utilise pour résoudre les URLs des modules.
+O3 charge les modules frontend avec des import maps et Module Federation. L'app shell inclut une ou plusieurs balises
+script `systemjs-importmap` dans `index.ejs`, mais le runtime actuel lit ces balises lui-même avec le package de
+chargement dynamique. SystemJS n'est plus l'élément qui importe le code des modules au runtime.
 
-La plupart des modules sont construits comme bundles Module Federation. Pour chaque URL de module, l'app shell ajoute une balise `<script>`. Quand le script se charge, il expose un conteneur Webpack (`init`/`get`) que l'app shell utilise pour charger les exports du module.
+Pour chaque URL de module, l'app shell ajoute une balise `<script>`. Quand le script se charge, il expose un conteneur
+Webpack Module Federation sur `window`, avec le nom du module transformé en identifiant JavaScript. L'app shell appelle
+ensuite les fonctions `init` et `get` du conteneur pour charger l'export `./start` du module.
 
-Certains modules anciens ne sont pas des bundles Module Federation. Dans ces cas, l'app shell les charge comme modules SystemJS simples via l'import map.
+Quand une page, une extension, une modale ou un workspace est sur le point d'être rendu, `loadLifeCycles()` importe le
+module frontend propriétaire, exécute une seule fois `startupApp()` si le module l'exporte, marque le module comme chargé
+dans le système de configuration, puis appelle l'export de lifecycle nommé dans `routes.json`.
 
 ## Séquence d'initialisation
 
@@ -94,7 +100,7 @@ La séquence complète d'initialisation suit cet ordre:
    - Met en place l'infrastructure UI, dont breakpoints, notifications et modales.
    - Initialise le module API et le schéma de configuration.
    - Met en place l'historique de routage.
-   - Enregistre les extensions core, dont les fils d'Ariane.
+   - Exécute le hook historique d'enregistrement des extensions core.
    - Charge et enregistre tous les modules frontend via `setupApps()`.
    - Finalise l'enregistrement des modules.
    - Met en place le support hors ligne si activé.

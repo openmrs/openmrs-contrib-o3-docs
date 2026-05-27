@@ -278,7 +278,7 @@ Extensions can be conditionally rendered based on feature flags. This allows you
 }
 ```
 
-If the `featureFlag` property is specified, the extension will only render when that feature flag is enabled. Feature flags can be toggled directly from the Implementer Tools app, which provides a visual interface for enabling and disabling feature flags. Once a feature flag is registered (via `registerFeatureFlag`), it automatically appears in the Implementer Tools with a toggle switch, allowing administrators to enable or disable it without code changes.
+If the `featureFlag` property is specified, the extension will only render when that feature flag is enabled. Register the flag in the module's `featureFlags` array in `routes.json`, or register it from code with `registerFeatureFlag`. Registered flags appear in the Implementer Tools with toggle switches, and implementers can enable them globally through app shell configuration.
 
 ### Advanced slot rendering
 

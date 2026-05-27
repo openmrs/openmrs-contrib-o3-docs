@@ -133,7 +133,7 @@ robot: {
 
 A validator can be created using the `validator` function, as above.
 
-The first argument is a function that takes the config value as its only argument. If the function returns something [truthy](https://developer.mozilla.org/en-US/docs/Glossary/Truthy), validation passes. If the function returns a string, that string is treated as an error message and validation fails.
+The first argument is a function that takes the config value as its only argument. If the function returns `true`, validation passes. If it returns `false`, validation fails and the second argument to `validator` is used as the error message. You can also provide a custom validator function directly in `_validators`; direct validators should return `undefined` for success or an error string for failure.
 
 **Important**: When validation fails, the error is logged to the browser console, but the application continues to run. Invalid configuration values are still used—validation errors serve as warnings to help implementers identify and fix configuration problems, rather than preventing the application from starting.
 

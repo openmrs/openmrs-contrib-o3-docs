@@ -303,7 +303,7 @@ Les feature flags peuvent être activés via les fichiers de configuration (en p
 }
 ```
 
-Les feature flags configurés de cette manière sont activés pour tous les utilisateurs, contrairement au bouton des outils de mise en œuvre qui n'affecte que la session du navigateur de l'utilisateur actuel. Notez que les feature flags doivent d'abord être enregistrés par le module qui les définit (via `registerFeatureFlag` dans le code) avant de pouvoir être activés via la configuration.
+Les feature flags configurés de cette manière sont activés pour tous les utilisateurs, contrairement au bouton des outils de mise en œuvre qui n'affecte que la session du navigateur de l'utilisateur actuel. Notez que les feature flags doivent d'abord être enregistrés par le module qui les définit, de préférence dans le tableau `featureFlags` du `routes.json` du module, avant de pouvoir être activés via la configuration.
 
 **Important** : Les fichiers de configuration doivent être accessibles via HTTP/HTTPS. La SPA tentera de les récupérer en utilisant `fetch()`, donc ils doivent être servis par un serveur web (nginx, Apache, etc.) ou un CDN. Les chemins de fichiers locaux ne fonctionneront pas.
 

@@ -99,9 +99,9 @@ export function startupApp() {
 }
 ```
 
-## Using breadcrumbs in your component
+## Rendering breadcrumbs
 
-Breadcrumbs are automatically rendered by the app shell as an extension in the `breadcrumbs-slot`. To display breadcrumbs in your page component, simply include the extension slot:
+`registerBreadcrumb` and `registerBreadcrumbs` only register breadcrumb data. A page still needs to render a breadcrumb UI. Current O3 apps usually do this by rendering a shared `breadcrumbs-slot`, but that slot must have a breadcrumb extension assigned by the distribution or by the module that owns the page layout.
 
 ```tsx
 import { ExtensionSlot } from "@openmrs/esm-framework";
@@ -116,7 +116,7 @@ export default function MyPage() {
 }
 ```
 
-The breadcrumbs extension is automatically registered by the app shell, so you don't need to register it yourself. Just include the `<ExtensionSlot>` component in your page to display the breadcrumb trail.
+If you create a new page layout, confirm that something in the distro actually provides the breadcrumb extension for `breadcrumbs-slot`; otherwise the slot will render nothing.
 
 ## Breadcrumb behavior
 

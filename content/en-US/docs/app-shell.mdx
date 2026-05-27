@@ -37,7 +37,7 @@ The `run` function orchestrates the complete initialization sequence. It is resp
 - Wiring up subscriptions to appropriate places in the app shell for toasts, inline notifications, actionable notifications, snackbars, and modals.
 - Calling `setupApiModule` to initialize the configuration schema.
 - Calling `setupHistory` to set up client-side routing.
-- Calling `registerCoreExtensions` which implements breadcrumbs functionality.
+- Calling `registerCoreExtensions`, a legacy hook for app-shell-owned extensions. The current app shell does not register breadcrumbs there.
 - Calling `setupCoreConfig` to initialize core configuration.
 - Calling `setupApps` which actually handles the loading of modules.
 - After modules are registered, it calls `finishRegisteringAllApps` to finalize the registration process.
@@ -78,14 +78,17 @@ When you define a `page`, the page definition can have a `route` property or a `
 
 ## Module loading
 
-O3 loads frontend modules using SystemJS import maps and Module Federation. The app shell injects a
-`systemjs-importmap` in `index.ejs`, preloads the import map, and then uses it to resolve module URLs.
+O3 loads frontend modules using import maps and Module Federation. The app shell includes one or more
+`systemjs-importmap` script tags in `index.ejs`, but the current runtime reads those tags itself through the
+dynamic-loading package. SystemJS is no longer the piece that imports module code at runtime.
 
-Most modules are built as Module Federation bundles. For each module URL, the app shell appends a `<script>` tag. When the
-script loads, it exposes a Webpack container (`init`/`get`) that the app shell uses to load the module’s exports.
+For each module URL, the app shell appends a `<script>` tag. When the script loads, it exposes a Webpack Module
+Federation container on `window` using the module name transformed into a JavaScript identifier. The app shell then calls
+the container's `init` and `get` functions to load the module's `./start` export.
 
-Some legacy modules are not Module Federation bundles; in those cases, the app shell loads them as plain SystemJS
-modules via the import map.
+When a page, extension, modal, or workspace is about to render, `loadLifeCycles()` imports the owning frontend module,
+runs that module's `startupApp()` once if it exports one, marks the module as loaded in the configuration system, and then
+calls the named lifecycle export referenced by `routes.json`.
 
 ## Initialization sequence
 
@@ -97,7 +100,7 @@ The complete initialization sequence follows this order:
    - Sets up UI infrastructure (breakpoints, notifications, modals)
    - Initializes API module and configuration schema
    - Sets up routing history
-   - Registers core extensions (breadcrumbs)
+   - Runs the legacy core-extension registration hook
    - Loads and registers all frontend modules via `setupApps()`
    - Finalizes module registration
    - Sets up offline support (if enabled)

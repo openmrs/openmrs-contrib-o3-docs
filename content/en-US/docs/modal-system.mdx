@@ -51,7 +51,7 @@ Register the modal by name in the `modals` property in `routes.json` and export 
 import { getAsyncLifecycle } from '@openmrs/esm-framework';
 
 export const modalComponentName = getAsyncLifecycle(
-  () => import('/path-to-the-modal-component/modal-component.tsx'),
+  () => import('./path-to-the-modal-component/modal-component'),
   options,
 );
 ```
@@ -112,7 +112,7 @@ The modal system automatically handles several behaviors for you:
 
 - **Body scroll locking**: When a modal is open, the page body scroll is automatically locked to prevent background scrolling
 - **ESC key handling**: Pressing the ESC key closes the topmost modal
-- **Focus management**: Focus is automatically managed to ensure accessibility
+- **Stack visibility**: Only the topmost modal is visible; previously opened modals remain mounted but hidden until the top one closes
 
 ### The `close` vs `closeModal` props
 

@@ -4,7 +4,7 @@ import Image from "next/image";
 
 Work in progress can be hidden behind feature flags. This is useful for complex features that may take some time and multiple iterations to get fully working.
 
-A feature flag can be toggled from the "Feature Flags" tab of the Implementer Tools. The feature will be turned on or off for that user, in their browser. Feature flags are not persisted to the server and therefore cannot be used to partially roll out features, and cannot be accessed by non-administrators. For users without access to the Implementer Tools, elements hidden behind feature flags will simply not be available.
+A feature flag can be toggled from the "Feature Flags" tab of the Implementer Tools. That toggle is stored for the current user in their browser. Feature flags can also be enabled for everyone through the app shell configuration key `Enabled feature flags`; see the [Configure O3 overview](/docs/configure-o3#feature-flags) for implementer-facing configuration.
 
 The API for feature flags can be found in the [API Docs](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#feature-flags-functions).
 
@@ -12,19 +12,21 @@ The API for feature flags can be found in the [API Docs](https://github.com/open
 
 Let's say you have built a page for your laser optometry clinic, and are working on adding functionality supporting a planned service where you give people laser eyes. This functionality is contained in the component `LaserEyeInstallation`. We're going to create a feature flag called `laser-eyes`, which will allow administrators to preview the component before it is rolled out to everyone.
 
-There are two steps: the feature flag must be registered using `registerFeatureFlag`, and then it can be used with `useFeatureFlag`. First we register the feature flag in the `startupApp` function of the frontend module we are working on.
+There are two steps: the feature flag must be registered, and then it can be used with `useFeatureFlag`. For Core v5+ modules, prefer declaring the feature flag in `routes.json` so it is available as soon as the routes registry is processed.
 
-```ts
-import { registerFeatureFlag } from "@openmrs/esm-framework";
-
-export function startupApp() {
-  registerFeatureFlag(
-    "laser-eyes",
-    "Laser Eye Installation Service",
-    "Adds a form and relevant patient diagnostic information relating to the planned Laser Eye Installation Service to the laser optometry clinic management page."
-  );
+```json filename="routes.json"
+{
+  "featureFlags": [
+    {
+      "flagName": "laser-eyes",
+      "label": "Laser Eye Installation Service",
+      "description": "Adds a form and relevant patient diagnostic information relating to the planned Laser Eye Installation Service to the laser optometry clinic management page."
+    }
+  ]
 }
 ```
+
+If you need to register a flag from code, `registerFeatureFlag(flagName, label, description)` is still available from `@openmrs/esm-framework`.
 
 Now the feature flag will appear in the Implementer Tools as shown below:
 
@@ -58,7 +60,7 @@ export default function LaserOptometryClinicManagement() {
 }
 ```
 
-Now you can deploy changes to the laser optometry app which include this in-progress code, and users will not see the feature hidden behind the flag. Administrators, however, will be able to open the Implementer Tools and toggle the "Laser Eye Installation Service" feature flag in order to preview the feature.
+Now you can deploy changes to the laser optometry app which include this in-progress code, and users will not see the feature hidden behind the flag. Administrators can open the Implementer Tools and toggle the "Laser Eye Installation Service" feature flag in their browser to preview the feature. Implementers can enable the same flag for everyone through app shell configuration once they are ready.
 
 Here's a cool explainer video about feature flags by Brandon:
 
