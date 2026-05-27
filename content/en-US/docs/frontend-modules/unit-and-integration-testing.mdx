@@ -251,11 +251,14 @@ In each frontend module's test configuration, you'll see a setup that maps or mo
 **Vitest config alias example:**
 
 ```ts {9} filename="tools/vitest.shared.ts"
+import { fileURLToPath } from "node:url";
 import { defineConfig } from 'vitest/config';
+
+const r = (relativePath: string) => fileURLToPath(new URL(relativePath, import.meta.url));
 
 export default defineConfig({
   test: {
-    setupFiles: [new URL('./setup-tests.ts', import.meta.url).pathname],
+    setupFiles: [r('./setup-tests.ts')],
     alias: [
       { find: /^@openmrs\/esm-framework$/, replacement: '@openmrs/esm-framework/mock' },
     ],
