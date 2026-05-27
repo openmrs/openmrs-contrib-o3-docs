@@ -6,73 +6,78 @@ OpenMRS fournit plusieurs utilitaires pour travailler avec les dates. Ces utilit
 
 ### formatDate
 
-Cet utilitaire accepte une date en entrée et renvoie une chaîne de caractères. Il formate la date d'entrée en fonction de la locale courante et des paramètres donnés:
+Cet utilitaire accepte un objet `Date` et renvoie une chaîne de caractères. Il formate la date d'entrée en fonction de la locale courante et des paramètres donnés:
 
 ```ts
-formatDate(date: Date, options: {
-  mode: "standard" | "wide",
-  time?: boolean,
+formatDate(date: Date, options?: {
+  mode?: "standard" | "wide",
+  time?: boolean | "for today",
   day?: boolean,
-  year?: boolean
-}): chaîne
+  month?: boolean,
+  year?: boolean,
+  noToday?: boolean,
+  locale?: string,
+  calendar?: string,
+  numberingSystem?: string
+}): string
 ```
 
 Le paramètre mode peut être réglé sur `standard` ou `wide`.
-Lorsqu'il vaut `standard`, la date est affichée au format `16-May-2023`, et lorsqu'il vaut `wide`, la date est affichée au format `16 - May - 2023`.
+Lorsqu'il vaut `standard`, la date est affichée au format `16-May-2023`, et lorsqu'il vaut `wide`, la date est affichée au format `16 — May — 2023`.
 
-Si la date est aujourd'hui, alors `Today` est produit à la place du jour réel (dans la langue locale).
+Par défaut, `formatDate` utilise `{ mode: "standard", time: "for today", day: true, month: true, year: true, noToday: false }`. Si la date est aujourd'hui, `Today` est produit à la place du jour réel dans la langue locale, et l'heure est ajoutée parce que l'option `time` vaut `"for today"` par défaut. Passez `{ time: false }` pour masquer l'heure pour la date du jour, ou `{ noToday: true }` pour formater aujourd'hui comme une date ordinaire.
 
-Lorsque l'option time est définie à true, l'heure est ajoutée avec une virgule et un espace, par exemple `16-May-2023, 08:21`. Ce format correspond à la sortie de Date.prototype.toLocaleString pour la plupart des langues.
+Lorsque l'option `time` vaut `true`, l'heure est ajoutée avec une virgule et un espace, par exemple `16-May-2023, 08:21`. Ce format correspond à la sortie de `Date.prototype.toLocaleString` pour la plupart des langues.
 
-Voici un exemple d'utilisation de `formatDate` avec un exemple de date au format omrs `1684387260000`
+Voici un exemple d'utilisation de `formatDate` avec un objet `Date` :
 
-```ts
+```tsx
 import { formatDate } from "@openmrs/esm-framework";
 
-const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({ appointment }) => {
-  return <span>{formatDate(appointment.patient?.birthDate, { mode: "standard" })}</span>;
-};
+function AppointmentDetails({ appointment }: AppointmentDetailsProps) {
+  return <span>{formatDate(appointment.scheduledDate, { mode: "standard" })}</span>;
+}
 ```
 
 La valeur retournée sera une chaîne au format `18-May-2023`.
 
 ### formatDatetime
 
-Cette fonction utilitaire accepte une entrée `date` et renvoie une `string`.
+Cette fonction utilitaire accepte un objet `Date` et renvoie une `string`.
 Elle formate la date pour afficher la date et l’heure, séparées par une virgule, selon la locale courante et les options fournies.
 
 ```ts
   formatDatetime(date: Date, options?: { mode?: "standard" | "wide" }): string
 ```
 
-Voici un exemple d’utilisation de `formatDatetime` avec une date d’exemple au format omrs `1684387260000`.
+Voici un exemple d’utilisation de `formatDatetime` :
 
-```ts
+```tsx
 import { formatDatetime } from "@openmrs/esm-framework";
 
-const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({ appointment }) => {
-  return <span>{formatDatetime(appointment.patient?.birthDate)}</span>;
-};
+function AppointmentDetails({ appointment }: AppointmentDetailsProps) {
+  return <span>{formatDatetime(appointment.scheduledDate)}</span>;
+}
 ```
 
 La valeur retournée sera `18-May-2023, 08:21`.
 
 ### formatTime
 
-Cette fonction utilitaire accepte une entrée `date` et renvoie une chaîne. Elle formate l’heure selon la locale courante en utilisant le format 12 ou 24 heures.
+Cette fonction utilitaire accepte un objet `Date` et renvoie une chaîne. Elle formate l’heure selon la locale courante en utilisant le format 12 ou 24 heures.
 
 ```ts
   formatTime(date: Date): string
 ```
 
-Voici un exemple d’utilisation de `formatTime` avec une date d’exemple au format omrs `1684387260000`.
+Voici un exemple d’utilisation de `formatTime` :
 
-```ts
+```tsx
 import { formatTime } from "@openmrs/esm-framework";
 
-const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({ appointment }) => {
-  return <span>{formatTime(encounter.encounterDateTime)}</span>;
-};
+function AppointmentDetails({ appointment }: AppointmentDetailsProps) {
+  return <span>{formatTime(appointment.scheduledDate)}</span>;
+}
 ```
 
 La valeur retournée sera `08:21`.
@@ -83,29 +88,29 @@ Cet utilitaire est STRICTE sur le fait de vérifier si une chaîne de date est a
 Elle accepte une chaîne `omrsPayloadString` et retourne un `boolean`.
 
 ```ts
-  isOmrsDateStrict(omrsPayloadString: string) :boolean
+  isOmrsDateStrict(omrsPayloadString: string): boolean
 ```
 
 ### isOmrsDateToday
 
-Cette fonction vérifie si la date fournie est aujourd'hui. Elle accepte une entrée de type `date` et retourne un `booléen`.
+Cette fonction vérifie si la date fournie est aujourd'hui. Elle accepte une entrée de type `DateInput` et retourne un `boolean`.
 
 ```ts
-  isOmrsDateToday(date: Date): boolean
+  isOmrsDateToday(date: DateInput): boolean
 ```
 
 ### parseDate
 
-Cette fonction utilitaire analyse une `dateString` arbitraire en une `date`. Elle utilise dayjs(dateString).
+Cette fonction utilitaire analyse une `dateString` arbitraire en une `Date`. Elle utilise `dayjs(dateString)`.
 
-Voici un exemple de comment utiliser `parseDate` avec une dateString d'échantillon `1684387260000`.
+Voici un exemple d'utilisation de `parseDate` avec une chaîne date-heure OpenMRS.
 
-```ts
+```tsx
 import { formatDate, parseDate } from "@openmrs/esm-framework";
 
-const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({ appointment }) => {
+function EncounterDate({ encounter }: EncounterDateProps) {
   return <span>{formatDate(parseDate(encounter.encounterDateTime))}</span>;
-};
+}
 ```
 
 La valeur retournée sera une chaîne de caractères dans ce format `18-Mai-2023`
@@ -136,8 +141,4 @@ body: {
   patientUuid: patientUuid,
   startedAt: toOmrsIsoString(new Date()),
 }
-```
-
-```
-
 ```

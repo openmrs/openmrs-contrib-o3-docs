@@ -35,7 +35,7 @@ import { WorkspaceContainer, launchWorkspace2 } from "@openmrs/esm-framework";
 import ListDetails from "./list-details/list-details.component";
 import ListsDashboard from "./lists-dashboard/lists-dashboard.component";
 
-const AutoLaunchPatientListWorkspace: React.FC = () => {
+function AutoLaunchPatientListWorkspace() {
   const [searchParams, setSearchParams] = useSearchParams();
   const hasOpenedRef = useRef(false);
 
@@ -52,9 +52,9 @@ const AutoLaunchPatientListWorkspace: React.FC = () => {
   }, [searchParams, setSearchParams]);
 
   return null;
-};
+}
 
-const RootComponent: React.FC = () => {
+function RootComponent() {
   const basename = window.getOpenmrsSpaBase() + "home/patient-lists";
 
   return (
@@ -67,7 +67,7 @@ const RootComponent: React.FC = () => {
       <WorkspaceContainer contextKey="patient-lists" />
     </BrowserRouter>
   );
-};
+}
 
 export default RootComponent;
 ```

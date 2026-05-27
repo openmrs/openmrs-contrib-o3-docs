@@ -6,74 +6,78 @@ OpenMRS provides several utilities to work with dates. These utilities have been
 
 ### formatDate
 
-This utility accepts a date input and returns a string. It formats the input date according to the current locale and the given parameters:
+This utility accepts a `Date` object and returns a string. It formats the input date according to the current locale and the given parameters:
 
 ```ts
-formatDate(date: Date, options: {
-  mode: "standard" | "wide",
-  time?: boolean,
+formatDate(date: Date, options?: {
+  mode?: "standard" | "wide",
+  time?: boolean | "for today",
   day?: boolean,
-  year?: boolean
+  month?: boolean,
+  year?: boolean,
+  noToday?: boolean,
+  locale?: string,
+  calendar?: string,
+  numberingSystem?: string
 }): string
-
 ```
 
 The mode parameter can be set to `standard` or `wide`.
 When set to `standard`, the date is displayed in the format `16-May-2023`, and when set to `wide`, the date is displayed as `16 — May — 2023`.
 
-If the date is today, then `Today` is produced instead of the actual day (in the locale language).
+By default, `formatDate` uses `{ mode: "standard", time: "for today", day: true, month: true, year: true, noToday: false }`. If the date is today, then `Today` is produced instead of the actual day in the locale language, and the time is appended because the default `time` option is `"for today"`. Pass `{ time: false }` to suppress the time for today's date, or `{ noToday: true }` to format today like any other date.
 
-When the time option is set to true, the time is appended with a comma and a space, e.g. `16-May-2023, 08:21`. This format agrees with the output of Date.prototype.toLocaleString for most locales.
+When the `time` option is set to `true`, the time is appended with a comma and a space, e.g. `16-May-2023, 08:21`. This format agrees with the output of `Date.prototype.toLocaleString` for most locales.
 
-Here's an example of how to use `formatDate` given a sample date in the omrs format `1684387260000`
+Here's an example of how to use `formatDate` with a `Date` object:
 
-```ts
+```tsx
 import { formatDate } from "@openmrs/esm-framework";
 
-const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({ appointment }) => {
-  return <span>{formatDate(appointment.patient?.birthDate, { mode: "standard" })}</span>;
-};
+function AppointmentDetails({ appointment }: AppointmentDetailsProps) {
+  return <span>{formatDate(appointment.scheduledDate, { mode: "standard" })}</span>;
+}
 ```
 
 The returned value will be a string in this format `18-May-2023`
 
 ### formatDatetime
 
-This utility function accepts a `date` input and returns a `string`.
+This utility function accepts a `Date` object and returns a `string`.
 It formats the input date to display both the date and time, separated by a comma, according to the current locale and the given options.
 
 ```ts
   formatDatetime(date: Date, options?: { mode?: "standard" | "wide" }): string
 ```
 
-Here's an example of how to use `formatDatetime` given a sample date in the omrs format `1684387260000`
+Here's an example of how to use `formatDatetime`:
 
-```ts
+```tsx
 import { formatDatetime } from "@openmrs/esm-framework";
 
-const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({ appointment }) => {
-  return <span>{formatDatetime(appointment.patient?.birthDate)}</span>;
-};
+function AppointmentDetails({ appointment }: AppointmentDetailsProps) {
+  return <span>{formatDatetime(appointment.scheduledDate)}</span>;
+}
 ```
 
 The returned value will be `18-May-2023, 08:21`
 
 ### formatTime
 
-This utility function accepts a date input and returns a string. It formats the time according to the current locale using the 12- or 24-hour format.
+This utility function accepts a `Date` object and returns a string. It formats the time according to the current locale using the 12- or 24-hour format.
 
 ```ts
   formatTime(date: Date): string
 ```
 
-Here's an example of how to use `formatTime` given a sample date in the omrs format `1684387260000`
+Here's an example of how to use `formatTime`:
 
-```ts
+```tsx
 import { formatTime } from "@openmrs/esm-framework";
 
-const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({ appointment }) => {
-  return <span>{formatTime(encounter.encounterDateTime)}</span>;
-};
+function AppointmentDetails({ appointment }: AppointmentDetailsProps) {
+  return <span>{formatTime(appointment.scheduledDate)}</span>;
+}
 ```
 
 The returned value will be `08:21`
@@ -89,24 +93,24 @@ It accepts an `omrsPayloadString` and returns a `boolean`.
 
 ### isOmrsDateToday
 
-This utility checks if the provided date is today. Accepts a `date` input and returns a `boolean`.
+This utility checks if the provided date is today. Accepts a `DateInput` and returns a `boolean`.
 
 ```ts
-  isOmrsDateToday(date: Date): boolean
+  isOmrsDateToday(date: DateInput): boolean
 ```
 
 ### parseDate
 
-This utility function parses an arbitrary `dateString` into a `date`. It uses dayjs(dateString).
+This utility function parses an arbitrary `dateString` into a `Date`. It uses `dayjs(dateString)`.
 
-Here's an example of how to use `parseDate` given a sample dateString `1684387260000`
+Here's an example of how to use `parseDate` with an OpenMRS date-time string:
 
-```ts
+```tsx
 import { formatDate, parseDate } from "@openmrs/esm-framework";
 
-const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({ appointment }) => {
+function EncounterDate({ encounter }: EncounterDateProps) {
   return <span>{formatDate(parseDate(encounter.encounterDateTime))}</span>;
-};
+}
 ```
 
 The returned value will be a string in this format `18-May-2023`

@@ -54,7 +54,7 @@ import LeftPanel from "./left-panel/left-panel.component";
 import WardWithBeds from "./ward-with-beds/ward-with-beds.component";
 import styles from "./root.scss";
 
-const Root: React.FC = () => {
+function Root() {
   const spaBasePath = window.spaBase;
   const bedManagementBasename = window.getOpenmrsSpaBase() + "bed-management";
 
@@ -75,7 +75,7 @@ const Root: React.FC = () => {
       <WorkspaceContainer contextKey="bed-management" />
     </BrowserRouter>
   );
-};
+}
 
 export default Root;
 ```
@@ -101,7 +101,7 @@ import styles from "./left-panel.scss";
 
 attach("nav-menu-slot", "bed-management-left-panel");
 
-const LeftPanel: React.FC = () => {
+function LeftPanel() {
   const { t } = useTranslation();
   const layout = useLayoutType();
 
@@ -116,7 +116,7 @@ const LeftPanel: React.FC = () => {
       </SideNav>
     )
   );
-};
+}
 
 export default LeftPanel;
 ```
