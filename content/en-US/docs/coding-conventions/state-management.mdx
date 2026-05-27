@@ -1,6 +1,6 @@
 # State management
 
-We use various approaches to manage state in O3, from React's built-in hooks to third-party libraries like [Zustand](https://github.com/pmndrs/zustand) for global state management. Read more about state management [in this recipe](/docs/recipes/store-values). Below are some general guidelines for state management:
+We use various approaches to manage state in O3, from React's built-in hooks to framework-provided Zustand stores. Read more about state management [in this recipe](/docs/recipes/store-values). Below are some general guidelines for state management:
 
 - Follow the guidelines outlined [here](https://kentcdodds.com/blog/application-state-management-with-react).
 - Keep state as close as possible to the component that needs it.
@@ -15,3 +15,67 @@ We use various approaches to manage state in O3, from React's built-in hooks to 
   - Use `useCallback` for memoized callbacks.
   - Split state into smaller pieces to prevent unnecessary re-renders.
 - Don't use global state for data that should be scoped to a specific component or a small set of components.
+
+- When state must be shared across microfrontends or across unrelated React trees, use the framework store APIs from `@openmrs/esm-framework` rather than importing Zustand directly. Define the store once at module scope with a unique name, type its shape, and select only the slice a component needs:
+
+  ```tsx
+  import { createGlobalStore, useStore } from '@openmrs/esm-framework';
+
+  interface VisitFilterStore {
+    filters: {
+      selectedStatus: string | null;
+    };
+  }
+
+  export const visitFilterStore = createGlobalStore<VisitFilterStore>('visit-filter', {
+    filters: {
+      selectedStatus: null,
+    },
+  });
+
+  function VisitFilterSummary() {
+    const { selectedStatus } = useStore(visitFilterStore, (state) => state.filters);
+
+    return <span>{selectedStatus ?? t('allStatuses', 'All statuses')}</span>;
+  }
+  ```
+
+- Put store updates behind small actions when multiple components need to update the same store. `useStore` can bind action functions so callers do not need to repeat `setState` details:
+
+  ```tsx
+  const visitFilterActions = {
+    setSelectedStatus: (state: VisitFilterStore, selectedStatus: string | null) => ({
+      filters: {
+        ...state.filters,
+        selectedStatus,
+      },
+    }),
+  };
+
+  const { selectedStatus, setSelectedStatus } = useStore(
+    visitFilterStore,
+    (state) => state.filters,
+    visitFilterActions,
+  );
+  ```
+
+- Use `createGlobalStore(name, initialState, 'sessionStorage')` only for values that should survive a page refresh in the current browser tab. Persistent clinical data should live in the backend, and secrets or patient-identifying data should not be placed in browser storage unless the feature explicitly requires it and the privacy tradeoff has been reviewed.
+
+- Use App Context for state that should exist only while a feature or app area is active. Define the namespace with `useDefineAppContext`, read it with `useAppContext`, and handle `undefined` explicitly because it means the namespace is not currently registered:
+
+  ```tsx
+  interface DateFilterContext {
+    dateRange: Date[] | null;
+    setDateRange: (dateRange: Date[] | null) => void;
+  }
+
+  useDefineAppContext<DateFilterContext>('laboratory-date-filter', {
+    dateRange,
+    setDateRange,
+  });
+
+  const dateRange = useAppContext<DateFilterContext, Date[] | null>(
+    'laboratory-date-filter',
+    (context) => context?.dateRange ?? null,
+  );
+  ```

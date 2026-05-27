@@ -26,14 +26,23 @@ import { Callout } from "nextra/components";
   }
   ```
 - Les hooks de récupération de données doivent suivre la convention de nommage `use<resource>`. Par exemple, `useUser` est le hook pour récupérer les données utilisateur.
-- Utilisez [openmrsFetch](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-api/src/openmrs-fetch.ts) pour récupérer les données du backend. `openmrsFetch` est un wrapper autour de l'API `fetch` qui ajoute des en-têtes d'authentification et d'autorisation et gère les erreurs. Passez-le aux hooks SWR comme argument `fetcher`.
+- Utilisez [openmrsFetch](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-api/src/openmrs-fetch.ts) pour récupérer les données du backend. `openmrsFetch` est un wrapper autour de l'API `fetch` qui ajoute des en-têtes d'authentification et d'autorisation et gère les erreurs. Si vous le passez directement à `useSWR`, typez les données SWR comme `FetchResponse<T>` et lisez la charge utile depuis `response.data`. Pour la plupart des hooks de ressource, préférez `useOpenmrsSWR`, qui fournit `openmrsFetch` et un signal d'abandon pour vous.
 - Utilisez les propriétés `error`, `isLoading`, `isValidating` et `mutate` du hook SWR pour gérer les erreurs, les états de chargement et les mutations. Ne recréez pas ces propriétés manuellement.
 - Utilisez le modèle de [récupération conditionnelle de données de SWR](https://swr.vercel.app/docs/conditional-fetching) lorsque la requête dépend d'une condition. Par exemple, si la requête dépend d'une prop, ne faites la requête que si la prop est vraie.
 
   ```tsx
+  import { type FetchResponse, openmrsFetch } from '@openmrs/esm-framework';
+
   // Ne récupérer les données utilisateur que si userId est fourni
   const url = userId ? `/ws/rest/v1/user/${userId}` : null;
-  const { data, error, isLoading, isValidating, mutate } = useSWR<User>(url, openmrsFetch);
+  const {
+    data: response,
+    error,
+    isLoading,
+    isValidating,
+    mutate,
+  } = useSWR<FetchResponse<User>, Error>(url, openmrsFetch);
+  const user = response?.data;
   ```
 
 ## Contrats : rendre les états explicites
@@ -110,19 +119,27 @@ Concevez les hooks pour qu'ils soient difficiles à utiliser incorrectement :
 
   ```tsx
   // Bon - hook étroit et spécifique
-  export function usePatientVisits(patientUuid: string) {
-    const url = patientUuid ? `/ws/rest/v1/visit?patient=${patientUuid}` : null;
-    const { data, error, isLoading } = useSWR(url, openmrsFetch);
+  import { restBaseUrl, useOpenmrsSWR } from '@openmrs/esm-framework';
+  import type { SWRConfiguration } from 'swr';
+
+  interface VisitSearchResponse {
+    results: Array<Visit>;
+  }
+
+  export function usePatientVisits(patientUuid?: string) {
+    const url = patientUuid ? `${restBaseUrl}/visit?patient=${patientUuid}` : null;
+    const { data: response, error, isLoading } = useOpenmrsSWR<VisitSearchResponse>(url);
+
     return {
-      visits: data ?? [],
+      visits: response?.data?.results ?? [],
       error,
-      isLoading
-    }
+      isLoading,
+    };
   }
 
   // À éviter - trop générique, facile à mal utiliser
-  export function useGenericFetch(url: string, options?: any) {
-    return useSWR(url, options?.fetcher, options);
+  export function useGenericFetch<Data>(url: string, options?: SWRConfiguration) {
+    return useSWR<Data>(url, options?.fetcher, options);
   }
   ```
 
@@ -175,15 +192,17 @@ Ces décisions appartiennent au hook (la limite de ressource), pas dispersées d
   export function usePatientVisits(patientUuid: string) {
     const url = patientUuid ? `/ws/rest/v1/visit?patient=${patientUuid}` : null;
     
-    return useSWR(url, openmrsFetch, {
-      // Politique de nouvelle tentative explicite
-      errorRetryCount: 3,
-      errorRetryInterval: 1000,
-      
-      // Stratégie de rafraîchissement explicite
-      revalidateOnFocus: false, // Les visites ne changent pas fréquemment
-      revalidateOnReconnect: true,
-      refreshInterval: 0, // Pas de polling
+    return useOpenmrsSWR<VisitSearchResponse>(url, {
+      swrConfig: {
+        // Politique de nouvelle tentative explicite
+        errorRetryCount: 3,
+        errorRetryInterval: 1000,
+
+        // Stratégie de rafraîchissement explicite
+        revalidateOnFocus: false, // Les visites ne changent pas fréquemment
+        revalidateOnReconnect: true,
+        refreshInterval: 0, // Pas de polling
+      },
     });
   }
   ```
@@ -193,16 +212,16 @@ Ces décisions appartiennent au hook (la limite de ressource), pas dispersées d
   ```tsx
   // Bon - filtrage au niveau du hook
   export function usePatients(patientUuids: string[]) {
-    const { data, error, isLoading } = useSWR(...);
+    const { data: response, error, isLoading } = useOpenmrsSWR<{ results: Array<Patient | null> }>(...);
     
     const validPatients = useMemo(
-      () => data?.filter((patient): patient is Patient => 
+      () => response?.data?.results?.filter((patient): patient is Patient =>
         patient !== null && patient.person !== null
-      ) ?? null,
-      [data]
+      ) ?? [],
+      [response?.data?.results]
     );
     
-    return { data: validPatients, error, isLoading };
+    return { patients: validPatients, error, isLoading };
   }
   ```
 
