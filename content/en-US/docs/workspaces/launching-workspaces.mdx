@@ -7,7 +7,7 @@ import { launchWorkspace2 } from '@openmrs/esm-framework';
 
 const MyComponent = ({ patientUuid }) => {
   const openGastrodynamics = () => {
-    launchWorkspace2('gastrodynamics-form-workspace', {
+    void launchWorkspace2('gastrodynamics-form-workspace', {
       patientUuid,
     });
   };

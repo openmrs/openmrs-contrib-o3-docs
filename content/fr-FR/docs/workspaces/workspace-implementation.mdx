@@ -66,5 +66,5 @@ Quand un utilisateur ferme un espace de travail, ferme une fenêtre, change des 
 Après l'enregistrement, fermez l'espace de travail sans afficher l'invite de changements non enregistrés :
 
 ```ts copy
-closeWorkspace({ discardUnsavedChanges: true });
+await closeWorkspace({ discardUnsavedChanges: true });
 ```

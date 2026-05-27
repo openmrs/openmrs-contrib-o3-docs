@@ -66,5 +66,5 @@ When a user closes a workspace, closes a window, changes incompatible props, or 
 After saving, close the workspace without showing the unsaved-changes prompt:
 
 ```ts copy
-closeWorkspace({ discardUnsavedChanges: true });
+await closeWorkspace({ discardUnsavedChanges: true });
 ```

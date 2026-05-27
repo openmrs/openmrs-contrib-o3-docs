@@ -29,10 +29,14 @@ export default function GastrodynamicsWorkspace({
   const [textValue, setTextValue] = useState('');
   const patientUuid = workspaceProps?.patientUuid;
 
+  if (!patientUuid) {
+    return null;
+  }
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     await postGastrodynamicsForm(patientUuid, textValue, new AbortController());
-    closeWorkspace({ discardUnsavedChanges: true });
+    await closeWorkspace({ discardUnsavedChanges: true });
   };
 
   return (
@@ -48,7 +52,7 @@ export default function GastrodynamicsWorkspace({
           <Button
             className={styles.button}
             kind="secondary"
-            onClick={() => closeWorkspace({ discardUnsavedChanges: true })}
+            onClick={() => void closeWorkspace({ discardUnsavedChanges: true })}
           >
             {t('discard', 'Discard')}
           </Button>
@@ -93,13 +97,15 @@ If your app owns the group, declare it in `workspaceGroups2`:
   "workspaceGroups2": [
     {
       "name": "gastrodynamics",
-      "scopePattern": "/home/gastrodynamics",
+      "scopePattern": "^/home/gastrodynamics",
       "overlay": true,
       "persistence": "closable"
     }
   ]
 }
 ```
+
+`scopePattern` is a regular expression matched against the current URL. If it is omitted, the group closes only when navigating to a different app. If it is defined, O3 closes the group when the new URL no longer matches the pattern; if the pattern has capture groups, O3 also closes the group when the captured values change. Anchor the pattern with `^` so it only matches the intended route prefix.
 
 Then export the workspace component from `index.ts`:
 
