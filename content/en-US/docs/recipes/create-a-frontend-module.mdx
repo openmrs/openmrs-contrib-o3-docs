@@ -56,12 +56,14 @@ You'll want to `cd` into your project directory and install dependencies if the 
 
 ```sh
 cd openmrs-esm-active-prescriptions-app
-yarn
+corepack yarn install
 ```
 
-Run `yarn up openmrs@next @openmrs/esm-framework@next` if you need to pull in the latest OpenMRS core libraries.
+Generated projects pin Yarn with the `packageManager` field, so use `corepack yarn ...` commands to respect the version in the generated `package.json`. If Corepack is not enabled on your machine, run `corepack enable` once and then rerun the install command.
 
-Run `yarn start` to get the app running. To run the app in a specific port you can add the suffix `--port portNumber` to the start command.
+Generated projects already depend on `openmrs@next`, `@openmrs/esm-framework@next`, and the selected OpenMRS build config. Use `corepack yarn up openmrs@next @openmrs/esm-framework@next` only when you intentionally want to pull the newest prerelease core libraries into the project. For release work, pin tested versions instead of leaving them on moving tags.
+
+Run `corepack yarn start` to get the app running. To run the app on a specific port, add the suffix `--port portNumber` to the start command.
 
 The app should automatically open up in your browser, and you can use the below credentials to log in.
 Username: `admin` 
@@ -70,9 +72,9 @@ Password: `Admin123`
 Once logged in, you should be redirected to the home page of the dashboard. But, wait a second, what's the fancy home page with the side bar and all the data, and where did the login page come from?
 You'll notice that the code for the home page and the login page is not actually in your project directory. The [home](https://github.com/openmrs/openmrs-esm-home) and [login](https://github.com/openmrs/openmrs-esm-core/tree/main/packages/apps/esm-login-app) are apps of their own. 
 
-The data is fetched from the hosted dev server, if you want to connect it to a different backend, you can append the suffix `--backend https://your-backend-url` to the `yarn start` command.
+The data is fetched from the hosted dev server. If you want to connect it to a different backend, append the suffix `--backend https://your-backend-url` to the `corepack yarn start` command.
 
-TLDR; the `yarn start` command actually runs `openmrs develop` which according to some configuration sets it all up (read more about [configuration](/docs/configuration-system)).
+TLDR; the `corepack yarn start` command actually runs `openmrs develop` which according to some configuration sets it all up (read more about [configuration](/docs/configuration-system)).
 
 <Callout emoji="ℹ️" type="info">
   To learn more about how `openmrs develop` works, check out [`runDevelop`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/tooling/openmrs/src/commands/develop.ts). Note that the Template repository is already set up for Core v5+ and uses `routes.json` and `startupApp()` for module registration. If you're migrating an older module, see the [migration guide](/docs/migrate-to-core-v5).

@@ -3,69 +3,76 @@ import { Callout, Steps } from "nextra/components";
 
 # Ajout d'un panneau gauche
 
-Le [panneau de gauche](https://zeroheight.com/23a080e38/p/796c6a-left-panel) permet de naviguer dans une application dans O3. Il est basé sur le [UI shell left panel de Carbon](https://carbondesignsystem.com/components/UI-shell-left-panel/usage/), et est positionné sous l'en-tête, fixé au bord gauche de la page. Il est possible d'ajouter un panneau de gauche à n'importe quelle page dans O3 si vous avez besoin d'exploiter ses capacités de navigation.
+Le [panneau gauche](https://zeroheight.com/23a080e38/p/796c6a-left-panel) permet de naviguer dans une app O3. Il est basé sur le [UI shell left panel de Carbon](https://carbondesignsystem.com/components/UI-shell-left-panel/usage/) et se place sous l'en-tête, fixé au bord gauche de la page.
 
-Ce guide vous guidera à travers le processus d'ajout d'un panneau gauche à l'application [Bed Management app](https://github.com/METS-Programme/esm-ugandaemr-bed-management-app), qui est un module frontal qui fait partie de l'instance UgandaEMR+. L'application de gestion des lits s'occupe de la gestion des lits dans un hôpital, et est un bon candidat pour un panneau de gauche parce qu'elle a plusieurs pages vers lesquelles il faut naviguer.
+Ce guide utilise l'application [Bed Management](https://github.com/openmrs/openmrs-esm-patient-management/tree/main/packages/esm-bed-management-app) du monorepo O3 Patient Management comme implémentation de référence. Bed Management contient plusieurs écrans liés, ce qui en fait un bon exemple d'utilisation d'un panneau gauche au niveau d'une app.
 
-## Exemple: Ajout d'un panneau de gauche à l'application Gestion des lits
+## Exemple: ajouter un panneau gauche à l'app Bed Management
 
-L'application Gestion des lits comporte les écrans suivants vers lesquels il faut naviguer:
+L'app Bed Management contient les écrans suivants:
 
-- L'écran d'accueil, qui affiche un résumé du nombre de lits dans chaque service.
-- Un écran de détail pour une unité spécifique, qui montre le nombre de lits dans cette unité et leur statut actuel.
-- A ward allocation screen, which allows you to add, edit and delete beds, as well as allocating beds to wards.
+- Un écran d'accueil qui résume les lits par emplacement.
+- Un écran de détail pour un emplacement spécifique.
+- Un écran d'administration pour l'allocation des lits.
+- Des écrans d'administration pour les types de lits et les étiquettes de lits.
 
-Nous devrons mettre en place les liens de navigation suivants dans le panneau de gauche:
+Le panneau gauche expose ces liens:
 
-- Un lien "Résumé" pour l'écran d'atterrissage et l'écran de détail de l'unité de soins.
-- Un lien "Administration" pour l'écran d'administration de la gestion des lits.
+- `Summary` pour l'écran d'accueil et l'écran de détail d'un emplacement.
+- `Bed allocation` pour l'administration des lits.
+- `Bed types` pour l'administration des types de lits.
+- `Bed tags` pour l'administration des étiquettes de lits.
 
-Voici une capture d'écran de l'application:
+Voici une capture d'écran de l'app:
 
 <br />
 <Image
   src="/left-panel-home.png"
-  alt="Screenshot of the bed management app landing page showing the left panel"
+  alt="Capture d'ecran de la page d'accueil de Bed Management montrant le panneau gauche"
   width={1000}
   height={1000}
 />
 <br />
 
-Pour ce faire, nous allons suivre les étapes ci-dessous:
+Pour obtenir ce résultat, suivez les étapes ci-dessous:
 
 <Steps>
 
-### Étape 1: Mise en place du panneau de gauche
+### Étape 1: Enregistrer le panneau gauche depuis la racine de page
 
-Commencez par mettre à jour votre composant racine (ou tout autre composant utilisé par votre application pour configurer le routage) comme suit:
+Commencez par mettre à jour le composant racine de l'app qui configure le routage:
 
-```tsx {13-19, 23} filename="src/root.component.tsx"
+```tsx {3, 13-16, 20, 29} filename="src/root.component.tsx"
 import React from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { LeftNavMenu, useLeftNav } from "@openmrs/esm-framework";
+import { useLeftNav, WorkspaceContainer } from "@openmrs/esm-framework";
 import BedAdministrationTable from "./bed-administration/bed-administration-table.component";
+import BedTagAdministrationTable from "./bed-tag/bed-tag-administration-table.component";
+import BedTypeAdministrationTable from "./bed-type/bed-type-administration-table.component";
 import Home from "./home.component";
+import LeftPanel from "./left-panel/left-panel.component";
 import WardWithBeds from "./ward-with-beds/ward-with-beds.component";
 import styles from "./root.scss";
 
 const Root: React.FC = () => {
   const spaBasePath = window.spaBase;
+  const bedManagementBasename = window.getOpenmrsSpaBase() + "bed-management";
 
-  useLeftNav({
-    name: "bed-management-left-panel-slot",
-    basePath: spaBasePath,
-  });
+  useLeftNav({ name: "bed-management-left-panel-slot", basePath: spaBasePath });
 
   return (
-    <BrowserRouter basename={`${window.getOpenmrsSpaBase()}bed-management`}>
-      <LeftNavMenu isChildOfHeader />
+    <BrowserRouter basename={bedManagementBasename}>
+      <LeftPanel />
       <main className={styles.container}>
         <Routes>
-          <Route path="/summary" element={<Home />} />
-          <Route path="/ward/:wardUuid" element={<WardWithBeds />} />
-          <Route path="/ward-allocation" element={<BedAdministrationTable />} />
+          <Route path="/" element={<Home />} />
+          <Route path="/location/:location" element={<WardWithBeds />} />
+          <Route path="/bed-administration" element={<BedAdministrationTable />} />
+          <Route path="/bed-tags" element={<BedTagAdministrationTable />} />
+          <Route path="/bed-types" element={<BedTypeAdministrationTable />} />
         </Routes>
       </main>
+      <WorkspaceContainer contextKey="bed-management" />
     </BrowserRouter>
   );
 };
@@ -73,53 +80,81 @@ const Root: React.FC = () => {
 export default Root;
 ```
 
-Voici quelques points importants à noter ici:
+Points importants:
 
-- Nous importons le composant `LeftNavMenu` du paquetage `@openmrs/esm-framework`. Ce composant rend le panneau de gauche. Nous importons également le hook `useLeftNav` du même paquet. Ce hook est utilisé pour enregistrer et désenregistrer automatiquement le panneau gauche avec le [LeftNav store](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-react-utils/src/useLeftNav.ts). Le magasin LeftNav est un magasin [Zustand](https://github.com/pmndrs/zustand) qui garde la trace de tous les panneaux de gauche qui ont été enregistrés dans l'application.
+- `useLeftNav()` enregistre le slot de navigation gauche actif tant que la page est montée, puis le désenregistre au démontage. Utilisez ce hook dans les composants de page, pas dans les composants d'extension.
+- `name` est le slot d'extension qui recevra les liens du panneau gauche. Le même nom de slot est utilisé dans `routes.json`.
+- `basePath` est le chemin de base de la SPA, `/openmrs/spa` par défaut.
+- L'app rend son propre composant `LeftPanel` au lieu de rendre `LeftNavMenu` directement. L'utilisation directe de `LeftNavMenu` en dehors de l'en-tête du shell est dépréciée dans le framework.
+- `WorkspaceContainer` garde les workspaces de Bed Management dans le contexte de cette page.
 
-- Nous appelons le hook `useLeftNav`, qui prend un objet avec deux propriétés:
+### Étape 2: Rendre une SideNav Carbon avec un slot d'extension
 
-  - `name`: Le nom du slot dans lequel le panneau de gauche doit être rendu. C'est le même nom que vous utiliserez lorsque vous ajouterez le panneau gauche au tableau `extensions` de votre fichier `routes.json`.
-  - `basePath`: Le chemin de base de l'application (`/openmrs/spa` par défaut). Ceci est utilisé pour s'assurer que les liens du panneau de gauche sont relatifs au chemin de base de l'application.
+Créez un composant `LeftPanel` qui s'affiche sur les layouts desktop et fournit le slot dans lequel les extensions de liens seront rendues:
 
-- Le hook `useLeftNav` gère automatiquement le nettoyage lorsque le composant est démonté, vous n'avez donc pas besoin d'appeler manuellement une fonction de désenregistrement.
+```tsx filename="src/left-panel/left-panel.component.tsx"
+import React from "react";
+import { useTranslation } from "react-i18next";
+import { SideNav } from "@carbon/react";
+import { attach, ExtensionSlot, isDesktop, useLayoutType } from "@openmrs/esm-framework";
+import styles from "./left-panel.scss";
 
-- Nous rendons le composant `LeftNavMenu` en tant que premier enfant du composant `BrowserRouter` avec la prop `isChildOfHeader` définie à `true`. Cette prop est requise pour que le composant soit rendu; sans elle, le composant retournera un fragment vide. Cela permet de s'assurer que le panneau de gauche est rendu dans toutes les routes de l'application.
+attach("nav-menu-slot", "bed-management-left-panel");
 
-- Nous mettons en place trois routes pour l'application Bed Management:
+const LeftPanel: React.FC = () => {
+  const { t } = useTranslation();
+  const layout = useLayoutType();
 
-  - Une route `/summary` qui rend le composant `Home`.
-  - Une route `/ward/:wardUuid` qui rend le composant `WardWithBeds`. La partie `:ward` de la route est un paramètre d'URL qui est passé au composant `WardWithBeds` en tant que prop. Ce composant est utilisé pour rendre la page détaillée d'une salle spécifique.
-  - Une route `/ward-allocation` qui rend le composant `BedAdministrationTable`.
+  return (
+    isDesktop(layout) && (
+      <SideNav
+        aria-label={t("bedManagementLeftPanel", "Bed management left panel")}
+        className={styles.leftPanel}
+        expanded
+      >
+        <ExtensionSlot name="bed-management-left-panel-slot" />
+      </SideNav>
+    )
+  );
+};
 
-### Étape 2: Câbler la page racine
+export default LeftPanel;
+```
 
-Ensuite, nous allons créer une exportation nommée pour le composant `Root` dans le fichier `index.ts`. C'est le composant que nous utiliserons pour connecter le composant `Root` à la route `bed-management` afin qu'il soit rendu lorsque vous naviguez vers cette route.
+Le nom de `ExtensionSlot` doit correspondre au slot enregistré avec `useLeftNav()` et au slot utilisé par les extensions de liens dans `routes.json`.
 
-Ajoutez ce qui suit à votre fichier `index.ts`:
+### Étape 3: Câbler la page racine
+
+Exportez le composant racine depuis `index.ts` et enregistrez le schéma de configuration pendant le démarrage:
 
 ```ts filename="src/index.ts"
-import { getSyncLifecycle } from "@openmrs/esm-framework";
-import rootComponent from './root.component';
+import { defineConfigSchema, getAsyncLifecycle } from "@openmrs/esm-framework";
+import { configSchema } from "./config-schema";
 
-const moduleName = '@openmrs/esm-bed-management-app';
+const moduleName = "@openmrs/esm-bed-management-app";
 
 const options = {
-  featureName: 'bed-management',
+  featureName: "bed-management",
   moduleName,
 };
 
-export const root = getSyncLifecycle(rootComponent, options);
+export const importTranslation = require.context("../translations", false, /.json$/, "lazy");
+
+export function startupApp() {
+  defineConfigSchema(moduleName, configSchema);
+}
+
+export const root = getAsyncLifecycle(() => import("./root.component"), options);
 ```
 
-Ensuite, modifiez votre fichier `routes.json` pour inclure la définition de page suivante:
+Ajoutez ensuite la route de page dans `routes.json`:
 
-```json {7-12}
+```json filename="src/routes.json"
 {
   "$schema": "https://json.openmrs.org/routes.schema.json",
   "backendDependencies": {
-    "fhir2": "^1.2.0",
-    "webservices.rest": "^2.24.0"
+    "fhir2": ">=1.2",
+    "webservices.rest": ">=2.2.0"
   },
   "pages": [
     {
@@ -130,56 +165,63 @@ Ensuite, modifiez votre fichier `routes.json` pour inclure la définition de pag
 }
 ```
 
-Cette définition de page indique à O3 de rendre le composant `Root` lorsque vous naviguez vers la route `bed-management`.
+Cette définition indique à O3 de rendre le lifecycle `root` lorsque vous naviguez vers `/openmrs/spa/bed-management`.
 
-### Etape 3: Ajouter des liens au panneau de gauche
+### Étape 4: Ajouter les liens au panneau gauche
 
-Ensuite, nous allons ajouter les deux liens que nous avons mentionnés plus tôt au panneau de gauche:
-
-- Un lien `Summary` pour l'écran d'atterrissage.
-- Un lien `Ward allocation` pour l'écran d'allocation des salles.
-
-Pour ce faire, nous devons créer deux extensions qui rendent les liens. Nous allons ensuite ajouter ces extensions au tableau `extensions` de notre fichier `routes.json`. Les exportations nommées de ces extensions seront utilisées comme propriété `component` des extensions, et ressembleront à ce qui suit:
+Créez un export de lifecycle pour chaque lien:
 
 ```ts filename="src/index.ts"
 import { getSyncLifecycle } from "@openmrs/esm-framework";
 import { createLeftPanelLink } from "./left-panel-link.component";
 
-const moduleName = '@openmrs/esm-bed-management-app';
-
-const options = {
-  featureName: 'bed-management',
-  moduleName,
-};
-
 export const summaryLeftPanelLink = getSyncLifecycle(
   createLeftPanelLink({
-    name: "summary",
+    name: "bed-management",
+    // t("summary", "Summary")
     title: "Summary",
   }),
   options
 );
 
-export const wardAllocationLeftPanelLink = getSyncLifecycle(
+export const adminLeftPanelLink = getSyncLifecycle(
   createLeftPanelLink({
-    name: "ward-allocation",
-    title: "Ward Allocation",
+    name: "bed-administration",
+    // t("bedAllocation", "Bed allocation")
+    title: "Bed allocation",
+  }),
+  options
+);
+
+export const bedTypeLeftPanelLink = getSyncLifecycle(
+  createLeftPanelLink({
+    name: "bed-types",
+    // t("bedTypes", "Bed types")
+    title: "Bed types",
+  }),
+  options
+);
+
+export const bedTagLeftPanelLink = getSyncLifecycle(
+  createLeftPanelLink({
+    name: "bed-tags",
+    // t("bedTags", "Bed tags")
+    title: "Bed tags",
   }),
   options
 );
 ```
 
 <Callout emoji="ℹ️" type="info">
-  **Note**: Si vous souhaitez utiliser des traductions pour les titres des liens, vous devrez gérer la fonction `t()` dans le composant `LinkExtension` dans `left-panel-link.component.tsx`, car `getSyncLifecycle` est appelé au moment du chargement du module, avant que les hooks React puissent être utilisés. Vous pouvez modifier le composant `LinkExtension` pour utiliser le hook `useTranslation()` afin d'obtenir des chaînes traduites.
+  Conservez les commentaires `t()` près des titres statiques afin que l'extraction des traductions puisse les trouver. Si un lien doit utiliser une traduction à l'exécution, gérez `useTranslation()` dans le composant de lien rendu plutôt que dans `getSyncLifecycle()`.
 </Callout>
 
-La fonction `createLeftPanelLink` est une fonction d'ordre supérieur qui prend une propriété `name` et une propriété `title`. La propriété `name` est le chemin unique auquel le segment d'URL est comparé. Si le nom correspond à la dernière partie de l'URL, le lien correspondant reçoit un style spécial pour indiquer qu'il s'agit du lien actif. La propriété `title` est rendue comme le texte du lien.
+Le helper `createLeftPanelLink` rend un `ConfigurableLink` et le marque comme actif lorsque son `name` correspond au segment courant de l'URL:
 
-Nous importons cette fonction `createLeftPanelLink` depuis un fichier séparé appelé `left-panel-link.component.tsx` qui ressemble à ce qui suit:
-
-```tsx {8-9, 13-19} filename="src/left-panel-link.component.tsx"
+```tsx {12-22, 26-29} filename="src/left-panel-link.component.tsx"
 import React, { useMemo } from "react";
-import last from "lodash-es/last";
+import classNames from "classnames";
+import { last } from "lodash-es";
 import { BrowserRouter, useLocation } from "react-router-dom";
 import { ConfigurableLink } from "@openmrs/esm-framework";
 
@@ -200,41 +242,33 @@ function LinkExtension({ config }: { config: LinkConfig }) {
   };
 
   if (isUUID(urlSegment)) {
-    urlSegment = "summary";
+    urlSegment = "bed-management";
   }
 
   return (
     <ConfigurableLink
-      to={`${window.getOpenmrsSpaBase()}bed-management${name ? `/${name}` : ""}`}
-      className={`cds--side-nav__link ${name === urlSegment && "active-left-nav-link"}`}
+      to={`${window.getOpenmrsSpaBase()}bed-management${name && name !== "bed-management" ? `/${name}` : ""}`}
+      className={classNames("cds--side-nav__link", name === urlSegment && "active-left-nav-link")}
     >
       {title}
     </ConfigurableLink>
   );
 }
 
-export const createLeftPanelLink = (config: LinkConfig) => () =>
-  (
-    <BrowserRouter>
-      <LinkExtension config={config} />
-    </BrowserRouter>
-  );
+export const createLeftPanelLink = (config: LinkConfig) => () => (
+  <BrowserRouter>
+    <LinkExtension config={config} />
+  </BrowserRouter>
+);
 ```
 
-Voici quelques points importants à noter:
+Lorsque le dernier segment de l'URL est un UUID d'emplacement, le helper traite la section courante comme `bed-management` afin que le lien `Summary` reste actif sur les pages de détail.
 
-- Nous utilisons le composant [ConfigurableLink](https://github.com/openmrs/openmrs-esm-core/blob/f5538148b48f5f8c3fc621ffde0e2d25fb60db6d/packages/framework/esm-react-utils/src/ConfigurableLink.tsx#L42) du paquetage `@openmrs/esm-framework` pour rendre le lien. La propriété `title` est rendue comme le texte du lien. Le lien bénéficie également d'un style particulier
-  si la propriété `name` correspond à la dernière partie de l'URL qui le distingue comme lien actif.
-- Nous utilisons le hook `useLocation` du package `react-router-dom` pour obtenir l'URL courante. Nous extrayons ensuite le dernier segment du chemin courant et le décodons. Ce segment est stocké dans la variable `urlSegment`. Nous utilisons ensuite la variable `urlSegment` pour déterminer si le lien est actif ou non.
-- Nous utilisons la fonction d'ordre supérieur `createLeftPanelLink` pour créer un composant qui rend le lien. Cette fonction prend une propriété `name` et une propriété `title`. La propriété `name` est le chemin unique auquel le segment d'URL est comparé. Si le nom correspond à la dernière partie de l'URL, le lien correspondant reçoit un style spécial pour indiquer qu'il s'agit du lien actif. La propriété `title` devient le texte du lien.
-- Lorsque le dernier segment de l'URL est un UUID (ce qui est le cas lorsque vous cliquez sur une carte de service sur la page d'atterrissage), nous définissons la variable `urlSegment` à `summary`. Cela permet de s'assurer que le lien `Summary` est mis en évidence en tant que lien actif à la fois sur la page d'accueil et sur l'écran de détail.
-- Enfin, nous exportons la fonction `createLeftPanelLink` afin qu'elle puisse être utilisée pour créer les liens `Summary` et `Ward allocation`.
+### Étape 5: Ajouter les extensions de liens à routes.json
 
-### Étape 4: Ajouter les extensions au fichier routes.json
+Ajoutez les exports de liens au tableau `extensions`:
 
-Finalement, nous allons devoir ajouter les deux extensions que nous avons créées dans l'étape précédente au tableau `extensions` de notre fichier `routes.json` comme indiqué ci-dessous:
-
-```json {7-17}
+```json {7-27} filename="src/routes.json"
 "extensions": [
   {
     "component": "adminCardLink",
@@ -242,47 +276,57 @@ Finalement, nous allons devoir ajouter les deux extensions que nous avons créé
     "slot": "system-admin-page-card-link-slot"
   },
   {
-    "component": "summaryLeftPanelLink",
-    "name": "bed-management-left-panel-link",
-    "slot": "bed-management-left-panel-slot",
-    "order": 0
+    "component": "adminLeftPanelLink",
+    "name": "bed-administration-left-panel-link",
+    "slot": "bed-management-left-panel-slot"
   },
   {
-    "component": "wardAllocationLeftPanelLink",
-    "name": "ward-allocation-left-panel-link",
+    "component": "bedTypeLeftPanelLink",
+    "name": "bed-type-left-panel-link",
     "slot": "bed-management-left-panel-slot"
+  },
+  {
+    "component": "bedTagLeftPanelLink",
+    "name": "bed-tag-left-panel-link",
+    "slot": "bed-management-left-panel-slot"
+  },
+  {
+    "component": "summaryLeftPanelLink",
+    "name": "bed-management-home-dashboard-link",
+    "slot": "bed-management-left-panel-slot",
+    "order": 0
   }
 ]
 ```
 
-### Étape 5: Profit !
+### Étape 6: Essayer le résultat
 
-Voilà, c'est fait ! Lorsque vous naviguez vers la route `gestion des lits`, vous devriez voir l'écran d'atterrissage de l'application Gestion des lits, qui devrait ressembler à ce qui suit:
+Naviguez vers `/openmrs/spa/bed-management`. Vous devriez voir l'écran d'accueil de Bed Management avec le panneau gauche:
 
 <br />
 <Image
   src="/left-panel-home.png"
-  alt="Screenshot of the bed management app landing page showing the left panel"
+  alt="Capture d'ecran de la page d'accueil de Bed Management montrant le panneau gauche"
   width={1000}
   height={1000}
 />
 
-En cliquant sur la carte "General Men Ward", vous accédez à la page détaillée d'un service spécifique, qui devrait ressembler à ce qui suit:
+Cliquer sur une carte d'emplacement ouvre une page de détail et garde le lien `Summary` actif:
 
 <br />
 <Image
   src="/ward-page.png"
-  alt="Screenshot of the ward page which is a nested route of the landing page"
+  alt="Capture d'ecran de la page de detail d'un emplacement dans Bed Management"
   width={1000}
   height={1000}
 />
 
-Enfin, en cliquant sur le lien "Ward Allocation" dans le panneau de gauche, vous accédez à la page Ward Allocation, qui ressemble à ce qui suit:
+Cliquer sur `Bed allocation` ouvre la page d'administration:
 
 <br />
 <Image
   src="/ward-allocation.png"
-  alt="Screenshot of the administration page of the bed management app"
+  alt="Capture d'ecran de la page d'administration de l'allocation des lits"
   width={1000}
   height={1000}
 />
