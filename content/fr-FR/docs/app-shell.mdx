@@ -32,14 +32,14 @@ La fonction `initializeSpa`:
 
 La fonction `run` orchestre toute la séquence d'initialisation. Elle est responsable de:
 
-- Afficher l'indicateur de chargement. Il reste affiché jusqu'à la fin du chargement des modules.
+- Afficher l'indicateur de chargement. Il reste visible pendant le démarrage de l'app shell et disparaît après que `runShell()` a démarré single-spa. Le code des modules frontend reste chargé paresseusement quand des pages, extensions, modales ou workspaces sont rendus.
 - Mettre en place les breakpoints d'interface pour les viewports `tablet`, `small-desktop` et `large-desktop`.
 - Brancher les souscriptions de l'app shell pour les toasts, notifications inline, notifications actionnables, snackbars et modales.
 - Appeler `setupApiModule` pour initialiser le schéma de configuration.
 - Appeler `setupHistory` pour mettre en place le routage côté client.
 - Appeler `registerCoreExtensions`, un hook historique pour les extensions possédées par l'app shell. L'app shell actuel n'y enregistre pas les fils d'Ariane.
 - Appeler `setupCoreConfig` pour initialiser la configuration core.
-- Appeler `setupApps`, qui charge réellement les modules.
+- Appeler `setupApps`, qui lit les route maps et enregistre les métadonnées des modules sans encore importer leur code.
 - Une fois les modules enregistrés, appeler `finishRegisteringAllApps` pour finaliser le processus d'enregistrement.
 - Si le mode hors ligne est activé, mettre en place les classes et handlers CSS hors ligne, puis enregistrer le service worker.
 - Charger la configuration depuis les `configUrls` fournis.
@@ -53,11 +53,11 @@ La fonction `setupApps` charge toutes les routes depuis le registre de routes. E
 - Les balises `<script type="openmrs-routes">` dans le HTML, sous forme de JSON inline ou depuis une URL.
 - Les surcharges de routes stockées dans `localStorage`, utiles pour le développement et le débogage.
 
-Après avoir chargé toutes les routes, elle invoque `registerApp()` sur chaque module et sa définition de module, c'est-à-dire ses dépendances backend, pages et extensions. `registerApp()`:
+Après avoir chargé toutes les routes, elle invoque `registerApp()` sur chaque module et sa définition de routes. Les définitions de routes restent disponibles sur `window.installedModules`, ce qui permet aux outils d'inspecter les versions des modules et les métadonnées de dépendances backend. `registerApp()`:
 
 - Enregistre un schéma de configuration implicite pour l'application.
 - Parcourt les extensions et les enregistre dans le registre des extensions.
-- Parcourt les modales, workspaces, groupes de workspaces et feature flags, puis les enregistre.
+- Parcourt les modales, workspaces, groupes de workspaces, fenêtres de workspace et feature flags, puis les enregistre.
 - Ajoute les pages à un tableau global. Une fois tous les modules enregistrés, `finishRegisteringAllApps` trie les pages alphabétiquement par nom d'app, puis crée un élément `<div>` dans le DOM pour chaque page. Ce div est créé dans le conteneur indiqué par la propriété `containerDomId` de la page, avec `omrs-apps-container` comme valeur par défaut. Cela garantit que single-spa dispose d'un élément DOM prédéterminé dans lequel monter chaque page, ce qui est nécessaire au bon fonctionnement du routage.
 
 Les pages et extensions sont implémentées comme objets single-spa. Ce sont essentiellement des objets JavaScript qui définissent trois fonctions de cycle de vie:
@@ -101,7 +101,7 @@ La séquence complète d'initialisation suit cet ordre:
    - Initialise le module API et le schéma de configuration.
    - Met en place l'historique de routage.
    - Exécute le hook historique d'enregistrement des extensions core.
-   - Charge et enregistre tous les modules frontend via `setupApps()`.
+   - Charge les route maps et enregistre les métadonnées des modules via `setupApps()`.
    - Finalise l'enregistrement des modules.
    - Met en place le support hors ligne si activé.
    - Charge les fichiers de configuration.

@@ -32,14 +32,14 @@ The `initializeSpa` function:
 
 The `run` function orchestrates the complete initialization sequence. It is responsible for:
 
-- Displaying the loading spinner. This spinner gets shown until modules finish loading.
+- Displaying the loading spinner. This spinner stays visible through app-shell startup and is removed after `runShell()` starts single-spa. Frontend module code is still loaded lazily when pages, extensions, modals, or workspaces render.
 - Setting up breakpoints in the UI for `tablet`, `small-desktop` and `large-desktop` viewports.
 - Wiring up subscriptions to appropriate places in the app shell for toasts, inline notifications, actionable notifications, snackbars, and modals.
 - Calling `setupApiModule` to initialize the configuration schema.
 - Calling `setupHistory` to set up client-side routing.
 - Calling `registerCoreExtensions`, a legacy hook for app-shell-owned extensions. The current app shell does not register breadcrumbs there.
 - Calling `setupCoreConfig` to initialize core configuration.
-- Calling `setupApps` which actually handles the loading of modules.
+- Calling `setupApps`, which reads route maps and registers module metadata without importing the module code yet.
 - After modules are registered, it calls `finishRegisteringAllApps` to finalize the registration process.
 - If offline mode is enabled, it sets up offline CSS classes and handlers, and registers the service worker.
 - Loading configuration from the provided `configUrls`.
@@ -53,11 +53,11 @@ The `setupApps` function loads all of the routes from the routes registry. It re
 - `<script type="openmrs-routes">` tags in the HTML (either inline JSON or from a URL)
 - Route overrides stored in `localStorage` (useful for development and debugging)
 
-After loading all routes, it invokes `registerApp()` on each module and its module definition (the backend dependencies, pages, and extensions it provides). `registerApp()` then:
+After loading all routes, it invokes `registerApp()` on each module and its route definition. The route definitions stay available on `window.installedModules`, which lets tools inspect module versions and backend dependency metadata. `registerApp()` itself then:
 
 - Registers an implicit configuration schema for the application.
 - Iterates through the extensions and registers them with the extension registry.
-- Iterates through modals, workspaces, workspace groups, and feature flags and registers them.
+- Iterates through modals, workspaces, workspace groups, workspace windows, and feature flags and registers them.
 - Pages get added to a global array. After all modules are registered, `finishRegisteringAllApps` sorts pages alphabetically by app name, then creates a `<div>` element for each page in the DOM. The div is created inside the container specified by the page's `containerDomId` property (defaults to `omrs-apps-container`). This ensures that single-spa has a predetermined DOM element to mount each page into, which is required for proper routing behavior.
 
 Pages and extensions are implemented as Single Spa objects, which are essentially JavaScript objects that define three lifecycle functions:
@@ -101,7 +101,7 @@ The complete initialization sequence follows this order:
    - Initializes API module and configuration schema
    - Sets up routing history
    - Runs the legacy core-extension registration hook
-   - Loads and registers all frontend modules via `setupApps()`
+   - Loads route maps and registers module metadata via `setupApps()`
    - Finalizes module registration
    - Sets up offline support (if enabled)
    - Loads configuration files
