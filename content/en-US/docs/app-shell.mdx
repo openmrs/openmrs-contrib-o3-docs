@@ -12,7 +12,7 @@ In O3, the app shell refers to the code inside the `esm-app-shell` package. It h
 - A `<link>` tag that is a reference to a registry of all the pages and extensions aggregated from all the frontend modules.
 - A `<script>` tag for the routes registry.
 
-The template also contains a reference to `openmrs.js` that is the main file generated from the Webpack bundle. It creates a function called `initializeSpa` and appends it to the window object, making it available to the global scope. This function is called from the `index.ejs` template and is responsible for bootstrapping the application. The template also includes:
+The template also contains a reference to the main JavaScript file generated from the Rspack app-shell bundle (`openmrs.js` in development and a hashed `openmrs.[contenthash].js` file in production). That bundle creates a function called `initializeSpa` and appends it to the window object, making it available to the global scope. This function is called from the `index.ejs` template and is responsible for bootstrapping the application. The template also includes:
 
 - `<div>`s where containers for modals, inline notifications, actionable notifications, snackbars, and toast notifications get rendered in the UI.
 - A loading spinner that gets rendered when frontend modules are getting loaded by the app shell.
@@ -25,7 +25,7 @@ The `initializeSpa` function:
 - Sets up utility functions (like `copyText` for error messages)
 - Configures global paths and variables on the window object (e.g. `openmrsBase`, `spaBase`, `spaEnv`, `spaVersion`, and `getOpenmrsSpaBase`)
 - Wires up the SPA base path by creating a `<base>` element in the document head
-- Initializes Webpack module sharing
+- Initializes the Module Federation shared scope used by frontend modules
 - Initializes the module loading mechanism by invoking the `run` function
 
 ### run()
@@ -82,9 +82,9 @@ O3 loads frontend modules using import maps and Module Federation. The app shell
 `systemjs-importmap` script tags in `index.ejs`, but the current runtime reads those tags itself through the
 dynamic-loading package. SystemJS is no longer the piece that imports module code at runtime.
 
-For each module URL, the app shell appends a `<script>` tag. When the script loads, it exposes a Webpack Module
-Federation container on `window` using the module name transformed into a JavaScript identifier. The app shell then calls
-the container's `init` and `get` functions to load the module's `./start` export.
+For each module URL, the app shell appends a `<script>` tag. When the script loads, it exposes a Module Federation
+container on `window` using the module name transformed into a JavaScript identifier. The app shell then calls the
+container's `init` and `get` functions to load the module's `./start` export.
 
 When a page, extension, modal, or workspace is about to render, `loadLifeCycles()` imports the owning frontend module,
 runs that module's `startupApp()` once if it exports one, marks the module as loaded in the configuration system, and then

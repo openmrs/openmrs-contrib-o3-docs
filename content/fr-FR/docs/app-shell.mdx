@@ -12,7 +12,7 @@ Dans O3, l'app shell correspond au code du paquet `esm-app-shell`. Il gère tout
 - Une balise `<link>` qui référence un registre de toutes les pages et extensions agrégées depuis les modules frontend.
 - Une balise `<script>` pour le registre des routes.
 
-Le template contient aussi une référence à `openmrs.js`, le fichier principal généré par le bundle Webpack. Il crée une fonction appelée `initializeSpa` et l'ajoute à l'objet `window`, ce qui la rend disponible dans le scope global. Cette fonction est appelée depuis le template `index.ejs` et démarre l'application. Le template contient aussi:
+Le template contient aussi une référence au fichier JavaScript principal généré par le bundle Rspack de l'app shell (`openmrs.js` en développement et un fichier `openmrs.[contenthash].js` en production). Ce bundle crée une fonction appelée `initializeSpa` et l'ajoute à l'objet `window`, ce qui la rend disponible dans le scope global. Cette fonction est appelée depuis le template `index.ejs` et démarre l'application. Le template contient aussi:
 
 - Des `<div>` dans lesquels sont rendus les conteneurs de modales, notifications inline, notifications actionnables, snackbars et toasts.
 - Un indicateur de chargement affiché pendant que l'app shell charge les modules frontend.
@@ -25,7 +25,7 @@ La fonction `initializeSpa`:
 - Met en place des fonctions utilitaires, comme `copyText` pour les messages d'erreur.
 - Configure des chemins et variables globaux sur l'objet `window`, par exemple `openmrsBase`, `spaBase`, `spaEnv`, `spaVersion` et `getOpenmrsSpaBase`.
 - Branche le chemin de base de la SPA en créant un élément `<base>` dans le `head` du document.
-- Initialise le partage de modules Webpack.
+- Initialise le shared scope Module Federation utilisé par les modules frontend.
 - Initialise le mécanisme de chargement des modules en invoquant la fonction `run`.
 
 ### run()
@@ -83,8 +83,8 @@ script `systemjs-importmap` dans `index.ejs`, mais le runtime actuel lit ces bal
 chargement dynamique. SystemJS n'est plus l'élément qui importe le code des modules au runtime.
 
 Pour chaque URL de module, l'app shell ajoute une balise `<script>`. Quand le script se charge, il expose un conteneur
-Webpack Module Federation sur `window`, avec le nom du module transformé en identifiant JavaScript. L'app shell appelle
-ensuite les fonctions `init` et `get` du conteneur pour charger l'export `./start` du module.
+Module Federation sur `window`, avec le nom du module transformé en identifiant JavaScript. L'app shell appelle ensuite
+les fonctions `init` et `get` du conteneur pour charger l'export `./start` du module.
 
 Quand une page, une extension, une modale ou un workspace est sur le point d'être rendu, `loadLifeCycles()` importe le
 module frontend propriétaire, exécute une seule fois `startupApp()` si le module l'exporte, marque le module comme chargé

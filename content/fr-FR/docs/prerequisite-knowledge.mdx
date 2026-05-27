@@ -53,7 +53,8 @@ La plupart de notre code est écrit en TypeScript. Nous recommandons les ressour
 - [yarn](https://yarnpkg.com/) - de nombreux dépôts OpenMRS utilisent yarn comme gestionnaire de paquets. En général, si le dépôt que vous consultez contient un fichier `yarn.lock` à sa racine, il utilise yarn. Nous utilisons les [workspaces de yarn](https://yarnpkg.com/features/workspaces) pour versionner et publier les packages dans nos monorepos.
 - [turbo](https://turbo.build/repo) - nous utilisons `turbo` pour exécuter des scripts pendant le développement local et nos processus d'intégration continue.
 - [swc](https://swc.rs/) - nous utilisons SWC pour compiler notre code JavaScript et TypeScript dans un format pris en charge par tous les principaux navigateurs.
-- [webpack](https://webpack.js.org) - nous utilisons webpack pour empaqueter notre code en vue de la production. Nous utilisons [webpack 5](https://webpack.js.org/blog/2020-10-10-webpack-5-release/), qui est la dernière version de webpack au moment de la rédaction.
+- [Rspack](https://rspack.dev/) - la plupart des modules frontend O3 actuels utilisent Rspack pour empaqueter le code en développement local et en production.
+- [webpack](https://webpack.js.org) - l'outillage de build O3 prend toujours en charge une configuration compatible Webpack, et quelques modules hérités utilisent encore Webpack directement. Vous rencontrerez surtout les concepts Webpack via Module Federation, la configuration des loaders et les modules frontend plus anciens.
 
 ## Git
 
