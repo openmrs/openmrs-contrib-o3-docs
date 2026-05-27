@@ -25,7 +25,7 @@ export function startupApp() {
 }
 ```
 
-Quand un utilisateur navigue vers `/myPage`, le fil d'Ariane affiche: **My First Page**
+Quand un utilisateur navigue vers le chemin SPA `${window.spaBase}/myPage`, par exemple `/openmrs/spa/myPage`, le fil d'Ariane affiche: **My First Page**
 
 Les fils d'Ariane peuvent aussi représenter une piste de liens hiérarchiques depuis la page d'accueil du site vers des sous-pages. Pour l'implémenter, utilisez la propriété `parent` pour indiquer quel fil d'Ariane doit être le parent.
 
@@ -55,9 +55,9 @@ export function startupApp() {
 ```
 
 Quand un utilisateur navigue vers différentes pages, les fils d'Ariane affichent:
-- Sur `/myPage`: **My First Page**
-- Sur `/myPage/subpage1`: **My First Page** > **Subpage 1**
-- Sur `/myPage/subpage2`: **My First Page** > **Subpage 2**
+- Sur `${window.spaBase}/myPage`: **My First Page**
+- Sur `${window.spaBase}/myPage/subpage1`: **My First Page** > **Subpage 1**
+- Sur `${window.spaBase}/myPage/subpage2`: **My First Page** > **Subpage 2**
 
 ## Fils d'Ariane dynamiques avec paramètres de route
 
@@ -72,7 +72,7 @@ export function startupApp() {
     matcher: `${window.spaBase}/patient/:patientUuid`, // Facultatif: définit explicitement le matcher
     title: (params) => {
       // params est un tableau des paramètres de route correspondants
-      // Pour /patient/:patientUuid, params[0] serait la valeur patientUuid
+      // Pour un chemin comme /openmrs/spa/patient/<uuid>, params[0] est la valeur patientUuid
       return `Patient ${params[0]}`;
     },
     parent: `${window.spaBase}/patients`,

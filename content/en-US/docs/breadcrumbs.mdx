@@ -25,7 +25,7 @@ export function startupApp() {
 }
 ```
 
-When a user navigates to `/myPage`, the breadcrumb will display: **My First Page**
+When a user navigates to the SPA path `${window.spaBase}/myPage` (for example, `/openmrs/spa/myPage`), the breadcrumb will display: **My First Page**
 
 Breadcrumbs can also represent a trail of hierarchical links from the site homepage to sub pages. To implement this, use the `parent` property to indicate what should be the parent breadcrumb.
 
@@ -55,9 +55,9 @@ export function startupApp() {
 ```
 
 When a user navigates to different pages, the breadcrumbs will display:
-- On `/myPage`: **My First Page**
-- On `/myPage/subpage1`: **My First Page** > **Subpage 1**
-- On `/myPage/subpage2`: **My First Page** > **Subpage 2**
+- On `${window.spaBase}/myPage`: **My First Page**
+- On `${window.spaBase}/myPage/subpage1`: **My First Page** > **Subpage 1**
+- On `${window.spaBase}/myPage/subpage2`: **My First Page** > **Subpage 2**
 
 ## Dynamic breadcrumbs with route parameters
 
@@ -72,7 +72,7 @@ export function startupApp() {
     matcher: `${window.spaBase}/patient/:patientUuid`, // Optional: explicitly define the matcher
     title: (params) => {
       // params is an array of matched route parameters
-      // For /patient/:patientUuid, params[0] would be the patientUuid value
+      // For a path like /openmrs/spa/patient/<uuid>, params[0] is the patientUuid value
       return `Patient ${params[0]}`;
     },
     parent: `${window.spaBase}/patients`,
