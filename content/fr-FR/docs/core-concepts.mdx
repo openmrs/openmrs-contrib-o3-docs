@@ -99,9 +99,10 @@ rendez-vous, gestion des lits, etc.) sont regroupés dans le monorepo
 [`openmrs-esm-patient-management`](https://github.com/openmrs/openmrs-esm-patient-management).
 
 Vous choisissez quels modules inclure dans une distribution en modifiant son fichier `spa-assemble-config.json`. Pour
-ajouter un module personnalisé, partez du dépôt [template app](https://github.com/openmrs/openmrs-esm-template-app),
+ajouter un module personnalisé, générez-le avec [`@openmrs/create-o3-app`](https://www.npmjs.com/package/@openmrs/create-o3-app),
 publiez-le sur npm sous votre propre espace de noms, puis ajoutez une entrée pour ce module dans
-`spa-assemble-config.json`.
+`spa-assemble-config.json`. Le dépôt [template app](https://github.com/openmrs/openmrs-esm-template-app) reste utile comme
+référence ou solution manuelle.
 
 Ensuite :
 

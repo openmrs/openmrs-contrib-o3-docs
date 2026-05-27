@@ -92,8 +92,9 @@ For example, patient-management modules (registration, queues, appointments, bed
 [`openmrs-esm-patient-management`](https://github.com/openmrs/openmrs-esm-patient-management) monorepo.
 
 You control which modules are included in a distro by editing the distro’s `spa-assemble-config.json` file. To add your
-own module, start from the [template app repo](https://github.com/openmrs/openmrs-esm-template-app), publish it to npm
-under your own namespace, then add an entry for it in `spa-assemble-config.json`.
+own module, scaffold it with [`@openmrs/create-o3-app`](https://www.npmjs.com/package/@openmrs/create-o3-app), publish it
+to npm under your own namespace, then add an entry for it in `spa-assemble-config.json`. The
+[template app repo](https://github.com/openmrs/openmrs-esm-template-app) remains useful as a reference or manual fallback.
 
 Next:
 

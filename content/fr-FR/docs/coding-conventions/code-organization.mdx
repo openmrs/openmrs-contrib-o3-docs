@@ -25,19 +25,24 @@
   - Rend clair quels fichiers appartiennent à quel composant
 
 - Évitez de placer les styles de plusieurs composants dans la même feuille de style. Créez plutôt une feuille de style séparée pour chaque composant. Cela facilite la recherche des styles pour un composant particulier.
-- Utilisez l'[application template](https://github.com/openmrs/openmrs-esm-template-app) pour rapidement créer de nouveaux modules frontend O3 :
-  1. Visitez le [dépôt template](https://github.com/openmrs/openmrs-esm-template-app)
-  2. Cliquez sur le bouton vert `Use this template`
-  3. Choisissez `Create a new repository`
-  4. Suivez les instructions de configuration dans le README du template
+- Utilisez [`@openmrs/create-o3-app`](https://www.npmjs.com/package/@openmrs/create-o3-app) pour créer rapidement de nouveaux modules frontend O3 :
 
-  Le template fournit :
+  ```sh
+  npm exec @openmrs/create-o3-app@latest -- my-module --standalone
+  ```
+
+  Le générateur fournit :
+  - Scaffolds pour modules autonomes, monorepos existants et nouveaux monorepos
+  - Rspack par défaut, avec Webpack disponible via `--webpack`
   - Configuration TypeScript correcte
+  - `routes.json`, `config-schema.ts` et exports de lifecycle reliés à `@openmrs/esm-framework`
   - Configuration de test préconfigurée avec Vitest
   - Configurations ESLint et Prettier
-  - Workflows GitHub Actions
+  - Configuration Husky et lint-staged
   - Structure de projet de base suivant les conventions O3
   - Exemples de composants et de tests
+
+  L'[application template](https://github.com/openmrs/openmrs-esm-template-app) reste utile comme référence ou solution manuelle.
 
 - Groupez les imports par ordre alphabétique en fonction de leur type. L'ordre recommandé est :
   - Imports React et framework (par exemple, `React`, `useState`, `useEffect`)

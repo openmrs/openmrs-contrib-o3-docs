@@ -2,10 +2,10 @@ import { Callout, Steps } from "nextra/components";
 
 # Création d'un module frontal
 
-OpenMRS dispose d'un générateur dans [`openmrs/create-o3-app`](https://github.com/openmrs/create-o3-app) pour créer des modules O3. Il peut créer des modules autonomes, des modules dans un monorepo existant et de nouveaux monorepos avec les conventions O3 habituelles déjà configurées. Il nécessite Node.js 20 ou plus récent. Le module frontal [Template](https://github.com/openmrs/openmrs-esm-template-app) reste utile comme référence stable ou comme solution manuelle.
+OpenMRS publie [`@openmrs/create-o3-app`](https://www.npmjs.com/package/@openmrs/create-o3-app), un générateur pour créer des modules O3. Il peut créer des modules autonomes, des modules dans un monorepo existant et de nouveaux monorepos avec les conventions O3 habituelles déjà configurées. Il nécessite Node.js 20 ou plus récent. Le code source du générateur se trouve dans [`openmrs/create-o3-app`](https://github.com/openmrs/create-o3-app). Le module frontal [Template](https://github.com/openmrs/openmrs-esm-template-app) reste utile comme référence stable ou comme solution manuelle.
 
 <Callout type="warning">
-  Ne lancez pas `npx create-o3-app`. Le package `create-o3-app` non scopé sur npm est un projet tiers sans rapport. Le générateur OpenMRS est publié sous le nom scopé `@openmrs/create-o3-app`. Tant que ce package n'est pas disponible sur npm, construisez le générateur depuis les sources comme ci-dessous.
+  Ne lancez pas `npx create-o3-app`. Le package `create-o3-app` non scopé sur npm est un projet tiers sans rapport. Le générateur OpenMRS est publié sous le nom scopé `@openmrs/create-o3-app`.
 </Callout>
 
 ## Exemple : Création d'un nouveau module frontal
@@ -23,23 +23,13 @@ Le processus pour cela serait le suivant :
 
 ### Étape 1
 
-Clonez et construisez le générateur OpenMRS:
+Lancez le générateur OpenMRS publié depuis le répertoire où le nouveau dossier de module doit être créé. Pour cet exemple, créez un module autonome nommé `active-prescriptions`:
 
 ```sh
-git clone https://github.com/openmrs/create-o3-app.git
-cd create-o3-app
-npm install
-npm run build
-cd ..
+npm exec @openmrs/create-o3-app@latest -- active-prescriptions --standalone --package-name "@openmrs/esm-active-prescriptions-app" --route "/active-prescriptions" --route-component "ActivePrescriptions"
 ```
 
-Lancez ensuite la commande de génération depuis le répertoire où le nouveau dossier de module doit être créé. Pour cet exemple, créez un module autonome nommé `active-prescriptions`:
-
-```sh
-node create-o3-app/dist/index.js active-prescriptions --standalone --package-name "@openmrs/esm-active-prescriptions-app" --route "/active-prescriptions" --route-component "ActivePrescriptions"
-```
-
-Si vous préférez accepter les valeurs par défaut et répondre aux prompts qui s'appliquent au répertoire courant, lancez `node create-o3-app/dist/index.js active-prescriptions`.
+Rspack est l'outil de build par défaut. Ajoutez `--webpack` uniquement si vous avez besoin d'un scaffold Webpack. Si vous préférez accepter les valeurs par défaut et répondre aux prompts qui s'appliquent au répertoire courant, lancez `npm exec @openmrs/create-o3-app@latest -- active-prescriptions`.
 
 <Callout emoji="ℹ️" type="info">
   Pourquoi le préfixe `esm`?
@@ -52,7 +42,7 @@ Si vous préférez accepter les valeurs par défaut et répondre aux prompts qui
 
 ### Étape 2
 
-Entrez dans votre répertoire de projet et installez les dépendances si le CLI ne l'a pas déjà fait:
+Entrez dans votre répertoire de projet. Le CLI installe automatiquement les dépendances sauf si l'installation est ignorée, interrompue ou si Corepack n'est pas disponible. Si vous devez installer manuellement, lancez:
 
 ```sh
 cd openmrs-esm-active-prescriptions-app
@@ -83,7 +73,7 @@ TL;DR : la commande `corepack yarn start` exécute en fait `openmrs develop` qui
 
 ### Étape 3
 
-Ensuite, vérifiez les fichiers générés et adaptez-les à vos besoins. Si vous avez utilisé `create-o3-app`, la plupart de ces valeurs devraient déjà correspondre aux options ou aux réponses données au CLI. Si vous avez utilisé le Template directement, vous devrez renommer les valeurs du template vous-même. Vérifiez les points suivants:
+Ensuite, vérifiez les fichiers générés et adaptez-les à vos besoins. Si vous avez utilisé `@openmrs/create-o3-app`, la plupart de ces valeurs devraient déjà correspondre aux options ou aux réponses données au CLI. Si vous avez utilisé le Template directement, vous devrez renommer les valeurs du template vous-même. Vérifiez les points suivants:
 
 - Remplacer toutes les instances de `template` par `active-prescriptions`.
 - Vérifier les métadonnées du module:
@@ -125,7 +115,7 @@ Profitez ! Vous devriez maintenant avoir un module frontal personnalisé que vou
 
 Le processus de création d'un nouveau module frontal dans un monorepo est presque identique à celui de la création dans un polyrepo, avec quelques ajustements :
 
-1. Depuis la racine du monorepo, lancez `node /path/to/create-o3-app/dist/index.js referrals-queue --monorepo` et répondez aux prompts. En mode non interactif, le CLI utilise `packages/apps/esm-referrals-queue` par défaut.
+1. Depuis la racine du monorepo, lancez `npm exec @openmrs/create-o3-app@latest -- referrals-queue --monorepo` et répondez aux prompts. En mode non interactif, le CLI utilise `packages/apps/esm-referrals-queue` par défaut. Pour créer un nouveau monorepo racine à la place, utilisez `--new-monorepo`.
 2. Si vous copiez le Template manuellement, placez son contenu dans un nouveau répertoire sous `packages/`. Pour notre exemple ci-dessus, nous créerions un nouveau répertoire appelé `packages/esm-referrals-queue` et déplacerions le contenu du Template dedans.
 3. Supprimez les fichiers de configuration déjà présents au niveau de l'espace de travail. Il s'agit de fichiers et de dossiers tels que `.github` et `.eslintrc`.
 4. Supprimez les `devDependencies` du nouveau module frontal dans le `package.json`

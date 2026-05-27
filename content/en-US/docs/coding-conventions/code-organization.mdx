@@ -25,19 +25,24 @@
   - Makes it clear which files belong to which component
 
 - Avoid placing styles for multiple components in the same stylesheet. Instead, create a separate stylesheet for each component. This makes it easier to find the styles for a particular component.
-- Use the [template app](https://github.com/openmrs/openmrs-esm-template-app) to quickly seed new O3 frontend modules:
-  1. Visit the [template repository](https://github.com/openmrs/openmrs-esm-template-app)
-  2. Click the green `Use this template` button
-  3. Choose `Create a new repository`
-  4. Follow the setup instructions in the template's README
+- Use [`@openmrs/create-o3-app`](https://www.npmjs.com/package/@openmrs/create-o3-app) to quickly seed new O3 frontend modules:
 
-  The template provides:
+  ```sh
+  npm exec @openmrs/create-o3-app@latest -- my-module --standalone
+  ```
+
+  The generator provides:
+  - Standalone, existing monorepo, and new monorepo scaffolds
+  - Rspack by default, with Webpack available through `--webpack`
   - Correct TypeScript configuration
+  - `routes.json`, `config-schema.ts`, and lifecycle exports wired to `@openmrs/esm-framework`
   - Pre-configured testing setup with Vitest
   - ESLint and Prettier configurations
-  - GitHub Actions workflows
+  - Husky and lint-staged setup
   - Basic project structure following O3 conventions
   - Example components and tests
+
+  The [template app](https://github.com/openmrs/openmrs-esm-template-app) remains useful as a reference or manual fallback.
 
 - Group imports alphabetically based on their type. The recommended order is:
   - React and framework imports (e.g., `React`, `useState`, `useEffect`)

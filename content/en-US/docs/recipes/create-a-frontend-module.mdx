@@ -2,10 +2,10 @@ import { Callout, Steps } from "nextra/components";
 
 # Creating a frontend module
 
-OpenMRS has a generator at [`openmrs/create-o3-app`](https://github.com/openmrs/create-o3-app) for scaffolding O3 modules. It can generate standalone modules, modules inside existing monorepos, and new monorepos with the usual O3 conventions already wired up. It requires Node.js 20 or newer. The [Template](https://github.com/openmrs/openmrs-esm-template-app) frontend module is still useful as a stable reference or as a manual fallback.
+OpenMRS publishes [`@openmrs/create-o3-app`](https://www.npmjs.com/package/@openmrs/create-o3-app), a generator for scaffolding O3 modules. It can generate standalone modules, modules inside existing monorepos, and new monorepos with the usual O3 conventions already wired up. It requires Node.js 20 or newer. The generator source lives in [`openmrs/create-o3-app`](https://github.com/openmrs/create-o3-app). The [Template](https://github.com/openmrs/openmrs-esm-template-app) frontend module is still useful as a stable reference or as a manual fallback.
 
 <Callout type="warning">
-  Do not run `npx create-o3-app`. The unscoped `create-o3-app` package on npm is an unrelated third-party project. The OpenMRS generator is published under the scoped name `@openmrs/create-o3-app`. Until that package is available on npm, build the generator from source as shown below.
+  Do not run `npx create-o3-app`. The unscoped `create-o3-app` package on npm is an unrelated third-party project. The OpenMRS generator is published under the scoped name `@openmrs/create-o3-app`.
 </Callout>
 
 ## Example: Creating a new frontend module
@@ -23,23 +23,13 @@ The process for doing that would be as follows:
 
 ### Step 1
 
-Clone and build the OpenMRS generator:
+Run the published OpenMRS generator from the directory where you want the new module folder to be created. For this example, create a standalone module named `active-prescriptions`:
 
 ```sh
-git clone https://github.com/openmrs/create-o3-app.git
-cd create-o3-app
-npm install
-npm run build
-cd ..
+npm exec @openmrs/create-o3-app@latest -- active-prescriptions --standalone --package-name "@openmrs/esm-active-prescriptions-app" --route "/active-prescriptions" --route-component "ActivePrescriptions"
 ```
 
-Then run the scaffold command from the directory where you want the new module folder to be created. For this example, create a standalone module named `active-prescriptions`:
-
-```sh
-node create-o3-app/dist/index.js active-prescriptions --standalone --package-name "@openmrs/esm-active-prescriptions-app" --route "/active-prescriptions" --route-component "ActivePrescriptions"
-```
-
-If you prefer to accept the defaults and answer any prompts that apply to your current directory, run `node create-o3-app/dist/index.js active-prescriptions`.
+Rspack is the default build tool. Add `--webpack` only if you specifically need a Webpack scaffold. If you prefer to accept the defaults and answer any prompts that apply to your current directory, run `npm exec @openmrs/create-o3-app@latest -- active-prescriptions`.
 
 <Callout emoji="ℹ️" type="info">
   Why the `esm` prefix?
@@ -52,7 +42,7 @@ If you prefer to accept the defaults and answer any prompts that apply to your c
 
 ### Step 2
 
-You'll want to `cd` into your project directory and install dependencies if the CLI did not already do so:
+You'll want to `cd` into your project directory. The CLI installs dependencies automatically unless installation is skipped, interrupted, or Corepack is unavailable. If you need to install manually, run:
 
 ```sh
 cd openmrs-esm-active-prescriptions-app
@@ -82,7 +72,7 @@ TLDR; the `corepack yarn start` command actually runs `openmrs develop` which ac
 
 ### Step 3
 
-Next, review the generated files and adapt them to your needs. If you used `create-o3-app`, most of these values should already match the flags or prompts you gave the CLI. If you used the Template directly, you'll need to rename the template values yourself. Check the following:
+Next, review the generated files and adapt them to your needs. If you used `@openmrs/create-o3-app`, most of these values should already match the flags or prompts you gave the CLI. If you used the Template directly, you'll need to rename the template values yourself. Check the following:
 
 - Replace any remaining instances of `template` with `active-prescriptions`.
 - Confirm the module metadata:
@@ -124,7 +114,7 @@ Profit! You should now have a custom frontend module that you can use in your Op
 
 The process for creating a new frontend module in a monorepo is nearly identical to the one for creating one in a polyrepo with a few tweaks:
 
-1. From the monorepo root, run `node /path/to/create-o3-app/dist/index.js referrals-queue --monorepo` and answer the prompts. In non-interactive mode, the CLI defaults to `packages/apps/esm-referrals-queue`.
+1. From the monorepo root, run `npm exec @openmrs/create-o3-app@latest -- referrals-queue --monorepo` and answer the prompts. In non-interactive mode, the CLI defaults to `packages/apps/esm-referrals-queue`. To create a new monorepo root instead, use `--new-monorepo`.
 2. If you copy the Template manually instead, put its contents into a new directory under `packages/`. For our example above, we'd create a new directory called `packages/esm-referrals-queue` and move the contents of Template into it.
 3. Remove configuration files that are already present at the workspace level. These include files and folders such as `.github` and `.eslintrc`.
 4. Remove `devDependencies` from the new frontend module's `package.json`
