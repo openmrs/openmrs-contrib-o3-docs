@@ -2,7 +2,7 @@ import { Callout } from "nextra/components";
 
 # The modal system
 
-The modal system is a part of the framework that handles rendering modal dialogs, warnings, and other similar displays. Its main goal is to coordinate modals across different applications so that only a single modal is rendered for the user at a time without any other modals being removed.
+The modal system is a part of the framework that handles rendering modal dialogs, warnings, and other similar displays. Its main goal is to coordinate modals across different applications so that the topmost modal is visible while any previously opened modals remain mounted but hidden in the stack.
 
 To use the modal system, first your application must register the modal as described below. Once the modal is registered, call [`showModal`](/docs/framework-api-reference#showmodal) with the modal name and the framework will render the modal for you.
 
@@ -13,21 +13,29 @@ To use the modal system, first your application must register the modal as descr
 The `ModalHeader` and `ModalBody` should be at the top level of the modal component and wrapped in a `React.Fragment`.
 
 ```tsx
-const ModalComponent = ({ closeModal }) => {
-	return (
-		<React.Fragment>
-			<ModalHeader closeModal={closeModal}>
-				{header content goes here}
-			</ModalHeader>
-			<ModalBody>
-				{modal body goes here}
-			</ModalBody>
-			<ModalFooter>
-				{modal footer goes here}
-			</ModalFooter>
-		</React.Fragment>
-	);
-};
+import { Button, ModalBody, ModalFooter, ModalHeader } from '@carbon/react';
+
+interface DeleteItemModalProps {
+  close: () => void;
+  itemName: string;
+}
+
+export default function DeleteItemModal({ close, itemName }: DeleteItemModalProps) {
+  return (
+    <>
+      <ModalHeader closeModal={close} title="Delete item" />
+      <ModalBody>
+        <p>Are you sure you want to delete {itemName}?</p>
+      </ModalBody>
+      <ModalFooter>
+        <Button kind="secondary" onClick={close}>
+          Cancel
+        </Button>
+        <Button kind="danger">Delete</Button>
+      </ModalFooter>
+    </>
+  );
+}
 ```
 
 <Callout>
@@ -58,17 +66,17 @@ export const modalComponentName = getAsyncLifecycle(
 
 ### Triggering the modal
 
-Finally, you can trigger your modal by calling `showModal` along with all the props you need to pass into the modal. The function returned by `showModal` can be called to "dispose" or force close the modal. In the example below, we pass `closeModal` as a prop to the modal component, which calls the dispose function when the modal should be closed.
+Finally, you can trigger your modal by calling `showModal` along with all the props you need to pass into the modal. The function returned by `showModal` can be called to "dispose" or force close the modal. The framework also passes that same function to the modal as the `close` prop.
 
 ```ts 
-const dispose = showModal('your-modal-name-modal', {
-	closeModal: () => dispose(),
-	// other props to pass in to the modal component
+const close = showModal('your-modal-name-modal', {
+  itemName: 'Example item',
+  // other props to pass in to the modal component
 });
 ```
 
 <Callout type="info">
-	Note: The framework automatically adds a `close` prop to your modal component's props. However, it's common practice to explicitly pass `closeModal` (as shown above) to make the prop name consistent with Carbon's `ModalHeader` component API.
+  Pass the injected `close` prop to Carbon's `ModalHeader` as `closeModal={close}`.
 </Callout>
 
 ## Important considerations
@@ -83,11 +91,11 @@ The `showModal` function accepts an optional third parameter `onClose` callback 
 
 ```ts
 const dispose = showModal('your-modal-name-modal', {
-	closeModal: () => dispose(),
-	// other props
+  itemName: 'Example item',
+  // other props
 }, () => {
-	// This callback is called when the modal is closed
-	console.log('Modal was closed');
+  // This callback is called when the modal is closed
+  console.log('Modal was closed');
 });
 ```
 
@@ -97,8 +105,8 @@ You can control the modal size by passing a `size` prop. Available sizes are `'x
 
 ```ts
 const dispose = showModal('your-modal-name-modal', {
-	closeModal: () => dispose(),
-	size: 'sm', // or 'xs', 'md', 'lg'
+  itemName: 'Example item',
+  size: 'sm', // or 'xs', 'md', 'lg'
 });
 ```
 
@@ -114,11 +122,8 @@ The modal system automatically handles several behaviors for you:
 - **ESC key handling**: Pressing the ESC key closes the topmost modal
 - **Stack visibility**: Only the topmost modal is visible; previously opened modals remain mounted but hidden until the top one closes
 
-### The `close` vs `closeModal` props
+### The `close` prop
 
-The framework automatically adds a `close` prop to your modal component. This is the dispose function returned by `showModal`. You can use either:
+The framework automatically adds a `close` prop to your modal component. This is the dispose function returned by `showModal`. Use this prop to close the modal from inside the modal component, and pass it to Carbon's header as `closeModal={close}`.
 
-- `close` - The automatically provided dispose function
-- `closeModal` - A custom prop you pass (commonly used to match Carbon's API)
-
-Both will close the modal, but `closeModal` is more commonly used since it matches Carbon Design System's `ModalHeader` component API.
+You may still see older code pass a custom `closeModal` prop through `showModal`. That works, but it is unnecessary unless an existing component API explicitly expects a prop with that name.
