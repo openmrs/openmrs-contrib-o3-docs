@@ -394,6 +394,7 @@ Configure where users are redirected after successful registration:
 
 The URL template supports:
 - `${openmrsSpaBase}` - Base URL for the SPA
+- `${openmrsBase}` - Base URL for the OpenMRS backend
 - `${patientUuid}` - UUID of the registered patient
 
 The default is `${openmrsSpaBase}/patient/${patientUuid}/chart`.
@@ -432,6 +433,7 @@ Configure where users are redirected when selecting a patient from search result
 
 The URL template supports:
 - `${openmrsSpaBase}` - Base URL for the SPA
+- `${openmrsBase}` - Base URL for the OpenMRS backend
 - `${patientUuid}` - UUID of the selected patient
 
 ### Recently Searched Patients
@@ -529,7 +531,7 @@ Control whether deceased patients appear in search results:
 }
 ```
 
-The default is `true`.
+The default is `false`.
 
 ### Contact Attribute Types
 
@@ -628,7 +630,6 @@ Configure the check-in button behavior:
   "@openmrs/esm-appointments-app": {
     "checkInButton": {
       "enabled": true,
-      "showIfActiveVisit": false,
       "customUrl": ""
     }
   }
@@ -636,8 +637,9 @@ Configure the check-in button behavior:
 ```
 
 - `enabled` - Whether the check-in button is enabled (default: `true`)
-- `showIfActiveVisit` - Whether to show the button if the patient has an active visit (default: `false`)
 - `customUrl` - Custom URL to open instead of the start visit form (optional)
+
+If the patient already has an active visit, the default check-in flow updates the appointment status to `CheckedIn` instead of opening the Start Visit workspace. A custom URL receives `${patientUuid}` and `${appointmentUuid}` as template parameters.
 
 ### Check-Out Button
 
@@ -657,6 +659,8 @@ Configure the check-out button:
 - `enabled` - Whether the check-out button is enabled (default: `true`)
 - `customUrl` - Custom URL to open when clicking check-out (optional)
 
+A custom checkout URL receives `${patientUuid}` and `${appointmentUuid}` as template parameters.
+
 ### Patient Chart URL
 
 Configure where users are redirected when clicking a patient name:
@@ -669,7 +673,7 @@ Configure where users are redirected when clicking a patient name:
 }
 ```
 
-The URL template supports `${openmrsSpaBase}` and `${patientUuid}`.
+The URL template supports `${openmrsSpaBase}`, `${openmrsBase}`, and `${patientUuid}`.
 
 ### Appointment Table Columns
 
@@ -689,7 +693,7 @@ Configure which columns appear in the appointments table:
 }
 ```
 
-Available column options: `patientName`, `identifier`, `location`, `serviceType`, `status`, `dateTime`, `provider`.
+Available column options: `patientName`, `identifier`, `location`, `serviceType`, `status`, `dateTime`, `provider`, `actions`, `visitStartTime`.
 
 ### Patient Identifier Type
 
@@ -730,6 +734,20 @@ Show the Unscheduled Appointments tab:
 ```
 
 **Note**: Setting this to `true` requires a custom `unscheduledAppointment` endpoint that is not currently available by default.
+
+### Early Appointments Tab
+
+Show the Early Appointments tab:
+
+```json
+{
+  "@openmrs/esm-appointments-app": {
+    "showEarlyAppointmentsTab": false
+  }
+}
+```
+
+**Note**: Setting this to `true` requires a custom `earlyAppointment` endpoint that is not currently available by default.
 
 ## Service Queues
 
@@ -885,6 +903,20 @@ Configure default number of lists displayed:
 
 The default is `10`.
 
+### Default to Current Location
+
+Default the patient list location filter to the user's current session location:
+
+```json
+{
+  "@openmrs/esm-patient-list-management-app": {
+    "defaultToCurrentLocation": true
+  }
+}
+```
+
+The default is `false`.
+
 ## Home Dashboard
 
 Configure the home page and default dashboards.
@@ -953,7 +985,7 @@ Hide the "Add" button in the Programs widget:
 
 ```json
 {
-  "@openmrs/esm-programs-app": {
+  "@openmrs/esm-patient-programs-app": {
     "hideAddProgramButton": true
   }
 }
@@ -967,11 +999,10 @@ Display the Program status field in the Record program enrollment and Edit progr
 
 ```json
 {
-  "@openmrs/esm-programs-app": {
+  "@openmrs/esm-patient-programs-app": {
     "showProgramStatusField": true
   }
 }
 ```
 
 The default is `false` (status field is hidden).
-

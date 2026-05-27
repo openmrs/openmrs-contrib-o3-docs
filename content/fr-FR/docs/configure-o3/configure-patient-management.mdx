@@ -394,6 +394,7 @@ Configurez où les utilisateurs sont redirigés après un enregistrement réussi
 
 Le modèle d'URL prend en charge :
 - `${openmrsSpaBase}` - URL de base pour le SPA
+- `${openmrsBase}` - URL de base pour le backend OpenMRS
 - `${patientUuid}` - UUID du patient enregistré
 
 La valeur par défaut est `${openmrsSpaBase}/patient/${patientUuid}/chart`.
@@ -432,6 +433,7 @@ Configurez où les utilisateurs sont redirigés lors de la sélection d'un patie
 
 Le modèle d'URL prend en charge :
 - `${openmrsSpaBase}` - URL de base pour le SPA
+- `${openmrsBase}` - URL de base pour le backend OpenMRS
 - `${patientUuid}` - UUID du patient sélectionné
 
 ### Patients récemment recherchés
@@ -529,7 +531,7 @@ Contrôlez si les patients décédés apparaissent dans les résultats de recher
 }
 ```
 
-La valeur par défaut est `true`.
+La valeur par défaut est `false`.
 
 ### Types d'attributs de contact
 
@@ -628,7 +630,6 @@ Configurez le comportement du bouton d'enregistrement :
   "@openmrs/esm-appointments-app": {
     "checkInButton": {
       "enabled": true,
-      "showIfActiveVisit": false,
       "customUrl": ""
     }
   }
@@ -636,8 +637,9 @@ Configurez le comportement du bouton d'enregistrement :
 ```
 
 - `enabled` - Si le bouton d'enregistrement est activé (par défaut : `true`)
-- `showIfActiveVisit` - S'il faut afficher le bouton si le patient a une visite active (par défaut : `false`)
 - `customUrl` - URL personnalisée à ouvrir au lieu du formulaire de démarrage de visite (optionnel)
+
+Si le patient a déjà une visite active, le flux d'enregistrement par défaut met le statut du rendez-vous à `CheckedIn` au lieu d'ouvrir l'espace de travail de démarrage de visite. Une URL personnalisée reçoit `${patientUuid}` et `${appointmentUuid}` comme paramètres de modèle.
 
 ### Bouton de départ
 
@@ -657,6 +659,8 @@ Configurez le bouton de départ :
 - `enabled` - Si le bouton de départ est activé (par défaut : `true`)
 - `customUrl` - URL personnalisée à ouvrir lors du clic sur départ (optionnel)
 
+Une URL personnalisée de départ reçoit `${patientUuid}` et `${appointmentUuid}` comme paramètres de modèle.
+
 ### URL du dossier du patient
 
 Configurez où les utilisateurs sont redirigés lors du clic sur un nom de patient :
@@ -669,7 +673,7 @@ Configurez où les utilisateurs sont redirigés lors du clic sur un nom de patie
 }
 ```
 
-Le modèle d'URL prend en charge `${openmrsSpaBase}` et `${patientUuid}`.
+Le modèle d'URL prend en charge `${openmrsSpaBase}`, `${openmrsBase}` et `${patientUuid}`.
 
 ### Colonnes du tableau des rendez-vous
 
@@ -689,7 +693,7 @@ Configurez quelles colonnes apparaissent dans le tableau des rendez-vous :
 }
 ```
 
-Options de colonnes disponibles : `patientName`, `identifier`, `location`, `serviceType`, `status`, `dateTime`, `provider`.
+Options de colonnes disponibles : `patientName`, `identifier`, `location`, `serviceType`, `status`, `dateTime`, `provider`, `actions`, `visitStartTime`.
 
 ### Type d'identifiant du patient
 
@@ -730,6 +734,20 @@ Afficher l'onglet Rendez-vous non planifiés :
 ```
 
 **Note** : Définir ceci à `true` nécessite un point de terminaison `unscheduledAppointment` personnalisé qui n'est pas actuellement disponible par défaut.
+
+### Onglet des rendez-vous anticipés
+
+Afficher l'onglet des rendez-vous anticipés :
+
+```json
+{
+  "@openmrs/esm-appointments-app": {
+    "showEarlyAppointmentsTab": false
+  }
+}
+```
+
+**Note** : Définir ceci à `true` nécessite un point de terminaison `earlyAppointment` personnalisé qui n'est pas actuellement disponible par défaut.
 
 ## Files d'attente de service
 
@@ -885,6 +903,20 @@ Configurez le nombre par défaut de listes affichées :
 
 La valeur par défaut est `10`.
 
+### Par défaut au lieu actuel
+
+Définissez le filtre de lieu des listes de patients sur le lieu de session actuel de l'utilisateur par défaut :
+
+```json
+{
+  "@openmrs/esm-patient-list-management-app": {
+    "defaultToCurrentLocation": true
+  }
+}
+```
+
+La valeur par défaut est `false`.
+
 ## Tableau de bord d'accueil
 
 Configurez la page d'accueil et les tableaux de bord par défaut.
@@ -953,7 +985,7 @@ Masquer le bouton "Ajouter" dans le widget Programmes :
 
 ```json
 {
-  "@openmrs/esm-programs-app": {
+  "@openmrs/esm-patient-programs-app": {
     "hideAddProgramButton": true
   }
 }
@@ -967,11 +999,10 @@ Afficher le champ Statut du programme dans les formulaires d'inscription au prog
 
 ```json
 {
-  "@openmrs/esm-programs-app": {
+  "@openmrs/esm-patient-programs-app": {
     "showProgramStatusField": true
   }
 }
 ```
 
 La valeur par défaut est `false` (le champ de statut est masqué).
-
