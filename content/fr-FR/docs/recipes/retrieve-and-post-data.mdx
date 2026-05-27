@@ -1,4 +1,4 @@
-# Récupération et affichage des données
+# Récupération et envoi de données
 
 Les modules frontaux interagissent avec le serveur OpenMRS via les API exposées par ses modules. En général, la plupart des points de terminaison que nous utilisons sont fournis par le [FHIR Module](https://wiki.openmrs.org/display/projects/FHIR+101%3A+OpenMRS+Strategy%2C+Tools%2C+FHIR+API%2C+et+Help). La plupart des autres éléments sont fournis par le [REST Module](https://wiki.openmrs.org/display/docs/REST+Module), qui est documenté [ici](https://rest.openmrs.org/).
 
@@ -18,24 +18,19 @@ qui fait également partie de `@openmrs/esm-framework`. Voir la documentation de
 
 ## FHIR
 
-Pour utiliser l'API FHIR, nous recommandons d'utiliser les crochets basés sur [SWR](https://swr.vercel.app/docs/data-fetching) et la fonction de récupération [`openmrsFetch`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#openmrsfetch) pour récupérer les données du serveur. SWR offre une multitude de fonctionnalités qui nous permettent d'améliorer l'expérience des utilisateurs.
+Pour utiliser l'API FHIR dans des composants React, préférez `useOpenmrsSWR` depuis `@openmrs/esm-framework`. Il encapsule [SWR](https://swr.vercel.app/docs/data-fetching), appelle [`openmrsFetch`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#openmrsfetch) et attache un abort controller afin que la requête puisse être annulée si le composant est démonté.
 
-Voici un exemple d'utilisation de SWR pour récupérer un patient depuis l'API FHIR.
+Voici un exemple d'utilisation de `useOpenmrsSWR` pour récupérer un patient depuis l'API FHIR.
 
 ```ts
-import useSWR from "swr";
-import { type FetchResponse, fhirBaseUrl, openmrsFetch, fhir } from "@openmrs/esm-framework";
+import { fhirBaseUrl, useOpenmrsSWR } from "@openmrs/esm-framework";
 
-const { data, error, isLoading, mutate } = useSWR<FetchResponse<fhir.Patient>, Error>(
-  `${fhirBaseUrl}/Patient/${patientUuid}`,
-  openmrsFetch
-);
+const { data, error, isLoading, mutate } = useOpenmrsSWR<fhir.Patient>(`${fhirBaseUrl}/Patient/${patientUuid}`);
 
 const patient = data?.data;
 ```
 
-Si vous avez des questions sur le support de FHIR dans OpenMRS, vous pouvez les poser dans le Slack [FHIR Squad].
-[FHIR Squad Slack channel](https://openmrs.slack.com/archives/CKLPH66BB).
+Si vous avez des questions sur le support de FHIR dans OpenMRS, vous pouvez les poser dans le [canal Slack FHIR Squad](https://openmrs.slack.com/archives/CKLPH66BB).
 
 ## Autres API du serveur OpenMRS
 
@@ -44,8 +39,7 @@ Certains points de terminaison administratifs n'auront probablement jamais de re
 Voici un exemple de hook SWR personnalisé qui récupère les données de visites.
 
 ```ts
-import useSWR from "swr";
-import { type FetchResponse, openmrsFetch, restBaseUrl, type Visit } from "@openmrs/esm-framework";
+import { restBaseUrl, type Visit, useOpenmrsSWR } from "@openmrs/esm-framework";
 
 interface VisitData {
   results: Array<Visit>;
@@ -55,7 +49,7 @@ interface VisitData {
 export function useVisits() {
   const url = `${restBaseUrl}/visit?includeInactive=false`;
 
-  const { data, error, isLoading, mutate } = useSWR<FetchResponse<VisitData>, Error>(url, openmrsFetch);
+  const { data, error, isLoading, mutate } = useOpenmrsSWR<VisitData>(url);
 
   return {
     visits: data?.data.results ?? [],
@@ -68,8 +62,8 @@ export function useVisits() {
 
 Nous pouvons utiliser ce hook `useVisits` dans notre composant `visits` comme suit:
 
-```ts
-const Visits = () => {
+```tsx
+function Visits() {
   const { visits, error, isLoading } = useVisits();
 
   if (isLoading) {
@@ -84,20 +78,20 @@ const Visits = () => {
   return (
     // rendre l'etat vide;
   );
-};
+}
 
 export default Visits;
 ```
 
-La fonction `mutate` retournée par `useSWR` peut être utilisée pour mettre à jour le cache et déclencher un nouveau rendu du composant. C'est utile lorsque nous voulons mettre à jour l'interface utilisateur après une mutation réussie.
+La fonction `mutate` retournée par `useOpenmrsSWR` peut être utilisée pour mettre à jour le cache et déclencher un nouveau rendu du composant. C'est utile lorsque nous voulons mettre à jour l'interface utilisateur après une mutation réussie.
 
 ```ts
-const res = await saveVisitNote(payload);
-
 try {
-  if (res.status === 201) {
-    mutate();
-    closeWorkspace();
+  const response = await saveVisitNote(payload);
+
+  if (response.status === 201) {
+    await mutate();
+    closeWorkspace({ discardUnsavedChanges: true });
 
     // montre le succès toast
   }
@@ -111,21 +105,23 @@ try {
 Voici un exemple qui démontre l'envoi de données de session au serveur.
 
 ```ts
-import { openmrsFetch } from "@openmrs/esm-framework";
+import { openmrsFetch, sessionEndpoint } from "@openmrs/esm-framework";
 
 const abortController = new AbortController();
 
-openmrsFetch("/ws/rest/v1/session", {
+const response = await openmrsFetch(sessionEndpoint, {
   method: "POST",
   body: {
-    username: "hi",
-    password: "there",
+    username,
+    password,
   },
   signal: abortController.signal,
 });
+
+const session = response.data;
 ```
 
-`openmrsFetch` préfixe automatiquement les chemins relatifs avec `window.openmrsBase`, demande des réponses JSON par défaut et sérialise les corps de requête qui sont des objets simples avant de les envoyer.
+`openmrsFetch` préfixe automatiquement les chemins relatifs avec `window.openmrsBase`, demande des réponses JSON par défaut, sérialise les corps de requête qui sont des objets simples avant de les envoyer et renvoie un `FetchResponse<T>` dont le corps de réponse analysé est disponible dans `response.data`.
 
 La meilleure pratique pour les requêtes POST est de disposer d'une fonction
 [AbortController](https://developer.mozilla.org/en-US/docs/Web/API/AbortController/abort).

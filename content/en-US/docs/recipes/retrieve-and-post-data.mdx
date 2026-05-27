@@ -23,18 +23,14 @@ which is also part of `@openmrs/esm-framework`. See the
 
 ## FHIR
 
-To use the FHIR API, we recommend using [SWR](https://swr.vercel.app/docs/data-fetching) based hooks and the [`openmrsFetch`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#openmrsfetch) fetcher function to retrieve data from the server. SWR offers a host of features that help us deliver an improved user experience.
+To use the FHIR API in React components, prefer `useOpenmrsSWR` from `@openmrs/esm-framework`. It wraps [SWR](https://swr.vercel.app/docs/data-fetching), calls [`openmrsFetch`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#openmrsfetch), and attaches an abort controller so the request can be cancelled if the component unmounts.
 
-Here's an example of using SWR to retrieve a patient from the FHIR API.
+Here's an example of using `useOpenmrsSWR` to retrieve a patient from the FHIR API.
 
 ```ts
-import useSWR from "swr";
-import { type FetchResponse, fhirBaseUrl, openmrsFetch, fhir } from "@openmrs/esm-framework";
+import { fhirBaseUrl, useOpenmrsSWR } from "@openmrs/esm-framework";
 
-const { data, error, isLoading, mutate } = useSWR<FetchResponse<fhir.Patient>, Error>(
-  `${fhirBaseUrl}/Patient/${patientUuid}`,
-  openmrsFetch
-);
+const { data, error, isLoading, mutate } = useOpenmrsSWR<fhir.Patient>(`${fhirBaseUrl}/Patient/${patientUuid}`);
 
 const patient = data?.data;
 ```
@@ -49,8 +45,7 @@ Some administrative endpoints will likely never have a proper representation in 
 Here's an example of a custom SWR hook that retrieves visits data.
 
 ```ts
-import useSWR from "swr";
-import { type FetchResponse, openmrsFetch, restBaseUrl, type Visit } from "@openmrs/esm-framework";
+import { restBaseUrl, type Visit, useOpenmrsSWR } from "@openmrs/esm-framework";
 
 interface VisitData {
   results: Array<Visit>;
@@ -60,7 +55,7 @@ interface VisitData {
 export function useVisits() {
   const url = `${restBaseUrl}/visit?includeInactive=false`;
 
-  const { data, error, isLoading, mutate } = useSWR<FetchResponse<VisitData>, Error>(url, openmrsFetch);
+  const { data, error, isLoading, mutate } = useOpenmrsSWR<VisitData>(url);
 
   return {
     visits: data?.data.results ?? [],
@@ -73,8 +68,8 @@ export function useVisits() {
 
 We can leverage this `useVisits` hook in our `visits` component as follows:
 
-```ts
-const Visits = () => {
+```tsx
+function Visits() {
   const { visits, error, isLoading } = useVisits();
 
   if (isLoading) {
@@ -89,20 +84,20 @@ const Visits = () => {
   return (
     // render empty state;
   );
-};
+}
 
 export default Visits;
 ```
 
-The `mutate` function returned by `useSWR` can be used to update the cache and trigger a re-render of the component. This is useful when we want to update the UI after a successful mutation.
+The `mutate` function returned by `useOpenmrsSWR` can be used to update the cache and trigger a re-render of the component. This is useful when we want to update the UI after a successful mutation.
 
 ```ts
-const res = await saveVisitNote(payload);
-
 try {
-  if (res.status === 201) {
-    mutate();
-    closeWorkspace();
+  const response = await saveVisitNote(payload);
+
+  if (response.status === 201) {
+    await mutate();
+    closeWorkspace({ discardUnsavedChanges: true });
 
     // show success toast
   }
@@ -116,21 +111,23 @@ try {
 Here's an example that demonstrates posting session data to the server.
 
 ```ts
-import { openmrsFetch } from "@openmrs/esm-framework";
+import { openmrsFetch, sessionEndpoint } from "@openmrs/esm-framework";
 
 const abortController = new AbortController();
 
-openmrsFetch("/ws/rest/v1/session", {
+const response = await openmrsFetch(sessionEndpoint, {
   method: "POST",
   body: {
-    username: "hi",
-    password: "there",
+    username,
+    password,
   },
   signal: abortController.signal,
 });
+
+const session = response.data;
 ```
 
-`openmrsFetch` automatically prefixes relative paths with `window.openmrsBase`, requests JSON responses by default, and stringifies plain-object request bodies before sending them.
+`openmrsFetch` automatically prefixes relative paths with `window.openmrsBase`, requests JSON responses by default, stringifies plain-object request bodies before sending them, and resolves to a `FetchResponse<T>` whose parsed response body is available as `response.data`.
 
 It is best practice for POST requests to have an
 [AbortController](https://developer.mozilla.org/en-US/docs/Web/API/AbortController/abort).
