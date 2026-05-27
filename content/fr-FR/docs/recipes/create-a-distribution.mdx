@@ -12,7 +12,7 @@ Ce guide vous explique comment créer une distribution O3 de A à Z, y compris l
 
 Avant de commencer, assurez-vous d'avoir:
 
-- **Node.js** version 16.17 (LTS) ou ultérieure installée. Nous recommandons d'utiliser [nvm](https://github.com/nvm-sh/nvm) ou [fnm](https://github.com/Schniz/fnm) pour gérer les versions de Node.js.
+- **Node.js** version 20.11 ou ultérieure installée. Le Dockerfile frontend de l'application de référence utilise actuellement Node 22. Nous recommandons d'utiliser [nvm](https://github.com/nvm-sh/nvm) ou [fnm](https://github.com/Schniz/fnm) pour gérer les versions de Node.js.
 - **npm** (fourni avec Node.js) - Vous l'utiliserez pour exécuter l'outil CLI `openmrs` via `npx`
 - **Un backend OpenMRS** - Vous aurez besoin d'un backend OpenMRS en cours d'exécution pour connecter votre distribution (pour les tests et la production)
 
@@ -36,7 +36,7 @@ Ensuite, vous pouvez exécuter les commandes directement sans `npx`:
 openmrs --help
 ```
 
-Pour les environnements CI/CD, il est recommandé d'utiliser `npx --legacy-peer-deps openmrs@${APP_SHELL_VERSION:-next}` pour garantir des versions cohérentes.
+Pour les environnements CI/CD, utilisez une version explicite du package `openmrs`, par exemple `npx --legacy-peer-deps openmrs@<app-shell-version>`, afin que le CLI et l'app shell utilisés par la construction soient reproductibles.
 
 ## Démarrage rapide: Workflow complet
 
@@ -156,7 +156,7 @@ openmrs build --build-config spa-build-config.json --target ./spa
 ```
 
 <Callout emoji="ℹ️" type="info">
-  **Note**: Dans les environnements CI/CD (comme Docker), vous pouvez vouloir utiliser `npx --legacy-peer-deps openmrs@${APP_SHELL_VERSION:-next}` au lieu de simplement `openmrs` pour garantir des versions cohérentes. Le drapeau `--manifest` génère des informations de version, et `--mode config` utilise explicitement le mode fichier de configuration (bien que ce soit la valeur par défaut lorsque `--config` est fourni).
+  **Note**: Dans les environnements CI/CD (comme Docker), vous pouvez vouloir utiliser `npx --legacy-peer-deps openmrs@<app-shell-version>` au lieu de simplement `openmrs` pour garantir des versions cohérentes. Le drapeau `--manifest` génère des informations de version, et `--mode config` est requis lorsque vous assemblez depuis un fichier de configuration.
 </Callout>
 
 <Callout emoji="⚠️" type="warning">
@@ -176,14 +176,14 @@ Pour des raisons de CI/CD, nous vous encourageons à utiliser un fichier de conf
 Pour utiliser le fichier de configuration, exécutez:
 
 ```bash
-openmrs assemble --config spa-assemble-config.json
+openmrs assemble --mode config --config spa-assemble-config.json
 ```
 
 Vous pouvez également spécifier des options supplémentaires:
 - `--target <répertoire>`: Le répertoire cible où les artefacts rassemblés seront stockés (par défaut: `dist`)
 - `--fresh`: Nettoyer le répertoire de sortie avant l'exécution
 - `--manifest`: Générer un fichier manifeste avec les informations de version
-- `--mode config`: Utiliser le mode fichier de configuration (par défaut lorsque `--config` est fourni)
+- `--mode config`: Utiliser le mode fichier de configuration. Sans cette option, le CLI démarre le questionnaire interactif.
 
 Le fichier peut ressembler à ce qui suit:
 
@@ -201,7 +201,10 @@ Le fichier peut ressembler à ce qui suit:
 Le tableau `frontendModuleExcludes` vous permet d'exclure des modules spécifiques qui pourraient être inclus en tant que dépendances d'autres modules. Ceci est utile lorsque vous souhaitez supprimer un module qui serait autrement inclus automatiquement.
 
 <Callout emoji="ℹ️" type="info">
-  **Note**: Certaines distributions peuvent utiliser `excludedFrontendModules` au lieu de `frontendModuleExcludes`. Les deux sont pris en charge, mais `frontendModuleExcludes` est le nom de propriété canonique utilisé par l'outil CLI `openmrs`.
+  **Note**: `frontendModuleExcludes` est la propriété utilisée par la commande
+  `openmrs assemble`. Certains anciens fichiers de configuration de
+  distribution peuvent contenir `excludedFrontendModules`, mais cette propriété
+  ne supprime pas les modules de dépendance pendant l'assemblage par le CLI.
 </Callout>
 
 Le `publicUrl` peut être important pour plus tard. Si les ressources rassemblées sont placées (et servies) dans le même dossier que les ressources de la SPA, alors `.` est bon. Si elles sont téléchargées vers un CDN, l'URL (de base) du CDN doit être définie.
@@ -254,8 +257,8 @@ Le fichier `spa-build-config.json` doit inclure:
 - `apiUrl`: L'URL de l'API backend OpenMRS
 - `configUrls`: Tableau d'URLs vers les fichiers de configuration JSON frontend
 - `defaultLocale`: Code de langue par défaut (par exemple, `en`, `fr`)
-- `importmap`: Chemin vers le fichier de carte d'importation créé par `assemble` (relatif au répertoire cible de construction)
-- `routes`: Chemin vers le fichier de registre des routes créé par `assemble` (relatif au répertoire cible de construction)
+- `importmap`: Chemin, URL ou JSON inline pour la carte d'importation créée par `assemble`. Les chemins relatifs sont résolus depuis le répertoire où vous exécutez la commande.
+- `routes`: Chemin, URL ou JSON inline pour le registre des routes créé par `assemble`. Les chemins relatifs sont résolus depuis le répertoire où vous exécutez la commande.
 - `supportOffline`: S'il faut activer le support hors ligne via un service worker
 
 Vous pouvez également utiliser des variables d'environnement dans le fichier de configuration (elles seront interpolées au moment de la construction):

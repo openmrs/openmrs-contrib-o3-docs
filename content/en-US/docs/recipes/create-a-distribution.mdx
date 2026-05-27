@@ -12,7 +12,7 @@ This guide walks you through creating an O3 distribution from start to finish, i
 
 Before you begin, ensure you have:
 
-- **Node.js** version 16.17 (LTS) or later installed. We recommend using [nvm](https://github.com/nvm-sh/nvm) or [fnm](https://github.com/Schniz/fnm) to manage Node.js versions.
+- **Node.js** version 20.11 or later installed. The reference application frontend Dockerfile currently uses Node 22. We recommend using [nvm](https://github.com/nvm-sh/nvm) or [fnm](https://github.com/Schniz/fnm) to manage Node.js versions.
 - **npm** (comes with Node.js) - You'll use this to run the `openmrs` CLI tool via `npx`
 - **An OpenMRS backend** - You'll need a running OpenMRS backend to connect your distribution to (for testing and production)
 
@@ -36,7 +36,7 @@ Then you can run commands directly without `npx`:
 openmrs --help
 ```
 
-For CI/CD environments, it's recommended to use `npx --legacy-peer-deps openmrs@${APP_SHELL_VERSION:-next}` to ensure consistent versions.
+For CI/CD environments, use an explicit `openmrs` package version, for example `npx --legacy-peer-deps openmrs@<app-shell-version>`, so the CLI and app shell used by the build are reproducible.
 
 ## Quick Start: Complete Workflow
 
@@ -156,7 +156,7 @@ openmrs build --build-config spa-build-config.json --target ./spa
 ```
 
 <Callout emoji="ℹ️" type="info">
-  **Note**: In CI/CD environments (like Docker), you may want to use `npx --legacy-peer-deps openmrs@${APP_SHELL_VERSION:-next}` instead of just `openmrs` to ensure consistent versions. The `--manifest` flag outputs version information, and `--mode config` explicitly uses config file mode (though it's the default when `--config` is provided).
+  **Note**: In CI/CD environments (like Docker), you may want to use `npx --legacy-peer-deps openmrs@<app-shell-version>` instead of just `openmrs` to ensure consistent versions. The `--manifest` flag outputs version information, and `--mode config` is required when assembling from a config file.
 </Callout>
 
 <Callout emoji="⚠️" type="warning">
@@ -176,14 +176,14 @@ For CI/CD purposes we encourage you to use a configuration file `spa-assemble-co
 To use the configuration file, run:
 
 ```bash
-openmrs assemble --config spa-assemble-config.json
+openmrs assemble --mode config --config spa-assemble-config.json
 ```
 
 You can also specify additional options:
 - `--target <directory>`: The target directory where the gathered artifacts will be stored (default: `dist`)
 - `--fresh`: Clean the output directory before the run
 - `--manifest`: Output a manifest file with version information
-- `--mode config`: Use config file mode (default when `--config` is provided)
+- `--mode config`: Use config file mode. Without this option, the CLI starts the interactive survey flow.
 
 The file may look as follows:
 
@@ -201,7 +201,10 @@ The file may look as follows:
 The `frontendModuleExcludes` array allows you to exclude specific modules that might be included as dependencies of other modules. This is useful when you want to remove a module that would otherwise be included automatically.
 
 <Callout emoji="ℹ️" type="info">
-  **Note**: Some distributions may use `excludedFrontendModules` instead of `frontendModuleExcludes`. Both are supported, but `frontendModuleExcludes` is the canonical property name used by the `openmrs` CLI tool.
+  **Note**: `frontendModuleExcludes` is the property consumed by the
+  `openmrs assemble` command. Some older distribution config files may contain
+  `excludedFrontendModules`, but that property does not remove dependency
+  modules during CLI assembly.
 </Callout>
 
 The `publicUrl` may be important for later. If the gathered resources are placed (and served) in the same folder as the SPA resources then `.` is good. If they are uploaded to say a CDN, then the (base) URL of the CDN should be defined.
@@ -254,8 +257,8 @@ The `spa-build-config.json` file should include:
 - `apiUrl`: The URL of the OpenMRS backend API
 - `configUrls`: Array of URLs to frontend configuration JSON files
 - `defaultLocale`: Default language code (e.g., `en`, `fr`)
-- `importmap`: Path to the import map file created by `assemble` (relative to build target)
-- `routes`: Path to the routes registry file created by `assemble` (relative to build target)
+- `importmap`: Path, URL, or inline JSON for the import map created by `assemble`. Relative file paths are resolved from the directory where you run the command.
+- `routes`: Path, URL, or inline JSON for the routes registry created by `assemble`. Relative file paths are resolved from the directory where you run the command.
 - `supportOffline`: Whether to enable offline support via service worker
 
 You can also use environment variables in the config file (they will be interpolated at build time):

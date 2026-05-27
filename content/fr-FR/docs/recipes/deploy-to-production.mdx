@@ -27,7 +27,7 @@ Avant de déployer en production, assurez-vous d'avoir:
 - Docker 20.10+ et Docker Compose 2.0+
 - Système d'exploitation: Linux, Ubuntu 20.04+ LTS recommandé, ou macOS/Windows Server
 - Base de données: MariaDB 10.11+ ou MySQL 8.0+
-- Java: JDK 11+ pour le backend OpenMRS
+- Java: nécessaire uniquement si vous construisez ou exécutez le backend hors Docker. Le Dockerfile backend actuel de l'application de référence utilise Amazon Corretto 21.
 
 **Exigences d'équipe:**
 - Administrateur système à l'aise avec Docker et Linux
@@ -69,7 +69,7 @@ Créez un fichier `docker-compose.yml` basé sur l'application de référence:
 ```yaml
 services:
   gateway:
-    image: openmrs/openmrs-reference-application-3-gateway:${TAG:-qa}
+    image: openmrs/openmrs-reference-application-3-gateway:${TAG}
     restart: "unless-stopped"
     depends_on:
       - frontend
@@ -78,7 +78,7 @@ services:
       - "80:80"
 
   frontend:
-    image: openmrs/openmrs-reference-application-3-frontend:${TAG:-qa}
+    image: openmrs/openmrs-reference-application-3-frontend:${TAG}
     restart: "unless-stopped"
     environment:
       SPA_PATH: /openmrs/spa
@@ -92,7 +92,7 @@ services:
       - backend
 
   backend:
-    image: openmrs/openmrs-reference-application-3-backend:${TAG:-qa}
+    image: openmrs/openmrs-reference-application-3-backend:${TAG}
     restart: "unless-stopped"
     depends_on:
       - db
@@ -133,7 +133,7 @@ volumes:
 ```
 
 <Callout emoji="💡" type="info">
-**Remarque**: le port 443 (HTTPS) n'est exposé que lorsque vous utilisez le fichier compose SSL (`docker-compose.ssl.yml`). La configuration de base n'expose que le port 80. Pour une production avec SSL, vous utiliserez les deux fichiers compose ensemble.
+**Remarque**: le port 443 (HTTPS) n'est exposé que lorsque vous utilisez le fichier compose SSL (`docker-compose.ssl.yml`). La configuration de base n'expose que le port 80. Le README de l'application de référence recommande de définir `COMPOSE_FILE=docker-compose.yml:docker-compose.ssl.yml` dans `.env` afin que toutes les commandes Compose incluent automatiquement l'overlay SSL.
 </Callout>
 
 #### Étape 3: Configurer les variables d'environnement
@@ -146,10 +146,11 @@ OMRS_DB_USER=openmrs
 OMRS_DB_PASSWORD=your-secure-password-here
 MYSQL_ROOT_PASSWORD=your-root-password-here
 
-# Tags des images Docker (utilisez 'qa', 'latest' ou une version précise)
-TAG=qa
+# Tag d'image Docker. Utilisez un tag de version testé, pas qa ni latest, en production.
+TAG=<tested-release-tag>
 
 # Configuration SSL (si vous utilisez Let's Encrypt)
+COMPOSE_FILE=docker-compose.yml:docker-compose.ssl.yml
 SSL_MODE=prod
 CERT_WEB_DOMAINS=your-domain.com,www.your-domain.com
 CERT_CONTACT_EMAIL=admin@your-domain.com
@@ -166,10 +167,7 @@ En production, vous devriez toujours utiliser HTTPS. L'application de référenc
 **Avec SSL activé:**
 
 ```bash
-SSL_MODE=prod \
-CERT_WEB_DOMAINS=your-domain.com \
-CERT_CONTACT_EMAIL=admin@your-domain.com \
-docker compose -f docker-compose.yml -f docker-compose.ssl.yml up -d
+docker compose up -d
 ```
 
 **Prérequis importants pour SSL:**
@@ -266,13 +264,10 @@ En production, désactivez les mises à jour automatiques de base de données et
 L'application de référence inclut une gestion automatique des certificats SSL via Certbot:
 
 ```bash
-SSL_MODE=prod \
-CERT_WEB_DOMAINS=example.com,www.example.com \
-CERT_CONTACT_EMAIL=admin@example.com \
-docker compose -f docker-compose.yml -f docker-compose.ssl.yml up -d
+docker compose up -d
 ```
 
-**Le renouvellement des certificats** se fait automatiquement. Les certificats sont valides 90 jours et sont renouvelés lorsqu'il reste 30 jours. Le conteneur certbot exécute périodiquement une vérification de renouvellement.
+Définissez `COMPOSE_FILE=docker-compose.yml:docker-compose.ssl.yml`, `SSL_MODE=prod`, `CERT_WEB_DOMAINS` et `CERT_CONTACT_EMAIL` dans votre fichier `.env` avant d'exécuter cette commande. Le renouvellement des certificats se fait automatiquement. Le conteneur certbot exécute périodiquement une vérification de renouvellement.
 
 ### Utiliser des certificats personnalisés
 
@@ -287,11 +282,7 @@ Si vous avez vos propres certificats SSL:
 Avant la mise en production, testez avec l'environnement staging de Let's Encrypt:
 
 ```bash
-SSL_MODE=prod \
-SSL_STAGING=true \
-CERT_WEB_DOMAINS=example.com \
-CERT_CONTACT_EMAIL=admin@example.com \
-docker compose -f docker-compose.yml -f docker-compose.ssl.yml up -d
+SSL_STAGING=true docker compose up -d
 ```
 
 ## Health checks et monitoring
@@ -483,13 +474,13 @@ docker compose logs <service-name>
 **Le certificat ne se renouvelle pas:**
 ```bash
 # Check certificate status
-docker compose -f docker-compose.yml -f docker-compose.ssl.yml exec certbot certbot certificates
+docker compose exec certbot certbot certificates
 
 # Force renewal
-docker compose -f docker-compose.yml -f docker-compose.ssl.yml exec certbot certbot renew --force-renewal --webroot -w /var/www/certbot
+docker compose exec certbot certbot renew --force-renewal --webroot -w /var/www/certbot
 
 # Reload nginx after renewal
-docker compose -f docker-compose.yml -f docker-compose.ssl.yml exec gateway nginx -s reload
+docker compose exec gateway nginx -s reload
 ```
 
 **Échecs de validation de domaine:**
@@ -535,13 +526,13 @@ Pour les déploiements de production, il est recommandé de maintenir des enviro
 
 ### Développement (Dev)
 - Utilisé pour le développement actif et les tests.
-- Peut utiliser les modules tagués `next`.
+- Peut utiliser les modules tagués `next` pour le développement frontend actif.
 - Exigences de sécurité moins strictes.
 - Déploiements fréquents acceptables.
 
 ### Assurance qualité (QA)
 - Reflète la configuration de production.
-- Utilise des versions stables, `latest` ou des versions précises.
+- Utilise les mêmes versions explicites que celles prévues pour la production.
 - Utilisé pour les tests avant production.
 - Doit correspondre au matériel et au logiciel de production.
 

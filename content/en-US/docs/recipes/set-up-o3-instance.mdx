@@ -26,15 +26,15 @@ This guide is intended for developers who want to set up an instance of O3. Broa
 These prerequisites are explained in detail in the [SDK wiki](https://wiki.openmrs.org/display/docs/OpenMRS+SDK).
 
 - Ensure you have [Apache Maven](https://maven.apache.org/install.html) installed.
-- Ensure you have MySQL v5.6 and above installed and set up correctly.
-- Ensure you have Java 8 installed with JDK 1.8 and JRE 1.8.
+- Ensure you have a MySQL or MariaDB instance supported by the O3 distribution you choose.
+- Use a current LTS JDK supported by that distribution. The current Reference Application Dockerfile builds and runs on Amazon Corretto 21, so Java 21 is the safest starting point for current O3 work.
 - Ensure that your `$JAVA_HOME` environment variable is set and that it
-  points to `v1.8` of Java. If you have the correct version of Java installed
+  points to the JDK you want the SDK to use. If you have the correct version of Java installed
   but `$JAVA_HOME` doesn't point to it, you could try adding the following
   alias to your `.zshrc` file (or `.bashrc` file if you're using Bash):
 
   ```sh
-    alias mvn='JAVA_HOME="$(/usr/libexec/java_home -v 1.8)" mvn'
+    alias mvn='JAVA_HOME="$(/usr/libexec/java_home -v 21)" mvn'
   ```
 
 <Steps>
@@ -59,10 +59,10 @@ This command will run a prompt that walks you through choosing:
 
 - A server ID e.g. `o3-distro`.
 - The type of server to set up - choose `O3 Distribution`.
-- What version of O3 to deploy - choose `Reference Application 3.0.0-SNAPSHOT`.
+- What version of O3 to deploy - choose the current Reference Application or the specific O3 release you want to test.
 - Which port to run the server on (defaults to `8080`).
 - Whether or not to enable remote debugging (defaults to `no debugging`)
-- When asked to choose which database to use. Choose `MySQL 5.6 and above (requires pre-installed MySQL 5.6 and above)`. This step is contingent on you having set up your MySQL installation up correctly.
+- When asked to choose which database to use, choose the option that matches your installed MySQL or MariaDB server.
 - When asked to choose a MySQL database URI, go with the default database URI presented.
 - When asked to specify your database username, specify whatever you chose when setting up your MySQL installation (defaults to `root`).
 - When asked to enter your database password, enter your database password.
@@ -78,13 +78,13 @@ mvn openmrs-sdk:run
 
 ### Step 4
 
-Navigate to `https://localhost:8080/openmrs` on your browser. You should expect the see the backend getting set up. Once that completes, you can navigate to `https://localhost:8080/openmrs/spa`.
+Navigate to `http://localhost:8080/openmrs` in your browser. You should expect the see the backend getting set up. Once that completes, you can navigate to `http://localhost:8080/openmrs/spa`.
 
 </Steps>
 
 ### Troubleshooting the SDK approach
 
-- If you're running into issues, first ensure that you're running the prescribed dependency versions i.e. Java 8, MySQL 5.6 or greater, Maven 3, and the latest SDK version.
+- If you're running into issues, first ensure that Maven, the OpenMRS SDK, Java, and your database version match the O3 distribution you selected.
 
 ## Using Docker
 
@@ -92,7 +92,7 @@ Navigate to `https://localhost:8080/openmrs` on your browser. You should expect 
   You might want to use Docker if:
 
 - You are already familiar with Docker and OpenMRS Docker images.
-- You don't want to use the SPA module.
+- You want to run the reference application's gateway, frontend, backend, and database containers together.
 - You're working on a deployment that will run Docker containers in production (generally cloud-based or SaaS offerings).
 - You want to set up a fresh instance of O3 (i.e. an instance with a brand new database and not one set up on top of your existing database).
 - You don't want to go through the hassle of setting up a Java environment and managing multiple dependencies.
@@ -117,17 +117,25 @@ Launch [Docker Desktop](https://docs.docker.com/desktop/) or [Docker Compose (v2
 
 ### Step 3
 
-Next we want to install the latest version of O3. To do that, we'll need to figure out what tag to use. Run `git tag --sort=-v:refname` to get a list of tags sorted by version number. At the time of writing, the latest tag is `3.0.0-beta.20`. To use this tag, run the following command:
+From the cloned repository, start the default QA-tagged images:
 
 ```sh
-TAG=3.0.0-beta.20 docker compose -f docker-compose.yml up -d
+docker compose up -d
+```
+
+The reference application compose file defaults `TAG` to `qa`, which tracks the current QA images and is convenient for local evaluation. For reproducible testing, fetch the repository tags and run a fixed release tag instead:
+
+```sh
+git fetch --tags
+git tag --sort=-v:refname | head
+TAG=<release-tag> docker compose -f docker-compose.yml up -d
 ```
 
 This command does the following:
 
-- `TAG=3.0.0-beta.20`: Sets an environment variable TAG to the value `3.0.0-beta.20`. We're using this variable to specify the latest stable release of O3.
-- `docker compose`: Runs the Docker Compose command.
-- `f docker-compose.yml`: Specifies the Compose file to use.
+- `TAG=<release-tag>`: Sets the Docker image tag for the gateway, frontend, backend, and related images.
+- `docker compose`: Runs Docker Compose v2.
+- `-f docker-compose.yml`: Specifies the Compose file to use.
 - `up -d`: Starts the services defined in the Compose file in detached mode.
 
 ### Step 4
@@ -168,9 +176,9 @@ To run the O3 Docker image on top of an existing database, do the following:
 <Steps>
 ### Step 1
 
-Working from the [standard Docker compose file](https://github.com/openmrs/openmrs-distro-referenceapplication/blob/main/docker-compose.yml), remove the `db` service (lines 44-60 highlighted below) and the `db-data` volume (line 64).
+Working from the [standard Docker compose file](https://github.com/openmrs/openmrs-distro-referenceapplication/blob/main/docker-compose.yml), remove the `db` service, remove the `db-data` volume, and point the backend service at your existing database host. The result should look like this:
 
-```yml {44-60, 64} filename="docker-compose.yml"
+```yml filename="docker-compose.yml"
 services:
   gateway:
     image: openmrs/openmrs-reference-application-3-gateway:${TAG:-qa}
@@ -198,13 +206,11 @@ services:
   backend:
     image: openmrs/openmrs-reference-application-3-backend:${TAG:-qa}
     restart: "unless-stopped"
-    depends_on:
-      - db
     environment:
       OMRS_CONFIG_MODULE_WEB_ADMIN: "true"
       OMRS_CONFIG_AUTO_UPDATE_DATABASE: "true"
       OMRS_CONFIG_CREATE_TABLES: "true"
-      OMRS_CONFIG_CONNECTION_SERVER: db
+      OMRS_CONFIG_CONNECTION_SERVER: host.docker.internal
       OMRS_CONFIG_CONNECTION_DATABASE: openmrs
       OMRS_CONFIG_CONNECTION_USERNAME: ${OMRS_DB_USER:-openmrs}
       OMRS_CONFIG_CONNECTION_PASSWORD: ${OMRS_DB_PASSWORD:-openmrs}
@@ -214,32 +220,13 @@ services:
     volumes:
       - openmrs-data:/openmrs/data
 
-  # MariaDB
-  db:
-    image: mariadb:10.11.7
-    restart: "unless-stopped"
-    command: "mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci"
-    healthcheck:
-      test: "mysql --user=${OMRS_DB_USER:-openmrs} --password=${OMRS_DB_PASSWORD:-openmrs} --execute \"SHOW DATABASES;\""
-      interval: 3s
-      timeout: 1s
-      retries: 5
-    environment:
-      MYSQL_DATABASE: openmrs
-      MYSQL_USER: ${OMRS_DB_USER:-openmrs}
-      MYSQL_PASSWORD: ${OMRS_DB_PASSWORD:-openmrs}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-openmrs}
-    volumes:
-      - db-data:/var/lib/mysql
-
 volumes:
   openmrs-data: ~
-  db-data: ~
 ```
 
 ### Step 2
 
-In the `backend` service, change the `OMRS_CONFIG_CONNECTION_SERVER` variable to the hostname of the database server and the `OMRS_CONFIG_CONNECTION_DATABASE` variable to the name of the existing database (leaving it alone probably works for 99% of installs).
+In the `backend` service, change the `OMRS_CONFIG_CONNECTION_SERVER` variable to the hostname of the database server and the `OMRS_CONFIG_CONNECTION_DATABASE` variable to the name of the existing database. On Docker Desktop, `host.docker.internal` points from a container to a database running on your host machine; on Linux or a remote database server, use the reachable DNS name or IP address instead.
 
 ### Step 3
 
@@ -247,7 +234,7 @@ Create a `.env` file in the same folder with `OMRS_DB_USER` and `OMRS_DB_PASSWOR
 
 ### Step 4
 
-Run `docker compose up -d` and, assuming everything is filled out correctly, it should just work™.
+Run `docker compose up -d` and, assuming everything is filled out correctly, the O3 containers should start against your existing database.
 
 </Steps>
 
@@ -273,7 +260,7 @@ Run `docker compose up -d` and, assuming everything is filled out correctly, it 
 
 ## Updating metadata
 
-Based on your requirements, you might want to customize configurations and metadata like concepts, visit types, encounter types, locations, etc. that gets loaded by the initializer module. When customizing such metadata, you have to build the docker image locally and use the locally built image for the changes to be shown in the instance.
+Based on your requirements, you might want to customize configurations and metadata like concepts, visit types, encounter types, locations, etc. that gets loaded by the initializer module. When customizing such metadata, build the Docker image locally and use that local image for the changes to be shown in the instance. The reference application repository includes `docker-compose.override.yml`, which adds local build contexts for the gateway, frontend, and backend services when you run Compose from the cloned source tree.
 
 ### Step 1: Stop your instance
 
@@ -319,42 +306,43 @@ Finally, follow [Step 4](https://docs/recipes/set-up-o3-instance#step-4-1) of th
 
 ## Preparing for production
 
-By default, the RefApp is configured to use the `next` tagged versions of [frontend modules](https://github.com/openmrs/openmrs-distro-referenceapplication/blob/main/frontend/spa-assemble-config.json) and the [app shell](https://github.com/openmrs/openmrs-distro-referenceapplication/blob/main/frontend/Dockerfile). This means it will use the latest _pre-release_ versions available. Pre-release versions get published to NPM each time a commit is merged into the `main` branch. Pre-release versions are generally considered unstable and are not recommended for production use.
+By default, the RefApp source tree is configured to build the frontend with `next` tagged versions of [frontend modules](https://github.com/openmrs/openmrs-distro-referenceapplication/blob/main/frontend/spa-assemble-config.json) and the [app shell](https://github.com/openmrs/openmrs-distro-referenceapplication/blob/main/frontend/Dockerfile). This means a local image build uses the latest _pre-release_ packages available. Pre-release versions get published to NPM each time a commit is merged into the `main` branch, so they are not recommended for production use.
 
 <Callout emoji="⚠️" type="warning">
-  It is strongly recommended to use the latest stable versions in production
-  environments. These versions are tagged with the `latest` tag on NPM.
+  In production, pin a tested RefApp Docker image tag and explicit non-preview
+  frontend package versions. The `latest` NPM tag is stable, but it still moves
+  over time; explicit versions make rebuilds reproducible.
 </Callout>
 
 <Steps>
 
 ### Step 1: Update frontend module versions
 
-Update the versions of the frontend modules in your instance from `next` to `latest` by editing the `frontend/spa-assemble-config.json` file as follows. For more information about this file, see the [Configuration overview](/docs/configure-o3/overview#spa-assemble-configjson) guide:
+Update the versions of the frontend modules in your instance from `next` to the exact versions you tested by editing the `frontend/spa-assemble-config.json` file as follows. For more information about this file, see the [Configuration overview](/docs/configure-o3/overview#spa-assemble-configjson) guide:
 
 ```json filename="frontend/spa-assemble-config.json"
 {
   "frontendModules": {
-    "@openmrs/esm-active-visits-app": "latest",
-    "@openmrs/esm-appointments-app": "latest"
+    "@openmrs/esm-active-visits-app": "x.y.z",
+    "@openmrs/esm-appointments-app": "x.y.z"
     // ... other frontend modules
   }
 }
 ```
 
-This ensures that the application will use the most recent stable versions of these frontend modules.
+This ensures that the application will use the same tested versions of these frontend modules every time you rebuild.
 
 ### Step 2: Update the app shell version
 
-Update the app shell version in the frontend Dockerfile by changing the value of the `APP_SHELL_VERSION` argument to `latest`:
+Update the app shell version in the frontend Dockerfile by changing the value of the `APP_SHELL_VERSION` argument to the exact version you tested:
 
 ```txt filename="frontend/Dockerfile"
   ...
-  ARG APP_SHELL_VERSION=latest
+  ARG APP_SHELL_VERSION=x.y.z
   ...
 ```
 
-This change ensures that the app shell is also using the latest stable version.
+This change ensures that the app shell is built from the same tested version as your distribution.
 
 </Steps>
 
