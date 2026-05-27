@@ -1,29 +1,36 @@
 # Siderail and Bottom Nav
 
-The Siderail and Bottom Nav are desktop and tablet versions of the same navigation functionality. They contain buttons that open different tabs in the Workspace. Once open, the Workspace is persistent across dashboards within the Patient Chart. Designs for these elements are on [the OpenMRS Styleguide](https://zeroheight.com/23a080e38/p/948cf1-siderail-and-bottom-nav).
+Workspace v2 renders an action menu for workspace groups that have windows with icons. On desktop this appears as a side rail. On tablet and phone layouts it appears as a bottom action menu.
 
-## Adding a New Navigation Button
+## Adding a New Action Menu Button
 
-The Siderail and Bottom Nav contain an extension slot, `action-menu-patient-chart-items-slot`. New navigation buttons may be wrapped in extensions and attached to this slot.
-
-Continuing our example from [Creating Workspaces](./creating-workspaces), let's assume we have registered a workspace called `gastrodynamics-form`.
+To add a button, register a `workspaceWindows2` entry with an `icon`. O3 automatically registers that icon component as an extension in the slot named after the workspace group. The extension ID matches the window name, which is how `ActionMenuButton2` knows which window it controls.
 
 ```json copy
-// routes.json
 {
-  "extensions": [
+  "workspaces2": [
     {
-      "name": "gastrodynamics-form-button",
-      "component": "gastrodynamicsFormButton",
-      "slot": "action-menu-patient-chart-items-slot",
-      "order": 4
+      "name": "gastrodynamics-form-workspace",
+      "component": "gastrodynamicsWorkspace",
+      "window": "gastrodynamics"
+    }
+  ],
+  "workspaceWindows2": [
+    {
+      "name": "gastrodynamics",
+      "group": "patient-chart",
+      "icon": "gastrodynamicsActionButton",
+      "order": 4,
+      "width": "narrow",
+      "canMaximize": true
     }
   ]
 }
 ```
 
+Then export the icon component in `index.ts`:
+
 ```ts copy
-// index.ts
 import { getAsyncLifecycle } from '@openmrs/esm-framework';
 
 const moduleName = '@myorg/esm-gastrodynamics-app';
@@ -33,37 +40,46 @@ const options = {
   moduleName,
 };
 
-export const gastrodynamicsFormButton = getAsyncLifecycle(
-  () => import('./gastrodynamics-form-button.extension'),
+export const gastrodynamicsActionButton = getAsyncLifecycle(
+  () => import('./gastrodynamics-action-button.extension'),
   options,
 );
 ```
 
-```ts copy
-// gastrodynamics-form-button.extension.tsx
-import React, { type ComponentProps } from "react";
-import { useTranslation } from "react-i18next";
-import { ActionMenuButton, IntestinesIcon } from "@openmrs/esm-framework";
-import { useLaunchWorkspaceRequiringVisit } from "@openmrs/esm-patient-common-lib";
+The action button component should render `ActionMenuButton2`.
 
-export default function GastrodynamicsFormButton() {
+```tsx copy
+import React, { type ComponentProps } from 'react';
+import { useTranslation } from 'react-i18next';
+import { ActionMenuButton2, AddIcon } from '@openmrs/esm-framework';
+import { type PatientChartWorkspaceActionButtonProps, useStartVisitIfNeeded } from '@openmrs/esm-patient-common-lib';
+
+export default function GastrodynamicsActionButton({
+  groupProps: { patientUuid },
+}: PatientChartWorkspaceActionButtonProps) {
   const { t } = useTranslation();
-  const launchGastrodynamicsForm = useLaunchWorkspaceRequiringVisit("gastrodynamics-form");
+  const startVisitIfNeeded = useStartVisitIfNeeded(patientUuid);
 
   return (
-    <ActionMenuButton
-      getIcon={(props: ComponentProps<typeof IntestinesIcon>) => <IntestinesIcon {...props} />}
-      label={t("gastrodynamics", "Gastrodynamics")}
-      iconDescription={t("gastrodynamics", "Gastrodynamics")}
-      handler={launchGastrodynamicsForm}
-      type={"form"}
+    <ActionMenuButton2
+      icon={(props: ComponentProps<typeof AddIcon>) => <AddIcon {...props} />}
+      label={t('gastrodynamics', 'Gastrodynamics')}
+      workspaceToLaunch={{
+        workspaceName: 'gastrodynamics-form-workspace',
+        workspaceProps: { patientUuid },
+      }}
+      onBeforeWorkspaceLaunch={startVisitIfNeeded}
     />
   );
 }
 ```
 
-## Siderail and Bottom Nav Behavior
+## Behavior
 
-The Siderail and Bottom Nav are implemented as a single component. If the screen is desktop-width, the Siderail is rendered; if it is smaller then the Bottom Nav is rendered.
+`ActionMenuButton2` is tied to the window whose name matches the extension ID. When clicked, it:
 
-Each `ActionMenuButton` has a `type`, which should correspond to the workspace that it opens. Given an `ActionMenuButton`, if a workspace is visible on the screen that matches its type, then that button will be highlighted as "active." If a workspace with a matching type has been opened but is not presently visible on the screen (it is minimized, or behind another workspace), then the button will show a little red warning badge, signifying that the workspace is in the "interrupted" state.
+1. Launches the configured workspace if the window is not open.
+2. Restores the window if it is open but hidden or behind another window.
+3. Hides the window if it is currently focused.
+
+If any workspace in the window has unsaved changes, the button displays an interruption badge.

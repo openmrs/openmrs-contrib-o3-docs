@@ -1,70 +1,69 @@
-# Lancer des workspaces
+# Lancement d'espaces de travail
 
-Pour lancer un workspace, utilisez la fonction `launchWorkspace`. Si le workspace accepte des props, elles peuvent être passées via le second argument. La propriété `workspaceTitle` est toujours acceptée et permet de surcharger le titre du workspace (défini lors de son enregistrement).
+Utilisez `launchWorkspace2` depuis `@openmrs/esm-framework` pour ouvrir un espace de travail.
 
-```ts copy
-import { launchWorkspace } from "@openmrs/esm-framework";
-import React from "react";
-import { useTranslation } from "react-i18next";
-import { Button } from "@carbon/react";
+```tsx copy
+import { launchWorkspace2 } from '@openmrs/esm-framework';
 
-const MyComponent = () => {
-  const openOrderBasket = () => {
-    launchWorkspace('order-basket', {
-      workspaceTitle: "Order basket, courtesy of MyComponent"
+const MyComponent = ({ patientUuid }) => {
+  const openGastrodynamics = () => {
+    launchWorkspace2('gastrodynamics-form-workspace', {
+      patientUuid,
     });
   };
 
-  return (
-    <button onClick={openOrderBasket}>
-      Open order basket
-    </button>
-  );
+  return <button onClick={openGastrodynamics}>Open gastrodynamics</button>;
 };
 ```
 
-Pour lancer un workspace patient qui nécessite une visite, utilisez `useLaunchWorkspaceRequiringVisit`.
-
-Si les visites sont activées sur le serveur OpenMRS et que le patient n'a pas de visite active, l'utilisateur sera invité à démarrer une nouvelle visite avant de lancer le workspace.
+La signature complète est :
 
 ```ts copy
-import { launchWorkspace } from "@openmrs/esm-framework";
-import React from "react";
-import { useTranslation } from "react-i18next";
-import { Button } from "@carbon/react";
-import { useLaunchWorkspaceRequiringVisit } from "@openmrs/esm-patient-common-lib";
+launchWorkspace2<WorkspaceProps, WindowProps, GroupProps>(
+  workspaceName,
+  workspaceProps,
+  windowProps,
+  groupProps,
+);
+```
 
-const MyComponent = () => {
-  const openOrderBasket = () => {
-    launchWorkspace('order-basket', {
-      workspaceTitle: "Order basket, courtesy of MyComponent"
-    });
-  };
+- `workspaceProps` est transmis au composant d'espace de travail comme `workspaceProps`.
+- `windowProps` est partagé par les espaces de travail de la même fenêtre.
+- `groupProps` est partagé par toutes les fenêtres et tous les espaces de travail du même groupe.
+- Les props `null` ou omises sont considérées comme compatibles avec les props existantes.
 
-  return (
-    <button onClick={openOrderBasket}>
-      Open order basket
-    </button>
-  );
-};
+`launchWorkspace2` retourne une `Promise<boolean>`. Elle se résout à `true` lorsque l'espace de travail est lancé ou restauré, et à `false` lorsque l'utilisateur annule une confirmation de fermeture requise.
 
-const OrderBasketActionButton: React.FC = () => {
+## Espaces de travail patient nécessitant une visite
+
+Pour les espaces de travail patient qui nécessitent une visite active, utilisez `useLaunchWorkspaceRequiringVisit` depuis `@openmrs/esm-patient-common-lib`.
+
+```tsx copy
+import React from 'react';
+import { Button } from '@carbon/react';
+import { useTranslation } from 'react-i18next';
+import { useLaunchWorkspaceRequiringVisit } from '@openmrs/esm-patient-common-lib';
+
+const OrderBasketActionButton = ({ patientUuid }) => {
   const { t } = useTranslation();
-  const launchOrderBasket = useLaunchWorkspaceRequiringVisit("order-basket");
+  const launchOrderBasket = useLaunchWorkspaceRequiringVisit(patientUuid, 'order-basket');
 
-  return <Button onClick={launchOrderBasket}>Launch order basket</Button>;
+  return <Button onClick={() => launchOrderBasket()}>{t('launchOrderBasket', 'Launch order basket')}</Button>;
 };
 
 export default OrderBasketActionButton;
 ```
 
+Si les visites sont activées et que le patient n'a pas de visite active, O3 invite l'utilisateur à démarrer ou sélectionner une visite avant de lancer l'espace de travail.
+
 ## Comportement
 
-`launchWorkspace` suit les règles suivantes lors de l'ouverture d'un workspace:
+`launchWorkspace2` suit le modèle de groupe et de fenêtre de Workspace v2 :
 
-1. S'il n'y a pas de workspace déjà ouvert, le lancement d'un nouveau workspace l'ouvre.
-2. Si le workspace portant le même nom est déjà ouvert et actif, ses `additionalProps` sont mis à jour (s'ils ont changé).
-3. Pour le workspace actuellement actif, s'il ne peut pas être masqué (c'est‑à‑dire s'il a été enregistré avec `canHide: false`), le lancement d'un nouveau workspace demande confirmation avant de fermer le workspace ouvert.
-4. Si le nouveau workspace lancé a le même type qu'un workspace déjà ouvert, le workspace précédent de ce type est remis au premier plan. Une modal s'affiche ensuite pour confirmer la fermeture du workspace courant avant d'ouvrir le nouveau.
+1. Si le groupe cible n'est pas ouvert, O3 ouvre le groupe, ouvre la fenêtre cible et rend l'espace de travail demandé.
+2. Si un autre groupe est ouvert, ou si les props du groupe existant sont incompatibles, O3 demande confirmation avant de fermer le groupe actuel et ses fenêtres.
+3. Si la fenêtre cible est déjà ouverte avec des props de fenêtre compatibles, le lancement d'un espace de travail déjà ouvert avec des props compatibles restaure cette fenêtre.
+4. Si la fenêtre cible ou l'espace de travail a des props incompatibles, O3 demande confirmation avant de fermer la fenêtre et d'ouvrir une nouvelle instance.
+5. `launchWorkspace2` ne crée pas d'espace de travail enfant. Depuis un espace de travail, utilisez la prop `launchChildWorkspace` fournie par `Workspace2DefinitionProps`.
 
-Pour un exemple plus complexe, regardons une situation qui implique les règles 3 et 4. Si un utilisateur ouvre le workspace A de type `clinical-form`, puis ouvre un workspace B de type `form` qui ne peut pas être réduit (`canHide == false`), et essaie ensuite d'ouvrir un workspace C de type `clinical-form` (identique au type du workspace A), l'utilisateur verra d'abord une modal pour confirmer la fermeture du workspace B (qui ne peut pas être réduit). Ensuite, une seconde modal apparaîtra pour le workspace A, qui a le même type `clinical-form`, car deux workspaces du même type ne peuvent pas être ouverts en même temps.
+Les titres sont définis par le wrapper `<Workspace2 title="...">`. L'option v1 `workspaceTitle` n'est pas utilisée par Workspace v2.

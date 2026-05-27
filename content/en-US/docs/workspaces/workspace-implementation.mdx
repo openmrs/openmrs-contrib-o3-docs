@@ -1,86 +1,70 @@
-# Implementation: Under the hood
+# Implementation: Under the Hood
 
-> This is how things work under the hood with the Workspace system. You probably don't need to know about this!
+Workspace v2 state is managed by the framework's workspace store. Most application code should use the public APIs instead of manipulating the store directly:
 
-Workspaces are implemented using global store, which can be imported as:
+- `launchWorkspace2` to open or restore a workspace
+- `launchWorkspaceGroup2` to initialize a group that your app owns
+- `closeWorkspaceGroup2` to close the current group
+- `Workspace2DefinitionProps.closeWorkspace` to close a workspace from inside its component
+- `Workspace2DefinitionProps.launchChildWorkspace` to open child workspaces in the same window
 
-```ts
-import { getWorkspaceStore } from "@openmrs/esm-framework";
+## Store Shape
 
-// Accessing the state of the workspace store
-const store = getWorkspaceStore();
-const state = store.getState();
-```
+The v2 store tracks registered definitions and currently opened UI:
 
-## Workspace window's properties
+- `registeredGroupsByName` - workspace group definitions registered from `workspaceGroups2`
+- `registeredWindowsByName` - workspace window definitions registered from `workspaceWindows2`
+- `registeredWorkspacesByName` - workspace definitions registered from `workspaces2`
+- `openedGroup` - the currently open workspace group and its group props
+- `openedWindows` - the open windows in that group, including each window's workspace stack
+- `isMostRecentlyOpenedWindowHidden` - whether the front-most window is currently hidden
 
-Workspace store has the following properties, defining the workspace window:
+Each opened window contains `windowName`, `props`, `maximized`, and `openedWorkspaces`. Each opened workspace stores its `workspaceName`, launch props, and `hasUnsavedChanges` state.
 
-1. `context: string | null` - Current workspace context (e.g., patient UUID)
-2. `openWorkspaces: OpenWorkspace[]` - The list of workspaces launched by the user
-3. `prompt: Prompt | null` - The prompt to be shown to the user, usually for confirming an action
-4. `workspaceWindowState: 'normal' | 'maximized' | 'hidden'` - The state of the workspace window
-5. `workspaceGroup?: WorkspaceGroup` - Optional workspace group information
+## Reading Workspace Context
 
-The workspace properties can be accessed by either 2 ways:
+Inside a workspace component, use the props supplied by `Workspace2DefinitionProps` or the `useWorkspace2Context` hook to read the current workspace context:
 
-1. Using the `getWorkspaceStore` function, which returns the workspace store
+```tsx copy
+import { useWorkspace2Context } from '@openmrs/esm-framework';
 
-```ts copy
-import { getWorkspaceStore } from '@openmrs/esm-framework';
+export function WorkspaceDebugPanel() {
+  const { workspaceName, windowName, workspaceProps, windowProps, groupProps } = useWorkspace2Context();
 
-const store = getWorkspaceStore();
-const state = store.getState();
-
-// To update the state of the workspace store, use the `store.setState` function
-store.setState({ ... })
-// OR
-store.setState((state) => { ... })
-```
-
-2. For react components, you can access the workspace state from the `useWorkspaces` hook
-
-```ts copy
-import { useWorkspaces, getWorkspaceStore } from "@openmrs/esm-framework";
-
-const MyComponent = () => {
-  const { workspaces, active, prompt, workspaceWindowState, workspaceGroup } = useWorkspaces();
-
-  // To update the state of the workspace store, use getWorkspaceStore().setState()
-  // Note: The hook is read-only and doesn't provide a setState function
-  const handleUpdate = () => {
-    const store = getWorkspaceStore();
-    store.setState({ ...store.getState(), workspaceWindowState: 'maximized' });
-  };
-
-  return <div></div>;
-};
-```
-
-Multiple workspaces can be opened at the same time but only one visible at a time, i.e. the workspace at the top. The workspace window is rendered on the right corner of the patient chart.
-
-## To know whether a workspace is active or not:
-
-```ts copy
-import { useWorkspaces } from "@openmrs/esm-framework";
-
-const MyComponent = () => {
-  const { workspaces, active, workspaceWindowState } = useWorkspaces();
-
-  // Check if any workspace is open
-  const hasOpenWorkspace = active;
-
-  // Find a specific workspace
-  const workspaceIndex = workspaces.findIndex(
-    (workspace) => workspace.name === "my-workspace-name"
+  return (
+    <pre>
+      {JSON.stringify(
+        {
+          workspaceName,
+          windowName,
+          workspaceProps,
+          windowProps,
+          groupProps,
+        },
+        null,
+        2,
+      )}
+    </pre>
   );
+}
+```
 
-  const workspaceOpened = workspaceIndex >= 0;
+The lower-level workspace store is an implementation detail. Prefer the public launch, close, group, and context APIs unless you are working inside the framework itself.
 
-  // Check if a specific workspace is active (visible and at the top)
-  const isWorkspaceActive =
-    workspaceWindowState !== "hidden" && workspaceIndex === 0;
+## Unsaved Changes
 
-  return <div></div>;
-};
+Workspace v2 does not use `promptBeforeClosing`. Instead, pass `hasUnsavedChanges` to the `<Workspace2>` wrapper:
+
+```tsx copy
+<Workspace2 title={t('editVisit', 'Edit visit')} hasUnsavedChanges={formState.isDirty}>
+  {/* workspace content */}
+</Workspace2>
+```
+
+When a user closes a workspace, closes a window, changes incompatible props, or switches groups, the workspace system checks the `hasUnsavedChanges` flags for the affected workspaces and prompts when needed.
+
+After saving, close the workspace without showing the unsaved-changes prompt:
+
+```ts copy
+closeWorkspace({ discardUnsavedChanges: true });
 ```

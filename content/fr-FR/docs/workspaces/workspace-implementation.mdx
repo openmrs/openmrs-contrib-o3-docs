@@ -1,86 +1,70 @@
 # Implémentation : sous le capot
 
-> Voici comment fonctionne le système de Workspaces sous le capot. Vous n'avez probablement pas besoin de le savoir !
+L'état de Workspace v2 est géré par le store d'espaces de travail du framework. La plupart du code applicatif doit utiliser les APIs publiques au lieu de modifier directement le store :
 
-Les Workspaces sont implémentés à l'aide d'un store global, qui peut être importé ainsi :
+- `launchWorkspace2` pour ouvrir ou restaurer un espace de travail
+- `launchWorkspaceGroup2` pour initialiser un groupe possédé par votre application
+- `closeWorkspaceGroup2` pour fermer le groupe actuel
+- `Workspace2DefinitionProps.closeWorkspace` pour fermer un espace de travail depuis son composant
+- `Workspace2DefinitionProps.launchChildWorkspace` pour ouvrir des espaces de travail enfants dans la même fenêtre
 
-```ts
-import { getWorkspaceStore } from "@openmrs/esm-framework";
+## Forme du store
 
-// Accéder à l'état du store des workspaces
-const store = getWorkspaceStore();
-const state = store.getState();
-```
+Le store v2 suit les définitions enregistrées et l'interface actuellement ouverte :
 
-## Propriétés de la fenêtre de workspace
+- `registeredGroupsByName` - définitions de groupes enregistrées depuis `workspaceGroups2`
+- `registeredWindowsByName` - définitions de fenêtres enregistrées depuis `workspaceWindows2`
+- `registeredWorkspacesByName` - définitions d'espaces de travail enregistrées depuis `workspaces2`
+- `openedGroup` - le groupe actuellement ouvert et ses props de groupe
+- `openedWindows` - les fenêtres ouvertes dans ce groupe, y compris la pile d'espaces de travail de chaque fenêtre
+- `isMostRecentlyOpenedWindowHidden` - indique si la fenêtre au premier plan est actuellement masquée
 
-Le store des workspaces expose les propriétés suivantes, qui définissent la fenêtre de workspace :
+Chaque fenêtre ouverte contient `windowName`, `props`, `maximized` et `openedWorkspaces`. Chaque espace de travail ouvert stocke son `workspaceName`, ses props de lancement et son état `hasUnsavedChanges`.
 
-1. `context: string | null` - Contexte actuel du workspace (par exemple, UUID du patient)
-2. `openWorkspaces: OpenWorkspace[]` - Liste des workspaces lancés par l'utilisateur
-3. `prompt: Prompt | null` - Prompt affiché à l'utilisateur, généralement pour confirmer une action
-4. `workspaceWindowState: 'normal' | 'maximized' | 'hidden'` - État de la fenêtre de workspace
-5. `workspaceGroup?: WorkspaceGroup` - Informations optionnelles sur le groupe de workspaces
+## Lire le contexte d'un espace de travail
 
-Les propriétés du workspace peuvent être accessibles de deux façons :
+Dans un composant d'espace de travail, utilisez les props fournies par `Workspace2DefinitionProps` ou le hook `useWorkspace2Context` pour lire le contexte de l'espace de travail courant :
 
-1. En utilisant la fonction `getWorkspaceStore`, qui retourne le store des workspaces
+```tsx copy
+import { useWorkspace2Context } from '@openmrs/esm-framework';
 
-```ts copy
-import { getWorkspaceStore } from '@openmrs/esm-framework';
+export function WorkspaceDebugPanel() {
+  const { workspaceName, windowName, workspaceProps, windowProps, groupProps } = useWorkspace2Context();
 
-const store = getWorkspaceStore();
-const state = store.getState();
-
-// Pour mettre à jour l'état du store, utilisez `store.setState`
-store.setState({ ... })
-// OU
-store.setState((state) => { ... })
-```
-
-2. Dans un composant React, vous pouvez accéder à l'état via le hook `useWorkspaces`
-
-```ts copy
-import { useWorkspaces, getWorkspaceStore } from "@openmrs/esm-framework";
-
-const MyComponent = () => {
-  const { workspaces, active, prompt, workspaceWindowState, workspaceGroup } = useWorkspaces();
-
-  // Pour mettre à jour l'état du store, utilisez getWorkspaceStore().setState()
-  // Note : Le hook est en lecture seule et ne fournit pas de fonction setState
-  const handleUpdate = () => {
-    const store = getWorkspaceStore();
-    store.setState({ ...store.getState(), workspaceWindowState: 'maximized' });
-  };
-
-  return <div></div>;
-};
-```
-
-Plusieurs workspaces peuvent être ouverts en même temps, mais un seul est visible à la fois : celui du haut. La fenêtre du workspace est rendue dans le coin droit du dossier patient.
-
-## Savoir si un workspace est actif
-
-```ts copy
-import { useWorkspaces } from "@openmrs/esm-framework";
-
-const MyComponent = () => {
-  const { workspaces, active, workspaceWindowState } = useWorkspaces();
-
-  // Vérifier si un workspace est ouvert
-  const hasOpenWorkspace = active;
-
-  // Trouver un workspace spécifique
-  const workspaceIndex = workspaces.findIndex(
-    (workspace) => workspace.name === "my-workspace-name"
+  return (
+    <pre>
+      {JSON.stringify(
+        {
+          workspaceName,
+          windowName,
+          workspaceProps,
+          windowProps,
+          groupProps,
+        },
+        null,
+        2,
+      )}
+    </pre>
   );
+}
+```
 
-  const workspaceOpened = workspaceIndex >= 0;
+Le store d'espaces de travail de bas niveau est un détail d'implémentation. Préférez les APIs publiques de lancement, fermeture, groupe et contexte sauf si vous travaillez dans le framework lui-même.
 
-  // Vérifier si un workspace spécifique est actif (visible et en haut)
-  const isWorkspaceActive =
-    workspaceWindowState !== "hidden" && workspaceIndex === 0;
+## Changements non enregistrés
 
-  return <div></div>;
-};
+Workspace v2 n'utilise pas `promptBeforeClosing`. À la place, transmettez `hasUnsavedChanges` au wrapper `<Workspace2>` :
+
+```tsx copy
+<Workspace2 title={t('editVisit', 'Edit visit')} hasUnsavedChanges={formState.isDirty}>
+  {/* workspace content */}
+</Workspace2>
+```
+
+Quand un utilisateur ferme un espace de travail, ferme une fenêtre, change des props incompatibles ou change de groupe, le système vérifie les indicateurs `hasUnsavedChanges` des espaces de travail concernés et affiche une confirmation si nécessaire.
+
+Après l'enregistrement, fermez l'espace de travail sans afficher l'invite de changements non enregistrés :
+
+```ts copy
+closeWorkspace({ discardUnsavedChanges: true });
 ```

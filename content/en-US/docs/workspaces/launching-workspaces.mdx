@@ -1,52 +1,69 @@
-# Launching workspaces
+# Launching Workspaces
 
-To launch a workspace, use the `launchWorkspace` function from `@openmrs/esm-framework`. If the workspace accepts props, they can be passed as `additionalProps` in the second argument. The `workspaceTitle` property is always accepted, and is used to override the workspace's title (which is defined in its registration).
+Use `launchWorkspace2` from `@openmrs/esm-framework` to open a workspace.
 
-```ts copy
-import { launchWorkspace } from "@openmrs/esm-framework";
+```tsx copy
+import { launchWorkspace2 } from '@openmrs/esm-framework';
 
-const MyComponent = () => {
-  const openOrderBasket = () => {
-    launchWorkspace('order-basket', {
-      workspaceTitle: "Order basket, courtesy of MyComponent"
+const MyComponent = ({ patientUuid }) => {
+  const openGastrodynamics = () => {
+    launchWorkspace2('gastrodynamics-form-workspace', {
+      patientUuid,
     });
   };
-  
-  return (
-    <button onClick={openOrderBasket}>
-      Open order basket
-    </button>
-  );
+
+  return <button onClick={openGastrodynamics}>Open gastrodynamics</button>;
 };
 ```
 
-To launch a patient workspace that requires a visit, use `useLaunchWorkspaceRequiringVisit`.
-
-If visits are enabled on the OpenMRS server and the patient doesn't have an active visit, the user will be prompted to start a new visit before launching a workspace.
+The full signature is:
 
 ```ts copy
-import React from "react";
-import { useTranslation } from "react-i18next";
-import { Button } from "@carbon/react";
-import { useLaunchWorkspaceRequiringVisit } from "@openmrs/esm-patient-common-lib";
+launchWorkspace2<WorkspaceProps, WindowProps, GroupProps>(
+  workspaceName,
+  workspaceProps,
+  windowProps,
+  groupProps,
+);
+```
 
-const OrderBasketActionButton: React.FC = () => {
+- `workspaceProps` are passed to the workspace component as `workspaceProps`.
+- `windowProps` are shared by workspaces in the same window.
+- `groupProps` are shared by all windows and workspaces in the same group.
+- `null` or omitted props are considered compatible with existing props.
+
+`launchWorkspace2` returns a `Promise<boolean>`. It resolves to `true` when the workspace is launched or restored, and `false` when the user cancels a required close confirmation.
+
+## Patient Workspaces That Require Visits
+
+For patient workspaces that require an active visit, use `useLaunchWorkspaceRequiringVisit` from `@openmrs/esm-patient-common-lib`.
+
+```tsx copy
+import React from 'react';
+import { Button } from '@carbon/react';
+import { useTranslation } from 'react-i18next';
+import { useLaunchWorkspaceRequiringVisit } from '@openmrs/esm-patient-common-lib';
+
+const OrderBasketActionButton = ({ patientUuid }) => {
   const { t } = useTranslation();
-  const launchOrderBasket = useLaunchWorkspaceRequiringVisit("order-basket");
+  const launchOrderBasket = useLaunchWorkspaceRequiringVisit(patientUuid, 'order-basket');
 
-  return <Button onClick={launchOrderBasket}>Launch order basket</Button>;
+  return <Button onClick={() => launchOrderBasket()}>{t('launchOrderBasket', 'Launch order basket')}</Button>;
 };
 
 export default OrderBasketActionButton;
 ```
 
+If visits are enabled and the patient has no active visit, O3 prompts the user to start or select a visit before launching the workspace.
+
 ## Behavior
 
-`launchWorkspace` follows these rules when opening a workspace:
+`launchWorkspace2` follows the workspace v2 group and window model:
 
-1. If there are no previously opened workspaces, then launching a new workspace should open the new workspace.
-2. If the workspace with the same name is already open and is focused, then the `additionalProps` of that workspace are updated (if they have changed).
-3. For the currently focused workspace, if it cannot hide (that is, if it was registered with `canHide: false`), launching a new workspace will prompt the user for confirmation before closing the opened workspace.
-4. If the new workspace launched has the same type as a workspace already opened, the previous workspace of that type will be brought to the front. A modal is then shown asking for confirmation to close the current workspace before opening the new one.
+1. If the target group is not open, O3 opens the group, opens the target window, and renders the requested workspace.
+2. If another group is open, or if the existing group props are incompatible, O3 prompts before closing the current group and its windows.
+3. If the target window is already open with compatible window props, launching an already-open workspace with compatible workspace props restores that window.
+4. If the target window or workspace has incompatible props, O3 prompts before closing the window and opening a fresh instance.
+5. `launchWorkspace2` does not create child workspaces. From inside a workspace, use the `launchChildWorkspace` prop supplied by `Workspace2DefinitionProps`.
 
-As a more complex example, let's look at a situation involving both rules 3 and 4. If a user opens workspace A with type 'clinical-form' and then opens another workspace B with type 'form' which cannot be collapsed (`canHide == false`), and subsequently tries to open workspace C with type 'clinical-form' (matching workspace A), then the user will first see a modal to confirm closing workspace B (which cannot be collapsed). Following this, a second modal will appear for workspace A, which has the same type 'clinical-form', since no two workspaces of the same type can be opened at the same time.
+Workspace titles are set by the `<Workspace2 title="...">` wrapper. The v1 `workspaceTitle` launch option is not used by workspace v2.

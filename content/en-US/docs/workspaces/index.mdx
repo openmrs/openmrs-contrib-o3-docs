@@ -1,11 +1,15 @@
 # Overview
 
-The Workspace is the interactive layer of the Patient Chart. It opens on the right side of the screen on a desktop computer, or in a drawer over the screen on smaller screens. It is where data entry, form filling, and ordering takes place. The design of the Workspace system is in [the OpenMRS Styleguide](https://zeroheight.com/23a080e38/p/483a22-workspace).
+Workspaces are O3's side-panel interaction model for data entry, ordering, form filling, and other focused tasks. On desktop, workspace windows open on the side of the screen. On tablet and phone layouts, they render as an overlay.
 
-The actual area of the screen in the Patient Chart where the Workspaces appear is called the Workspace Window. Things like forms and the order basket are each Workspaces, and those Workspaces open in the Workspace Window.
+Workspace v2 uses a three-level model:
 
-Any new Workspace should conform to one of the three variants described in the [the OpenMRS Styleguide](https://zeroheight.com/23a080e38/p/483a22-workspace). These variants provide guidelines about Workspace styling and behavior.
+- **Workspace group** - The top-level container for a related workflow. A group can own an action menu, define where it persists with `scopePattern`, and choose whether it renders as an overlay.
+- **Workspace window** - A panel inside a group. Windows define width, maximize behavior, display order, and optionally an action menu icon.
+- **Workspace** - The React component that renders the actual task UI inside a window. A window can hold a stack of workspaces, which is how parent and child workspace flows are represented.
 
-A Workspace is essentially a component that has been [registered](./creating-workspaces) as a Workspace with a `name` and a `type`. The `name` should be unique to the Workspace, since it will be used to look up the component when launching. Different Workspaces may have the same `type`. The Workspace system will not allow multiple Workspaces of the same type to be open at the same time. Currently existing types are `form`, `clinical-form` (a special form), `order`, and `patient-lists`. If you add a new [Siderail Nav Button](./siderail-and-bottom-nav), it will correspond to a new Workspace type. Otherwise you may create your own type or use an existing one, according to the desired behavior.
+A workspace component is registered in `routes.json` under `workspaces2`. Each workspace points to a `workspaceWindows2` entry, and each window points to a `workspaceGroups2` entry. Apps can either define their own group or attach windows to an existing group such as `patient-chart` or `ward-patient`.
 
-Once a workspace is [registered](./creating-workspaces), it may be [launched](./launching-workspaces) anywhere in the Patient Chart.
+Workspace components should render `<Workspace2>` as their top-level container. Launch workspaces with `launchWorkspace2`, or use patient helpers such as `useLaunchWorkspaceRequiringVisit` when a workflow requires an active visit.
+
+The older v1 APIs (`workspaces`, `launchWorkspace`, `ActionMenuButton`, workspace `type`, `canHide`, and `promptBeforeClosing`) are deprecated. See [Migrating to Workspace v2](/docs/migrate-to-workspace-v2) when updating older code.

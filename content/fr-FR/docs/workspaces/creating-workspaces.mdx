@@ -1,90 +1,122 @@
-# Créer des workspaces
+# Création d'espaces de travail
 
-Pour créer un Workspace, vous devez créer le composant qui l'implémente, puis enregistrer ce composant auprès du système de Workspaces.
+Pour créer un espace de travail, implémentez un composant React et enregistrez-le dans le système Workspace v2 dans `routes.json`.
 
-## Le composant Workspace
+## Composant d'espace de travail
 
-Un Workspace est implémenté en tant que composant React. Tous les Workspaces reçoivent les props définies et documentées dans l'interface `DefaultPatientWorkspaceProps`, y compris `patient`, `patientUuid` et les fonctions `closeWorkspace`, `promptBeforeClosing` et `closeWorkspaceWithSavedChanges`.
+Les composants Workspace v2 reçoivent `Workspace2DefinitionProps` depuis `@openmrs/esm-framework`. Les props personnalisées passées au lancement sont disponibles dans `workspaceProps`; le contexte partagé du groupe est disponible dans `groupProps`; et le composant peut se fermer avec `closeWorkspace`.
 
-Le type de props de votre Workspace doit étendre (ou être) `DefaultPatientWorkspaceProps`. Cela garantit que vous avez les bons typings pour les props que le système de Workspaces transmet.
+Enveloppez le contenu de l'espace de travail dans `<Workspace2>`. Ce composant gère l'en-tête, le titre, les contrôles d'agrandissement et de fermeture, ainsi que l'état des changements non enregistrés.
 
-La prop `promptBeforeClosing` sert à indiquer au système de Workspaces s'il existe des changements non enregistrés dans le formulaire. Par défaut, tout Workspace ouvert est considéré comme ayant des changements non enregistrés. Cela peut entraîner un comportement très pénible : si quelqu'un ouvre votre Workspace et clique immédiatement ailleurs, il sera averti à propos des changements non enregistrés (c'est plus sûr que l'alternative, qui consisterait par défaut à ne jamais avertir). En tant que créateur de Workspace, c'est à vous d'éviter ce comportement, en utilisant `promptBeforeClosing`.
-
-Les Workspaces peuvent aussi recevoir des props personnalisées. Celles‑ci seront passées lors de l'appel de la [fonction de lancement](./launching-workspaces).
-
-### Exemple de Workspace
-
-Nous définissons un Workspace minimaliste pour le service de gastro‑dynamique de notre hôpital. Le fichier du Workspace utilise l'extension `.workspace.tsx` pour être facilement identifiable.
-
-```ts copy
+```tsx copy
 // gastrodynamics.workspace.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, ButtonSet, Form, TextInput } from '@carbon/react';
-import { type DefaultPatientWorkspaceProps } from '@openmrs/esm-patient-common-lib';
+import { Workspace2, type Workspace2DefinitionProps } from '@openmrs/esm-framework';
 import { postGastrodynamicsForm } from './gastrodynamics.resource';
 import styles from './gastrodynamics-form.module.scss';
 
-export function GastrodynamicsForm({ patientUuid, closeWorkspace, promptBeforeClosing }: DefaultPatientWorkspaceProps) {
+interface GastrodynamicsWorkspaceProps {
+  patientUuid: string;
+}
+
+export default function GastrodynamicsWorkspace({
+  workspaceProps,
+  closeWorkspace,
+}: Workspace2DefinitionProps<GastrodynamicsWorkspaceProps>) {
   const { t } = useTranslation();
   const [textValue, setTextValue] = useState('');
+  const patientUuid = workspaceProps?.patientUuid;
 
-  useEffect(() => {
-    promptBeforeClosing(() => textValue.length > 0);
-  }, [textValue])
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    postGastrodynamicsForm(patientUuid, textValue, new AbortController());
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    await postGastrodynamicsForm(patientUuid, textValue, new AbortController());
+    closeWorkspace({ discardUnsavedChanges: true });
   };
 
   return (
-    <Form className={styles.form}>
-      <TextInput
-        id="howsThePlumbing"
-        labelText={t('howsThePlumbing', "How's the plumbing?")}
-        onChange={(event) => setTextValue(event.target.value)}
-        value={textValue}
-      />
-      <ButtonSet>
-        <Button className={styles.button} kind="secondary" onClick={closeWorkspace}>
-          {t('discard', 'Discard')}
-        </Button>
-        <Button onClick={handleSubmit} className={styles.button} kind="primary">
-          {t('submit', 'Submit')}
-        </Button>
-      </ButtonSet>
-    </Form>
+    <Workspace2 title={t('gastrodynamics', 'Gastrodynamics')} hasUnsavedChanges={textValue.length > 0}>
+      <Form className={styles.form} onSubmit={handleSubmit}>
+        <TextInput
+          id="howsThePlumbing"
+          labelText={t('howsThePlumbing', "How's the plumbing?")}
+          onChange={(event) => setTextValue(event.target.value)}
+          value={textValue}
+        />
+        <ButtonSet>
+          <Button
+            className={styles.button}
+            kind="secondary"
+            onClick={() => closeWorkspace({ discardUnsavedChanges: true })}
+          >
+            {t('discard', 'Discard')}
+          </Button>
+          <Button className={styles.button} kind="primary" type="submit">
+            {t('submit', 'Submit')}
+          </Button>
+        </ButtonSet>
+      </Form>
+    </Workspace2>
   );
-};
-```
-
-## Enregistrer un Workspace
-
-L'enregistrement permet au système de Workspaces de connaître le nouveau Workspace. Une fois enregistré, il peut être [lancé](./launching-workspaces).
-
-Notre nouveau Workspace peut être enregistré dans le fichier `index.ts`, en utilisant la fonction `registerWorkspace` de `@openmrs/esm-patient-common-lib`. Les paramètres de `registerWorkspace` sont documentés dans l'interface `WorkspaceRegistration`.
-
-Notez que même si les paramètres de `registerWorkspace` permettent une certaine flexibilité de comportement, vous devriez généralement viser un Workspace conforme à l'une des [variantes](https://zeroheight.com/23a080e38/p/483a22-workspace) conçues.
-
-## Exemple d'enregistrement
-
-Voici un exemple qui serait placé dans le fichier index de l'application. Nous supposons que l'application s'appelle `@myorg/esm-gastrodynamics-app`.
-
-```ts copy
-// index.ts
-import { registerWorkspace } from '@openmrs/esm-patient-common-lib';
-
-export function startupApp() {
-  registerWorkspace({
-    name: 'gastrodynamics-form',
-    title: translateFrom('@myorg/esm-gastrodynamics-app', 'gastrodynamicsTitle', 'Gastrodynamics'),
-    load: getAsyncLifecycle(() => import('./gastrodynamics.workspace'), options),
-    type: 'other-form',
-    canHide: false,
-    canMaximize: true,
-    width: 'narrow',
-    preferredWindowSize: 'maximized'
-  });
 }
 ```
+
+## Enregistrement
+
+Enregistrez l'espace de travail dans `routes.json` avec `workspaces2`. Chaque espace de travail doit appartenir à une fenêtre d'espace de travail, et chaque fenêtre doit appartenir à un groupe.
+
+```json copy
+{
+  "workspaces2": [
+    {
+      "name": "gastrodynamics-form-workspace",
+      "component": "gastrodynamicsWorkspace",
+      "window": "gastrodynamics"
+    }
+  ],
+  "workspaceWindows2": [
+    {
+      "name": "gastrodynamics",
+      "group": "patient-chart",
+      "width": "narrow",
+      "canMaximize": true
+    }
+  ]
+}
+```
+
+Si votre application possède le groupe, déclarez-le dans `workspaceGroups2` :
+
+```json copy
+{
+  "workspaceGroups2": [
+    {
+      "name": "gastrodynamics",
+      "scopePattern": "/home/gastrodynamics",
+      "overlay": true,
+      "persistence": "closable"
+    }
+  ]
+}
+```
+
+Exportez ensuite le composant d'espace de travail depuis `index.ts` :
+
+```ts copy
+import { getAsyncLifecycle } from '@openmrs/esm-framework';
+
+const moduleName = '@myorg/esm-gastrodynamics-app';
+
+const options = {
+  featureName: 'gastrodynamics',
+  moduleName,
+};
+
+export const gastrodynamicsWorkspace = getAsyncLifecycle(
+  () => import('./gastrodynamics.workspace'),
+  options,
+);
+```
+
+Après l'enregistrement, lancez l'espace de travail avec `launchWorkspace2('gastrodynamics-form-workspace', props)`.

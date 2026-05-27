@@ -1,11 +1,15 @@
 # Vue d'ensemble
 
-Le Workspace est la couche interactive du Dossier patient. Sur ordinateur, il s'ouvre sur le côté droit de l'écran ; sur les plus petits écrans, il s'affiche dans un tiroir. C'est là que se font la saisie de données, le remplissage des formulaires et la passation de commandes. Le design du système de Workspaces est décrit dans le [OpenMRS Styleguide](https://zeroheight.com/23a080e38/p/483a22-workspace).
+Les espaces de travail sont le modèle d'interaction latéral d'O3 pour la saisie de données, les commandes, le remplissage de formulaires et les autres tâches ciblées. Sur ordinateur, les fenêtres d'espace de travail s'ouvrent sur le côté de l'écran. Sur tablette et téléphone, elles s'affichent en superposition.
 
-La zone de l'écran du Dossier patient où s'affichent les Workspaces s'appelle la Workspace Window (fenêtre du Workspace). Les formulaires et le panier de commandes sont des Workspaces, et ils s'ouvrent dans cette fenêtre.
+Workspace v2 utilise un modèle à trois niveaux :
 
-Tout nouveau Workspace doit respecter l'une des trois variantes décrites dans le [OpenMRS Styleguide](https://zeroheight.com/23a080e38/p/483a22-workspace). Ces variantes donnent des indications sur le style et le comportement d'un Workspace.
+- **Groupe d'espaces de travail** - Le conteneur principal d'un flux de travail lié. Un groupe peut posséder un menu d'actions, définir où il persiste avec `scopePattern`, et choisir s'il s'affiche en superposition.
+- **Fenêtre d'espace de travail** - Un panneau dans un groupe. Les fenêtres définissent la largeur, le comportement d'agrandissement, l'ordre d'affichage et éventuellement une icône de menu d'actions.
+- **Espace de travail** - Le composant React qui rend l'interface de tâche dans une fenêtre. Une fenêtre peut contenir une pile d'espaces de travail, ce qui représente les flux parent et enfant.
 
-Un Workspace est essentiellement un composant [enregistré](./creating-workspaces) avec un `name` et un `type`. Le `name` doit être unique, car il est utilisé pour retrouver le composant lors du lancement. Différents Workspaces peuvent partager le même `type`. Le système n'autorise pas plusieurs Workspaces du même type à être ouverts en même temps. Les types existants sont `form`, `clinical-form` (un formulaire spécial), `order` et `patient-lists`. Si vous ajoutez un nouveau [bouton de navigation du Siderail](./siderail-and-bottom-nav), il correspondra à un nouveau type de Workspace. Sinon, vous pouvez créer votre propre type ou utiliser un type existant, selon le comportement souhaité.
+Un composant d'espace de travail est enregistré dans `routes.json` sous `workspaces2`. Chaque espace de travail pointe vers une entrée `workspaceWindows2`, et chaque fenêtre pointe vers une entrée `workspaceGroups2`. Les applications peuvent définir leur propre groupe ou rattacher des fenêtres à un groupe existant comme `patient-chart` ou `ward-patient`.
 
-Une fois qu'un Workspace est [enregistré](./creating-workspaces), il peut être [lancé](./launching-workspaces) n'importe où dans le Dossier patient.
+Les composants d'espace de travail doivent rendre `<Workspace2>` comme conteneur principal. Lancez les espaces de travail avec `launchWorkspace2`, ou utilisez des helpers patient comme `useLaunchWorkspaceRequiringVisit` quand un flux nécessite une visite active.
+
+Les anciennes APIs v1 (`workspaces`, `launchWorkspace`, `ActionMenuButton`, le `type` d'espace de travail, `canHide` et `promptBeforeClosing`) sont dépréciées. Consultez [Migrer vers Workspace v2](/docs/migrate-to-workspace-v2) lorsque vous mettez à jour du code plus ancien.
