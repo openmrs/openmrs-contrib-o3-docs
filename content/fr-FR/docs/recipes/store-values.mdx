@@ -69,14 +69,25 @@ Ceci est utile pour s'assurer que tout un arbre React a une version cohérente d
 
 #### Global Store
 
-Fourni par `@openmrs/esm-framework` (et, spécifiquement, `esm-global`); cela nous donne accès aux [Zustand stores](https://github.com/pmndrs/zustand). Ceci est utile pour stocker des valeurs qui sont partagées entre plusieurs composants et qui doivent être cohérentes entre elles. Notez que bien que l'implémentation sous-jacente utilise Zustand, il est préférable d'utiliser [l'API fournie par le framework](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#store-functions), par exemple,
+Fourni par `@openmrs/esm-framework` (spécifiquement, `esm-state`); cela nous donne accès aux [Zustand stores](https://github.com/pmndrs/zustand). Ceci est utile pour stocker des valeurs qui sont partagées entre plusieurs composants et qui doivent être cohérentes entre elles. Notez que bien que l'implémentation sous-jacente utilise Zustand, il est préférable d'utiliser [l'API fournie par le framework](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#store-functions), par exemple,
 
 ```ts
+import { createGlobalStore, useStore } from "@openmrs/esm-framework";
+
+interface User {
+  uuid: string;
+  display: string;
+}
+
+interface UserStore {
+  user: User | null;
+}
+
 // à l'extérieur d'un composant
-const userStore = createGlobalStore<UserStore>('userStore', { user: null });
+const userStore = createGlobalStore<UserStore>("userStore", { user: null });
 
 // à l'intérieur d'un composant
-const user = useStore<UserStore, User | null>(userStore, state => state.user);
+const { user } = useStore(userStore);
 
 // à un autre moment
 userStore.setState({ user: /* valeur provenant de quelque part */ });
@@ -114,16 +125,18 @@ useDefineAppContext<DateFilterContext>("laboratory-date-filter", {
 });
 ```
 
+`useDefineAppContext()` supprime le namespace lorsque le composant qui le définit est démonté. Les namespaces d'app context doivent utiliser `null` plutôt que `undefined` lorsqu'ils doivent représenter une valeur vide.
+
 ##### Accéder au contexte
 
 ```tsx
-const { dateRange, setDateRange } = useAppContext<DateFilterContext>(
-  "laboratory-date-filter"
-) ?? {
-  // Valeurs de fallback utilisées quand l'app context est undefined
-  dateRange: "fallback-date-range",
-  setDateRange: "fallback setter function",
-};
+const dateFilterContext = useAppContext<DateFilterContext>("laboratory-date-filter");
+
+if (!dateFilterContext) {
+  return null;
+}
+
+const { dateRange, setDateRange } = dateFilterContext;
 ```
 
 **Quand utiliser App Context plutôt qu'un Global Store**
@@ -146,3 +159,5 @@ Il s'agit d'une API [Storage](https://developer.mozilla.org/en-US/docs/Web/API/S
 #### Stockage local
 
 Il s'agit d'une API [Storage](https://developer.mozilla.org/en-US/docs/Web/API/Storage) pour les valeurs qui persistent jusqu'à ce qu'elles soient modifiées. Elles sont spécifiques à une origine web, mais s'appliquent à tous les onglets et à toutes les pages. Ceci est utile pour stocker les préférences de l'utilisateur au niveau de l'application (par exemple, la langue), mais ne doit pas être utilisé pour le stockage des données.
+
+Évitez de stocker des secrets ou des données identifiant un patient dans le stockage du navigateur, sauf si une fonctionnalité l'exige explicitement et que le compromis de confidentialité a été examiné.

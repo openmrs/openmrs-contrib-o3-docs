@@ -29,7 +29,7 @@ export interface BooksStore {
   books: Array<string>;
 }
 
-createGlobalStore("books", {
+export const bookStore = createGlobalStore<BooksStore>("books", {
   books: [],
 });
 ```
@@ -38,21 +38,21 @@ The store can then be accessed using
 [`getGlobalStore`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#getglobalstore)
 
 ```ts
-import { getGlobalStore } from "@openmrs/esm-framework";
+import { getGlobalStore, subscribeTo } from "@openmrs/esm-framework";
 
-const bookStore = getGlobalStore("books");
+const bookStore = getGlobalStore<BooksStore>("books");
 console.log(bookStore.getState());
-bookStore.subscribe((books) => console.log(books));
+subscribeTo(bookStore, (state) => state.books, (books) => console.log(books));
 bookStore.setState({ books: ["Pathologies of Power"] });
 ```
 
 ### In React:
 
 ```ts
-import React, { useEffect } from "react";
+import React from "react";
 import { getGlobalStore, useStore } from "@openmrs/esm-framework";
 
-const bookStore = getGlobalStore("books");
+const bookStore = getGlobalStore<BooksStore>("books");
 
 function BookShelf() {
   const { books } = useStore(bookStore);
@@ -69,7 +69,13 @@ this method is by far the simplest.
 If your directory structure allows, you can also pass stores around explicitly:
 
 ```ts filename="bookStore.ts"
-export const bookStore = createGlobalStore("books", {
+import { createGlobalStore } from "@openmrs/esm-framework";
+
+export interface BooksStore {
+  books: Array<string>;
+}
+
+export const bookStore = createGlobalStore<BooksStore>("books", {
   books: [],
 });
 ```
@@ -78,6 +84,8 @@ export const bookStore = createGlobalStore("books", {
 import { bookStore } from "./bookStore";
 bookStore.setState({ books: ["A History of Global Health"] });
 ```
+
+Global stores are in memory by default. If a store needs to survive a browser refresh within the same tab session, pass `"sessionStorage"` as the third argument to `createGlobalStore()`.
 
 See the [Zustand docs](https://docs.pmnd.rs/zustand/getting-started/introduction) for more
 information about stores.

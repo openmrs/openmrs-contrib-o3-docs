@@ -71,14 +71,25 @@ This is useful for ensuring that an entire React tree has a consistent version o
 
 #### Global Store
 
-Provided by `@openmrs/esm-framework` (and, specifically, `esm-global`); this gives us access to [Zustand stores](https://github.com/pmndrs/zustand). This is useful for storing values that are shared across more than one component and need to be consistent across them. Note that while the underlying implementation uses Zustand, it is preferable to use [the framework-provided API](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#store-functions), e.g.,
+Provided by `@openmrs/esm-framework` (specifically, `esm-state`); this gives us access to [Zustand stores](https://github.com/pmndrs/zustand). This is useful for storing values that are shared across more than one component and need to be consistent across them. Note that while the underlying implementation uses Zustand, it is preferable to use [the framework-provided API](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#store-functions), e.g.,
 
 ```ts
+import { createGlobalStore, useStore } from "@openmrs/esm-framework";
+
+interface User {
+  uuid: string;
+  display: string;
+}
+
+interface UserStore {
+  user: User | null;
+}
+
 // outside of a component
-const userStore = createGlobalStore<UserStore>('userStore', { user: null });
+const userStore = createGlobalStore<UserStore>("userStore", { user: null });
 
 // inside a component
-const user = useStore<UserStore, User | null>(userStore, state => state.user);
+const { user } = useStore(userStore);
 
 // at some other point
 userStore.setState({ user: /* value from somewhere */ });
@@ -116,16 +127,18 @@ useDefineAppContext<DateFilterContext>("laboratory-date-filter", {
 });
 ```
 
+`useDefineAppContext()` removes the namespace when the defining component unmounts. App context namespaces should use `null` rather than `undefined` when they need to represent an empty value.
+
 ##### Accessing the context
 
 ```tsx
-const { dateRange, setDateRange } = useAppContext<DateFilterContext>(
-  "laboratory-date-filter"
-) ?? {
-  // Fallback values used when the app context is undefined
-  dateRange: "fallback-date-range",
-  setDateRange: "fallback setter function",
-};
+const dateFilterContext = useAppContext<DateFilterContext>("laboratory-date-filter");
+
+if (!dateFilterContext) {
+  return null;
+}
+
+const { dateRange, setDateRange } = dateFilterContext;
 ```
 
 **When to use App Context vs Global Store**
@@ -148,3 +161,5 @@ This provides a [Storage](https://developer.mozilla.org/en-US/docs/Web/API/Stora
 #### Local Storage
 
 This provides a [Storage](https://developer.mozilla.org/en-US/docs/Web/API/Storage) API for values that persist until they are changed. They are specific to a web origin, but apply to all tabs and all pages. This is useful for storing user application-level preferences (e.g., language), but should not be used unless the value should be associated with the user-and-browser combination.
+
+Avoid storing secrets or patient-identifying data in browser storage unless a feature explicitly requires it and the privacy tradeoff has been reviewed.

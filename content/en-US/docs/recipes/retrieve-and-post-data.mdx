@@ -29,12 +29,14 @@ Here's an example of using SWR to retrieve a patient from the FHIR API.
 
 ```ts
 import useSWR from "swr";
-import { fhirBaseUrl, openmrsFetch, fhir } from "@openmrs/esm-framework";
+import { type FetchResponse, fhirBaseUrl, openmrsFetch, fhir } from "@openmrs/esm-framework";
 
-const { data, error, isLoading, mutate } = useSWR<fhir.Patient, Error>(
+const { data, error, isLoading, mutate } = useSWR<FetchResponse<fhir.Patient>, Error>(
   `${fhirBaseUrl}/Patient/${patientUuid}`,
   openmrsFetch
 );
+
+const patient = data?.data;
 ```
 
 If you have questions about FHIR support in OpenMRS, you can ask in the
@@ -48,7 +50,7 @@ Here's an example of a custom SWR hook that retrieves visits data.
 
 ```ts
 import useSWR from "swr";
-import { openmrsFetch, Visit } from "@openmrs/esm-framework";
+import { type FetchResponse, openmrsFetch, restBaseUrl, type Visit } from "@openmrs/esm-framework";
 
 interface VisitData {
   results: Array<Visit>;
@@ -56,12 +58,12 @@ interface VisitData {
 
 /* Custom data fetching hook */
 export function useVisits() {
-  const url = `/ws/rest/v1/visit?includeInactive=false`;
+  const url = `${restBaseUrl}/visit?includeInactive=false`;
 
-  const { data, error, isLoading, mutate } = useSWR<{ data: VisitData }, Error>(url, openmrsFetch);
+  const { data, error, isLoading, mutate } = useSWR<FetchResponse<VisitData>, Error>(url, openmrsFetch);
 
   return {
-    visits: data,
+    visits: data?.data.results ?? [],
     isLoading,
     error,
     mutate,
@@ -73,21 +75,21 @@ We can leverage this `useVisits` hook in our `visits` component as follows:
 
 ```ts
 const Visits = () => {
-  const { visits, isError, isLoading } = useVisits();
+  const { visits, error, isLoading } = useVisits();
 
   if (isLoading) {
-    return <DataTableSkeleton role="progressbar" />
+    return <DataTableSkeleton role="progressbar" />;
   }
   if (error) {
-    // render error state
+    // render error state;
   }
-  if (visits?.length) {
-    // render visits
+  if (visits.length) {
+    // render visits;
   }
   return (
-    // render empty state
-  )
-}
+    // render empty state;
+  );
+};
 
 export default Visits;
 ```
@@ -127,6 +129,8 @@ openmrsFetch("/ws/rest/v1/session", {
   signal: abortController.signal,
 });
 ```
+
+`openmrsFetch` automatically prefixes relative paths with `window.openmrsBase`, requests JSON responses by default, and stringifies plain-object request bodies before sending them.
 
 It is best practice for POST requests to have an
 [AbortController](https://developer.mozilla.org/en-US/docs/Web/API/AbortController/abort).
