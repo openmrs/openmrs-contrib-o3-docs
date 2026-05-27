@@ -126,7 +126,7 @@ useEffect(() => {
     visitContext,
     mutateVisitContext,
   });
-}, [patient, patientUuid, visitContext]);
+}, [patient, patientUuid, visitContext, mutateVisitContext]);
 ```
 
 Only one workspace group can be open at a time. If `launchWorkspaceGroup2` is called with a different group name (or incompatible props), the user will be prompted to close any open workspaces before the new group is opened.
@@ -172,11 +172,11 @@ interface MyFormProps {
   appointment?: Appointment;
 }
 
-const MyForm: React.FC<Workspace2DefinitionProps<MyFormProps>> = ({
+export default function MyForm({
   workspaceProps,
   groupProps,
   closeWorkspace,
-}) => {
+}: Workspace2DefinitionProps<MyFormProps>) {
   const { patientUuid, appointment } = workspaceProps ?? {};
 
   return (
@@ -184,7 +184,7 @@ const MyForm: React.FC<Workspace2DefinitionProps<MyFormProps>> = ({
       {/* workspace content */}
     </Workspace2>
   );
-};
+}
 ```
 
 Key changes:
@@ -306,16 +306,17 @@ const OrderBasket: React.FC<DefaultWorkspaceProps> = ({
 **After (v2):**
 
 ```tsx
-const OrderBasket: React.FC<
-  Workspace2DefinitionProps<OrderBasketProps>
-> = ({ closeWorkspace, launchChildWorkspace }) => {
+function OrderBasket({
+  closeWorkspace,
+  launchChildWorkspace,
+}: Workspace2DefinitionProps<OrderBasketProps>) {
   const handleAddDrug = () => {
     launchChildWorkspace("drug-search-workspace", {
       onSelect: handleDrugSelect,
     });
   };
   // ...
-};
+}
 ```
 
 Child workspaces are rendered within the same window and are automatically closed when their parent workspace is closed.
@@ -329,10 +330,10 @@ Tests need to provide the new prop structure when rendering workspace components
 ```tsx
 const defaultProps = {
   patientUuid: mockPatient.id,
-  closeWorkspace: jest.fn(),
-  closeWorkspaceWithSavedChanges: jest.fn(),
-  promptBeforeClosing: jest.fn(),
-  setTitle: jest.fn(),
+  closeWorkspace: vi.fn(),
+  closeWorkspaceWithSavedChanges: vi.fn(),
+  promptBeforeClosing: vi.fn(),
+  setTitle: vi.fn(),
 };
 
 render(<MyForm {...defaultProps} />);
@@ -345,8 +346,8 @@ const defaultProps: Workspace2DefinitionProps<MyFormProps> = {
   workspaceProps: {
     patientUuid: mockPatient.id,
   },
-  closeWorkspace: jest.fn(),
-  launchChildWorkspace: jest.fn(),
+  closeWorkspace: vi.fn(),
+  launchChildWorkspace: vi.fn(),
   groupProps: null,
   windowProps: null,
   workspaceName: "my-form-workspace",
