@@ -221,7 +221,7 @@ Define custom columns or override built-in columns:
   - For `status`: `statusConfigs` - Array of status icon configurations
   - For `actions`: `actions.buttons` and `actions.overflowMenu` - Arrays of action types
   - For `queue-number`: `visitQueueNumberAttributeUuid` - UUID of visit attribute containing queue number
-  - For `extension`: a column with ID `eligibility` renders the `queue-table-eligibility-slot` extension slot and passes `queueEntry` in slot state
+  - For `extension`: any extension column renders the `queue-table-<column-id>-slot` extension slot and passes `queueEntry` in slot state. For example, a column with ID `eligibility` renders `queue-table-eligibility-slot`.
 
 ### Table Definitions
 

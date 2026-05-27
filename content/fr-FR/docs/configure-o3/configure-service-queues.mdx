@@ -221,7 +221,7 @@ Définissez des colonnes personnalisées ou remplacez les colonnes intégrées :
   - Pour `status` : `statusConfigs` - Tableau des configurations d'icônes de statut
   - Pour `actions` : `actions.buttons` et `actions.overflowMenu` - Tableaux de types d'action
   - Pour `queue-number` : `visitQueueNumberAttributeUuid` - UUID de l'attribut de visite contenant le numéro de file
-  - Pour `extension` : une colonne avec l'ID `eligibility` rend l'emplacement d'extension `queue-table-eligibility-slot` et transmet `queueEntry` dans l'état de l'emplacement
+  - Pour `extension` : toute colonne d'extension rend l'emplacement d'extension `queue-table-<column-id>-slot` et transmet `queueEntry` dans l'état de l'emplacement. Par exemple, une colonne avec l'ID `eligibility` rend `queue-table-eligibility-slot`.
 
 ### Définitions de tableaux
 

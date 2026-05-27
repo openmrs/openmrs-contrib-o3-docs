@@ -227,12 +227,11 @@ Content packages can include frontend configuration files at `configuration/fron
 **Note**: The demo content package (`openmrs-content-referenceapplication-demo`) includes a frontend configuration file that configures extension slots. To use it, extract `configuration/frontend_configuration/config.json` from the content package and serve it via HTTP/HTTPS, then add its URL to `configUrls` in `spa-build-config.json`.
 
 **Configuration precedence** (highest to lowest):
-1. **Temporary config** (from Implementer Tools) — highest precedence, overrides all other sources
-2. **Content package frontend configs** (from `configuration/frontend_configuration/config.json` in content packages, when manually extracted and added to `configUrls`)
-3. **Config files** (from `configUrls`, loaded sequentially—last file in the array overrides earlier files)
-4. **Schema defaults** (`_default` values in config schemas) — lowest precedence, used when no other source provides a value
+1. **Temporary config** (from Implementer Tools): highest precedence, overrides all other sources
+2. **Config files** (from `configUrls`, loaded sequentially): this includes manually extracted content package frontend configs once their URL is added to `configUrls`; later files in the array override earlier files
+3. **Schema defaults** (`_default` values in config schemas): lowest precedence, used when no other source provides a value
 
-**Note on content package frontend configs**: Content package frontend configs (from `configuration/frontend_configuration/config.json`) must currently be manually extracted and added to `configUrls` to be used. When added to `configUrls`, they are treated as regular config files and follow the same precedence rules—place them earlier in the array to be overridden by other config files, or later to override other config files. The intended design is for content package frontend configs to be automatically loaded with higher precedence than regular config files, but this feature is not yet implemented.
+**Note on content package frontend configs**: Content package frontend configs (from `configuration/frontend_configuration/config.json`) must currently be manually extracted and added to `configUrls` to be used. When added to `configUrls`, they are treated as regular config files and follow the same precedence rules. Place them earlier in the array to be overridden by other config files, or later to override other config files. The intended design is for content package frontend configs to be automatically loaded with higher precedence than regular config files, but this feature is not yet implemented.
 
 **Feature flags configuration:**
 
