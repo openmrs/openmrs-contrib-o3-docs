@@ -15,6 +15,7 @@ De nombreux implémenteurs ont des formulaires construits en utilisant le module
 - Gestion des obs avec des answerConcepts définis et où les réponses doivent être déduites du dictionnaire
 - Gestion du style des obs pour les boutons radio, les cases à cocher, les listes déroulantes
 - Gestion des champs obs qui sont marqués comme obligatoires
+- Gestion de `answerClass` pour les diagnostics
 - Gestion des étiquettes personnalisées telles que définies dans answerLabel/answerLabels
 - Génération de schéma pour la balise obsgroup. La logique est capable de regrouper les questions au sein d'un groupe obs. Elle génère également un schéma pour les groupes marqués comme repeating
 - Exportation du schéma HFE vers un répertoire configurable. Cela est utile dans les cas où le schéma HFE nécessite des mises à jour supplémentaires afin de générer le bon schéma JSON
@@ -27,7 +28,8 @@ De nombreux implémenteurs ont des formulaires construits en utilisant le module
 
 Avant d'utiliser le convertisseur, vous devez configurer une propriété globale :
 
-1. Définissez la propriété globale `htmlformmigration.resources` sur un chemin absolu d'un répertoire accessible en écriture où les schémas de formulaires HTML seront exportés.
+1. Installez le module [HFE to O3 schema converter](https://github.com/openmrs/hfe-o3-form-schema-converter) sur le backend où vos formulaires HTML Form Entry sont disponibles.
+2. Définissez la propriété globale `htmlformmigration.resources` sur un chemin absolu d'un répertoire accessible en écriture où les schémas de formulaires HTML seront exportés.
 
 ### Accès au convertisseur
 
@@ -42,12 +44,12 @@ Le processus de conversion comprend deux étapes :
 
 2. **Convertir en JSON** : Après l'exportation, cliquez sur un formulaire dans la liste pour afficher son schéma JSON converti. Vous pouvez :
    - Afficher le schéma JSON généré dans une fenêtre modale
-   - Modifier le schéma si nécessaire (le convertisseur fournit un éditeur JSON)
-   - Télécharger le fichier de schéma JSON
+   - Ouvrir la boîte de dialogue "View and copy", qui fournit un éditeur JSON pour copier ou ajuster le schéma généré
+   - Copier le JSON généré dans un fichier et continuer à l'affiner dans le Constructeur de Formulaires O3
 
 ### Notes importantes
 
-- **Structure par défaut** : Le convertisseur génère une page par défaut avec une seule section "Starter section" contenant toutes les questions. Vous devrez organiser manuellement les questions en pages et sections appropriées en utilisant le Constructeur de Formulaires O3.
+- **Structure par défaut** : Le convertisseur génère une page par défaut "Starter page" avec une seule section "Starter section" contenant toutes les questions. Vous devrez organiser manuellement les questions en pages et sections appropriées en utilisant le Constructeur de Formulaires O3.
 
 - **Placeholder de version** : Le schéma généré inclut un placeholder de version (`"version": "xxx"`). Vous devez le mettre à jour avec un numéro de version approprié (par exemple, `"1.0"`) avant d'utiliser le formulaire.
 
@@ -59,6 +61,7 @@ L'outil de conversion a certaines limitations :
 
 - **Balises prises en charge** : Seules les balises `obs` et `obsgroup` sont actuellement prises en charge. Les autres balises HTML Form Entry ne sont pas converties automatiquement.
 - **Pages et sections** : Le convertisseur génère des questions mais ne crée pas automatiquement de pages et de sections. Vous devrez organiser manuellement les questions converties en pages et sections en utilisant le Constructeur de Formulaires O3.
+- **Règles de validation** : La prise en charge de la validation est limitée. Revoyez les indicateurs `required` générés et ajoutez manuellement les règles de validation manquantes.
 - **Ajustements manuels** : Après la conversion, vous devrez peut-être ajuster manuellement le schéma généré, en particulier pour les formulaires complexes ou les formulaires utilisant des fonctionnalités non prises en charge.
 
 Bien que cela ne vous permette pas de migrer complètement vos formulaires, cela devrait vous permettre d'avancer suffisamment pour que vous puissiez utiliser le constructeur de formulaires intégré à O3 pour apporter les modifications restantes à vos schémas.

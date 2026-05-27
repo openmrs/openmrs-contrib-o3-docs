@@ -2,7 +2,7 @@ import { Callout, Steps } from "nextra/components";
 
 # Building forms using the O3 Form Builder
 
-O3 comes out of the box with a built-in form builder that you could leverage to build your form schemas. The Form Builder uses the [React Form Engine](https://github.com/openmrs/openmrs-form-engine-lib) to render form previews and validate schemas. To access it, click the app switcher icon in the navigation bar and click the `System Administration` link. You'll get navigated to the System Administration page where you'll see a list of cards for apps. Click on the `Form Builder` card and you'll be navigated to the Form Builder UI.
+O3 comes out of the box with a built-in form builder that you can use to build form schemas. The Form Builder uses the [React Form Engine](https://github.com/openmrs/openmrs-form-engine-lib) to render form previews and validate schemas. To access it, go to `${openmrsSpaBase}/form-builder`, or click the app switcher icon in the navigation bar, open `System Administration`, and select the `Form Builder` card.
 
 ## 5 Minute Demo Video (Explained in Detail Below)
 
@@ -15,16 +15,17 @@ The main pages in the O3 form builder are:
 - The `Forms Dashboard` - where you'll see a tabular list of form schemas saved in your server. You can search through the available forms and filter them by publish status. You can also click on the Edit icon next to each form to launch it in the form editor, where you can make changes to it.
 - The `Form Editor` - where you can create a new form schema or edit an existing one. The Form Editor consists of the following things:
 
-  - `Schema Editor` - contains an embedded JSON editor that uses the [React Ace](https://github.com/securingsincity/react-ace) library. Changes made to the schema editor have to be synced over to the Form Preview by clicking the `Render changes` button at the top of the editor. JSON code typed into the editor should match the [standard O3 form schema](https://github.com/openmrs/openmrs-contrib-json-schemas/blob/main/form.schema.json). Read the [React Form Engine documentation](https://openmrs.atlassian.net/wiki/spaces/projects/pages/68747273/O3+Form+Docs) to learn more about what schema properties are available.
-  - `Form Preview` - a live form preview that renders the form schema using the [React Form Engine](https://github.com/openmrs/openmrs-form-engine-lib) as you would see it within your EMR. The Form Preview responds to changes made to the Schema Editor and the Interactive Builder.
-  - `Interactive Builder` - an interactive UI that enables you to build out your form schemas without writing JSON code. Changes to your schema get synced over to both the Schema Editor and the Form Preview as you build your form. You can use the Interactive Builder to add pages, sections, and questions to your form.
-  - `Audit details` - a UI that displays audit information related to a form, including the form's name, description, version, and published status.
+  - `Schema Editor` - contains an embedded JSON editor that uses the [React Ace](https://github.com/securingsincity/react-ace) library. You can import a schema, load a sample schema when creating a new form, copy or download the current schema, and click `Render changes` to sync manual JSON edits to the preview. JSON code typed into the editor should match the [standard O3 form schema](https://github.com/openmrs/openmrs-contrib-json-schemas/blob/main/form.schema.json). Read the [React Form Engine documentation](https://openmrs.atlassian.net/wiki/spaces/projects/pages/68747273/O3+Form+Docs) to learn more about what schema properties are available.
+  - `Preview` - a live form preview that renders the form schema using the [React Form Engine](https://github.com/openmrs/openmrs-form-engine-lib) as you would see it within your EMR. The preview updates automatically from the Interactive Builder and after you click `Render changes` for Schema Editor edits. You can also choose the preview language when the form has translations.
+  - `Interactive Builder` - an interactive UI that enables you to build out your form schemas without writing JSON code. Changes to your schema get synced over to both the Schema Editor and the Preview as you build your form. You can use the Interactive Builder to add pages, sections, and questions to your form.
+  - `Translation Builder` - a UI for adding and editing schema translations that can be previewed from the language selector in the editor.
+  - `Audit Details` - a UI that displays metadata related to a saved form, including the form's name, description, UUID, version, encounter type, creator, last editor, published status, and retired status.
 
 Once you've built out your form schema to fit your requirements, you could choose to:
 
-- `Validate fields` - the O3 Form Builder has rich validation capabilities powered by the React Form Engine. To learn more about what's possible, read the [React Form Engine documentation](https://openmrs.atlassian.net/wiki/spaces/projects/pages/68747273/O3+Form+Docs).
-- `Save` your form to the server - saving your schema to your own database is the best way to guarantee persistence. The O3 server is ephemeral at best and should not be relied upon for persisting your schemas. We recommend maintaining a local backup of your schemas to avoid losing them when working with the O3 server.
-- `Publish` or `unpublish` your form - Once you've saved your form, you can choose to publish it. Only published forms are accessible to the forms workspace in the patient chart. We recommend maintaining some kind of versioning scheme so you can control which forms are accessible to users and which ones aren't. In addition to publishing forms, you can also unpublish existing published forms. This can be useful if, say, you want to deprecate an older version of a form and replace it with a new version but wish to maintain some kind of version history.
+- `Validate form` - when `@openmrs/esm-form-builder-app` is configured with `enableFormValidation: true`, the editor shows validation actions powered by the React Form Engine. By default this validation workflow is disabled, and the form can be published with the regular publish action.
+- `Save` your form to the server - saving your schema persists it in your OpenMRS database. Shared demo or test servers can be reset, so keep version-controlled backups of important schemas and avoid relying on a demo server as the only copy.
+- `Publish` or `unpublish` your form - once you've saved your form, you can choose to publish it. Only published forms are shown in the default forms workspace in the patient chart. If form validation is enabled, the publish action becomes `Validate and publish form`; otherwise, it appears as `Publish form`. You can unpublish existing published forms when you want to retire an older version from clinical use while preserving its history.
 
 ## Key Form Engine Capabilities
 
@@ -41,11 +42,11 @@ Forms are organized hierarchically:
 
 Questions can be rendered in various ways depending on the `rendering` property in `questionOptions`:
 
-- **Text inputs**: `text`, `textarea`, `number`
-- **Date/time**: `date`, `datetime`
-- **Selection**: `select`, `radio`, `checkbox`, `checkbox-searchable`, `toggle`
-- **Special**: `drug` (for medication orders), `file` (for attachments), `problem` (for diagnoses), `workspace-launcher` (to open other workspaces)
-- **Structural**: `group` (for obs groups), `repeating` (for repeatable sections), `markdown` (for read-only content)
+- **Basic inputs**: `text`, `textarea`, `number`
+- **Date, time, and encounter metadata**: `date`, `datetime`, `encounter-location`, `encounter-provider`, `encounter-role`
+- **Selection**: `select`, `select-concept-answers`, `radio`, `checkbox`, `checkbox-searchable`, `content-switcher`, `toggle`, `ui-select-extended`
+- **Clinical and specialized inputs**: `drug` (for medication orders), `problem` (for diagnoses), `file` (for attachments), `workspace-launcher` (to open other workspaces), `extension-widget` (to render a custom extension)
+- **Structural and read-only content**: `group` (for obs groups), `repeating` (for repeatable sections), `markdown`, `fixed-value`
 
 ### Advanced Features
 
@@ -55,6 +56,7 @@ Questions can be rendered in various ways depending on the `rendering` property 
 - **Historical expressions** - Pre-fill fields with values from previous encounters
 - **Data sources** - Populate fields from external data sources
 - **Subforms** - Embed reusable forms within other forms
+- **Translations** - Store translations in the schema and preview the form in a selected language
 - **Post-submission actions** - Execute actions after form submission (e.g., program enrollment)
 
 For comprehensive documentation on all available features, rendering types, validation options, and advanced capabilities, see the [React Form Engine documentation](https://openmrs.atlassian.net/wiki/spaces/projects/pages/68747273/O3+Form+Docs).
@@ -84,7 +86,7 @@ Here, you can choose to type JSON code into the Schema Editor or to build your f
 To use the Schema Editor:
 
 - Click on the `Schema Editor` tab (if not already selected)
-- Press the `Input Dummy Schema` button (this button only appears when creating a new form with no existing schema) to get a scaffold in your editor where you can begin editing from. Amend the scaffold by deleting or replacing the values of the properties highlighted below with your own content:
+- Press the `Load sample schema` button (this button only appears when creating a new form with no existing schema) to get a scaffold in your editor where you can begin editing from. Amend the scaffold by deleting or replacing the values of the properties highlighted below with your own content:
 - After making changes to your schema, click the `Render changes` button (located at the top of the Schema Editor) to sync your changes to the Form Preview
 
 ```json {3, 7, 10, 13, 16, 17, 19, 20-21, 23, 28, 32-33, 35, 38-52, 55}
@@ -158,9 +160,9 @@ To use the Interactive Builder:
 - Click the `Start building` button
 - Enter a `form name` and an optional `form description`
 - Click the `Create form` button
-- Click the `Add Page +` button to add a new page
-- Click the `Add Section +` button to add a new section
-- Click the `Add Question +` button to add a new question
+- Click the `Add Page` button to add a new page
+- Click the `Add Section` button to add a new section
+- Click the `Add Question` button to add a new question
 
 </Steps>
 
@@ -180,11 +182,11 @@ Here, you can choose to use either the Schema Editor or the Interactive Builder 
 
 ### Step 3
 
-Ultimately, when you're done editing your form, you'll want to save it. Click the `Save form` button at the top of the Form Editor. A confirmation modal will appear asking whether you want to update the existing version or save as a new form. Click the `Update existing version` button to update the current form. Any details entered from either the Schema Editor or Interactive Builder should get picked up here automatically. If you've made significant changes, you might consider updating the version of your form, as well as describing what changed in the description field. Fill in the form details (name, version, encounter type, description) and click the `Save` button to persist your changes to the server.
+Ultimately, when you're done editing your form, you'll want to save it. Click the `Save form` button in the Form Editor. A confirmation modal will appear asking whether you want to update the existing version or save as a new form. Click `Update existing version` to update the current form, or `Save as a new form` to preserve the existing version and create a new one. Any details entered from either the Schema Editor or Interactive Builder should get picked up here automatically. If you've made significant changes, consider updating the version of your form and describing what changed in the description field. Fill in the form details (name, version, encounter type, description) and click `Save` to persist your changes to the server.
 
 ### Step 4
 
-At this point, if your form is ready for use, you can choose to publish it. To do so, click the `Publish form` button at the top of the Form Editor to publish the form and make it available in the patient chart.
+At this point, if your form is ready for use, you can choose to publish it. Click `Publish form`, or `Validate and publish form` when validation is enabled, to make the form available in the patient chart.
 
 </Steps>
 
@@ -193,7 +195,7 @@ At this point, if your form is ready for use, you can choose to publish it. To d
 - [React Form Engine documentation](https://openmrs.atlassian.net/wiki/spaces/projects/pages/68747273/O3+Form+Docs) - comprehensive guide to the React Form Engine that powers the Form Builder's preview and rendering
 - [Form Builder app repo](https://github.com/openmrs/openmrs-esm-form-builder)
 - [React Form Engine library repo](https://github.com/openmrs/openmrs-form-engine-lib)
-- Video tutorial: Form Builder demo (old version)
+- Video tutorial: Form Builder demo (older UI wording, still useful for the core flow)
 
 <br />
 <iframe

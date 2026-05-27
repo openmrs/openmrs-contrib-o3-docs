@@ -15,6 +15,7 @@ Many implementers have forms built using the HTML Form Entry module. To make it 
 - Handling obs with defined `answerConcepts` and where the answers should be inferred from the dictionary
 - Handling of obs styling for radio, checkbox, dropdown
 - Handling obs fields that are marked as required
+- Handling diagnosis `answerClass`
 - Handling of custom labels as defined in answerLabel/answerLabels
 - Schema generation for the `obsgroup` tag. The logic can group questions within an obs group. It also generates a schema for groups marked as `repeating`
 - Exporting the HFE schema to a configurable directory. This is helpful in cases where the HFE schema requires further updates to generate the correct JSON schema
@@ -27,7 +28,8 @@ Many implementers have forms built using the HTML Form Entry module. To make it 
 
 Before using the converter, you need to configure a global property:
 
-1. Set the `htmlformmigration.resources` global property to an absolute path of a writable directory where HTML form schemas will be exported.
+1. Install the [HFE to O3 schema converter](https://github.com/openmrs/hfe-o3-form-schema-converter) module in the backend where your HTML Form Entry forms are available.
+2. Set the `htmlformmigration.resources` global property to an absolute path of a writable directory where HTML form schemas will be exported.
 
 ### Accessing the converter
 
@@ -42,12 +44,12 @@ The conversion process involves two steps:
 
 2. **Convert to JSON**: After exporting, click on a form in the list to view its converted JSON schema. You can:
    - View the generated JSON schema in a modal dialog
-   - Edit the schema if needed (the converter provides a JSON editor)
-   - Download the JSON schema file
+   - Open the "View and copy" dialog, which provides a JSON editor for copying or adjusting the generated schema
+   - Copy the generated JSON into a file and continue refining it in the O3 Form Builder
 
 ### Important notes
 
-- **Default structure**: The converter generates a default page with a single "Starter section" containing all questions. You'll need to manually organize questions into appropriate pages and sections using the O3 Form Builder.
+- **Default structure**: The converter generates a default "Starter page" with a single "Starter section" containing all questions. You'll need to manually organize questions into appropriate pages and sections using the O3 Form Builder.
 
 - **Version placeholder**: The generated schema includes a placeholder version (`"version": "xxx"`). You must update this to a proper version number (e.g., `"1.0"`) before using the form.
 
@@ -59,6 +61,7 @@ The converter tool has some limitations:
 
 - **Supported tags**: Only `obs` and `obsgroup` tags are currently supported. Other HTML Form Entry tags are not converted automatically.
 - **Pages and sections**: The converter generates questions but does not automatically create pages and sections. You'll need to manually organize the converted questions into pages and sections using the O3 Form Builder.
+- **Validation rules**: Validation support is limited. Review any generated `required` flags and add missing validation rules manually.
 - **Manual adjustments**: After conversion, you may need to manually adjust the generated schema, especially for complex forms or forms using unsupported features.
 
 While this won't get you all the way there in terms of migrating your forms, it should get you far along enough that you can use O3's built-in form builder to make the remaining changes to your schemas.
