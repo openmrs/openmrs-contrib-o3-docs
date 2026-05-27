@@ -30,6 +30,10 @@ function launchMyForm(form: Form, encounterUuid?: string) {
 }
 ```
 
+<Callout emoji="ℹ️" type="info">
+`patient-form-entry-workspace` reads `patient`, `patientUuid`, `visitContext`, and `mutateVisitContext` from the patient chart workspace group. Launch it from inside the patient chart, or build your own workspace wrapper if your form needs to run outside that context.
+</Callout>
+
 The workspace wraps the form in `Workspace2`, renders the `visit-context-header-slot`, and then renders either an HTML Form Entry iframe or the React Form Engine through the `form-widget-slot`.
 
 ### Creating a custom form workspace
@@ -38,7 +42,7 @@ The workspace wraps the form in `Workspace2`, renders the `visit-context-header-
 The `react-form-engine-widget` extension is registered by `@openmrs/esm-form-engine-app` in the `form-widget-slot`. You only need a custom workspace when you want a different workspace shell, custom data refresh behavior, or a non-patient-chart rendering context.
 </Callout>
 
-If you do create your own workspace, register it with Workspace v2 routes:
+If you do create your own workspace for the patient chart, register it with Workspace v2 routes and put its window in the `patient-chart` group:
 
 ```json
 {
@@ -88,6 +92,7 @@ export function MyFormWorkspace({
     patientUuid,
     encounterUuid: encounterUuid ?? '',
     visit: visitContext,
+    visitUuid: visitContext?.uuid,
     closeWorkspace,
     closeWorkspaceWithSavedChanges: () => {
       mutateVisitContext?.();
@@ -118,6 +123,8 @@ function launchMyCustomWorkspace(formUuid: string) {
   });
 }
 ```
+
+This launch example assumes it runs from a patient-chart extension or page, so the `patient-chart` group props are available to the workspace.
 
 <Callout emoji="💡" type="info">
 The form renderer extension automatically handles form schema loading, error states, and workspace lifecycle management. It's the recommended approach for most use cases.
@@ -197,15 +204,15 @@ The `FormEngine` component accepts the following props:
 - **`encounterUUID`** (string) - The UUID of an existing encounter to edit. When provided, the form will be pre-filled with encounter data and rendered in edit mode.
 - **`visit`** (Visit) - The visit object to associate with a submitted encounter. The patient chart form workspace supplies the active visit for new forms, or the encounter's own visit when editing an existing encounter.
 - **`mode`** (`'enter' | 'edit' | 'view' | 'embedded-view'`) - The rendering mode for the form. See [Form rendering modes](#form-rendering-modes) below.
-- **`formSessionIntent`** (string) - The intent of the form session (default: `'*'`). Used to filter form sessions when loading initial values.
-- **`onSubmit`** (function) - Callback function called when the form is successfully submitted. Receives an array of created/updated encounters.
+- **`formSessionIntent`** (string) - The intent of the form session. Used to filter form sessions when loading initial values. The form renderer extension passes `'*'` by default; when using `FormEngine` directly, pass `'*'` explicitly if you want wildcard intent behavior.
+- **`onSubmit`** (function) - Callback function called when the form is successfully submitted. Receives an array of processor results. For forms that use `EncounterFormProcessor`, those results are created or updated encounters.
 - **`onCancel`** (function) - Callback function called when the user cancels the form.
 - **`handleClose`** (function) - Callback function called when the form should be closed.
 - **`handleConfirmQuestionDeletion`** (function) - Custom handler for confirming deletion of repeatable questions. Should return a Promise that resolves when deletion is confirmed.
 - **`markFormAsDirty`** (function) - Callback function called when the form's dirty state changes. Useful for workspace integration to prompt before closing.
 - **`hideControls`** (boolean) - Hide form action buttons (Save, Cancel). Useful for embedded views or custom UI.
 - **`hidePatientBanner`** (boolean) - Hide the patient banner that appears in ultra-wide workspaces.
-- **`preFilledQuestions`** (Record&lt;string, string&gt;) - Pre-fill specific questions with values. Keys are question IDs, values are the pre-filled values.
+- **`preFilledQuestions`** (Record&lt;string, string | number | Date | boolean | Array&lt;string&gt;&gt;) - Pre-fill specific questions with values. Keys are question IDs, values are the pre-filled values.
 
 ### Common prop combinations
 
@@ -231,6 +238,7 @@ The `FormEngine` component accepts the following props:
 ```tsx
 import React, { useState } from 'react';
 import { Workspace2, type Workspace2DefinitionProps } from '@openmrs/esm-framework';
+import { FormEngine } from '@openmrs/esm-form-engine-lib';
 
 function MyDirectFormWorkspace({
   closeWorkspace,
@@ -326,9 +334,9 @@ The React Form Engine supports four rendering modes, each suited for different u
 
 **Behavior:**
 - Form is rendered in read-only mode
-- Section headers and form actions are hidden
+- Sidebar navigation and bottom action buttons are hidden
 - Patient banner is hidden
-- Sidebar navigation is hidden
+- Empty transient fields, and empty unanswered fields configured to be hidden in read-only forms, are omitted
 - Compact layout suitable for embedding in other components
 
 ```tsx
@@ -343,7 +351,7 @@ The React Form Engine supports four rendering modes, each suited for different u
 
 ## Form submission and response handling
 
-When a form is submitted, the `onSubmit` callback receives an array of encounters that were created or updated. Each encounter contains the form data that was submitted.
+When a form is submitted, the `onSubmit` callback receives an array of processor results. For forms that use `EncounterFormProcessor`, each result is an encounter that was created or updated.
 
 ### Handling form submission
 
@@ -361,8 +369,7 @@ function MyFormWorkspace({ patientUuid, formUuid }: Props) {
     // Close workspace or navigate
     closeWorkspace({ discardUnsavedChanges: true });
 
-    // Refresh related data
-    mutate('/ws/rest/v1/encounter');
+    // Refresh related encounter, visit, or workspace data here.
   };
 
   return (
@@ -428,6 +435,7 @@ export function MyFormWorkspace({
       patient,
       patientUuid,
       visit: visitContext,
+      visitUuid: visitContext?.uuid,
       encounterUuid: encounterUuid ?? '',
       closeWorkspace,
       closeWorkspaceWithSavedChanges: () => {
@@ -468,18 +476,18 @@ You can pre-fill specific questions in a form using the `preFilledQuestions` pro
   patientUUID={patientUuid}
   formUUID={formUuid}
   preFilledQuestions={{
-    'vitals-weight': '70',
-    'vitals-height': '175',
+    'vitals-weight': 70,
+    'vitals-height': 175,
     'chief-complaint': 'Patient reports headache'
   }}
 />
 ```
 
-The keys in `preFilledQuestions` should match the `id` property of the questions in your form schema.
+The keys in `preFilledQuestions` should match the `id` property of the questions in your form schema. When you pass values through the patient chart form renderer extension, keep them as strings because its shared `FormRendererProps` type currently narrows `preFilledQuestions` to `Record<string, string>`.
 
 ## Form session intent
 
-The `formSessionIntent` prop allows you to filter form sessions when loading initial values. This is useful when you want to pre-fill a form with data from a specific type of encounter or session:
+The `formSessionIntent` prop allows you to filter form sessions when loading initial values. This is useful when you want to pre-fill a form with data from a specific type of encounter or session. The patient chart form renderer extension defaults this to `'*'`, but direct `FormEngine` usage leaves it unset unless you pass a value:
 
 ```tsx
 <FormEngine
