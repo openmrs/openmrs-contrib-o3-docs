@@ -352,20 +352,30 @@ export function startupApp() {
 }
 ```
 
-Le nom de l'extension doit correspondre à la propriété `name` de l'extension telle que définie dans `routes.json`. Lorsqu'une extension a son propre schéma de configuration, `useConfig()` dans cette extension fusionne la configuration normale du module avec la configuration de l'extension. Les valeurs spécifiques à l'extension ont la priorité lorsque la même clé existe aux deux endroits.
+Le nom de l'extension doit correspondre à la propriété `name` de l'extension telle que définie dans `routes.json`. Lorsqu'une extension a son propre schéma de configuration, les valeurs de base de ce schéma sont fournies sous le nom de l'extension, pas sous le nom du module. `useConfig()` dans cette extension retourne toujours la configuration normale du module plus la configuration de l'extension. Les valeurs spécifiques à l'extension ont la priorité lorsque la même clé de premier niveau existe aux deux endroits.
 
 **Comment la configuration de l'extension est résolue :**
 
 Les valeurs de configuration de l'extension sont déterminées en fusionnant plusieurs sources dans cet ordre :
 
-1. **Configuration de base de l'extension** - Valeurs du schéma propre de l'extension (si défini) ou du schéma du module parent
+1. **Configuration de base de l'extension** - Valeurs fournies sous le nom de l'extension lorsque l'extension a son propre schéma, ou sous le nom du module de l'extension lorsqu'elle utilise le schéma du module
 2. **Remplacements spécifiques au slot** - Valeurs de l'objet `configure` dans la configuration du slot (priorité la plus élevée)
 
 Cette fusion permet aux administrateurs de personnaliser le comportement d'une extension différemment pour chaque slot où elle apparaît. Par exemple, la même extension pourrait avoir des paramètres différents lorsqu'elle est utilisée dans un en-tête de patient par rapport à un tableau de bord.
 
 La clé dans `configure` doit correspondre à l'ID d'extension assigné au slot. Si vous attachez plusieurs fois la même extension avec des IDs d'instance comme `my-extension#left` et `my-extension#right`, configurez ces IDs complets séparément.
 
-La configuration de l'extension peut être remplacée par slot en utilisant l'objet `configure` dans la configuration du slot :
+Par exemple, ceci fournit la configuration de base de l'extension :
+
+```json
+{
+  "my-extension-name": {
+    "customSetting": "base value"
+  }
+}
+```
+
+La configuration de l'extension peut ensuite être remplacée par slot en utilisant l'objet `configure` dans la configuration du slot :
 
 ```json
 {

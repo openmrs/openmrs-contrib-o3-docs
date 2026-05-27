@@ -352,20 +352,30 @@ export function startupApp() {
 }
 ```
 
-The extension name should match the `name` property of the extension as defined in `routes.json`. When an extension has its own config schema, `useConfig()` within that extension will merge the module's normal configuration with the extension's configuration. Extension-specific values take precedence when the same key exists in both places.
+The extension name should match the `name` property of the extension as defined in `routes.json`. When an extension has its own config schema, base values for that schema are provided under the extension name, not under the module name. `useConfig()` within that extension still returns the module's normal configuration plus the extension's configuration. Extension-specific values take precedence when the same top-level key exists in both places.
 
 **How extension configuration is resolved:**
 
 Extension configuration values are determined by merging multiple sources in this order:
 
-1. **Extension's base configuration** - Values from the extension's own schema (if defined) or from the parent module's schema
+1. **Extension's base configuration** - Values provided under the extension name when the extension has its own schema, or under the extension module name when it uses the module schema
 2. **Slot-specific overrides** - Values from the `configure` object in the slot's configuration (highest precedence)
 
 This merging allows administrators to customize an extension's behavior differently for each slot where it appears. For example, the same extension could have different settings when used in a patient header versus a dashboard.
 
 The `configure` key must match the extension ID assigned to the slot. If you attach the same extension multiple times with instance IDs such as `my-extension#left` and `my-extension#right`, configure those full IDs separately.
 
-Extension configuration can be overridden per-slot using the `configure` object in the slot's configuration:
+For example, this provides the extension's base configuration:
+
+```json
+{
+  "my-extension-name": {
+    "customSetting": "base value"
+  }
+}
+```
+
+Extension configuration can then be overridden per-slot using the `configure` object in the slot's configuration:
 
 ```json
 {
