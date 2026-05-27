@@ -10,15 +10,11 @@ documented [here](https://rest.openmrs.org/).
 Endpoints from the FHIR Module should always be preferred, when they are
 available. FHIR is an interoperability standard which OpenMRS supports.
 
-Some data is available using higher-level functions or custom React Hooks provided
-by `@openmrs/esm-framework`. These should be used when available.
-
-All of this functionality (React hooks excepted) is provided by the
-[`@openmrs/esm-api`](https://github.com/openmrs/openmrs-esm-core/tree/main/packages/framework/esm-api)
-package, which is part of `@openmrs/esm-framework`.
-The React hooks are in
-[`@openmrs/esm-react-utils`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-react-utils),
-which is also part of `@openmrs/esm-framework`. See the
+Some data is available using higher-level functions or custom React hooks provided by `@openmrs/esm-framework`.
+Use those public framework exports when available. Internally, these APIs come from packages such as
+[`@openmrs/esm-api`](https://github.com/openmrs/openmrs-esm-core/tree/main/packages/framework/esm-api),
+`@openmrs/esm-emr-api`, and `@openmrs/esm-react-utils`, but application code should import them from
+`@openmrs/esm-framework`. See the
 [API Docs](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md).
 
 ## FHIR
@@ -148,9 +144,6 @@ useEffect(() => {
 ## API Objects
 
 Some API objects are made available via React hooks (or via framework-agnostic subscriptions).
-The hooks are in
-`@openmrs/esm-react-utils`,
-and the subscription-yielding equivalents are in
-[`@openmrs/esm-api`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#api-functions).
+Import the hooks and the subscription-yielding equivalents from `@openmrs/esm-framework`.
 See for example [`useVisitTypes`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#usevisittypes)
 and the corresponding [`getVisitTypes`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#getvisittypes).

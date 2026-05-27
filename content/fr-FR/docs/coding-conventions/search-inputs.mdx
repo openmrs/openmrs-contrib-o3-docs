@@ -2,7 +2,7 @@
 
 Voici quelques lignes directrices générales pour les champs de recherche :
 
-- Préférez utiliser la fonctionnalité de recherche côté serveur plutôt que d'implémenter le filtrage de recherche côté client. Ce dernier nécessite de récupérer l'ensemble de données complet et peut être inefficace. Cependant, la recherche côté client pourrait être le bon choix dans les cas où la fonctionnalité de recherche côté serveur est insuffisante ou lorsque la taille de résultat attendue est petite. Dans les deux cas, soyez prudent avec la gestion de la pagination côté serveur, car la plupart des ressources REST ont une [limite de taille](https://openmrs.atlassian.net/wiki/spaces/docs/pages/25469882/REST+Module) de résultat de recherche par requête. Utilisez les hooks [useOpenmrsPagination](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-react-utils/src/useOpenmrsPagination.ts), [useOpenmrsFetchAll](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-react-utils/src/useOpenmrsFetchAll.ts) et [useOpenmrsInfinite](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-react-utils/src/useOpenmrsInfinite.ts) pour gérer la pagination côté serveur pour différents cas d'usage.
+- Préférez utiliser la fonctionnalité de recherche côté serveur plutôt que d'implémenter le filtrage de recherche côté client. Ce dernier nécessite de récupérer l'ensemble de données complet et peut être inefficace. Cependant, la recherche côté client pourrait être le bon choix dans les cas où la fonctionnalité de recherche côté serveur est insuffisante ou lorsque la taille de résultat attendue est petite. Dans les deux cas, soyez prudent avec la gestion de la pagination côté serveur, car la plupart des ressources REST ont une [limite de taille](https://openmrs.atlassian.net/wiki/spaces/docs/pages/25469882/REST+Module) de résultat de recherche par requête. Utilisez les hooks [useOpenmrsPagination](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#useopenmrspagination), [useOpenmrsFetchAll](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#useopenmrsfetchall) et [useOpenmrsInfinite](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#useopenmrsinfinite) depuis `@openmrs/esm-framework` pour gérer la pagination côté serveur pour différents cas d'usage.
 
   ```tsx
   import { restBaseUrl, useOpenmrsFetchAll } from "@openmrs/esm-framework";
@@ -12,7 +12,7 @@ Voici quelques lignes directrices générales pour les champs de recherche :
   // faire quelque chose avec les données
   ```
 
-- Débouncez les champs de recherche pour éviter les requêtes inutiles au backend. Utilisez le hook [useDebounce](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-react-utils/src/useDebounce.ts) de `@openmrs/esm-framework` pour débouncer les champs de recherche. Voici un extrait (certains bits sont omis pour la brièveté) montrant comment vous pourriez utiliser le hook :
+- Débouncez les champs de recherche pour éviter les requêtes inutiles au backend. Utilisez le hook [useDebounce](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#usedebounce) de `@openmrs/esm-framework` pour débouncer les champs de recherche. Voici un extrait (certains bits sont omis pour la brièveté) montrant comment vous pourriez utiliser le hook :
 
   ```tsx
   import { useDebounce } from "@openmrs/esm-framework";

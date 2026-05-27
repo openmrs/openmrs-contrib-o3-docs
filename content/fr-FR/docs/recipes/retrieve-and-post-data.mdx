@@ -5,15 +5,12 @@ Les modules frontaux interagissent avec le serveur OpenMRS via les API exposées
 Les points de terminaison du module FHIR devraient toujours être préférés, lorsqu'ils sont
 disponibles. FHIR est une norme d'interopérabilité qu'OpenMRS prend en charge.
 
-Certaines données sont disponibles en utilisant des fonctions de plus haut niveau ou des crochets React personnalisés fournis
-par `@openmrs/esm-framework`. Celles-ci doivent être utilisées lorsqu'elles sont disponibles.
-
-Toutes ces fonctionnalités (à l'exception des crochets React) sont fournies par l'application
-[`@openmrs/esm-api`](https://github.com/openmrs/openmrs-esm-core/tree/main/packages/framework/esm-api)
-qui fait partie de `@openmrs/esm-framework`.
-Les hooks React sont dans
-[`@openmrs/esm-react-utils`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-react-utils),
-qui fait également partie de `@openmrs/esm-framework`. Voir la documentation de l'API
+Certaines données sont disponibles en utilisant des fonctions de plus haut niveau ou des hooks React personnalisés fournis
+par `@openmrs/esm-framework`. Utilisez ces exports publics du framework lorsqu'ils sont disponibles. En interne, ces API
+proviennent de packages comme
+[`@openmrs/esm-api`](https://github.com/openmrs/openmrs-esm-core/tree/main/packages/framework/esm-api),
+`@openmrs/esm-emr-api` et `@openmrs/esm-react-utils`, mais le code applicatif doit les importer depuis
+`@openmrs/esm-framework`. Voir la documentation de l'API
 [API Docs](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md).
 
 ## FHIR
@@ -142,9 +139,6 @@ useEffect(() => {
 ## Objets de l'API
 
 Certains objets de l'API sont mis à disposition via des crochets React (ou via des abonnements agnostiques au cadre).
-Les crochets se trouvent dans
-`@openmrs/esm-react-utils`,
-et les équivalents pour les abonnements sont dans
-[`@openmrs/esm-api`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#api-functions).
+Importez les hooks et les équivalents par abonnement depuis `@openmrs/esm-framework`.
 Voir par exemple [`useVisitTypes`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#usevisittypes)
 et le correspondant [`getVisitTypes`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#getvisittypes).
