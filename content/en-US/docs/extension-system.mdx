@@ -7,11 +7,11 @@ Introduced by [RFC-27](https://github.com/openmrs/openmrs-rfc-frontend/blob/mast
 <Callout emoji="ℹ️" type="info">
   Those familiar with the [OpenMRS RefApp 2.x extension
   system](https://openmrs.atlassian.net/wiki/spaces/Archives/pages/25520677/Module+Extension+Points) will be glad to know that the basic concepts
-  here are similar, but simpler. “Extensions” are roughly the same thing as before, “points” are now called “slots,” and
-  there is no longer anything like “apps,” which no one really understood anyway.
+  here are similar, but simpler. "Extensions" are roughly the same thing as before, extension "points" are now called
+  "slots," and O3 frontend modules use `routes.json` instead of RefApp-style app definitions.
 </Callout>
 
-## Key Concepts
+## Key concepts
 
 The extension system posits two concepts: `extensions` and `slots`. An `extension` is a component. A `slot` is a place in the UI.
 
@@ -19,7 +19,9 @@ Extensions get rendered into slots. An extension gets associated with a slot in 
 
 - The extension names the slot in its definition, using the `slot` or `slots` property.
 - A call to the [attach](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#attach) function.
-- A system administrator adds the extension to the slot using the slot’s add array.
+- A system administrator adds the extension to the slot using the slot's `add` array.
+
+Slot names are global at runtime. If two modules render the same slot name, O3 treats that as the same extension point; if they try to register ownership from different modules, the runtime warns and keeps the first owner.
 
 ## When to use extensions and slots
 
@@ -39,9 +41,18 @@ Consider exporting the component and using it the normal way.
 
 ## Usage
 
-Extensions are defined in a module's `routes.json` file. This is the required approach for Core v5+ modules. The `setupOpenMRS` function was used in Core v4 and earlier but is no longer supported in Core v5+. Modules must migrate to `routes.json` to work with Core v5+. Each extension definition includes a name and a component reference. It may also specify the names of slots to attach the extension to by default, required privileges for role-based access control, connectivity requirements, and a [number of other things](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/interfaces/ExtensionRegistration.md), some of which will be covered below.
+Extensions are defined in a module's `routes.json` file. This is the current approach for O3 frontend modules. The older `setupOpenMRS` registration approach from Core v4 and earlier is not supported in Core v5+. Each extension definition includes a name and a component reference. It may also specify the names of slots to attach the extension to by default, required privileges for role-based access control, connectivity requirements, feature flags, display expressions, and `meta`.
 
 Slots are components. There is an [ExtensionSlot](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#extensionslot) React component. If you are working in a different framework and would like to create an extension slot, please get in touch with the OpenMRS Frontend 3.0 team on Slack.
+
+At runtime, the flow is:
+
+1. The distro build includes each module's `routes.json` in `routes.registry.json`.
+2. The app shell reads the routes registry and registers each extension definition.
+3. A host module renders `<ExtensionSlot name="..." />`.
+4. O3 computes the assigned extension IDs from default `slot`/`slots` attachments plus administrator `add`, `remove`, `order`, and `configure` settings.
+5. O3 filters assigned extensions by privileges, display expressions, feature flags, and the extension definition's `online`/`offline` flags.
+6. The slot renders each extension as a single-spa parcel and passes `_meta`, `_extensionContext`, and any slot `state` props.
 
 ## Principles
 
@@ -147,11 +158,13 @@ The `Display conditions` object supports the following properties:
   - `session.currentProvider` - the current provider
   - `session.locale` - the current locale
 
-- **`online`** (boolean): Overrides whether the extension displays when the browser is online. If not specified, the extension's default `online` property is used.
+  The expression context also includes values from the slot's `state` object, so patient-scoped slots can expose values like `patientUuid` to display expressions.
 
-- **`offline`** (boolean): Overrides whether the extension displays when the browser is offline. If not specified, the extension's default `offline` property is used.
+Connectivity is controlled by the extension definition's `online` and `offline` fields in `routes.json`, not by `Display conditions` configuration.
 
 **Example configuration:**
+
+Slot configuration belongs under the module that owns the slot. In this example, `@openmrs/esm-patient-chart` is the module rendering `patient-header-slot`.
 
 ```json
 {
@@ -162,9 +175,7 @@ The `Display conditions` object supports the following properties:
           "vitals-widget": {
             "Display conditions": {
               "privileges": ["View Vitals", "Manage Vitals"],
-              "expression": "session.user.systemId !== 'admin' && session.sessionLocation?.uuid === 'some-location-uuid'",
-              "online": true,
-              "offline": false
+              "expression": "session.user.systemId !== 'admin' && session.sessionLocation?.uuid === 'some-location-uuid'"
             }
           }
         }
@@ -178,7 +189,6 @@ This configuration would:
 - Require the user to have both "View Vitals" and "Manage Vitals" privileges
 - Hide the extension for users with systemId "admin"
 - Only show the extension when the session location matches a specific UUID
-- Only display when online
 
 #### UI Editor
 
@@ -233,7 +243,7 @@ Sometimes, extensions might want to pass information to the slot that receives t
 
 Meta is provided by extensions in their definition in `routes.json`. (In Core v4 and earlier, this was done in the `setupOpenMRS` function, but that approach is no longer supported in Core v5+.)
 
-Slots can access meta through the extension system API, such as by using [useExtensionSlotMeta](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#useextensionslotmeta).
+Slots can access meta through the extension system API, such as by using [useExtensionSlotMeta](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#useextensionslotmeta). `meta` comes from the extension definition; use slot `configure` settings when administrators need to override extension-specific configuration.
 
 ### Order
 
@@ -380,7 +390,7 @@ Extensions declared in `routes.json` are registered via `registerExtension`. (Th
 
 ### Meta and slot APIs
 
-Slots can read `meta` through `useExtensionSlotMeta()` and use it to adjust layouts—dashboards read column requests, patient headers read badge sizes, etc. Because `meta` is just another part of the definition, it’s merged with slot config overrides through the same `getAssignedExtensionsFromSlotData` logic.
+Slots can read `meta` through `useExtensionSlotMeta()` and use it to adjust layouts—dashboards read column requests, patient headers read badge sizes, etc. `meta` is definition metadata, while extension configuration is exposed separately through the assigned extension's `config` value and `useConfig()` inside the extension.
 
 For hooks into slot state if the default helpers are not enough, consult `registerExtensionSlot`, `renderExtension`, and `getAssignedExtensions` in `@openmrs/esm-extensions`, and `useExtensionSlotMeta` in `@openmrs/esm-react-utils`, so you understand how the stores, configs, and connectivity checks interact.
 
@@ -388,10 +398,12 @@ For hooks into slot state if the default helpers are not enough, consult `regist
 
 If your extension isn’t showing up:
 
+- Confirm that the module appears in `/openmrs/spa/routes.registry.json` and that the `extensions` entry is present.
 - Double-check `routes.json` — the `component` name must match the named export from `src/index.ts`.
 - Confirm the target slot exists and is rendered (look for `<ExtensionSlot name="..." />` in the host module).
+- Check `privileges`, `displayExpression`, `featureFlag`, and the extension definition's `online`/`offline` flags.
 - Unless you explicitly need runtime control, bind the slot in `routes.json` rather than using `attach`.
-- Slot configuration can override order: administrators can reorder entries via the slot’s `order` array.
+- Slot configuration can add, remove, configure, or reorder entries through the slot's `add`, `remove`, `configure`, and `order` arrays.
 
 ## Worked example
 
@@ -440,8 +452,6 @@ Short introductory videos:
 - [Introductory presentation: Quick Guide to Slots](https://docs.google.com/presentation/d/1mQxh7qAYLD-gc9sh0I58t4o_XNndPcu6hAJmTZQZ_fo/edit#slide=id.gbe34f6b087_0_34)
 
 For a terse technical description of the extension system, see the [Extensions RFC](https://github.com/openmrs/openmrs-rfc-frontend/pull/27/files).
-
-See the [App shell deep dive](https://github.com/openmrs/openmrs-esm-core/tree/main/docs/app-shell-deep-dive) for the runtime wiring that powers slot registration, extension rendering, and the parcel lifecycle.
 
 ## Workshop
 
