@@ -68,11 +68,12 @@ defineConfigSchema("@openmrs/esm-hologram-doctor", {
 Note that each configuration element should have an object for a value, and that this object must define the properties for that element. Do not do this:
 
 ```ts
-❌ // This is wrong!
-❌ defineConfigSchema("@openmrs/esm-hologram-doctor",
-❌  hologram: {
-❌   salutation: "Some friendly default salutation! ? this is wrong!"
-❌ })
+// This is wrong. `salutation` is a raw value, not a schema object.
+defineConfigSchema("@openmrs/esm-hologram-doctor", {
+  hologram: {
+    salutation: "Some friendly default salutation!"
+  }
+});
 ```
 
 The words prefixed with `_` are schema keywords. Do not prefix the names of your config elements with underscores. Especially do not use a schema keyword as a config element name.
@@ -86,13 +87,16 @@ The following keys are reserved and cannot be used as configuration element name
 These keys are automatically included in every module's implicit schema and will cause validation errors if you try to use them as custom configuration keys.
 
 ```ts
-❌ // Don't do this!
-❌ defineConfigSchema("@openmrs/esm-hologram-doctor",
-❌  hologram: {
-❌    salutation: {
-❌      _default: {
-❌        _default: "Greetings ? this is bad don't do it"
-❌ }}})
+// Don't do this. `_default` is a schema keyword, not a config element name.
+defineConfigSchema("@openmrs/esm-hologram-doctor", {
+  hologram: {
+    salutation: {
+      _default: {
+        _default: "Greetings"
+      }
+    }
+  }
+});
 ```
 
 #### Typing
@@ -104,7 +108,7 @@ The available types are:
 - `Type.Number` - Numeric values
 - `Type.Boolean` - Boolean values (true/false)
 - `Type.Array` - Arrays (requires `_elements` to specify the array element schema)
-- `Type.Object` - Object values
+- `Type.Object` - Freeform object values. When used with `_elements`, O3 validates and fills defaults for each value in the object.
 - `Type.UUID` - UUID strings
 - `Type.ConceptUuid` - Concept UUID strings
 - `Type.PersonAttributeTypeUuid` - Person attribute type UUID strings
@@ -214,7 +218,7 @@ import { getConfig } from "@openmrs/esm-framework";
 
 async function doctorGreeting() {
   const config = await getConfig("@openmrs/esm-hologram-doctor");
-  return "Hello, my name is Dr. " + config.virtualProvider.name.family;
+  return "Hello, my name is Dr. " + config.virtualProvider.name.given.join(" ");
 }
 ```
 
@@ -229,6 +233,8 @@ When multiple configuration sources provide values for the same key, they are me
 3. **Temporary config** from the Implementer Tools UI (highest precedence)
 
 This means that if you set a value in a config file and then change it using the Implementer Tools, the Implementer Tools value will take effect. Similarly, if the same key appears in multiple config files, the value from the last file loaded will be used.
+
+Nested objects are merged deeply, but arrays are replaced as whole values. If a later config source provides an array for a key, it replaces the earlier array rather than merging by index.
 
 #### React support
 
@@ -248,7 +254,7 @@ import { useConfig } from "@openmrs/esm-framework";
 
 export default function DoctorGreeting() {
   const config = useConfig();
-  const greeting = "Hello, my name is Dr. " + config.virtualProvider.name.family;
+  const greeting = "Hello, my name is Dr. " + config.virtualProvider.name.given.join(" ");
   return <div>{greeting}</div>;
 }
 ```
@@ -272,6 +278,9 @@ In Core v5+ modules, config schemas should be registered in the `startupApp()` f
 
 ```ts
 import { defineConfigSchema } from "@openmrs/esm-framework";
+import { configSchema } from "./config-schema";
+
+const moduleName = "@openmrs/esm-hologram-doctor";
 
 export function startupApp() {
   defineConfigSchema(moduleName, configSchema);
@@ -330,7 +339,7 @@ Extensions can have their own configuration schemas that are separate from their
 To define an extension-specific config schema, use `defineExtensionConfigSchema`:
 
 ```ts
-import { defineExtensionConfigSchema } from "@openmrs/esm-framework";
+import { defineExtensionConfigSchema, Type } from "@openmrs/esm-framework";
 
 export function startupApp() {
   defineExtensionConfigSchema("my-extension-name", {
@@ -343,7 +352,7 @@ export function startupApp() {
 }
 ```
 
-The extension name should match the `name` property of the extension as defined in `routes.json`. When an extension has its own config schema, `useConfig()` within that extension will automatically return the extension's configuration rather than the module's configuration.
+The extension name should match the `name` property of the extension as defined in `routes.json`. When an extension has its own config schema, `useConfig()` within that extension will merge the module's normal configuration with the extension's configuration. Extension-specific values take precedence when the same key exists in both places.
 
 **How extension configuration is resolved:**
 
@@ -353,6 +362,8 @@ Extension configuration values are determined by merging multiple sources in thi
 2. **Slot-specific overrides** - Values from the `configure` object in the slot's configuration (highest precedence)
 
 This merging allows administrators to customize an extension's behavior differently for each slot where it appears. For example, the same extension could have different settings when used in a patient header versus a dashboard.
+
+The `configure` key must match the extension ID assigned to the slot. If you attach the same extension multiple times with instance IDs such as `my-extension#left` and `my-extension#right`, configure those full IDs separately.
 
 Extension configuration can be overridden per-slot using the `configure` object in the slot's configuration:
 
@@ -376,7 +387,7 @@ Extension configuration can be overridden per-slot using the `configure` object 
 
 `_default`
 
-All config elements must have a default (excluding elements within arrays of objects).
+All config elements must have a default (excluding elements within arrays or freeform objects governed by `_elements`).
 
 The default does not necessarily need to satisfy the `_type` or the `_validators` of the element, but this may change in future versions.
 
@@ -404,7 +415,7 @@ Can be used anywhere within the schema structure.
 
 `_elements`
 
-Only valid alongside `_type: Type.Array`. A `_default` must also be provided at this level. Value should be a schema for the values contained in the array.
+Only valid alongside `_type: Type.Array` or `_type: Type.Object`. A `_default` must also be provided at this level. For arrays, the value should be a schema for each array item. For freeform objects, the value should be a schema for each object value.
 
 ### API Documentation
 

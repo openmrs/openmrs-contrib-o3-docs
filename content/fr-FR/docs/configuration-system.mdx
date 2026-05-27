@@ -68,11 +68,12 @@ defineConfigSchema("@openmrs/esm-hologram-doctor", {
 Notez que chaque élément de configuration doit avoir un objet pour une valeur, et que cet objet doit définir les propriétés de cet élément. Ne faites pas ceci:
 
 ```ts
-❌ // Ce n'est pas correct!
-❌ defineConfigSchema("@openmrs/esm-hologram-doctor",
-❌  hologram: {
-❌   salutation: "Some friendly default salutation! ? this is wrong!"
-❌ })
+// Ce n'est pas correct. `salutation` est une valeur brute, pas un objet de schéma.
+defineConfigSchema("@openmrs/esm-hologram-doctor", {
+  hologram: {
+    salutation: "Some friendly default salutation!"
+  }
+});
 ```
 
 Les mots préfixés par `_` sont des mots-clés de schéma. Ne préfixez pas les noms de vos éléments de configuration avec des underscores. En particulier, n'utilisez pas un mot-clé de schéma comme nom d'élément de configuration.
@@ -86,13 +87,16 @@ Les clés suivantes sont réservées et ne peuvent pas être utilisées comme no
 Ces clés sont automatiquement incluses dans le schéma implicite de chaque module et provoqueront des erreurs de validation si vous essayez de les utiliser comme clés de configuration personnalisées.
 
 ```ts
-❌ // e faites pas ça!
-❌ defineConfigSchema("@openmrs/esm-hologram-doctor",
-❌  hologram: {
-❌    salutation: {
-❌      _default: {
-❌        _default: "Greetings ? this is bad don't do it"
-❌ }}})
+// Ne faites pas ça. `_default` est un mot-clé de schéma, pas un nom d'élément de configuration.
+defineConfigSchema("@openmrs/esm-hologram-doctor", {
+  hologram: {
+    salutation: {
+      _default: {
+        _default: "Greetings"
+      }
+    }
+  }
+});
 ```
 
 #### Typage
@@ -104,7 +108,7 @@ Les types disponibles sont :
 - `Type.Number` - Valeurs numériques
 - `Type.Boolean` - Valeurs booléennes (true/false)
 - `Type.Array` - Tableaux (nécessite `_elements` pour spécifier le schéma des éléments du tableau)
-- `Type.Object` - Valeurs d'objet
+- `Type.Object` - Valeurs d'objet libres. Lorsqu'il est utilisé avec `_elements`, O3 valide et applique les valeurs par défaut pour chaque valeur de l'objet.
 - `Type.UUID` - Chaînes UUID
 - `Type.ConceptUuid` - Chaînes UUID de concept
 - `Type.PersonAttributeTypeUuid` - Chaînes UUID de type d'attribut de personne
@@ -214,7 +218,7 @@ import { getConfig } from "@openmrs/esm-framework";
 
 async function doctorGreeting() {
   const config = await getConfig("@openmrs/esm-hologram-doctor");
-  return "Hello, my name is Dr. " + config.virtualProvider.name.family;
+  return "Hello, my name is Dr. " + config.virtualProvider.name.given.join(" ");
 }
 ```
 
@@ -229,6 +233,8 @@ Lorsque plusieurs sources de configuration fournissent des valeurs pour la même
 3. **Configuration temporaire** de l'interface des outils d'implémentation (priorité la plus élevée)
 
 Cela signifie que si vous définissez une valeur dans un fichier de configuration puis la modifiez en utilisant les outils d'implémentation, la valeur des outils d'implémentation prendra effet. De même, si la même clé apparaît dans plusieurs fichiers de configuration, la valeur du dernier fichier chargé sera utilisée.
+
+Les objets imbriqués sont fusionnés en profondeur, mais les tableaux sont remplacés en bloc. Si une source de configuration plus tardive fournit un tableau pour une clé, il remplace le tableau précédent au lieu d'être fusionné par index.
 
 #### Support React
 
@@ -248,7 +254,7 @@ import { useConfig } from "@openmrs/esm-framework";
 
 export default function DoctorGreeting() {
   const config = useConfig();
-  const greeting = "Bonjour, mon nom est Dr. " + config.virtualProvider.name.family;
+  const greeting = "Bonjour, mon nom est Dr. " + config.virtualProvider.name.given.join(" ");
   return <div>{greeting}</div>;
 }
 ```
@@ -272,6 +278,9 @@ Dans les modules Core v5+, les schémas de configuration doivent être enregistr
 
 ```ts
 import { defineConfigSchema } from "@openmrs/esm-framework";
+import { configSchema } from "./config-schema";
+
+const moduleName = "@openmrs/esm-hologram-doctor";
 
 export function startupApp() {
   defineConfigSchema(moduleName, configSchema);
@@ -330,7 +339,7 @@ Les extensions peuvent avoir leurs propres schémas de configuration qui sont s�
 Pour définir un schéma de configuration spécifique à une extension, utilisez `defineExtensionConfigSchema` :
 
 ```ts
-import { defineExtensionConfigSchema } from "@openmrs/esm-framework";
+import { defineExtensionConfigSchema, Type } from "@openmrs/esm-framework";
 
 export function startupApp() {
   defineExtensionConfigSchema("my-extension-name", {
@@ -343,7 +352,7 @@ export function startupApp() {
 }
 ```
 
-Le nom de l'extension doit correspondre à la propriété `name` de l'extension telle que définie dans `routes.json`. Lorsqu'une extension a son propre schéma de configuration, `useConfig()` dans cette extension retournera automatiquement la configuration de l'extension plutôt que la configuration du module.
+Le nom de l'extension doit correspondre à la propriété `name` de l'extension telle que définie dans `routes.json`. Lorsqu'une extension a son propre schéma de configuration, `useConfig()` dans cette extension fusionne la configuration normale du module avec la configuration de l'extension. Les valeurs spécifiques à l'extension ont la priorité lorsque la même clé existe aux deux endroits.
 
 **Comment la configuration de l'extension est résolue :**
 
@@ -353,6 +362,8 @@ Les valeurs de configuration de l'extension sont déterminées en fusionnant plu
 2. **Remplacements spécifiques au slot** - Valeurs de l'objet `configure` dans la configuration du slot (priorité la plus élevée)
 
 Cette fusion permet aux administrateurs de personnaliser le comportement d'une extension différemment pour chaque slot où elle apparaît. Par exemple, la même extension pourrait avoir des paramètres différents lorsqu'elle est utilisée dans un en-tête de patient par rapport à un tableau de bord.
+
+La clé dans `configure` doit correspondre à l'ID d'extension assigné au slot. Si vous attachez plusieurs fois la même extension avec des IDs d'instance comme `my-extension#left` et `my-extension#right`, configurez ces IDs complets séparément.
 
 La configuration de l'extension peut être remplacée par slot en utilisant l'objet `configure` dans la configuration du slot :
 
@@ -376,7 +387,7 @@ La configuration de l'extension peut être remplacée par slot en utilisant l'ob
 
 `_default`
 
-Tous les éléments de configuration doivent avoir une valeur par défaut (à l'exception des éléments dans les tableaux d'objets).
+Tous les éléments de configuration doivent avoir une valeur par défaut (à l'exception des éléments dans les tableaux ou les objets libres gouvernés par `_elements`).
 
 La valeur par défaut n'a pas nécessairement besoin de satisfaire le `_type` ou les `_validators` de l'élément, mais cela pourrait changer dans les versions futures.
 
@@ -404,7 +415,7 @@ Peut être utilisé n'importe où dans la structure du schéma.
 
 `_elements`
 
-Valable uniquement avec `_type: Type.Array`. Un `_default` doit également être fourni à ce niveau. La valeur doit être un schéma pour les valeurs contenues dans le tableau.
+Valable uniquement avec `_type: Type.Array` ou `_type: Type.Object`. Un `_default` doit également être fourni à ce niveau. Pour les tableaux, la valeur doit être un schéma pour chaque élément du tableau. Pour les objets libres, la valeur doit être un schéma pour chaque valeur de l'objet.
 
 ### Documentation de l'API
 
