@@ -69,7 +69,9 @@ Rendez ensuite `form-widget-slot` depuis une enveloppe `Workspace2` et transmett
 ```tsx
 import React, { useState } from 'react';
 import { ExtensionSlot, Workspace2 } from '@openmrs/esm-framework';
+import { useSWRConfig } from 'swr';
 import {
+  invalidateVisitAndEncounterData,
   type PatientWorkspace2DefinitionProps,
   type FormRendererProps,
 } from '@openmrs/esm-patient-common-lib';
@@ -84,6 +86,7 @@ export function MyFormWorkspace({
   workspaceProps: { formUuid, encounterUuid },
   groupProps: { patient, patientUuid, visitContext, mutateVisitContext },
 }: PatientWorkspace2DefinitionProps<MyFormWorkspaceProps, object>) {
+  const { mutate: globalMutate } = useSWRConfig();
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const state: FormRendererProps = {
@@ -96,6 +99,7 @@ export function MyFormWorkspace({
     closeWorkspace,
     closeWorkspaceWithSavedChanges: () => {
       mutateVisitContext?.();
+      invalidateVisitAndEncounterData(globalMutate, patientUuid);
       return closeWorkspace({ discardUnsavedChanges: true });
     },
     setHasUnsavedChanges,
@@ -111,6 +115,8 @@ export function MyFormWorkspace({
   );
 }
 ```
+
+`closeWorkspaceWithSavedChanges` fait partie de l'état `FormRendererProps` transmis à `form-widget-slot`. Utilisez-le pour actualiser les données après l'enregistrement avant de fermer l'espace de travail. Le `closeWorkspace` de Workspace v2 continue de gérer les annulations ou fermetures ordinaires.
 
 Lancez l'espace de travail personnalisé avec Workspace v2 :
 
@@ -138,8 +144,7 @@ Pour plus de contrôle sur le rendu et le comportement des formulaires, vous pou
 
 ```tsx
 import React from 'react';
-import { FormEngine } from '@openmrs/esm-form-engine-lib';
-import type { FormSchema } from '@openmrs/esm-form-engine-lib';
+import { FormEngine, type FormSchema, type OpenmrsEncounter } from '@openmrs/esm-form-engine-lib';
 
 interface MyFormComponentProps {
   patientUuid: string;
@@ -147,7 +152,7 @@ interface MyFormComponentProps {
 }
 
 export function MyFormComponent({ patientUuid, formSchema }: MyFormComponentProps) {
-  const handleSubmit = (encounters: Array<any>) => {
+  const handleSubmit = (encounters: Array<OpenmrsEncounter>) => {
     console.log('Formulaire soumis :', encounters);
     // Gérer la soumission du formulaire
   };
@@ -356,10 +361,10 @@ Lorsqu'un formulaire est soumis, le callback `onSubmit` reçoit un tableau de r�
 ### Gérer la soumission du formulaire
 
 ```tsx
-import { type Encounter } from '@openmrs/esm-framework';
+import { type OpenmrsEncounter } from '@openmrs/esm-form-engine-lib';
 
 function MyFormWorkspace({ patientUuid, formUuid }: Props) {
-  const handleSubmit = (encounters: Array<Encounter>) => {
+  const handleSubmit = (encounters: Array<OpenmrsEncounter>) => {
     const encounter = encounters[0];
 
     // Gérer la soumission réussie
@@ -387,8 +392,10 @@ function MyFormWorkspace({ patientUuid, formUuid }: Props) {
 Le Form Engine gère automatiquement les erreurs de validation et les affiche en ligne. Le callback `onSubmit` est appelé uniquement après une soumission réussie. Si la soumission échoue, le Form Engine gère l'erreur en interne et l'affiche à l'utilisateur. Votre callback `onSubmit` n'est alors pas appelé.
 
 ```tsx
+import { type OpenmrsEncounter } from '@openmrs/esm-form-engine-lib';
+
 function MyFormWorkspace({ patientUuid, formUuid }: Props) {
-  const handleSubmit = (encounters: Array<Encounter>) => {
+  const handleSubmit = (encounters: Array<OpenmrsEncounter>) => {
     // Ce callback est appelé uniquement si la soumission réussit
     // Le Form Engine gère les erreurs en interne
     console.log('Formulaire soumis avec succès :', encounters);
@@ -412,7 +419,9 @@ Voici un exemple complet d'un espace de travail de formulaire personnalisé qui 
 ```tsx
 import React, { useMemo, useState } from 'react';
 import { ExtensionSlot, Workspace2 } from '@openmrs/esm-framework';
+import { useSWRConfig } from 'swr';
 import {
+  invalidateVisitAndEncounterData,
   type FormRendererProps,
   type PatientWorkspace2DefinitionProps,
 } from '@openmrs/esm-patient-common-lib';
@@ -427,6 +436,7 @@ export function MyFormWorkspace({
   workspaceProps: { formUuid, encounterUuid },
   groupProps: { patient, patientUuid, visitContext, mutateVisitContext },
 }: PatientWorkspace2DefinitionProps<MyFormWorkspaceProps, object>) {
+  const { mutate: globalMutate } = useSWRConfig();
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const state = useMemo(
@@ -440,6 +450,7 @@ export function MyFormWorkspace({
       closeWorkspace,
       closeWorkspaceWithSavedChanges: () => {
         mutateVisitContext?.();
+        invalidateVisitAndEncounterData(globalMutate, patientUuid);
         return closeWorkspace({ discardUnsavedChanges: true });
       },
       setHasUnsavedChanges,
@@ -449,6 +460,7 @@ export function MyFormWorkspace({
     }),
     [
       formUuid,
+      globalMutate,
       patient,
       patientUuid,
       visitContext,
