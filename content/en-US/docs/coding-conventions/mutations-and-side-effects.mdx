@@ -1,14 +1,18 @@
 # Mutations and side effects
 
-- Use SWR's global and bound [mutate](https://swr.vercel.app/docs/mutation#mutate) APIs to mutate data in the cache when the user performs an action that changes the backend state. This ensures that the cache is updated consistently across the application and omits the need to reload the page to see the changes.
+- Use SWR's bound [mutate](https://swr.vercel.app/docs/mutation#mutate) function and the `mutate` function from `useSWRConfig()` when the user performs an action that changes backend state. This keeps O3's shared SWR cache in sync and avoids reloading the page to see changes. Prefer `useSWRConfig().mutate` over importing the global `mutate` function from `swr` inside components, because O3 provides its own SWR cache through the component decorator.
 
   There are two main approaches to mutation with SWR:
 
-  1. Using the [bound mutate](https://swr.vercel.app/docs/mutation.en-US#bound-mutate) function from `useSWR`:
+  1. Using the [bound mutate](https://swr.vercel.app/docs/mutation.en-US#bound-mutate) function returned by your resource hook:
   
   ```tsx
+  import { restBaseUrl, useOpenmrsSWR } from '@openmrs/esm-framework';
+
   // Using bound mutate to update a specific resource
-  const { data, mutate } = useSWR<Patient>(`/ws/rest/v1/patient/${patientUuid}`);
+  const patientUrl = `${restBaseUrl}/patient/${patientUuid}`;
+  const { data: response, mutate } = useOpenmrsSWR<Patient>(patientUrl);
+  const patient = response?.data;
 
   const handleSave = async (updates) => {
     try {
@@ -26,21 +30,26 @@
   };
   ```
 
-  2. Using the [global mutate](https://swr.vercel.app/docs/mutation.en-US#global-mutate) function for broader cache updates:
+  2. Using `useSWRConfig().mutate` for broader cache updates:
 
   ```tsx
-  import { mutate } from 'swr';
+  import { restBaseUrl } from '@openmrs/esm-framework';
+  import { useSWRConfig } from 'swr';
 
-  // Using global mutate to update all instances of a resource
-  const handleDeleteVisit = async (visitUuid: string) => {
+  const { mutate } = useSWRConfig();
+
+  // Update all cached visit resources that can show this deleted visit
+  const handleDeleteVisit = async (patientUuid: string, visitUuid: string) => {
     try {
       await deleteVisit(visitUuid);
       
-      // Update all cached visit lists
-      await mutate('/ws/rest/v1/visit');
+      // Update cached visit lists for this patient
+      await mutate(
+        (key) => typeof key === 'string' && key.startsWith(`${restBaseUrl}/visit?patient=${patientUuid}`),
+      );
       
       // Update the specific visit's data
-      await mutate(`/ws/rest/v1/visit/${visitUuid}`);
+      await mutate(`${restBaseUrl}/visit/${visitUuid}`);
       
       showSnackbar({ title: t('visitDeleted', 'Visit deleted successfully') });
     } catch (error) {
@@ -61,6 +70,8 @@
 
   // Memoized function to update cohort membership cache
   const useMutateCohortMembers = (patientUuid: string) => {
+    const { mutate } = useSWRConfig();
+
     return useCallback(() => {
       const key = getCohortMembershipUrl(patientUuid);
       return mutate(

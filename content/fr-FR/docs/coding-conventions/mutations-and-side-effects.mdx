@@ -1,14 +1,18 @@
 # Mutations et effets secondaires
 
-- Utilisez les API [mutate](https://swr.vercel.app/docs/mutation#mutate) globales et liées de SWR pour muter les données dans le cache lorsque l'utilisateur effectue une action qui change l'état du backend. Cela garantit que le cache est mis à jour de manière cohérente dans toute l'application et évite le besoin de recharger la page pour voir les changements.
+- Utilisez la fonction [mutate](https://swr.vercel.app/docs/mutation#mutate) liée de SWR et la fonction `mutate` retournée par `useSWRConfig()` lorsque l'utilisateur effectue une action qui change l'état du backend. Cela garde le cache SWR partagé d'O3 synchronisé et évite de recharger la page pour voir les changements. Préférez `useSWRConfig().mutate` à l'import de la fonction globale `mutate` depuis `swr` dans les composants, car O3 fournit son propre cache SWR via le décorateur de composant.
 
   Il y a deux approches principales pour la mutation avec SWR :
 
-  1. Utilisation de la fonction [mutate liée](https://swr.vercel.app/docs/mutation.en-US#bound-mutate) de `useSWR` :
+  1. Utilisation de la fonction [mutate liée](https://swr.vercel.app/docs/mutation.en-US#bound-mutate) retournée par votre hook de ressource :
   
   ```tsx
+  import { restBaseUrl, useOpenmrsSWR } from '@openmrs/esm-framework';
+
   // Utilisation de mutate liée pour mettre à jour une ressource spécifique
-  const { data, mutate } = useSWR<Patient>(`/ws/rest/v1/patient/${patientUuid}`);
+  const patientUrl = `${restBaseUrl}/patient/${patientUuid}`;
+  const { data: response, mutate } = useOpenmrsSWR<Patient>(patientUrl);
+  const patient = response?.data;
 
   const handleSave = async (updates) => {
     try {
@@ -26,21 +30,26 @@
   };
   ```
 
-  2. Utilisation de la fonction [mutate globale](https://swr.vercel.app/docs/mutation.en-US#global-mutate) pour des mises à jour de cache plus larges :
+  2. Utilisation de `useSWRConfig().mutate` pour des mises à jour de cache plus larges :
 
   ```tsx
-  import { mutate } from 'swr';
+  import { restBaseUrl } from '@openmrs/esm-framework';
+  import { useSWRConfig } from 'swr';
 
-  // Utilisation de mutate globale pour mettre à jour toutes les instances d'une ressource
-  const handleDeleteVisit = async (visitUuid: string) => {
+  const { mutate } = useSWRConfig();
+
+  // Mettre à jour toutes les ressources de visite en cache qui peuvent afficher cette visite supprimée
+  const handleDeleteVisit = async (patientUuid: string, visitUuid: string) => {
     try {
       await deleteVisit(visitUuid);
       
-      // Mettre à jour toutes les listes de visites en cache
-      await mutate('/ws/rest/v1/visit');
+      // Mettre à jour les listes de visites en cache pour ce patient
+      await mutate(
+        (key) => typeof key === 'string' && key.startsWith(`${restBaseUrl}/visit?patient=${patientUuid}`),
+      );
       
       // Mettre à jour les données de la visite spécifique
-      await mutate(`/ws/rest/v1/visit/${visitUuid}`);
+      await mutate(`${restBaseUrl}/visit/${visitUuid}`);
       
       showSnackbar({ title: t('visitDeleted', 'Visite supprimée avec succès') });
     } catch (error) {
@@ -61,6 +70,8 @@
 
   // Fonction mémorisée pour mettre à jour le cache d'adhésion à la cohorte
   const useMutateCohortMembers = (patientUuid: string) => {
+    const { mutate } = useSWRConfig();
+
     return useCallback(() => {
       const key = getCohortMembershipUrl(patientUuid);
       return mutate(

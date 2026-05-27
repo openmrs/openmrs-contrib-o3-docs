@@ -5,6 +5,8 @@ Voici quelques lignes directrices générales pour les champs de recherche :
 - Préférez utiliser la fonctionnalité de recherche côté serveur plutôt que d'implémenter le filtrage de recherche côté client. Ce dernier nécessite de récupérer l'ensemble de données complet et peut être inefficace. Cependant, la recherche côté client pourrait être le bon choix dans les cas où la fonctionnalité de recherche côté serveur est insuffisante ou lorsque la taille de résultat attendue est petite. Dans les deux cas, soyez prudent avec la gestion de la pagination côté serveur, car la plupart des ressources REST ont une [limite de taille](https://openmrs.atlassian.net/wiki/spaces/docs/pages/25469882/REST+Module) de résultat de recherche par requête. Utilisez les hooks [useOpenmrsPagination](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-react-utils/src/useOpenmrsPagination.ts), [useOpenmrsFetchAll](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-react-utils/src/useOpenmrsFetchAll.ts) et [useOpenmrsInfinite](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-react-utils/src/useOpenmrsInfinite.ts) pour gérer la pagination côté serveur pour différents cas d'usage.
 
   ```tsx
+  import { restBaseUrl, useOpenmrsFetchAll } from "@openmrs/esm-framework";
+
   // filtrage de recherche côté client, `data` contient l'ensemble de données complet lorsque `isLoading` n'est plus vrai.
   const { data, totalCount, isLoading } = useOpenmrsFetchAll<Patient>(`${restBaseUrl}/patient`);
   // faire quelque chose avec les données
@@ -66,22 +68,44 @@ Voici quelques lignes directrices générales pour les champs de recherche :
 - Lors de la récupération de données basée sur une action utilisateur continue, telle que la recherche en temps réel lors de la saisie dans un champ de recherche, garder les résultats de recherche précédents dans l'interface utilisateur jusqu'à ce que les nouveaux résultats de recherche soient récupérés et affichés peut améliorer considérablement l'expérience utilisateur. Les hooks SWR ont une option [keepPreviousData](https://swr.vercel.app/docs/advanced/understanding.en-US#return-previous-data-for-better-ux) qui peut être utilisée pour y parvenir. Cette approche empêche l'interface utilisateur de clignoter vide lorsque les nouveaux résultats de recherche sont récupérés, ce qui peut être déconcertant pour l'utilisateur.
 
   ```tsx
-  // Utilisation de keepPreviousData avec useSWRInfinite pour la recherche
-  const { data, isLoading } = useSWRInfinite(getKey, fetcher, {
-    keepPreviousData: true,
-    initialSize: 1,
+  // Utilisation de keepPreviousData avec useOpenmrsSWR pour la recherche
+  interface PatientSearchResponse {
+    results: Array<Patient>;
+  }
+
+  const searchUrl = search
+    ? `${restBaseUrl}/patient?q=${encodeURIComponent(search)}&v=custom:(uuid,display)&limit=10`
+    : null;
+
+  const { data: response, isLoading } = useOpenmrsSWR<PatientSearchResponse>(searchUrl, {
+    swrConfig: {
+      keepPreviousData: true,
+    },
   });
+  const patients = response?.data?.results ?? [];
   ```
 
   Ceci est particulièrement important pour les champs de recherche où les utilisateurs tapent continuellement, car cela fournit une expérience plus fluide en maintenant les résultats précédents pendant que les nouveaux se chargent.
 
   ```tsx
-  function Search() {
+  import { restBaseUrl, useOpenmrsSWR } from '@openmrs/esm-framework';
+
+  interface PatientSearchResponse {
+    results: Array<Patient>;
+  }
+
+  function PatientSearch() {
     const [search, setSearch] = useState('');
+    const searchUrl = search
+      ? `${restBaseUrl}/patient?q=${encodeURIComponent(search)}&v=custom:(uuid,display)&limit=10`
+      : null;
   
-    const { data, isLoading } = useSWR(`/search?q=${search}`, fetcher, {
-      keepPreviousData: true
+    const { data: response, isLoading } = useOpenmrsSWR<PatientSearchResponse>(searchUrl, {
+      swrConfig: {
+        keepPreviousData: true,
+      },
     });
+    const patients = response?.data?.results ?? [];
   
     return (
       <div>
@@ -93,7 +117,9 @@ Voici quelques lignes directrices générales pour les champs de recherche :
         />
   
         <div className={isLoading ? "loading" : ""}>
-          {data?.products?.map(item => <Product key={item.id} name={item.name} />)}
+          {patients.map((patient) => (
+            <PatientSearchResult key={patient.uuid} patient={patient} />
+          ))}
         </div>
       </div>
     );

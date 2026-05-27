@@ -20,15 +20,15 @@
     ```
 
 - Use [element optimization](https://kentcdodds.com/blog/optimize-react-re-renders) to avoid unnecessary re-renders. If you give React the same element reference, it will skip rendering the component.
-- Use the appropriate lifecycle registration method based your component's loading requirements:
-  - Use `getAsyncLifecycle` to register modals, workspaces and other components that can be loaded on-demand. 
+- Use the appropriate lifecycle registration method based on your component's loading requirements:
+  - Use `getAsyncLifecycle` for modals, workspaces, secondary pages, and other components that can be loaded on demand.
 
   ```tsx
   // Good - modal loaded only when needed
   export const markPatientAliveModal = getAsyncLifecycle(() => import('./mark-patient-alive.modal'), options);
   ```
 
-  - Use `getSyncLifecycle` for components that need to be available immediately on page load:
+  - Use `getSyncLifecycle` for components that are already imported and need to be available immediately, such as lightweight links, action buttons, and root components that should not wait for another chunk:
 
   ```tsx
   // Good - component included in the main bundle
@@ -38,29 +38,37 @@
   });
   ```
 
-  The key difference between the two is that `getAsyncLifecycle` creates a separate chunk for the component in your app's code split. This chunk gets loaded on-demand, which can improve the initial load time of your application. On the other hand, `getSyncLifecycle` includes the component in the main bundle, ensuring that it's available immediately on page load. Use each approach when appropriate to optimize the performance of your application. Read more about the difference between static and dynamic metadata [here](/docs/migrate-to-core-v5).
+  The key difference is where the component code lives. `getAsyncLifecycle` uses a dynamic import, so the bundler can create a separate chunk that O3 loads only when the component is needed. `getSyncLifecycle` wraps a component that has already been statically imported, so it stays in the main module bundle and is available as soon as the frontend module loads. Avoid making every export async by default: many tiny dynamic chunks can add extra runtime requests. Read more about the difference between static and dynamic metadata [here](/docs/migrate-to-core-v5).
 
-- Prefer using [icons](https://zeroheight.com/23a080e38/p/993dce-iconography) and [pictograms](https://zeroheight.com/23a080e38/p/396ba7-pictograms) from the CarbonMRS icon library over the `@carbon/react/icons` package. The CarbonMRS library is optimized for our use case and avoids potential tree-shaking issues that can occur with the Carbon icons package.
+- Prefer icons and pictograms exported by `@openmrs/esm-framework` when a matching OpenMRS asset exists. These come from the O3 styleguide sprite sheets and avoid pulling individual icons from `@carbon/react/icons` when the design system already provides the asset.
 
 - Consider using prefetching to improve the responsiveness of your application. Prefetching can be particularly useful in these cases:
   - Prefetching data for items that are likely to be accessed next:
 
-   ```tsx
+  ```tsx
+  import { useSWRConfig } from 'swr';
+
   // Prefetch the next page of results
+  const { mutate } = useSWRConfig();
+  const nextPageUrl = `/ws/rest/v1/patient?startIndex=${currentPage + 1}`;
+
   const prefetchNextPage = () => {
-    void mutate(`/ws/rest/v1/patient?startIndex=${currentPage + 1}`);
+    void mutate(nextPageUrl);
   };
   ```
 
   - Preloading data using SWR's [preload API](https://swr.vercel.app/docs/prefetching) when hovering over links or buttons:
 
   ```tsx
+  import { openmrsFetch, restBaseUrl } from '@openmrs/esm-framework';
+  import { preload } from 'swr';
+
   // Preload form schemas when hovering over links in the form builder
   <ConfigurableLink
     className={styles.link}
     to={editSchemaUrl}
     templateParams={{ formUuid: form?.uuid }}
-    onMouseEnter={() => void preload(`/ws/rest/v1/form/${form?.uuid}?v=full`, openmrsFetch)}
+    onMouseEnter={() => form?.uuid && void preload(`${restBaseUrl}/form/${form.uuid}?v=full`, openmrsFetch)}
   >
     {form.name}
   </ConfigurableLink>
@@ -68,10 +76,10 @@
 
   Remember that while prefetching can improve the user experience, it should be used judiciously to avoid unnecessary network requests and data usage.
 
-- Tweak your SWR configuration appropriately to optimize performance. O3 uses a [global SWR configuration](https://github.com/openmrs/openmrs-esm-core/pull/1157) that disables most automatic revalidations. Because the [SWRConfig component](https://swr.vercel.app/docs/global-configuration.en-US) merges configurations from the parent context, you can override options in the global configuration on a per-component basis. Alternatively, you can specify a custom configuration at a per-hook level. Each SWR hook accepts an options object as an argument, which you can use to customize the behavior of the hook.
+- Tweak your SWR configuration appropriately to optimize performance. O3 wraps frontend module components in an `openmrsComponentDecorator` that provides a shared SWR cache, `openmrsFetch` as the default fetcher, and a [global SWR configuration](https://github.com/openmrs/openmrs-esm-core/pull/1157) that disables most automatic revalidations. Because the [SWRConfig component](https://swr.vercel.app/docs/global-configuration.en-US) merges configurations from the parent context, you can override options in the global configuration on a per-component basis. Alternatively, you can specify a custom configuration at a per-hook level. Each SWR hook accepts an options object as an argument, which you can use to customize the behavior of the hook.
 
   ```tsx
-  // Global configuration in the OpenMRS component decorator
+  // Simplified from the OpenMRS component decorator
   const defaultSwrConfig = {
     // max number of retries after requests have failed
     errorRetryCount: 3,
@@ -87,7 +95,15 @@
     shouldRetryOnError: (error) => {
       if (error instanceof OpenmrsFetchError) {
         const status = error.response.status;
-        return status >= 500 || status === 401 || status === 403 || status === 429;
+        if (status >= 500) {
+          return true;
+        }
+
+        if (status === 401 || status === 403 || status === 429) {
+          return true;
+        }
+
+        return false;
       }
 
       return true;
@@ -118,17 +134,21 @@
 
   ```tsx
   // Custom configuration at a per-hook level
-  const { data } = useSWR('/ws/rest/v1/patient?v=full', openmrsFetch, {
-    revalidateOnFocus: true,
-    revalidateOnReconnect: true,
+  const { data: response } = useOpenmrsSWR<PatientSearchResponse>('/ws/rest/v1/patient?v=full', {
+    swrConfig: {
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
+    },
   });
+
+  const patients = response?.data?.results ?? [];
   ```
   
 - Avoid common performance pitfalls:
-  - Don't create new objects or arrays in render
-  - Avoid inline function definitions in JSX
-  - Don't use index as key in lists
-  - Prevent unnecessary re-renders by proper state management
+  - Don't create new objects or arrays in render when they are passed to memoized children.
+  - Avoid inline function definitions in JSX when they cause memoized children to rerender.
+  - Don't use index as a key in lists whose order can change.
+  - Prevent unnecessary re-renders with clear state ownership and narrow component props.
 
   ```tsx
   // Bad - new function created every render
@@ -142,8 +162,8 @@
   <Button onClick={handleButtonClick} />
   ```
 
-- Monitor your application's performance using the [React DevTools Profiler](https://react.dev/learn/react-developer-tools). To profile your app, you could run both your app and the O3 app shell locally and then use the [import map overrides mechanism](/docs/frontend-modules/development#import-map-overrides) to load your app in the O3 app shell. You could then open the React DevTools Profiler in your browser and start a profiling session. Things to watch out for include:
+- Monitor your application's performance using the [React DevTools Profiler](https://react.dev/learn/react-developer-tools). To profile your app, run both your app and the O3 app shell locally, then use the [import map overrides mechanism](/docs/frontend-modules/development#import-map-overrides) to load your app in the O3 app shell. Open the React DevTools Profiler in your browser and start a profiling session. Things to watch out for include:
   - Components with frequent re-renders
   - Components that are slow to render
-  - Long task in the main thread
+  - Long tasks in the main thread
   - Components that could be memoized

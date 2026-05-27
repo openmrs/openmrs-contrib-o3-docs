@@ -3,9 +3,13 @@
 - Lors de la création de hooks personnalisés qui encapsulent SWR, mémorisez la valeur de retour en utilisant `useMemo` pour éviter des rerenders inutiles. Ceci est particulièrement important lors du retour d'un objet avec plusieurs propriétés :
 
   ```tsx
+  import { restBaseUrl, useOpenmrsSWR } from '@openmrs/esm-framework';
+
   // Bon - valeur de retour mémorisée
   export function usePatient(patientUuid?: string) {
-    const { data: patient, error, isLoading, isValidating } = useSWR(...);
+    const url = patientUuid ? `${restBaseUrl}/patient/${patientUuid}` : null;
+    const { data: response, error, isLoading, isValidating } = useOpenmrsSWR<Patient>(url);
+    const patient = response?.data;
     
     return useMemo(
       () => ({
@@ -24,7 +28,8 @@
 
   ```tsx
   // Bon - le chargement initial et le rafraîchissement en arrière-plan sont distincts
-  const { data, error, isLoading, isValidating } = useSWR(url, fetcher);
+  const { data: response, error, isLoading, isValidating } = useOpenmrsSWR<Patient>(url);
+  const patient = response?.data;
 
   if (isLoading) {
     return <SkeletonPlaceholder />;
@@ -34,14 +39,14 @@
     return <ErrorState error={error} />;
   }
 
-  if (!data) {
+  if (!patient) {
     return <EmptyState />;
   }
 
   return (
     <>
       {isValidating ? <InlineLoading description={t('refreshing', 'Actualisation')} /> : null}
-      <PatientBanner patient={data} />
+      <PatientBanner patient={patient} />
     </>
   );
   ```

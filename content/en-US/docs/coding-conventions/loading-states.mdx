@@ -3,9 +3,13 @@
 - When creating custom hooks that wrap SWR, memoize the return value using `useMemo` to prevent unnecessary re-renders. This is especially important when returning an object with multiple properties:
 
   ```tsx
+  import { restBaseUrl, useOpenmrsSWR } from '@openmrs/esm-framework';
+
   // Good - memoized return value
   export function usePatient(patientUuid?: string) {
-    const { data: patient, error, isLoading, isValidating } = useSWR(...);
+    const url = patientUuid ? `${restBaseUrl}/patient/${patientUuid}` : null;
+    const { data: response, error, isLoading, isValidating } = useOpenmrsSWR<Patient>(url);
+    const patient = response?.data;
     
     return useMemo(
       () => ({
@@ -24,7 +28,8 @@
 
   ```tsx
   // Good - initial load and background refresh are distinct
-  const { data, error, isLoading, isValidating } = useSWR(url, fetcher);
+  const { data: response, error, isLoading, isValidating } = useOpenmrsSWR<Patient>(url);
+  const patient = response?.data;
 
   if (isLoading) {
     return <SkeletonPlaceholder />;
@@ -34,14 +39,14 @@
     return <ErrorState error={error} />;
   }
 
-  if (!data) {
+  if (!patient) {
     return <EmptyState />;
   }
 
   return (
     <>
       {isValidating ? <InlineLoading description={t('refreshing', 'Refreshing')} /> : null}
-      <PatientBanner patient={data} />
+      <PatientBanner patient={patient} />
     </>
   );
   ```

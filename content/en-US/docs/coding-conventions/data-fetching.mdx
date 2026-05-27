@@ -9,9 +9,13 @@ import { Callout } from "nextra/components";
 - Memoize the return value of your SWR hook using `useMemo` to prevent unnecessary rerenders. This is especially important if the hook is used in a component that is rendered many times, such as a table row. When creating custom hooks that wrap SWR, always memoize the return object:
 
   ```tsx
+  import { restBaseUrl, useOpenmrsSWR } from '@openmrs/esm-framework';
+
   // Good - memoized return value
   export function usePatient(patientUuid?: string) {
-    const { data: patient, error, isLoading, isValidating } = useSWR(...);
+    const url = patientUuid ? `${restBaseUrl}/patient/${patientUuid}` : null;
+    const { data: response, error, isLoading, isValidating } = useOpenmrsSWR<Patient>(url);
+    const patient = response?.data;
     
     return useMemo(
       () => ({
@@ -97,12 +101,14 @@ Unbounded retries and refresh loops cause unpredictable latency and load.
 
   ```tsx
   // Good - explicit retry policy
-  const { data } = useSWR(url, fetcher, {
-    errorRetryCount: 3,
-    errorRetryInterval: 1000,
-    revalidateOnFocus: true,
-    revalidateOnReconnect: true,
-    refreshInterval: 0, // Explicitly disable polling
+  const { data } = useOpenmrsSWR<VisitSearchResponse>(url, {
+    swrConfig: {
+      errorRetryCount: 3,
+      errorRetryInterval: 1000,
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
+      refreshInterval: 0, // Explicitly disable polling
+    },
   });
   ```
 

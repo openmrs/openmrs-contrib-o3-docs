@@ -5,6 +5,8 @@ The following are some general guidelines for search inputs:
 - Prefer using server-side search functionality over implementing search filtering on the client side. The latter requires fetching the entire data set and can be inefficient. However, client-side search might be the right choice in cases where the server-side search functionality is insufficient or the expected result size is small. In either case, be careful with handling server-side pagination, as most REST resources have a search result [size limit](https://openmrs.atlassian.net/wiki/spaces/docs/pages/25469882/REST+Module) per request. Use the [useOpenmrsPagination](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-react-utils/src/useOpenmrsPagination.ts), [useOpenmrsFetchAll](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-react-utils/src/useOpenmrsFetchAll.ts) and [useOpenmrsInfinite](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-react-utils/src/useOpenmrsInfinite.ts) hooks to handle server-side pagination for different use cases.
 
   ```tsx
+  import { restBaseUrl, useOpenmrsFetchAll } from "@openmrs/esm-framework";
+
   // client side search filtering, `data` contains entire data set when `isLoading` is no longer true.
   const { data, totalCount, isLoading } = useOpenmrsFetchAll<Patient>(`${restBaseUrl}/patient`);
   // do something with the data
@@ -66,22 +68,44 @@ The following are some general guidelines for search inputs:
 - When doing data fetching based on continuous user action, such as real-time search when typing in a search input, keeping the previous search results in the UI until the new search results are fetched and displayed can improve the user experience significantly. SWR hooks have a [keepPreviousData](https://swr.vercel.app/docs/advanced/understanding.en-US#return-previous-data-for-better-ux) option that can be used to achieve this. This approach prevents the UI from flashing empty when the new search results are fetched, which can be jarring to the user.
 
   ```tsx
-  // Using keepPreviousData with useSWRInfinite for search
-  const { data, isLoading } = useSWRInfinite(getKey, fetcher, {
-    keepPreviousData: true,
-    initialSize: 1,
+  // Using keepPreviousData with useOpenmrsSWR for search
+  interface PatientSearchResponse {
+    results: Array<Patient>;
+  }
+
+  const searchUrl = search
+    ? `${restBaseUrl}/patient?q=${encodeURIComponent(search)}&v=custom:(uuid,display)&limit=10`
+    : null;
+
+  const { data: response, isLoading } = useOpenmrsSWR<PatientSearchResponse>(searchUrl, {
+    swrConfig: {
+      keepPreviousData: true,
+    },
   });
+  const patients = response?.data?.results ?? [];
   ```
 
   This is especially important for search inputs where users are typing continuously, as it provides a smoother experience by maintaining previous results while new ones load.
 
   ```tsx
-  function Search() {
+  import { restBaseUrl, useOpenmrsSWR } from '@openmrs/esm-framework';
+
+  interface PatientSearchResponse {
+    results: Array<Patient>;
+  }
+
+  function PatientSearch() {
     const [search, setSearch] = useState('');
+    const searchUrl = search
+      ? `${restBaseUrl}/patient?q=${encodeURIComponent(search)}&v=custom:(uuid,display)&limit=10`
+      : null;
   
-    const { data, isLoading } = useSWR(`/search?q=${search}`, fetcher, {
-      keepPreviousData: true
+    const { data: response, isLoading } = useOpenmrsSWR<PatientSearchResponse>(searchUrl, {
+      swrConfig: {
+        keepPreviousData: true,
+      },
     });
+    const patients = response?.data?.results ?? [];
   
     return (
       <div>
@@ -93,7 +117,9 @@ The following are some general guidelines for search inputs:
         />
   
         <div className={isLoading ? "loading" : ""}>
-          {data?.products?.map(item => <Product key={item.id} name={item.name} />)}
+          {patients.map((patient) => (
+            <PatientSearchResult key={patient.uuid} patient={patient} />
+          ))}
         </div>
       </div>
     );

@@ -9,9 +9,13 @@ import { Callout } from "nextra/components";
 - Mémorisez la valeur de retour de votre hook SWR en utilisant `useMemo` pour éviter des rerenders inutiles. Ceci est particulièrement important si le hook est utilisé dans un composant qui est rendu plusieurs fois, comme une ligne de tableau. Lors de la création de hooks personnalisés qui encapsulent SWR, mémorisez toujours l'objet de retour :
 
   ```tsx
+  import { restBaseUrl, useOpenmrsSWR } from '@openmrs/esm-framework';
+
   // Bon - valeur de retour mémorisée
   export function usePatient(patientUuid?: string) {
-    const { data: patient, error, isLoading, isValidating } = useSWR(...);
+    const url = patientUuid ? `${restBaseUrl}/patient/${patientUuid}` : null;
+    const { data: response, error, isLoading, isValidating } = useOpenmrsSWR<Patient>(url);
+    const patient = response?.data;
     
     return useMemo(
       () => ({
@@ -97,12 +101,14 @@ Les nouvelles tentatives et les boucles de rafraîchissement non bornées causen
 
   ```tsx
   // Bon - politique de nouvelle tentative explicite
-  const { data } = useSWR(url, fetcher, {
-    errorRetryCount: 3,
-    errorRetryInterval: 1000,
-    revalidateOnFocus: true,
-    revalidateOnReconnect: true,
-    refreshInterval: 0, // Désactiver explicitement le polling
+  const { data } = useOpenmrsSWR<VisitSearchResponse>(url, {
+    swrConfig: {
+      errorRetryCount: 3,
+      errorRetryInterval: 1000,
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
+      refreshInterval: 0, // Désactiver explicitement le polling
+    },
   });
   ```
 

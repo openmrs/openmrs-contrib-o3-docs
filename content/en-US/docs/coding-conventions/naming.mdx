@@ -26,8 +26,9 @@
 
   ```ts
   // user.resource.ts
-  export const fetchUser = () => {
-    return openmrsFetch<User>('/ws/rest/v1/user');
+  export async function fetchUser() {
+    const response = await openmrsFetch<User>('/ws/rest/v1/user');
+    return response.data;
   }
   ```
 
