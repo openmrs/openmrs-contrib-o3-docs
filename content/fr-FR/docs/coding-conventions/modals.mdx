@@ -4,20 +4,20 @@ Les modales sont des boîtes de dialogue qui apparaissent au-dessus de la page a
 
 - Les composants modaux doivent utiliser le suffixe `.modal.tsx` pour indiquer clairement leur objectif et permettre une extraction correcte des clés de traduction.
 
-- Utilisez les composants `Modal` de Carbon (`ModalHeader`, `ModalBody`, `ModalFooter`) pour une structure modale cohérente :
+- Utilisez les composants `Modal` de Carbon (`ModalHeader`, `ModalBody`, `ModalFooter`) pour une structure modale cohérente. Gardez `ModalHeader` et `ModalBody` au premier niveau du composant de modale, enveloppés dans un fragment, afin que le shell puisse dimensionner correctement la modale et faire défiler son corps :
 
   ```tsx
   import { ModalHeader, ModalBody, ModalFooter } from '@carbon/react';
 
-  const DeleteModal: React.FC<DeleteModalProps> = ({ closeModal, itemId }) => {
+  function DeleteModal({ close, itemId }: DeleteModalProps) {
     return (
       <>
-        <ModalHeader closeModal={closeModal} title={t('deleteItem', 'Supprimer l'élément')} />
+        <ModalHeader closeModal={close} title={t('deleteItem', "Supprimer l'élément")} />
         <ModalBody>
           <p>{t('deleteConfirmation', 'Êtes-vous sûr de vouloir supprimer cet élément ?')}</p>
         </ModalBody>
         <ModalFooter>
-          <Button kind="secondary" onClick={closeModal}>
+          <Button kind="secondary" onClick={close}>
             {t('cancel', 'Annuler')}
           </Button>
           <Button kind="danger" onClick={handleDelete}>
@@ -26,7 +26,7 @@ Les modales sont des boîtes de dialogue qui apparaissent au-dessus de la page a
         </ModalFooter>
       </>
     );
-  };
+  }
   ```
 
 - Utilisez les états de chargement dans les boutons d'action modaux pour fournir un retour pendant les opérations asynchrones :
@@ -34,11 +34,7 @@ Les modales sont des boîtes de dialogue qui apparaissent au-dessus de la page a
   ```tsx
   const [isDeleting, setIsDeleting] = useState(false);
 
-  <Button 
-    kind="danger" 
-    onClick={handleDelete} 
-    disabled={isDeleting}
-  >
+  <Button kind="danger" onClick={handleDelete} disabled={isDeleting}>
     {isDeleting ? (
       <InlineLoading description={t('deleting', 'Suppression') + '...'} />
     ) : (
@@ -54,8 +50,8 @@ Les modales sont des boîtes de dialogue qui apparaissent au-dessus de la page a
     setIsDeleting(true);
     try {
       await deleteItem(itemId);
-      mutate(); // Mettre à jour le cache SWR
-      closeModal();
+      await mutate(); // Mettre à jour le cache SWR
+      close();
       showSnackbar({
         isLowContrast: true,
         kind: 'success',
@@ -65,23 +61,22 @@ Les modales sont des boîtes de dialogue qui apparaissent au-dessus de la page a
       showSnackbar({
         kind: 'error',
         title: t('errorDeletingItem', 'Erreur lors de la suppression de l'élément'),
-        subtitle: error?.message,
+        subtitle: error instanceof Error ? error.message : t('unknownError', 'Erreur inconnue'),
       });
     } finally {
       setIsDeleting(false);
     }
-  }, [itemId, closeModal, mutate, t]);
+  }, [itemId, close, mutate, t]);
   ```
 
-- Utilisez `showModal` de `@openmrs/esm-framework` pour lancer des modales programmatiquement :
+- Utilisez `showModal` de `@openmrs/esm-framework` pour lancer des modales programmatiquement. Le framework injecte une prop `close` dans la modale et renvoie également la même fonction de fermeture à l'appelant :
 
   ```tsx
   import { showModal } from '@openmrs/esm-framework';
 
   const handleOpenModal = () => {
-    const dispose = showModal('my-modal-name', {
+    showModal('delete-item-modal', {
       itemId: '123',
-      closeModal: () => dispose(),
     });
   };
   ```
@@ -113,7 +108,7 @@ Les modales sont des boîtes de dialogue qui apparaissent au-dessus de la page a
 
   ```tsx
   <ModalFooter>
-    <Button kind="secondary" onClick={closeModal}>
+    <Button kind="secondary" onClick={close}>
       {t('cancel', 'Annuler')}
     </Button>
     <Button kind="danger" onClick={handleDelete}>
