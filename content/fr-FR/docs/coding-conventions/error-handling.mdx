@@ -10,7 +10,7 @@
     showSnackbar({
       title: t('errorSavingPatient', 'Erreur lors de l'enregistrement du patient'),
       kind: 'error',
-      subtitle: error?.message ?? t('unknownError', 'Une erreur inconnue s'est produite'),
+      subtitle: error instanceof Error ? error.message : t('unknownError', "Une erreur inconnue s'est produite"),
     });
   }
   ```
@@ -62,7 +62,7 @@
       showSnackbar({
         title: t('errorSavingPatient', 'Erreur lors de l'enregistrement du patient'),
         kind: 'error',
-        description: error?.message
+        subtitle: error instanceof Error ? error.message : t('unknownError', "Une erreur inconnue s'est produite"),
       });
     });
 
@@ -75,7 +75,7 @@
       showSnackbar({
         title: t('errorSavingPatient', 'Erreur lors de l'enregistrement du patient'),
         kind: 'error',
-        subtitle: error?.message
+        subtitle: error instanceof Error ? error.message : t('unknownError', "Une erreur inconnue s'est produite"),
       });
     }
   }
@@ -101,4 +101,3 @@
     }
   }
   ```
-

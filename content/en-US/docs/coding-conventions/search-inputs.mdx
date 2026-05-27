@@ -10,9 +10,11 @@ The following are some general guidelines for search inputs:
   // do something with the data
   ```
 
-- Debounce search inputs to prevent unnecessary requests to the backend. Use the [useDebounce](https://github.com/openmrs/openmrs-esm-core/blob/2396ab96a37bc7202c853110969d82c17fe098a6/packages/framework/esm-react-utils/src/useDebounce.ts) hook to debounce search inputs. Here's a snippet (some bits are omitted for brevity) showing how you could use the hook:
+- Debounce search inputs to prevent unnecessary requests to the backend. Use the [useDebounce](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-react-utils/src/useDebounce.ts) hook from `@openmrs/esm-framework` to debounce search inputs. Here's a snippet (some bits are omitted for brevity) showing how you could use the hook:
 
   ```tsx
+  import { useDebounce } from "@openmrs/esm-framework";
+
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm);
 
@@ -53,7 +55,7 @@ The following are some general guidelines for search inputs:
           .filter(debouncedSearchTerm, forms, {
             extract: (form: TypedForm) => `${form.name} ${form.version}`,
           })
-          .sort((r1, r2) => r2.score - r1.score)
+          .sort((r1, r2) => r1.score - r2.score)
           .map((result) => result.original)
       : forms;
   }, [filter, forms, debouncedSearchTerm]);
@@ -91,7 +93,7 @@ The following are some general guidelines for search inputs:
         />
   
         <div className={isLoading ? "loading" : ""}>
-          {data?.products.map(item => <Product key={item.id} name={item.name} />)}
+          {data?.products?.map(item => <Product key={item.id} name={item.name} />)}
         </div>
       </div>
     );
@@ -108,4 +110,4 @@ The following are some general guidelines for search inputs:
     allowFullScreen
   ></iframe>
 
-  Here's an example of using `keepPreviousData` in the O3 patient search https://github.com/openmrs/openmrs-esm-patient-management/blob/main/packages/esm-patient-search-app/src/patient-search.resource.tsx#L198.
+  Here's an example of using `keepPreviousData` in the [O3 patient search](https://github.com/openmrs/openmrs-esm-patient-management/blob/main/packages/esm-patient-search-app/src/patient-search.resource.tsx).

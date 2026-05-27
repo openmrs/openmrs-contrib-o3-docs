@@ -12,14 +12,15 @@ Voici quelques lignes directrices à suivre lors de la gestion de l'i18n dans O3
 
   const AddVitalsButton = () => {
     const { t } = useTranslation();
+    const addVitalsLabel = t("addVitals", "Add vitals");
+
     return (
-        <Button
-          kind="ghost"
-          renderIcon={Add}
-          iconDescription="Add vitals"
-          onClick={launchVitalsBiometricsForm}
+      <Button
+        kind="ghost"
+        renderIcon={Add}
+        iconDescription={addVitalsLabel}
+        onClick={launchVitalsBiometricsForm}
       >
-        // Le deuxième argument est la valeur par défaut si la clé n'est pas trouvée dans les fichiers de traduction
         {t("add", "Add")}
       </Button>
     );
@@ -29,7 +30,8 @@ Voici quelques lignes directrices à suivre lors de la gestion de l'i18n dans O3
   Les clés et chaînes correspondantes pour le code ci-dessus devraient ressembler à ceci :
 
   ```json filename="en.json"
-  "add": "Add"
+  "add": "Add",
+  "addVitals": "Add vitals"
   ```
 
 - Utilisez le composant [Trans](https://react.i18next.com/latest/trans-component) pour traduire les chaînes qui contiennent des balises HTML.
@@ -72,8 +74,8 @@ Voici quelques lignes directrices à suivre lors de la gestion de l'i18n dans O3
   Les clés et chaînes correspondantes pour le code ci-dessus devraient ressembler à ceci :
 
   ```json
-  "flagCount_one": "{{ count }} risk flag",
-  "flagCount_other": "{{ count }} risk flags"
+  "flagCount_one": "{{count}} risk flag",
+  "flagCount_other": "{{count}} risk flags"
   ```
 
 - Pour interpoler des variables dans une chaîne, utilisez le modèle suivant :
@@ -92,4 +94,3 @@ Voici quelques lignes directrices à suivre lors de la gestion de l'i18n dans O3
   ```json filename="en.json"
   "welcome": "Welcome, {{name}}!"
   ```
-

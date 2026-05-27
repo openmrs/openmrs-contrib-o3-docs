@@ -55,7 +55,7 @@ The following are some general guidelines for testing:
   ```
 
   - Don't unnecessarily wrap things in `act`. Follow [this guide](https://kentcdodds.com/blog/fix-the-not-wrapped-in-act-warning) instead to fix `Not wrapped in act(...)` warnings.
-  - Don't use `render` or `renderHook` to wrap components in tests.
+  - Don't create one-off wrapper components for `render` or `renderHook` unless the test needs providers. When providers are needed, prefer a shared helper such as `renderWithSwr` so each test gets an isolated cache.
 
 - [Avoid the test user](https://kentcdodds.com/blog/avoid-the-test-user).
 - Avoid testing implementation details. Instead, test the component's public API. This makes it easier to refactor the component without having to rewrite the tests.

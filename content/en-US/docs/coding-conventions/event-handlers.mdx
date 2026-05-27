@@ -1,6 +1,6 @@
 # Event handlers
 
-- Ensure that your event handlers properly define their cleanup logic. Event handlers in useEffect callbacks should _always return_ a cleanup function to prevent unexpected behaviour. For example, do this:
+- Ensure that event listeners registered in `useEffect` callbacks define their cleanup logic. When an effect adds a listener, it should return a cleanup function that removes that listener. For example, do this:
 
   ```tsx {8-10}
   useEffect(() => {
@@ -31,7 +31,7 @@
   }, []);
   ```
 
-  This is important because improper cleanup can lead to memory leaks and unexpected behaviour.
+  This is important because improper cleanup can lead to memory leaks and unexpected behavior.
 
 - Event handler props should be prefixed with `on` and use camelCase:
 

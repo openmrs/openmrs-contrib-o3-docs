@@ -55,7 +55,7 @@ Voici quelques lignes directrices générales pour les tests :
   ```
 
   - Ne pas envelopper inutilement les choses dans `act`. Suivez [ce guide](https://kentcdodds.com/blog/fix-the-not-wrapped-in-act-warning) à la place pour corriger les avertissements `Not wrapped in act(...)`.
-  - N'utilisez pas `render` ou `renderHook` pour envelopper les composants dans les tests.
+  - Ne créez pas de composants wrapper ponctuels pour `render` ou `renderHook` sauf si le test a besoin de providers. Lorsque des providers sont nécessaires, préférez un helper partagé comme `renderWithSwr` afin que chaque test obtienne un cache isolé.
 
 - [Évitez le test user](https://kentcdodds.com/blog/avoid-the-test-user).
 - Évitez de tester les détails d'implémentation. Testez plutôt l'API publique du composant. Cela facilite le refactoring du composant sans avoir à réécrire les tests.
@@ -148,4 +148,3 @@ Voici quelques lignes directrices générales pour les tests :
       });
     });
     ```
-

@@ -12,14 +12,15 @@ The following are some guidelines to follow when handling i18n in O3:
 
   const AddVitalsButton = () => {
     const { t } = useTranslation();
+    const addVitalsLabel = t("addVitals", "Add vitals");
+
     return (
-        <Button
-          kind="ghost"
-          renderIcon={Add}
-          iconDescription="Add vitals"
-          onClick={launchVitalsBiometricsForm}
+      <Button
+        kind="ghost"
+        renderIcon={Add}
+        iconDescription={addVitalsLabel}
+        onClick={launchVitalsBiometricsForm}
       >
-        // The second argument is the default value if the key is not found in the translation files
         {t("add", "Add")}
       </Button>
     );
@@ -29,7 +30,8 @@ The following are some guidelines to follow when handling i18n in O3:
   The corresponding keys and strings for the code above should look like this:
 
   ```json filename="en.json"
-  "add": "Add"
+  "add": "Add",
+  "addVitals": "Add vitals"
   ```
 
 - Use the [Trans](https://react.i18next.com/latest/trans-component) component to translate strings that contain HTML tags.
@@ -72,8 +74,8 @@ The following are some guidelines to follow when handling i18n in O3:
   The corresponding keys and strings for the code above should look like this:
 
   ```json
-  "flagCount_one": "{{ count }} risk flag",
-  "flagCount_other": "{{ count }} risk flags"
+  "flagCount_one": "{{count}} risk flag",
+  "flagCount_other": "{{count}} risk flags"
   ```
 
 - To interpolate variables in a string, use the following pattern:

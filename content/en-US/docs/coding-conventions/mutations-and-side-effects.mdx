@@ -13,9 +13,9 @@
   const handleSave = async (updates) => {
     try {
       const result = await savePatient(updates);
-      mutate(result);
+      await mutate(result, { revalidate: false });
       showSnackbar({ title: t('patientSaved', 'Patient saved successfully') });
-      closeWorkspace();
+      closeWorkspace({ discardUnsavedChanges: true });
     } catch (error) {
       showSnackbar({ 
         kind: 'error',
@@ -36,10 +36,10 @@
       await deleteVisit(visitUuid);
       
       // Update all cached visit lists
-      mutate('/ws/rest/v1/visit');
+      await mutate('/ws/rest/v1/visit');
       
       // Update the specific visit's data
-      mutate(`/ws/rest/v1/visit/${visitUuid}`);
+      await mutate(`/ws/rest/v1/visit/${visitUuid}`);
       
       showSnackbar({ title: t('visitDeleted', 'Visit deleted successfully') });
     } catch (error) {
@@ -73,15 +73,17 @@
   And here's an example of using the mutate hook in a submit handler:
 
   ```tsx
-  const handleSubmit = useCallback(() => {
-    Promise.all(
-      selected.map((selectedId) => {
-        const patientList = data.find((list) => list.id === selectedId);
-        if (!patientList) return Promise.resolve();
+  const handleSubmit = useCallback(async () => {
+    try {
+      await Promise.all(
+        selected.map(async (selectedId) => {
+          const patientList = data.find((list) => list.id === selectedId);
+          if (!patientList) {
+            return;
+          }
 
-        return patientList
-          .addPatient()
-          .then(async () => {
+          try {
+            await patientList.addPatient();
             // Update the cohort membership data
             await mutateCohortMembers();
             showSnackbar({
@@ -90,15 +92,17 @@
               isLowContrast: true,
               subtitle: `${t('successAddPatientToList', 'Patient added to list')}: ${patientList.displayName}`,
             });
-          })
-          .catch(() => {
+          } catch {
             showSnackbar({
               title: t('error', 'Error'),
               kind: 'error',
               subtitle: `${t('errorAddPatientToList', 'Patient not added to list')}: ${patientList.displayName}`,
             });
-          });
-      }),
-    ).finally(closeModal);
-  }, [data, selected, closeModal, t, patientUuid]);
+          }
+        }),
+      );
+    } finally {
+      closeModal();
+    }
+  }, [data, selected, closeModal, t, mutateCohortMembers]);
   ```

@@ -17,9 +17,9 @@
     isAdmin?: boolean;
   }
 
-  const UserComponent: React.FC<UserComponentProps> = ({ name, age, isAdmin = false }) => {
+  function UserComponent({ name, age, isAdmin = false }: UserComponentProps) {
     // ...
-  };
+  }
   ```
 
 - Make sure you read through a [Carbon component's](https://react.carbondesignsystem.com/) documentation before using it. This helps you to understand the component's props and how to use them. It also helps you to understand the component's behavior and can obviate the need for writing custom code. For example, here's the [Button component documentation](https://react.carbondesignsystem.com/?path=/docs/components-button--default).
@@ -97,7 +97,7 @@
 
 - Follow consistent code formatting, naming conventions and folder structure. This makes the codebase more readable and easier to maintain.
 
-- Provide appropriate dependencies for hooks that accept dependency arrays (`useEffect`, `useMemo`, `useCallback`, `useLayoutEffect`, `useTransition`, `useImperativeHandle`, and `useDebugValue`). This helps ensure that your hooks remain synchronized with the latest props and state of your component. The general rule of thumb is to:
+- Provide appropriate dependencies for hooks that accept dependency arrays (`useEffect`, `useMemo`, `useCallback`, `useLayoutEffect`, `useInsertionEffect`, and `useImperativeHandle`). This helps ensure that your hooks remain synchronized with the latest props and state of your component. The general rule of thumb is to:
   - Make dependencies as specific as possible while still capturing all values that could affect the hook's behavior
   - Consider the performance implications of including objects or functions as dependencies
   - Follow the [React documentation guidelines](https://react.dev/learn/removing-effect-dependencies#what-to-do-about-object-dependencies) for managing object and function dependencies

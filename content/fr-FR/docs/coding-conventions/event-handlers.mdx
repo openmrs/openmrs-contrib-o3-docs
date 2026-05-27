@@ -1,6 +1,6 @@
 # Gestionnaires d'événements
 
-- Assurez-vous que vos gestionnaires d'événements définissent correctement leur logique de nettoyage. Les gestionnaires d'événements dans les callbacks useEffect doivent _toujours retourner_ une fonction de nettoyage pour éviter un comportement inattendu. Par exemple, faites ceci :
+- Assurez-vous que les écouteurs d'événements enregistrés dans des callbacks `useEffect` définissent correctement leur logique de nettoyage. Lorsqu'un effet ajoute un écouteur, il doit retourner une fonction de nettoyage qui supprime cet écouteur. Par exemple, faites ceci :
 
   ```tsx {8-10}
   useEffect(() => {
@@ -79,4 +79,3 @@
     <button onClick={onClick}>{children}</button>
   );
   ```
-

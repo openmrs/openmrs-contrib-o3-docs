@@ -17,9 +17,9 @@
     isAdmin?: boolean;
   }
 
-  const UserComponent: React.FC<UserComponentProps> = ({ name, age, isAdmin = false }) => {
+  function UserComponent({ name, age, isAdmin = false }: UserComponentProps) {
     // ...
-  };
+  }
   ```
 
 - Assurez-vous de lire la documentation d'un [composant Carbon](https://react.carbondesignsystem.com/) avant de l'utiliser. Cela vous aide à comprendre les props du composant et comment les utiliser. Cela vous aide également à comprendre le comportement du composant et peut éviter le besoin d'écrire du code personnalisé. Par exemple, voici la [documentation du composant Button](https://react.carbondesignsystem.com/?path=/docs/components-button--default).
@@ -97,9 +97,8 @@
 
 - Suivez un formatage de code cohérent, des conventions de nommage et une structure de dossiers. Cela rend la base de code plus lisible et plus facile à maintenir.
 
-- Fournissez des dépendances appropriées pour les hooks qui acceptent des tableaux de dépendances (`useEffect`, `useMemo`, `useCallback`, `useLayoutEffect`, `useTransition`, `useImperativeHandle` et `useDebugValue`). Cela aide à garantir que vos hooks restent synchronisés avec les dernières props et l'état de votre composant. La règle générale est de :
+- Fournissez des dépendances appropriées pour les hooks qui acceptent des tableaux de dépendances (`useEffect`, `useMemo`, `useCallback`, `useLayoutEffect`, `useInsertionEffect` et `useImperativeHandle`). Cela aide à garantir que vos hooks restent synchronisés avec les dernières props et l'état de votre composant. La règle générale est de :
   - Rendre les dépendances aussi spécifiques que possible tout en capturant toutes les valeurs qui pourraient affecter le comportement du hook
   - Considérer les implications de performance de l'inclusion d'objets ou de fonctions comme dépendances
   - Suivre les [lignes directrices de la documentation React](https://react.dev/learn/removing-effect-dependencies#what-to-do-about-object-dependencies) pour gérer les dépendances d'objets et de fonctions
   - Utiliser la règle `exhaustive-deps` de `eslint-plugin-react-hooks` pour aider à faire respecter les spécifications de dépendances correctes
-

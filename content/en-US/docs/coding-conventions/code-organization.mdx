@@ -84,7 +84,6 @@
 - Place type annotations and interfaces at the top of the file, after the imports and above any component code. Since TypeScript types and interfaces are development-time constructs that get removed during compilation, they don't affect the runtime behavior of your code.
 
    ```tsx
-  import React from 'react';
   import { useTranslation } from 'react-i18next';
   import { Button } from '@carbon/react';
   import { showSnackbar } from '@openmrs/esm-framework';
@@ -104,13 +103,13 @@
   };
 
   // Component code follows type definitions
-  export const UserComponent: React.FC<UserComponentProps> = ({ 
+  export function UserComponent({
     userData,
     onSave,
-    isEditable = false 
-  }) => {
+    isEditable = false,
+  }: UserComponentProps) {
     // ... component implementation
-  };
+  }
   ```
 
   Some key points about type placement:

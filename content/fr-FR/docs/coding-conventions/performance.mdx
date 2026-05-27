@@ -84,6 +84,14 @@
     revalidateOnFocus: false,
     revalidateOnReconnect: false,
     refreshInterval: 0,
+    shouldRetryOnError: (error) => {
+      if (error instanceof OpenmrsFetchError) {
+        const status = error.response.status;
+        return status >= 500 || status === 401 || status === 403 || status === 429;
+      }
+
+      return true;
+    },
   };
 
   <SWRConfig value={defaultSwrConfig}>
@@ -139,4 +147,3 @@
   - Composants qui sont lents à rendre
   - Tâches longues dans le thread principal
   - Composants qui pourraient être mémorisés
-
