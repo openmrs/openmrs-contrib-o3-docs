@@ -57,14 +57,14 @@ Workspaces are side panels that slide in from the right side of the screen, typi
   const handleSave = async () => {
     try {
       await saveData();
-      mutate(); // Update SWR cache
-      closeWorkspace({ discardUnsavedChanges: true });
+      await mutate(); // Update SWR cache
+      await closeWorkspace({ discardUnsavedChanges: true });
       showSnackbar({ title: t('saved', 'Saved successfully') });
     } catch (error) {
       showSnackbar({
         kind: 'error',
         title: t('errorSaving', 'Error saving'),
-        subtitle: error?.message,
+        subtitle: error instanceof Error ? error.message : t('unknownError', 'Unknown error'),
       });
     }
   };

@@ -57,14 +57,14 @@ Les espaces de travail sont des panneaux latéraux qui glissent depuis le côté
   const handleSave = async () => {
     try {
       await saveData();
-      mutate(); // Mettre à jour le cache SWR
-      closeWorkspace({ discardUnsavedChanges: true });
+      await mutate(); // Mettre à jour le cache SWR
+      await closeWorkspace({ discardUnsavedChanges: true });
       showSnackbar({ title: t('saved', 'Enregistré avec succès') });
     } catch (error) {
       showSnackbar({
         kind: 'error',
         title: t('errorSaving', 'Erreur lors de l'enregistrement'),
-        subtitle: error?.message,
+        subtitle: error instanceof Error ? error.message : t('unknownError', 'Erreur inconnue'),
       });
     }
   };

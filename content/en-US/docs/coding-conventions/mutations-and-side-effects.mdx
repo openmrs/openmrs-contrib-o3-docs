@@ -15,11 +15,12 @@
       const result = await savePatient(updates);
       await mutate(result, { revalidate: false });
       showSnackbar({ title: t('patientSaved', 'Patient saved successfully') });
-      closeWorkspace({ discardUnsavedChanges: true });
+      await closeWorkspace({ discardUnsavedChanges: true });
     } catch (error) {
       showSnackbar({ 
         kind: 'error',
-        title: t('errorSavingPatient', 'Error saving patient') 
+        title: t('errorSavingPatient', 'Error saving patient'),
+        subtitle: error instanceof Error ? error.message : t('unknownError', 'Unknown error'),
       });
     }
   };
@@ -46,7 +47,7 @@
       showSnackbar({ 
         kind: 'error',
         title: t('errorDeletingVisit', 'Error deleting visit'),
-        subtitle: error?.message
+        subtitle: error instanceof Error ? error.message : t('unknownError', 'Unknown error'),
       });
     }
   };
