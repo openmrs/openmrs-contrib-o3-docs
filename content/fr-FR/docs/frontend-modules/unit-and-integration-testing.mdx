@@ -1,4 +1,4 @@
-import { Callout, Steps } from "nextra/components";
+import { Callout } from "nextra/components";
 import DeprecationWarning from "@/components/deprecation-warning";
 
 # Tests unitaires et d'intégration
@@ -34,9 +34,9 @@ Pourquoi le projet évolue vers Vitest :
 
 ## Exécuter les tests et fichiers de setup
 
-Les commandes de test varient selon le module, donc vérifiez le `package.json` du module pour connaître les scripts exacts. Les modèles courants incluent `yarn test` et `yarn test:watch`.
+Les commandes de test varient selon le module, donc vérifiez le `package.json` du module pour connaître les scripts exacts. Les modèles courants incluent `yarn test`, `yarn test:watch` et `yarn turbo test` dans les dépôts qui utilisent Turbo.
 
-Les fichiers de setup s’appellent généralement `setupTests.ts` ou `setup-tests.ts`, et ils sont déclarés dans la configuration du runner de test (Jest ou Vitest). Si vous devez ajouter des mocks globaux ou des utilitaires de test, c’est l’endroit approprié.
+Les fichiers de setup des modules Vitest actuels s’appellent généralement `setup-tests.ts` et sont déclarés via `test.setupFiles` dans `vitest.config.ts`. Les anciens modules Jest peuvent encore utiliser `setupTests.ts`. Si vous devez ajouter des mocks globaux ou des utilitaires de test, utilisez le fichier de setup et la convention de nommage déjà présents dans ce dépôt.
 
 ## Exemple: Tester un module frontend
 
@@ -246,6 +246,23 @@ Core exporte des mocks de modules qui peuvent être utilisés pour tester les fo
 
 Lorsque vous importez `@openmrs/esm-framework/mock`, le package se résout automatiquement vers le fichier de mock approprié en fonction de votre système de modules. Vous n'avez pas besoin de préciser quel fichier utiliser — le framework s'en charge automatiquement. Notez que cette résolution dépend du système de modules (ESM vs CommonJS), pas du runner de test. Par exemple, un projet Jest configuré pour utiliser les modules ES utilisera `mock.tsx` via `import`, tandis qu'une utilisation CommonJS (via `require()`) utilisera `mock-jest.tsx`.
 
+Dans la configuration de test de chaque module frontend, vous verrez une configuration qui mappe ou mocke `@openmrs/esm-framework`. L'approche exacte dépend du runner de test utilisé dans ce dépôt (Jest ou Vitest).
+
+**Exemple d'alias de configuration Vitest :**
+
+```ts {9} filename="tools/vitest.shared.ts"
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+  test: {
+    setupFiles: [new URL('./setup-tests.ts', import.meta.url).pathname],
+    alias: [
+      { find: /^@openmrs\/esm-framework$/, replacement: '@openmrs/esm-framework/mock' },
+    ],
+  },
+});
+```
+
 **Exemple Jest :**
 
 ```js {4}
@@ -257,7 +274,7 @@ module.exports = {
 };
 ```
 
-**Exemple Vitest (dans `setup-tests.ts`) :**
+**Exemple de fichier de setup Vitest :**
 
 ```ts
 vi.mock('@openmrs/esm-framework', () => import('@openmrs/esm-framework/mock'));
@@ -278,9 +295,9 @@ C'est considéré comme une bonne pratique en matière de tests parce que cela :
 
 Le mock du framework agrège des stubs pour toutes les APIs du framework que votre module pourrait utiliser. Si une fonctionnalité est manquante, vous devriez d'abord l'ajouter au mock. Vous pouvez le faire en étendant l'un des stubs existants ou en en ajoutant de nouveaux.
 
-### Vous ne devriez pas avoir besoin d'utiliser des mocks partiels
+### Préférer les mocks partagés avant les mocks partiels
 
-Le mock du framework devrait être suffisant pour tester votre module. Si vous vous retrouvez à devoir simuler des fonctions ou des classes individuelles, il est probable que le mock du framework manque de fonctionnalités. Vous avez peut-être vu un modèle comme celui-ci dans le passé:
+Le mock du framework devrait couvrir les comportements réutilisables du framework dont votre module a besoin. Si vous simulez une fonction du framework parce qu'il manque un stub généralement utile dans le mock partagé, ajoutez ce stub au package de mock approprié au lieu de construire une structure de mock séparée dans chaque test. Vous avez peut-être vu un modèle comme celui-ci dans le passé:
 
 ```tsx
 import { useConfig } from "@openmrs/esm-framework";
@@ -291,7 +308,7 @@ jest.mock("@openmrs/esm-framework", () => ({
 }));
 ```
 
-C'est un anti-modèle. Ce n'est pas parce que cette approche ne fonctionne pas — elle fonctionne. C'est un anti-modèle parce qu'elle crée essentiellement une structure de mock parallèle qui n'est pas aussi facile à maintenir que le mock du framework. Comme les stubs du mock du framework sont centralisés, il est plus simple d'ajouter de nouveaux stubs à chaque fois que de nouvelles fonctionnalités sont ajoutées au framework.
+Évitez cette approche lorsque l'objectif est de fournir un stub de framework réutilisable. Elle crée une structure de mock parallèle qui est plus difficile à maintenir que le mock centralisé du framework. Comme les stubs du mock du framework sont centralisés, il est plus simple d'ajouter de nouveaux stubs à chaque fois que de nouvelles fonctionnalités sont ajoutées au framework.
 
 La bonne façon d'étendre le mock du framework est d'ajouter la fonctionnalité manquante au mock lui-même. Voici un exemple de la manière de procéder :
 
@@ -322,6 +339,27 @@ beforeEach(() => {
 });
 
 // Vos tests vont ici...
+```
+
+Les mocks partiels ciblés restent raisonnables lorsqu'un test précis doit remplacer une exportation existante, comme `useSession`, `launchWorkspace2` ou un composant UI du framework. Avec Vitest, conservez le reste du module et remplacez uniquement l'exportation nécessaire :
+
+```tsx
+import { launchWorkspace2 } from "@openmrs/esm-framework";
+import { beforeEach, vi } from "vitest";
+
+vi.mock("@openmrs/esm-framework", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@openmrs/esm-framework")>();
+  return {
+    ...actual,
+    launchWorkspace2: vi.fn(),
+  };
+});
+
+const mockLaunchWorkspace2 = vi.mocked(launchWorkspace2);
+
+beforeEach(() => {
+  mockLaunchWorkspace2.mockReset();
+});
 ```
 
 Voici un exemple réel de pull request qui a ajouté de nouveaux stubs au mock du framework: https://github.com/openmrs/openmrs-esm-core/pull/1105.
@@ -471,7 +509,7 @@ beforeEach(() => {
 ### Points clés à retenir
 
 - Utilisez le mock du framework pour tester votre module de manière isolée.
-- Étendez le mock du framework en ajoutant des stubs pour les fonctionnalités manquantes. N'utilisez pas de mocks partiels pour ajouter des fonctionnalités manquantes.
+- Étendez le mock du framework en ajoutant des stubs pour les comportements réutilisables du framework manquants. Utilisez des mocks partiels ciblés seulement pour des remplacements propres à un test.
 - Utilisez la fonction `mocked` (`jest.mocked` pour Jest ou `vi.mocked` pour Vitest) pour déduire le type de vos mocks à partir de la fonction source.
 - Annotez vos mocks avec des informations de type pour détecter les erreurs de type tôt et rendre vos tests plus robustes.
 
