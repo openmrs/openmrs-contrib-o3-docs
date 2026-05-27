@@ -1,4 +1,4 @@
-import { Callout, Steps } from "nextra/components";
+import { Callout } from "nextra/components";
 
 # Utiliser les formulaires dans les applications
 
@@ -13,81 +13,108 @@ Le React Form Engine peut être utilisé de deux manières principales :
 
 ## Rendre les formulaires dans les espaces de travail
 
-Le moyen le plus simple de rendre un formulaire dans un espace de travail est d'utiliser l'extension `react-form-engine-widget` fournie par `@openmrs/esm-form-engine-app`. Cette extension gère automatiquement le chargement des formulaires, les états d'erreur et l'intégration dans les espaces de travail.
+Le dossier patient fournit déjà un espace de travail de saisie de formulaire via `@openmrs/esm-patient-forms-app`. Pour la plupart des flux du dossier patient, lancez `patient-form-entry-workspace` avec un objet formulaire et, si nécessaire, les détails de la rencontre au lieu d'enregistrer votre propre espace de travail :
 
-### Étape 1 : Enregistrer l'espace de travail du formulaire
+```tsx
+import { launchWorkspace2 } from '@openmrs/esm-framework';
+import { type Form } from '@openmrs/esm-patient-common-lib';
 
-Dans le fichier `routes.json` de votre module, enregistrez un espace de travail :
+function launchMyForm(form: Form, encounterUuid?: string) {
+  launchWorkspace2('patient-form-entry-workspace', {
+    form,
+    encounterUuid,
+    additionalProps: {
+      mode: encounterUuid ? 'edit' : 'enter',
+    },
+  });
+}
+```
+
+Cet espace de travail encapsule le formulaire dans `Workspace2`, rend le `visit-context-header-slot`, puis rend soit un iframe HTML Form Entry, soit le React Form Engine via le `form-widget-slot`.
+
+### Créer un espace de travail de formulaire personnalisé
+
+<Callout emoji="ℹ️" type="info">
+L'extension `react-form-engine-widget` est enregistrée par `@openmrs/esm-form-engine-app` dans le slot `form-widget-slot`. Vous n'avez besoin d'un espace de travail personnalisé que si vous voulez une enveloppe d'espace de travail différente, un comportement d'actualisation personnalisé ou un contexte de rendu hors du dossier patient.
+</Callout>
+
+Si vous créez votre propre espace de travail, enregistrez-le avec les routes Workspace v2 :
 
 ```json
 {
-  "workspaces": [
+  "workspaces2": [
     {
       "name": "my-form-workspace",
-      "title": "Mon formulaire",
       "component": "myFormWorkspace",
-      "type": "clinical-form",
-      "canMaximize": true,
-      "width": "wider"
+      "window": "my-form-window"
+    }
+  ],
+  "workspaceWindows2": [
+    {
+      "name": "my-form-window",
+      "group": "patient-chart",
+      "width": "extra-wide",
+      "canMaximize": true
     }
   ]
 }
 ```
 
-<Callout emoji="ℹ️" type="info">
-L'extension `react-form-engine-widget` est déjà enregistrée par `@openmrs/esm-form-engine-app` dans le slot `form-widget-slot`. Vous n'avez pas besoin de l'enregistrer à nouveau sauf si vous créez un renderer de formulaire personnalisé.
-</Callout>
-
-### Étape 2 : Créer le composant de l'espace de travail
-
-Créez un composant d'espace de travail qui utilise `ExtensionSlot` pour rendre le formulaire :
+Rendez ensuite `form-widget-slot` depuis une enveloppe `Workspace2` et transmettez l'état attendu par le renderer de formulaire :
 
 ```tsx
-import React from 'react';
-import { ExtensionSlot } from '@openmrs/esm-framework';
-import { type DefaultPatientWorkspaceProps } from '@openmrs/esm-patient-common-lib';
+import React, { useState } from 'react';
+import { ExtensionSlot, Workspace2 } from '@openmrs/esm-framework';
+import {
+  type PatientWorkspace2DefinitionProps,
+  type FormRendererProps,
+} from '@openmrs/esm-patient-common-lib';
 
-interface MyFormWorkspaceProps extends DefaultPatientWorkspaceProps {
+interface MyFormWorkspaceProps {
   formUuid: string;
   encounterUuid?: string;
 }
 
-export function MyFormWorkspace({ 
-  patientUuid, 
-  formUuid, 
-  encounterUuid,
+export function MyFormWorkspace({
   closeWorkspace,
-  promptBeforeClosing,
-  closeWorkspaceWithSavedChanges 
-}: MyFormWorkspaceProps) {
-  const state = {
-    view: 'form',
+  workspaceProps: { formUuid, encounterUuid },
+  groupProps: { patient, patientUuid, visitContext, mutateVisitContext },
+}: PatientWorkspace2DefinitionProps<MyFormWorkspaceProps, object>) {
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  const state: FormRendererProps = {
     formUuid,
+    patient,
     patientUuid,
-    encounterUuid: encounterUuid ?? null,
+    encounterUuid: encounterUuid ?? '',
+    visit: visitContext,
     closeWorkspace,
-    promptBeforeClosing,
-    closeWorkspaceWithSavedChanges,
+    closeWorkspaceWithSavedChanges: () => {
+      mutateVisitContext?.();
+      return closeWorkspace({ discardUnsavedChanges: true });
+    },
+    setHasUnsavedChanges,
+    additionalProps: {
+      mode: encounterUuid ? 'edit' : 'enter',
+    },
   };
 
   return (
-    <ExtensionSlot name="form-widget-slot" state={state} />
+    <Workspace2 title="Mon formulaire" hasUnsavedChanges={hasUnsavedChanges}>
+      <ExtensionSlot name="form-widget-slot" state={state} />
+    </Workspace2>
   );
 }
 ```
 
-### Étape 3 : Lancer l'espace de travail
-
-Lancez l'espace de travail avec l'UUID du formulaire :
+Lancez l'espace de travail personnalisé avec Workspace v2 :
 
 ```tsx
-import { launchWorkspace } from '@openmrs/esm-framework';
+import { launchWorkspace2 } from '@openmrs/esm-framework';
 
-function launchMyForm(patientUuid: string, formUuid: string) {
-  launchWorkspace('my-form-workspace', {
-    patientUuid,
+function launchMyCustomWorkspace(formUuid: string) {
+  launchWorkspace2('my-form-workspace', {
     formUuid,
-    workspaceTitle: 'Mon formulaire'
   });
 }
 ```
@@ -130,9 +157,7 @@ export function MyFormComponent({ patientUuid, formSchema }: MyFormComponentProp
 
 ### Charger le schéma de formulaire depuis l'UUID
 
-Si vous avez un UUID de formulaire au lieu du schéma, vous pouvez soit :
-
-1. **Utiliser la prop form UUID** - Le FormEngine chargera automatiquement le schéma :
+Si vous avez un UUID de formulaire au lieu du schéma, transmettez-le à la prop `formUUID`. Le FormEngine chargera automatiquement le schéma :
 
 ```tsx
 import React from 'react';
@@ -153,46 +178,9 @@ export function MyFormComponent({ patientUuid, formUuid }: MyFormComponentProps)
 }
 ```
 
-2. **Charger le schéma manuellement** - Si vous devez gérer vous-même les états de chargement ou les erreurs :
-
-```tsx
-import React from 'react';
-import useSWR from 'swr';
-import { FormEngine } from '@openmrs/esm-form-engine-lib';
-import { openmrsFetch, restBaseUrl } from '@openmrs/esm-framework';
-import type { FormSchema } from '@openmrs/esm-form-engine-lib';
-import { InlineLoading } from '@carbon/react';
-
-interface MyFormComponentProps {
-  patientUuid: string;
-  formUuid: string;
-}
-
-export function MyFormComponent({ patientUuid, formUuid }: MyFormComponentProps) {
-  const { data, error, isLoading } = useSWR<{ data: FormSchema }>(
-    `${restBaseUrl}/o3/forms/${formUuid}`,
-    openmrsFetch
-  );
-
-  if (isLoading) {
-    return <InlineLoading description="Chargement du formulaire..." />;
-  }
-
-  if (error || !data?.data) {
-    return <div>Erreur lors du chargement du formulaire</div>;
-  }
-
-  const schema = { ...data.data, encounterType: data.data.encounterType['uuid'] };
-
-  return (
-    <FormEngine
-      patientUUID={patientUuid}
-      formJson={schema}
-      formUUID={formUuid}
-    />
-  );
-}
-```
+<Callout emoji="💡" type="info">
+Le FormEngine gère les états de chargement et les erreurs en interne. Vous n'avez pas besoin de récupérer manuellement le schéma du formulaire sauf si votre cas d'usage l'exige.
+</Callout>
 
 ## Props et configuration du formulaire
 
@@ -204,11 +192,11 @@ Le composant `FormEngine` accepte les props suivantes :
 
 ### Props optionnelles
 
-- **`formUUID`** (string) - L'UUID du formulaire à charger depuis le serveur. Si fourni, le schéma du formulaire sera chargé automatiquement. Si `formUUID` et `formJson` sont tous deux fournis, `formJson` prend la priorité.
+- **`formUUID`** (string) - L'UUID du formulaire à charger depuis le serveur. Si fourni, le schéma du formulaire sera chargé automatiquement. Ne peut pas être fourni avec `formJson` : vous devez utiliser soit `formUUID`, soit `formJson`, mais pas les deux.
 - **`formJson`** (FormSchema) - L'objet schéma de formulaire. Utilisez-le lorsque vous avez déjà le schéma chargé ou souhaitez utiliser un schéma personnalisé.
 - **`encounterUUID`** (string) - L'UUID d'une rencontre existante à modifier. Lorsqu'il est fourni, le formulaire sera pré-rempli avec les données de la rencontre et rendu en mode édition.
-- **`visit`** (Visit) - L'objet visite associé à la session du formulaire. Si non fourni, le form engine utilisera la visite active du patient.
-- **`mode`** (`'enter' | 'edit' | 'view' | 'embedded-view'`) - Le mode de rendu du formulaire. Voir [Modes de rendu des formulaires](#form-rendering-modes) ci-dessous.
+- **`visit`** (Visit) - L'objet visite à associer à la rencontre soumise. L'espace de travail de formulaire du dossier patient fournit la visite active pour les nouveaux formulaires, ou la visite de la rencontre lorsque vous modifiez une rencontre existante.
+- **`mode`** (`'enter' | 'edit' | 'view' | 'embedded-view'`) - Le mode de rendu du formulaire. Voir [Modes de rendu des formulaires](#modes-de-rendu-des-formulaires) ci-dessous.
 - **`formSessionIntent`** (string) - L'intention de la session du formulaire (par défaut : `'*'`). Utilisé pour filtrer les sessions de formulaire lors du chargement des valeurs initiales.
 - **`onSubmit`** (function) - Fonction de rappel appelée lorsque le formulaire est soumis avec succès. Reçoit un tableau des rencontres créées/mises à jour.
 - **`onCancel`** (function) - Fonction de rappel appelée lorsque l'utilisateur annule le formulaire.
@@ -349,14 +337,14 @@ import { type Encounter } from '@openmrs/esm-framework';
 function MyFormWorkspace({ patientUuid, formUuid }: Props) {
   const handleSubmit = (encounters: Array<Encounter>) => {
     const encounter = encounters[0];
-    
+
     // Gérer la soumission réussie
     console.log('Rencontre créée :', encounter.uuid);
     console.log('Observations :', encounter.obs);
-    
+
     // Fermer l'espace de travail ou naviguer
-    closeWorkspaceWithSavedChanges();
-    
+    closeWorkspace({ discardUnsavedChanges: true });
+
     // Actualiser les données liées
     mutate('/ws/rest/v1/encounter');
   };
@@ -373,102 +361,85 @@ function MyFormWorkspace({ patientUuid, formUuid }: Props) {
 
 ### Gestion des erreurs
 
-Le Form Engine gère automatiquement les erreurs de validation et les affiche en ligne. Pour les erreurs de soumission, vous pouvez les gérer dans votre callback `onSubmit` ou utiliser l'état d'erreur du formulaire :
+Le Form Engine gère automatiquement les erreurs de validation et les affiche en ligne. Le callback `onSubmit` est appelé uniquement après une soumission réussie. Si la soumission échoue, le Form Engine gère l'erreur en interne et l'affiche à l'utilisateur. Votre callback `onSubmit` n'est alors pas appelé.
 
 ```tsx
 function MyFormWorkspace({ patientUuid, formUuid }: Props) {
-  const [submitError, setSubmitError] = useState<Error | null>(null);
-
-  const handleSubmit = async (encounters: Array<Encounter>) => {
-    try {
-      // La soumission du formulaire est gérée par le Form Engine
-      // Ce callback est appelé après une soumission réussie
-      console.log('Formulaire soumis avec succès');
-      closeWorkspaceWithSavedChanges();
-    } catch (error) {
-      setSubmitError(error);
-    }
+  const handleSubmit = (encounters: Array<Encounter>) => {
+    // Ce callback est appelé uniquement si la soumission réussit
+    // Le Form Engine gère les erreurs en interne
+    console.log('Formulaire soumis avec succès :', encounters);
+    closeWorkspace({ discardUnsavedChanges: true });
   };
 
   return (
-    <>
-      {submitError && (
-        <InlineNotification
-          kind="error"
-          title="Erreur lors de la soumission du formulaire"
-          subtitle={submitError.message}
-        />
-      )}
-      <FormEngine
-        patientUUID={patientUuid}
-        formUUID={formUuid}
-        onSubmit={handleSubmit}
-      />
-    </>
+    <FormEngine
+      patientUUID={patientUuid}
+      formUUID={formUuid}
+      onSubmit={handleSubmit}
+    />
   );
 }
 ```
 
 ## Exemple complet : Espace de travail de formulaire
 
-Voici un exemple complet d'un espace de travail de formulaire qui s'intègre au dossier patient :
+Voici un exemple complet d'un espace de travail de formulaire personnalisé qui s'intègre au dossier patient :
 
 ```tsx
-import React, { useCallback, useMemo } from 'react';
-import { ExtensionSlot } from '@openmrs/esm-framework';
-import { type Encounter } from '@openmrs/esm-framework';
-import { 
-  type DefaultPatientWorkspaceProps 
+import React, { useMemo, useState } from 'react';
+import { ExtensionSlot, Workspace2 } from '@openmrs/esm-framework';
+import {
+  type FormRendererProps,
+  type PatientWorkspace2DefinitionProps,
 } from '@openmrs/esm-patient-common-lib';
 
-interface MyFormWorkspaceProps extends DefaultPatientWorkspaceProps {
+interface MyFormWorkspaceProps {
   formUuid: string;
   encounterUuid?: string;
 }
 
 export function MyFormWorkspace({
-  patientUuid,
-  formUuid,
-  encounterUuid,
   closeWorkspace,
-  promptBeforeClosing,
-  closeWorkspaceWithSavedChanges,
-}: MyFormWorkspaceProps) {
-  const handleSubmit = useCallback(
-    (encounters: Array<Encounter>) => {
-      console.log('Formulaire soumis :', encounters);
-      closeWorkspaceWithSavedChanges();
-      // Optionnellement actualiser les données liées ou afficher une notification de succès
-    },
-    [closeWorkspaceWithSavedChanges]
-  );
+  workspaceProps: { formUuid, encounterUuid },
+  groupProps: { patient, patientUuid, visitContext, mutateVisitContext },
+}: PatientWorkspace2DefinitionProps<MyFormWorkspaceProps, object>) {
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const state = useMemo(
-    () => ({
-      view: 'form',
+    (): FormRendererProps => ({
       formUuid,
+      patient,
       patientUuid,
-      encounterUuid: encounterUuid ?? null,
+      visit: visitContext,
+      encounterUuid: encounterUuid ?? '',
       closeWorkspace,
-      promptBeforeClosing,
-      closeWorkspaceWithSavedChanges,
+      closeWorkspaceWithSavedChanges: () => {
+        mutateVisitContext?.();
+        return closeWorkspace({ discardUnsavedChanges: true });
+      },
+      setHasUnsavedChanges,
       additionalProps: {
         mode: encounterUuid ? 'edit' : 'enter',
-        handlePostResponse: handleSubmit,
       },
     }),
     [
       formUuid,
+      patient,
       patientUuid,
+      visitContext,
       encounterUuid,
       closeWorkspace,
-      promptBeforeClosing,
-      closeWorkspaceWithSavedChanges,
-      handleSubmit,
+      mutateVisitContext,
+      setHasUnsavedChanges,
     ]
   );
 
-  return <ExtensionSlot name="form-widget-slot" state={state} />;
+  return (
+    <Workspace2 title="Mon formulaire" hasUnsavedChanges={hasUnsavedChanges}>
+      <ExtensionSlot name="form-widget-slot" state={state} />
+    </Workspace2>
+  );
 }
 ```
 
@@ -507,4 +478,3 @@ La prop `formSessionIntent` vous permet de filtrer les sessions de formulaire lo
 - Découvrez comment [créer des formulaires avec le Form Builder](/docs/forms-in-o3/build-forms-with-o3-form-builder)
 - Lisez la [documentation du React Form Engine](https://openmrs.atlassian.net/wiki/spaces/projects/pages/68747273/O3+Form+Docs) pour les fonctionnalités avancées
 - Consultez la [documentation des espaces de travail](/docs/workspaces/creating-workspaces) pour en savoir plus sur la création d'espaces de travail
-

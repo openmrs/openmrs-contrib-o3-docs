@@ -1,4 +1,4 @@
-import { Callout, Steps } from "nextra/components";
+import { Callout } from "nextra/components";
 
 # Using forms in applications
 
@@ -13,81 +13,108 @@ The React Form Engine can be used in two main ways:
 
 ## Rendering forms in workspaces
 
-The simplest way to render a form in a workspace is to use the `react-form-engine-widget` extension provided by `@openmrs/esm-form-engine-app`. This extension handles form loading, error states, and workspace integration automatically.
+The patient chart already provides a form entry workspace through `@openmrs/esm-patient-forms-app`. For most patient-chart workflows, launch `patient-form-entry-workspace` with a form object and optional encounter details instead of registering your own workspace:
 
-### Step 1: Register the form workspace
+```tsx
+import { launchWorkspace2 } from '@openmrs/esm-framework';
+import { type Form } from '@openmrs/esm-patient-common-lib';
 
-In your module's `routes.json`, register a workspace:
+function launchMyForm(form: Form, encounterUuid?: string) {
+  launchWorkspace2('patient-form-entry-workspace', {
+    form,
+    encounterUuid,
+    additionalProps: {
+      mode: encounterUuid ? 'edit' : 'enter',
+    },
+  });
+}
+```
+
+The workspace wraps the form in `Workspace2`, renders the `visit-context-header-slot`, and then renders either an HTML Form Entry iframe or the React Form Engine through the `form-widget-slot`.
+
+### Creating a custom form workspace
+
+<Callout emoji="ℹ️" type="info">
+The `react-form-engine-widget` extension is registered by `@openmrs/esm-form-engine-app` in the `form-widget-slot`. You only need a custom workspace when you want a different workspace shell, custom data refresh behavior, or a non-patient-chart rendering context.
+</Callout>
+
+If you do create your own workspace, register it with Workspace v2 routes:
 
 ```json
 {
-  "workspaces": [
+  "workspaces2": [
     {
       "name": "my-form-workspace",
-      "title": "My Form",
       "component": "myFormWorkspace",
-      "type": "clinical-form",
-      "canMaximize": true,
-      "width": "wider"
+      "window": "my-form-window"
+    }
+  ],
+  "workspaceWindows2": [
+    {
+      "name": "my-form-window",
+      "group": "patient-chart",
+      "width": "extra-wide",
+      "canMaximize": true
     }
   ]
 }
 ```
 
-<Callout emoji="ℹ️" type="info">
-The `react-form-engine-widget` extension is already registered by `@openmrs/esm-form-engine-app` in the `form-widget-slot`. You don't need to register it again unless you're creating a custom form renderer.
-</Callout>
-
-### Step 2: Create the workspace component
-
-Create a workspace component that uses the `ExtensionSlot` to render the form:
+Then render `form-widget-slot` from a `Workspace2` shell and pass the state expected by the form renderer:
 
 ```tsx
-import React from 'react';
-import { ExtensionSlot } from '@openmrs/esm-framework';
-import { type DefaultPatientWorkspaceProps } from '@openmrs/esm-patient-common-lib';
+import React, { useState } from 'react';
+import { ExtensionSlot, Workspace2 } from '@openmrs/esm-framework';
+import {
+  type PatientWorkspace2DefinitionProps,
+  type FormRendererProps,
+} from '@openmrs/esm-patient-common-lib';
 
-interface MyFormWorkspaceProps extends DefaultPatientWorkspaceProps {
+interface MyFormWorkspaceProps {
   formUuid: string;
   encounterUuid?: string;
 }
 
-export function MyFormWorkspace({ 
-  patientUuid, 
-  formUuid, 
-  encounterUuid,
+export function MyFormWorkspace({
   closeWorkspace,
-  promptBeforeClosing,
-  closeWorkspaceWithSavedChanges 
-}: MyFormWorkspaceProps) {
-  const state = {
-    view: 'form',
+  workspaceProps: { formUuid, encounterUuid },
+  groupProps: { patient, patientUuid, visitContext, mutateVisitContext },
+}: PatientWorkspace2DefinitionProps<MyFormWorkspaceProps, object>) {
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  const state: FormRendererProps = {
     formUuid,
+    patient,
     patientUuid,
-    encounterUuid: encounterUuid ?? null,
+    encounterUuid: encounterUuid ?? '',
+    visit: visitContext,
     closeWorkspace,
-    promptBeforeClosing,
-    closeWorkspaceWithSavedChanges,
+    closeWorkspaceWithSavedChanges: () => {
+      mutateVisitContext?.();
+      return closeWorkspace({ discardUnsavedChanges: true });
+    },
+    setHasUnsavedChanges,
+    additionalProps: {
+      mode: encounterUuid ? 'edit' : 'enter',
+    },
   };
 
   return (
-    <ExtensionSlot name="form-widget-slot" state={state} />
+    <Workspace2 title="My form" hasUnsavedChanges={hasUnsavedChanges}>
+      <ExtensionSlot name="form-widget-slot" state={state} />
+    </Workspace2>
   );
 }
 ```
 
-### Step 3: Launch the workspace
-
-Launch the workspace with the form UUID:
+Launch the custom workspace with Workspace v2:
 
 ```tsx
-import { launchWorkspace } from '@openmrs/esm-framework';
+import { launchWorkspace2 } from '@openmrs/esm-framework';
 
-function launchMyForm(patientUuid: string, formUuid: string) {
-  launchWorkspace('my-form-workspace', {
-    patientUuid,
+function launchMyCustomWorkspace(formUuid: string) {
+  launchWorkspace2('my-form-workspace', {
     formUuid,
-    workspaceTitle: 'My Form'
   });
 }
 ```
@@ -168,7 +195,7 @@ The `FormEngine` component accepts the following props:
 - **`formUUID`** (string) - The UUID of the form to load from the server. If provided, the form schema will be loaded automatically. Cannot be provided together with `formJson` - you must use either `formUUID` or `formJson`, not both.
 - **`formJson`** (FormSchema) - The form schema object. Use this when you already have the schema loaded or want to use a custom schema.
 - **`encounterUUID`** (string) - The UUID of an existing encounter to edit. When provided, the form will be pre-filled with encounter data and rendered in edit mode.
-- **`visit`** (Visit) - The visit object associated with the form session. If not provided, the form engine will use the patient's active visit.
+- **`visit`** (Visit) - The visit object to associate with a submitted encounter. The patient chart form workspace supplies the active visit for new forms, or the encounter's own visit when editing an existing encounter.
 - **`mode`** (`'enter' | 'edit' | 'view' | 'embedded-view'`) - The rendering mode for the form. See [Form rendering modes](#form-rendering-modes) below.
 - **`formSessionIntent`** (string) - The intent of the form session (default: `'*'`). Used to filter form sessions when loading initial values.
 - **`onSubmit`** (function) - Callback function called when the form is successfully submitted. Receives an array of created/updated encounters.
@@ -202,13 +229,27 @@ The `FormEngine` component accepts the following props:
 
 **Form with workspace integration:**
 ```tsx
-<FormEngine
-  patientUUID={patientUuid}
-  formUUID={formUuid}
-  onSubmit={(encounters) => closeWorkspaceWithSavedChanges()}
-  handleClose={closeWorkspace}
-  markFormAsDirty={(isDirty) => promptBeforeClosing(() => isDirty)}
-/>
+import React, { useState } from 'react';
+import { Workspace2, type Workspace2DefinitionProps } from '@openmrs/esm-framework';
+
+function MyDirectFormWorkspace({
+  closeWorkspace,
+  workspaceProps: { patientUuid, formUuid },
+}: Workspace2DefinitionProps<{ patientUuid: string; formUuid: string }>) {
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  return (
+    <Workspace2 title="My form" hasUnsavedChanges={hasUnsavedChanges}>
+      <FormEngine
+        patientUUID={patientUuid}
+        formUUID={formUuid}
+        onSubmit={() => closeWorkspace({ discardUnsavedChanges: true })}
+        handleClose={() => closeWorkspace()}
+        markFormAsDirty={setHasUnsavedChanges}
+      />
+    </Workspace2>
+  );
+}
 ```
 
 ## Form rendering modes
@@ -312,14 +353,14 @@ import { type Encounter } from '@openmrs/esm-framework';
 function MyFormWorkspace({ patientUuid, formUuid }: Props) {
   const handleSubmit = (encounters: Array<Encounter>) => {
     const encounter = encounters[0];
-    
+
     // Handle successful submission
     console.log('Encounter created:', encounter.uuid);
     console.log('Observations:', encounter.obs);
-    
+
     // Close workspace or navigate
-    closeWorkspaceWithSavedChanges();
-    
+    closeWorkspace({ discardUnsavedChanges: true });
+
     // Refresh related data
     mutate('/ws/rest/v1/encounter');
   };
@@ -344,7 +385,7 @@ function MyFormWorkspace({ patientUuid, formUuid }: Props) {
     // This callback is only called if submission succeeds
     // The Form Engine handles errors internally
     console.log('Form submitted successfully:', encounters);
-    closeWorkspaceWithSavedChanges();
+    closeWorkspace({ discardUnsavedChanges: true });
   };
 
   return (
@@ -359,64 +400,62 @@ function MyFormWorkspace({ patientUuid, formUuid }: Props) {
 
 ## Complete example: Form workspace
 
-Here's a complete example of a form workspace that integrates with the patient chart:
+Here's a complete example of a custom form workspace that integrates with the patient chart:
 
 ```tsx
-import React, { useCallback, useMemo } from 'react';
-import { ExtensionSlot } from '@openmrs/esm-framework';
-import { type Encounter } from '@openmrs/esm-framework';
-import { 
-  type DefaultPatientWorkspaceProps 
+import React, { useMemo, useState } from 'react';
+import { ExtensionSlot, Workspace2 } from '@openmrs/esm-framework';
+import {
+  type FormRendererProps,
+  type PatientWorkspace2DefinitionProps,
 } from '@openmrs/esm-patient-common-lib';
 
-interface MyFormWorkspaceProps extends DefaultPatientWorkspaceProps {
+interface MyFormWorkspaceProps {
   formUuid: string;
   encounterUuid?: string;
 }
 
 export function MyFormWorkspace({
-  patientUuid,
-  formUuid,
-  encounterUuid,
   closeWorkspace,
-  promptBeforeClosing,
-  closeWorkspaceWithSavedChanges,
-}: MyFormWorkspaceProps) {
-  const handleSubmit = useCallback(
-    (encounters: Array<Encounter>) => {
-      console.log('Form submitted:', encounters);
-      closeWorkspaceWithSavedChanges();
-      // Optionally refresh related data or show success notification
-    },
-    [closeWorkspaceWithSavedChanges]
-  );
+  workspaceProps: { formUuid, encounterUuid },
+  groupProps: { patient, patientUuid, visitContext, mutateVisitContext },
+}: PatientWorkspace2DefinitionProps<MyFormWorkspaceProps, object>) {
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const state = useMemo(
-    () => ({
-      view: 'form',
+    (): FormRendererProps => ({
       formUuid,
+      patient,
       patientUuid,
-      encounterUuid: encounterUuid ?? null,
+      visit: visitContext,
+      encounterUuid: encounterUuid ?? '',
       closeWorkspace,
-      promptBeforeClosing,
-      closeWorkspaceWithSavedChanges,
+      closeWorkspaceWithSavedChanges: () => {
+        mutateVisitContext?.();
+        return closeWorkspace({ discardUnsavedChanges: true });
+      },
+      setHasUnsavedChanges,
       additionalProps: {
         mode: encounterUuid ? 'edit' : 'enter',
-        handlePostResponse: handleSubmit,
       },
     }),
     [
       formUuid,
+      patient,
       patientUuid,
+      visitContext,
       encounterUuid,
       closeWorkspace,
-      promptBeforeClosing,
-      closeWorkspaceWithSavedChanges,
-      handleSubmit,
+      mutateVisitContext,
+      setHasUnsavedChanges,
     ]
   );
 
-  return <ExtensionSlot name="form-widget-slot" state={state} />;
+  return (
+    <Workspace2 title="My form" hasUnsavedChanges={hasUnsavedChanges}>
+      <ExtensionSlot name="form-widget-slot" state={state} />
+    </Workspace2>
+  );
 }
 ```
 
@@ -455,4 +494,3 @@ The `formSessionIntent` prop allows you to filter form sessions when loading ini
 - Learn about [building forms with the Form Builder](/docs/forms-in-o3/build-forms-with-o3-form-builder)
 - Read the [React Form Engine documentation](https://openmrs.atlassian.net/wiki/spaces/projects/pages/68747273/O3+Form+Docs) for advanced features
 - Check out the [workspace documentation](/docs/workspaces/creating-workspaces) for more on creating workspaces
-
