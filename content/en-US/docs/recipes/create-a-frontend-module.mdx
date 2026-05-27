@@ -49,6 +49,8 @@ cd openmrs-esm-active-prescriptions-app
 corepack yarn install
 ```
 
+For standalone modules, the generated directory is based on the package name. In this example, the `--package-name "@openmrs/esm-active-prescriptions-app"` flag creates the `openmrs-esm-active-prescriptions-app` directory.
+
 Generated projects pin Yarn with the `packageManager` field, so use `corepack yarn ...` commands to respect the version in the generated `package.json`. If Corepack is not enabled on your machine, run `corepack enable` once and then rerun the install command.
 
 Generated projects already depend on `openmrs@next`, `@openmrs/esm-framework@next`, and the selected OpenMRS build config. Use `corepack yarn up openmrs@next @openmrs/esm-framework@next` only when you intentionally want to pull the newest prerelease core libraries into the project. For release work, pin tested versions instead of leaving them on moving tags.
