@@ -241,3 +241,42 @@ Masquez les liens d'historique des signes vitaux et d'enregistrement des signes 
 
 La valeur par défaut est `false`. Lorsqu'elle est définie sur `true`, les liens d'historique des signes vitaux et d'enregistrement des signes vitaux sont masqués dans l'espace de travail du patient du service.
 
+## Concepts supplémentaires de notes d'hospitalisation
+
+Configurez des concepts de notes supplémentaires à afficher dans l'espace de travail des notes du patient du service. Ils sont affichés avec le `consultFreeTextCommentsConcept` fourni par EMR API.
+
+```json
+{
+  "@openmrs/esm-ward-app": {
+    "additionalInpatientNotesConceptUuids": [
+      "162169AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    ]
+  }
+}
+```
+
+La valeur par défaut est un tableau vide.
+
+## Restrictions du bouton de sortie par lieu de session
+
+Le bouton de sortie du menu d'actions peut être limité à des lieux de session précis :
+
+```json
+{
+  "@openmrs/esm-ward-app": {
+    "extensionSlots": {
+      "ward-patient": {
+        "configure": {
+          "ward-patient-discharge": {
+            "allowedSessionLocationUuids": [
+              "some-session-location-uuid"
+            ]
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+Quand `allowedSessionLocationUuids` est vide, le bouton de sortie est disponible dans tous les lieux de session. Quand il contient des UUIDs, le bouton ne s'affiche que pour les utilisateurs dont le lieu de session actuel figure dans la liste.

@@ -241,3 +241,42 @@ Hide vital history and record vital links in the ward patient workspace:
 
 The default is `false`. When set to `true`, the vital history and record vital links are hidden in the ward patient workspace.
 
+## Additional Inpatient Note Concepts
+
+Configure additional note concepts to display in the ward patient notes workspace. These are shown alongside the EMR API `consultFreeTextCommentsConcept`.
+
+```json
+{
+  "@openmrs/esm-ward-app": {
+    "additionalInpatientNotesConceptUuids": [
+      "162169AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    ]
+  }
+}
+```
+
+The default is an empty array.
+
+## Discharge Button Location Restrictions
+
+The discharge action menu button can be limited to specific session locations:
+
+```json
+{
+  "@openmrs/esm-ward-app": {
+    "extensionSlots": {
+      "ward-patient": {
+        "configure": {
+          "ward-patient-discharge": {
+            "allowedSessionLocationUuids": [
+              "some-session-location-uuid"
+            ]
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+When `allowedSessionLocationUuids` is empty, the discharge button is available at all session locations. When it contains UUIDs, the button only renders for users whose current session location is in the list.

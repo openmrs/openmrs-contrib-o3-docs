@@ -161,19 +161,21 @@ Chaque configuration de type d'attribut de visite comprend :
 }
 ```
 
-### Affichage de l'emplacement des attributs de visite supplémentaires
+### Ajout d'attributs de visite supplémentaires
 
-Si vous utilisez des extensions qui fournissent des attributs de visite supplémentaires, vous pouvez activer leur prise en charge:
+Le formulaire de démarrage de visite rend toujours l'emplacement d'extension `extra-visit-attribute-slot`. Les extensions de cet emplacement reçoivent `patientUuid` et `setExtraVisitInfo` dans l'état de l'emplacement. Elles peuvent appeler `setExtraVisitInfo` pour ajouter des attributs de visite supplémentaires au payload de création de visite, ou pour exécuter un rappel après la création de la visite.
 
 ```json
 {
   "@openmrs/esm-patient-chart-app": {
-    "showExtraVisitAttributesSlot": true
+    "extensionSlots": {
+      "extra-visit-attribute-slot": {
+        "add": ["my-extra-visit-attributes"]
+      }
+    }
   }
 }
 ```
-
-Quand cette option est activée, le formulaire de démarrage de visite traite la soumission des attributs de visite supplémentaires provenant de l'emplacement d'extension `extra-visit-attributes-slot`.
 
 ### Affichage des champs de file de service
 

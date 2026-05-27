@@ -182,6 +182,11 @@ Define custom columns or override built-in columns:
           "config": {
             "visitQueueNumberAttributeUuid": "c61ce16f-272a-41e7-9924-4c555d3f18b5"
           }
+        },
+        {
+          "id": "eligibility",
+          "columnType": "extension",
+          "header": "Eligibility"
         }
       ]
     }
@@ -189,11 +194,12 @@ Define custom columns or override built-in columns:
 }
 ```
 
-**Built-in column types**:
+**Available column types**:
 - `patient-name` - Patient name
 - `patient-identifier` - Patient identifier (requires `identifierTypeUuid` in config)
 - `patient-age` - Patient age
 - `coming-from` - Where patient came from
+- `extension` - Custom extension slot column
 - `priority` - Priority tag
 - `status` - Status with icons (requires `statusConfigs` in config)
 - `queue` - Queue name
@@ -215,6 +221,7 @@ Define custom columns or override built-in columns:
   - For `status`: `statusConfigs` - Array of status icon configurations
   - For `actions`: `actions.buttons` and `actions.overflowMenu` - Arrays of action types
   - For `queue-number`: `visitQueueNumberAttributeUuid` - UUID of visit attribute containing queue number
+  - For `extension`: a column with ID `eligibility` renders the `queue-table-eligibility-slot` extension slot and passes `queueEntry` in slot state
 
 ### Table Definitions
 
@@ -300,7 +307,7 @@ Configure identifier types displayed in queue tables:
 }
 ```
 
-These identifier types are displayed on patient search result pages.
+These identifier types are used when queue entry details need preferred identifiers, such as in the call patient modal.
 
 ## Contact Attribute Type
 
@@ -328,8 +335,8 @@ Configure where users are redirected when clicking a patient name:
 
 The URL template supports:
 - `${openmrsSpaBase}` - Base URL for the SPA
-- `${patientUuid` - UUID of the patient
-- `${openBase}` - Base URL (also available)
+- `${openmrsBase}` - Base URL for the OpenMRS backend
+- `${patientUuid}` - UUID of the patient
 
 ## Vitals Configuration
 
@@ -401,4 +408,3 @@ Configure appointment statuses (shared with appointments app):
 ```
 
 The default statuses are: `Requested`, `Scheduled`, `CheckedIn`, `Completed`, `Cancelled`, `Missed`.
-

@@ -182,6 +182,11 @@ Définissez des colonnes personnalisées ou remplacez les colonnes intégrées :
           "config": {
             "visitQueueNumberAttributeUuid": "c61ce16f-272a-41e7-9924-4c555d3f18b5"
           }
+        },
+        {
+          "id": "eligibility",
+          "columnType": "extension",
+          "header": "Eligibility"
         }
       ]
     }
@@ -189,11 +194,12 @@ Définissez des colonnes personnalisées ou remplacez les colonnes intégrées :
 }
 ```
 
-**Types de colonnes intégrés** :
+**Types de colonnes disponibles** :
 - `patient-name` - Nom du patient
 - `patient-identifier` - Identifiant du patient (nécessite `identifierTypeUuid` dans la config)
 - `patient-age` - Âge du patient
 - `coming-from` - D'où vient le patient
+- `extension` - Colonne personnalisée rendue par un emplacement d'extension
 - `priority` - Tag de priorité
 - `status` - Statut avec icônes (nécessite `statusConfigs` dans la config)
 - `queue` - Nom de la file
@@ -215,6 +221,7 @@ Définissez des colonnes personnalisées ou remplacez les colonnes intégrées :
   - Pour `status` : `statusConfigs` - Tableau des configurations d'icônes de statut
   - Pour `actions` : `actions.buttons` et `actions.overflowMenu` - Tableaux de types d'action
   - Pour `queue-number` : `visitQueueNumberAttributeUuid` - UUID de l'attribut de visite contenant le numéro de file
+  - Pour `extension` : une colonne avec l'ID `eligibility` rend l'emplacement d'extension `queue-table-eligibility-slot` et transmet `queueEntry` dans l'état de l'emplacement
 
 ### Définitions de tableaux
 
@@ -300,7 +307,7 @@ Configurez les types d'identifiants affichés dans les tableaux de files :
 }
 ```
 
-Ces types d'identifiants sont affichés sur les pages de résultats de recherche de patients.
+Ces types d'identifiants sont utilisés lorsque les détails d'une entrée de file doivent afficher des identifiants préférés, par exemple dans la modale d'appel du patient.
 
 ## Type d'attribut de contact
 
@@ -328,8 +335,8 @@ Configurez où les utilisateurs sont redirigés lors du clic sur un nom de patie
 
 Le modèle d'URL prend en charge :
 - `${openmrsSpaBase}` - URL de base pour le SPA
-- `${patientUuid` - UUID du patient
-- `${openBase}` - URL de base (également disponible)
+- `${openmrsBase}` - URL de base pour le backend OpenMRS
+- `${patientUuid}` - UUID du patient
 
 ## Configuration des signes vitaux
 
@@ -401,4 +408,3 @@ Configurez les statuts de rendez-vous (partagés avec l'application de rendez-vo
 ```
 
 Les statuts par défaut sont : `Requested`, `Scheduled`, `CheckedIn`, `Completed`, `Cancelled`, `Missed`.
-

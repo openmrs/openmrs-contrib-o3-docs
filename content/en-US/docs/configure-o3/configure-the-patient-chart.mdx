@@ -161,19 +161,21 @@ Each visit attribute type configuration includes:
 }
 ```
 
-### Showing Extra Visit Attributes Slot
+### Adding Extra Visit Attributes
 
-If you're using extensions that provide additional visit attributes, you can enable handling of those attributes:
+The Start Visit form always renders the `extra-visit-attribute-slot` extension slot. Extensions in this slot receive `patientUuid` and `setExtraVisitInfo` in slot state. They can call `setExtraVisitInfo` to contribute additional visit attributes to the create-visit payload, or to run a callback after the visit is created.
 
 ```json
 {
   "@openmrs/esm-patient-chart-app": {
-    "showExtraVisitAttributesSlot": true
+    "extensionSlots": {
+      "extra-visit-attribute-slot": {
+        "add": ["my-extra-visit-attributes"]
+      }
+    }
   }
 }
 ```
-
-When enabled, the Start Visit form will handle submission of extra visit attributes from the `extra-visit-attributes-slot` extension slot.
 
 ### Showing Service Queue Fields
 
