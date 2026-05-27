@@ -5,29 +5,45 @@
   ```tsx
   // Bon - valeur de retour mémorisée
   export function usePatient(patientUuid?: string) {
-    const { data: patient, error, isValidating } = useSWR(...);
+    const { data: patient, error, isLoading, isValidating } = useSWR(...);
     
     return useMemo(
       () => ({
-        isLoading: isValidating && !error && !patient,
+        isLoading,
+        isValidating,
         patient,
         patientUuid,
         error,
       }),
-      [isValidating, error, patient, patientUuid],
+      [isLoading, isValidating, error, patient, patientUuid],
     );
   }
   ```
 
-- Calculez l'état de chargement en utilisant `isValidating && !error && !data` plutôt que de s'appuyer uniquement sur la propriété `isLoading` de SWR. Cela garantit que le chargement n'est vrai que lorsque les données sont activement récupérées et qu'il n'y a pas d'erreur :
+- Utilisez `isLoading` de SWR pour le chargement initial bloquant, et utilisez `isValidating` lorsque vous devez afficher un indicateur de rafraîchissement en arrière-plan pendant que les données existantes restent à l'écran. Évitez de traiter chaque revalidation comme un état de chargement complet lorsque des données périmées sont déjà disponibles :
 
   ```tsx
-  // Bon - calcul de chargement explicite
-  const { data, error, isValidating } = useSWR(url, fetcher);
-  const isLoading = isValidating && !error && !data;
+  // Bon - le chargement initial et le rafraîchissement en arrière-plan sont distincts
+  const { data, error, isLoading, isValidating } = useSWR(url, fetcher);
 
-  // Moins idéal - s'appuie sur isLoading de SWR qui peut ne pas tenir compte de tous les cas
-  const { data, error, isLoading } = useSWR(url, fetcher);
+  if (isLoading) {
+    return <SkeletonPlaceholder />;
+  }
+
+  if (error) {
+    return <ErrorState error={error} />;
+  }
+
+  if (!data) {
+    return <EmptyState />;
+  }
+
+  return (
+    <>
+      {isValidating ? <InlineLoading description={t('refreshing', 'Actualisation')} /> : null}
+      <PatientBanner patient={data} />
+    </>
+  );
   ```
 
 - Utilisez les composants de chargement de Carbon pour fournir un retour visuel pendant la récupération de données :
@@ -93,4 +109,3 @@
     console.log(patient.person.name); // Accès type-safe
   });
   ```
-

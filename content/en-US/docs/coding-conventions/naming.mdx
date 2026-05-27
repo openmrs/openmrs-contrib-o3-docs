@@ -1,7 +1,7 @@
 # Naming
 
 - Follow the guidelines in this [naming cheatsheet](https://github.com/kettanaito/naming-cheatsheet).
-- Use `camelCase` for variables, functions, methods, and class names.
+- Use `camelCase` for variables, functions, methods, and props. Use `PascalCase` for React components, classes, and exported type names.
 - Use `kebab-case` for file names and folder names.
 - Components should contain the `.component` suffix in their name (e.g. `user.component.tsx`). This nomenclature is used to distinguish components from other files such as resources, stylesheets, and tests, and determines where the i18next-parser tool extracts translation keys and strings from. Translation keys and strings will not be extracted from files that do not match this convention by default.
 - Components may also contain different suffixes to indicate their purpose. These custom suffixes should be used in addition to the base `.component` suffix. They include:
@@ -17,8 +17,8 @@
   
   ```tsx
   // user.component.tsx
-  const UserComponent: React.FC<UserComponentProps> => {
-    return <div>User Component</div>
+  function UserComponent(props: UserComponentProps) {
+    return <div>User Component</div>;
   }
   ```
 
@@ -39,6 +39,6 @@
 - Use `camelCase` for prop names. This is consistent with the naming convention for variables, functions, and methods.
 - Translation keys should be in `camelCase` whereas translation strings should be in `sentence case`. For example, `firstName` is a translation key whereas `First name` is its corresponding translation string.
 - Frontend modules in monorepos should have names that start with the `esm-` prefix. The name of the module should describe what the module does. For example, `esm-user-management` is a good name for a frontend module handling user management concerns and `esm-patient-chart` is a good name for a frontend module handling patient chart concerns.
-- Event handler props should be named after they event they handle `e.g. onClick` for a click handler. By convention, event handler props should start with the `on` prefix, followed by a capital letter.
+- Event handler props should be named after the event they handle, such as `onClick` for a click handler. By convention, event handler props should start with the `on` prefix, followed by a capital letter.
 - State updater functions should be named after the state they update. For example, `setFirstName` is a good name for a state updater function that updates the `firstName` state.
-- What to name your branches is typically down to personal preference. However, when in doubt, name your branches using the [conventional commit](https://www.conventionalcommits.org/en/v1.0.0/) type that your work conforms to, followed by a slash and a short dash-separated description of the work. Good examples include: `feat/debounced-order-basket-search`, `fix/missing-translation`, `chore/bump-dependencies` and `refactor/remove-unused-code`.
+- What to name your branches is typically down to personal preference. However, when in doubt, name your branches using the [conventional commit](https://www.conventionalcommits.org/en/v1.0.0/) type that your work conforms to, followed by a slash and a short dash-separated description of the work. Good examples include: `feat/debounced-order-basket-search`, `fix/missing-translation`, `chore/bump-dependencies`, and `test/add-order-basket-coverage`.

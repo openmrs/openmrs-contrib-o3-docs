@@ -17,10 +17,10 @@ O3 consists of both monorepos and standalone repositories. Monorepos are used to
     - Declares shared dependencies for the monorepo in the `peerDependencies` and `dependencies` properties.
     - Defines the `workspaces` property which tells Yarn how to find the workspaces in the monorepo.
 
-  A typical convention is to place configuration files for the i18next parser, test utilities, and the Jest test setup file in a `tools` directory at the root of the monorepo:
+  A typical convention is to place configuration files for the i18next parser, shared test utilities, and test setup helpers in a `tools` directory at the root of the monorepo:
 
   - `tools/i18next-parser.config.js` - i18next parser configuration file
-  - `tools/setupTests.ts` - Jest test setup file
+  - `tools/setup-tests.ts` - Vitest test setup helper, when the repository keeps shared test setup at the root
   - `tools/test-utils.tsx` - Test utilities
 
   Configuration files you'd expect to find at the root of each package in the monorepo include:

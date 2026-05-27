@@ -17,10 +17,10 @@ O3 comprend à la fois des monorepos et des dépôts autonomes. Les monorepos so
     - Déclare les dépendances partagées pour le monorepo dans les propriétés `peerDependencies` et `dependencies`.
     - Définit la propriété `workspaces` qui indique à Yarn comment trouver les workspaces dans le monorepo.
 
-  Une convention typique consiste à placer les fichiers de configuration pour le parser i18next, les utilitaires de test et le fichier de configuration de test Jest dans un répertoire `tools` à la racine du monorepo :
+  Une convention typique consiste à placer les fichiers de configuration pour le parser i18next, les utilitaires de test partagés et les helpers de configuration de test dans un répertoire `tools` à la racine du monorepo :
 
   - `tools/i18next-parser.config.js` - Fichier de configuration du parser i18next
-  - `tools/setupTests.ts` - Fichier de configuration de test Jest
+  - `tools/setup-tests.ts` - Helper de configuration de test Vitest, lorsque le dépôt conserve une configuration de test partagée à la racine
   - `tools/test-utils.tsx` - Utilitaires de test
 
   Les fichiers de configuration que vous vous attendez à trouver à la racine de chaque package dans le monorepo incluent :
@@ -53,4 +53,3 @@ O3 comprend à la fois des monorepos et des dépôts autonomes. Les monorepos so
   // TypeScript résoudra automatiquement le chemin vers le répertoire tools
   import { waitForLoadingToFinish } from 'tools';
   ```
-

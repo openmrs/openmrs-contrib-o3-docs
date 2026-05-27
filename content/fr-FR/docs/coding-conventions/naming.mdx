@@ -1,7 +1,7 @@
 # Nommage
 
 - Suivez les lignes directrices de cette [feuille de triche de nommage](https://github.com/kettanaito/naming-cheatsheet).
-- Utilisez `camelCase` pour les variables, fonctions, méthodes et noms de classe.
+- Utilisez `camelCase` pour les variables, fonctions, méthodes et props. Utilisez `PascalCase` pour les composants React, les classes et les noms de types exportés.
 - Utilisez `kebab-case` pour les noms de fichiers et de dossiers.
 - Les composants doivent contenir le suffixe `.component` dans leur nom (par exemple `user.component.tsx`). Cette nomenclature est utilisée pour distinguer les composants des autres fichiers tels que les ressources, les feuilles de style et les tests, et détermine où l'outil i18next-parser extrait les clés et chaînes de traduction. Les clés et chaînes de traduction ne seront pas extraites des fichiers qui ne correspondent pas à cette convention par défaut.
 - Les composants peuvent également contenir différents suffixes pour indiquer leur objectif. Ces suffixes personnalisés doivent être utilisés en plus du suffixe de base `.component`. Ils incluent :
@@ -17,8 +17,8 @@
   
   ```tsx
   // user.component.tsx
-  const UserComponent: React.FC<UserComponentProps> => {
-    return <div>User Component</div>
+  function UserComponent(props: UserComponentProps) {
+    return <div>User Component</div>;
   }
   ```
 
@@ -41,5 +41,4 @@
 - Les modules frontend dans les monorepos doivent avoir des noms qui commencent par le préfixe `esm-`. Le nom du module doit décrire ce que fait le module. Par exemple, `esm-user-management` est un bon nom pour un module frontend gérant les préoccupations de gestion des utilisateurs et `esm-patient-chart` est un bon nom pour un module frontend gérant les préoccupations du dossier patient.
 - Les props de gestionnaires d'événements doivent être nommées d'après l'événement qu'elles gèrent, par exemple `onClick` pour un gestionnaire de clic. Par convention, les props de gestionnaires d'événements doivent commencer par le préfixe `on`, suivi d'une lettre majuscule.
 - Les fonctions de mise à jour d'état doivent être nommées d'après l'état qu'elles mettent à jour. Par exemple, `setFirstName` est un bon nom pour une fonction de mise à jour d'état qui met à jour l'état `firstName`.
-- Le nommage de vos branches est généralement une question de préférence personnelle. Cependant, en cas de doute, nommez vos branches en utilisant le type de [commit conventionnel](https://www.conventionalcommits.org/en/v1.0.0/) auquel votre travail se conforme, suivi d'un slash et d'une courte description séparée par des tirets du travail. De bons exemples incluent : `feat/debounced-order-basket-search`, `fix/missing-translation`, `chore/bump-dependencies` et `refactor/remove-unused-code`.
-
+- Le nommage de vos branches est généralement une question de préférence personnelle. Cependant, en cas de doute, nommez vos branches en utilisant le type de [commit conventionnel](https://www.conventionalcommits.org/en/v1.0.0/) auquel votre travail se conforme, suivi d'un slash et d'une courte description séparée par des tirets du travail. De bons exemples incluent : `feat/debounced-order-basket-search`, `fix/missing-translation`, `chore/bump-dependencies` et `test/add-order-basket-coverage`.

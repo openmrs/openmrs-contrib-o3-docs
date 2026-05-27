@@ -11,16 +11,17 @@ import { Callout } from "nextra/components";
   ```tsx
   // Good - memoized return value
   export function usePatient(patientUuid?: string) {
-    const { data: patient, error, isValidating } = useSWR(...);
+    const { data: patient, error, isLoading, isValidating } = useSWR(...);
     
     return useMemo(
       () => ({
-        isLoading: isValidating && !error && !patient,
+        isLoading,
+        isValidating,
         patient,
         patientUuid,
         error,
       }),
-      [isValidating, error, patient, patientUuid],
+      [isLoading, isValidating, error, patient, patientUuid],
     );
   }
   ```

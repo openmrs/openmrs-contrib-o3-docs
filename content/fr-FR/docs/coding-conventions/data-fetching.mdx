@@ -11,16 +11,17 @@ import { Callout } from "nextra/components";
   ```tsx
   // Bon - valeur de retour mémorisée
   export function usePatient(patientUuid?: string) {
-    const { data: patient, error, isValidating } = useSWR(...);
+    const { data: patient, error, isLoading, isValidating } = useSWR(...);
     
     return useMemo(
       () => ({
-        isLoading: isValidating && !error && !patient,
+        isLoading,
+        isValidating,
         patient,
         patientUuid,
         error,
       }),
-      [isValidating, error, patient, patientUuid],
+      [isLoading, isValidating, error, patient, patientUuid],
     );
   }
   ```
@@ -230,4 +231,3 @@ Ces décisions appartiennent au hook (la limite de ressource), pas dispersées d
     initialSize: patientUuids ? Math.min(resultsToFetch, patientUuids.length) : 0,
   });
   ```
-

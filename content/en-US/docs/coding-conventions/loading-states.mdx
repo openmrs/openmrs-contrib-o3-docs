@@ -5,29 +5,45 @@
   ```tsx
   // Good - memoized return value
   export function usePatient(patientUuid?: string) {
-    const { data: patient, error, isValidating } = useSWR(...);
+    const { data: patient, error, isLoading, isValidating } = useSWR(...);
     
     return useMemo(
       () => ({
-        isLoading: isValidating && !error && !patient,
+        isLoading,
+        isValidating,
         patient,
         patientUuid,
         error,
       }),
-      [isValidating, error, patient, patientUuid],
+      [isLoading, isValidating, error, patient, patientUuid],
     );
   }
   ```
 
-- Calculate loading state using `isValidating && !error && !data` rather than relying solely on SWR's `isLoading` property. This ensures that loading is only true when data is actively being fetched and there's no error:
+- Use SWR's `isLoading` for the initial blocking load, and use `isValidating` when you need to show a background refresh indicator while existing data remains on screen. Avoid treating every revalidation as a full loading state when stale data is already available:
 
   ```tsx
-  // Good - explicit loading calculation
-  const { data, error, isValidating } = useSWR(url, fetcher);
-  const isLoading = isValidating && !error && !data;
+  // Good - initial load and background refresh are distinct
+  const { data, error, isLoading, isValidating } = useSWR(url, fetcher);
 
-  // Less ideal - relies on SWR's isLoading which may not account for all cases
-  const { data, error, isLoading } = useSWR(url, fetcher);
+  if (isLoading) {
+    return <SkeletonPlaceholder />;
+  }
+
+  if (error) {
+    return <ErrorState error={error} />;
+  }
+
+  if (!data) {
+    return <EmptyState />;
+  }
+
+  return (
+    <>
+      {isValidating ? <InlineLoading description={t('refreshing', 'Refreshing')} /> : null}
+      <PatientBanner patient={data} />
+    </>
+  );
   ```
 
 - Use Carbon's loading components to provide visual feedback during data fetching:
@@ -93,4 +109,3 @@
     console.log(patient.person.name); // Type-safe access
   });
   ```
-

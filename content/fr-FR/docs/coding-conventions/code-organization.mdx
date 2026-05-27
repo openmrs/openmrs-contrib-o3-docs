@@ -2,7 +2,7 @@
 
 - Colocalisez les fichiers connexes dans le même répertoire. Chaque composant doit avoir son propre répertoire contenant tous ses fichiers associés. Ceci inclut :
   - Fichier de composant (par exemple, `patient-banner.component.tsx`) - C'est un composant React.
-  - Fichier de test (par exemple, `patient-banner.test.tsx`) - C'est un fichier de test Jest.
+  - Fichier de test (par exemple, `patient-banner.test.tsx`) - C'est un fichier de test unitaire ou d'intégration.
   - Feuille de style (par exemple, `patient-banner.module.scss`) - C'est une feuille de style de module CSS.
   - Fichier de ressource (par exemple, `patient-banner.resource.ts`) - C'est un fichier qui contient la logique de récupération de données.
   - Tous les autres fichiers connexes (par exemple, constantes, types, utilitaires)
@@ -33,7 +33,7 @@
 
   Le template fournit :
   - Configuration TypeScript correcte
-  - Configuration de test préconfigurée avec Jest
+  - Configuration de test préconfigurée avec Vitest
   - Configurations ESLint et Prettier
   - Workflows GitHub Actions
   - Structure de projet de base suivant les conventions O3
@@ -41,7 +41,7 @@
 
 - Groupez les imports par ordre alphabétique en fonction de leur type. L'ordre recommandé est :
   - Imports React et framework (par exemple, `React`, `useState`, `useEffect`)
-  - Modules externes (par exemple, `lodash`, `dayjs`, `react-i8next`)
+  - Modules externes (par exemple, `lodash`, `dayjs`, `react-i18next`)
   - Imports de composants Carbon (par exemple, `Button`, `InlineLoading`)
   - Imports OpenMRS (par exemple, `@openmrs/esm-framework`, `@openmrs/esm-patient-common-lib`)
   - Imports locaux (composants, hooks, utilitaires, etc.)
@@ -138,4 +138,3 @@
   type ButtonKind = 'primary' | 'secondary' | 'ghost';
   type Nullable<T> = T | null;
   ```
-
