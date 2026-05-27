@@ -61,7 +61,7 @@ Nom d'utilisateur : `admin`
 Mot de passe : `Admin123`
 
 Une fois connecté, vous devriez être redirigé vers la page d'accueil du tableau de bord. Mais, attendez une seconde, d'où vient cette page d'accueil sophistiquée avec la barre latérale et toutes les données, et où est passée la page de connexion ?
-Vous remarquerez que le code de la page d'accueil et de la page de connexion n'est en fait pas dans votre répertoire de projet. Les [home](https://github.com/openmrs/openmrs-esm-home) et [login](https://github.com/openmrs/openmrs-esm-core/tree/main/packages/apps/esm-login-app) sont des applications à part entière.
+Vous remarquerez que le code de la page d'accueil et de la page de connexion n'est en fait pas dans votre répertoire de projet. Les modules [home](https://github.com/openmrs/openmrs-esm-patient-management/tree/main/packages/esm-home-app) et [login](https://github.com/openmrs/openmrs-esm-core/tree/main/packages/apps/esm-login-app) vivent dans des packages séparés.
 
 Les données sont récupérées à partir du serveur de développement hébergé. Si vous souhaitez le connecter à un autre backend, vous pouvez ajouter le suffixe `--backend https://your-backend-url` à la commande `corepack yarn start`.
 

@@ -60,7 +60,7 @@ Username: `admin`
 Password: `Admin123`
 
 Once logged in, you should be redirected to the home page of the dashboard. But, wait a second, what's the fancy home page with the side bar and all the data, and where did the login page come from?
-You'll notice that the code for the home page and the login page is not actually in your project directory. The [home](https://github.com/openmrs/openmrs-esm-home) and [login](https://github.com/openmrs/openmrs-esm-core/tree/main/packages/apps/esm-login-app) are apps of their own. 
+You'll notice that the code for the home page and the login page is not actually in your project directory. The [home](https://github.com/openmrs/openmrs-esm-patient-management/tree/main/packages/esm-home-app) and [login](https://github.com/openmrs/openmrs-esm-core/tree/main/packages/apps/esm-login-app) modules live in separate packages.
 
 The data is fetched from the hosted dev server. If you want to connect it to a different backend, append the suffix `--backend https://your-backend-url` to the `corepack yarn start` command.
 
