@@ -11,7 +11,7 @@ import Image from "next/image";
 
 ## Introduction
 
-O3 provides a powerful [module loading](/docs/frontend-modules/loading-modules) system that handles loading of frontend modules in the app shell. This system leverages [Webpack module federation](/docs/frontend-modules/using-webpack) and forms the basis of our microfrontends architecture. However, it does suffer from a few historical drawbacks:
+O3 provides a powerful [module loading](/docs/frontend-modules/loading-modules) system that handles loading of frontend modules in the app shell. At the time of the Core v5 migration, this system leveraged Webpack Module Federation. The current docs cover the same runtime-sharing model in the [Rspack and Module Federation guide](/docs/frontend-modules/using-rspack). However, the pre-Core v5 loader did suffer from a few historical drawbacks:
 
 - All frontend modules get sequentially loaded at app startup time, which has a big performance impact.
 - Because we're loading all modules at startup, we're also incurring the cost of executing all the dynamic import code for each module, even if the module is not used in the current page.

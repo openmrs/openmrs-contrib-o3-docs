@@ -12,7 +12,7 @@ import Image from "next/image";
 
 ## Introduction
 
-O3 fournit un puissant système de [chargement de modules](/docs/frontend-modules/loading-modules) qui gère le chargement des modules frontaux dans le shell de l'application. Ce système s'appuie sur [Webpack module federation](/docs/frontend-modules/using-webpack) et constitue la base de notre architecture microfrontends. Cependant, il souffre de quelques inconvénients historiques:
+O3 fournit un puissant système de [chargement de modules](/docs/frontend-modules/loading-modules) qui gère le chargement des modules frontaux dans le shell de l'application. Au moment de la migration Core v5, ce système s'appuyait sur Webpack Module Federation. La documentation actuelle couvre le même modèle de partage à l'exécution dans le [guide Rspack et Module Federation](/docs/frontend-modules/using-rspack). Cependant, le chargeur antérieur à Core v5 souffrait de quelques inconvénients historiques:
 
 - Tous les modules frontaux sont chargés séquentiellement au démarrage de l'application, ce qui a un impact important sur les performances.
 - Parce que nous chargeons tous les modules au démarrage, nous supportons également le coût de l'exécution de tout le code d'importation dynamique pour chaque module, même si le module n'est pas utilisé dans la page en cours.
