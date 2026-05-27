@@ -4,7 +4,7 @@ import Image from "next/image";
 
 Les fonctionnalités en cours de développement peuvent être cachées derrière des feature flags. C’est utile pour des fonctionnalités complexes qui nécessitent du temps et plusieurs itérations avant d’être entièrement prêtes.
 
-Un feature flag peut être activé ou désactivé depuis l’onglet « Feature Flags » des Implementer Tools. Ce choix est stocké pour l'utilisateur actuel, dans son navigateur. Les feature flags peuvent aussi être activés pour tout le monde avec la clé de configuration de l'app shell `Enabled feature flags`; voir l'[aperçu de la configuration O3](/docs/configure-o3#feature-flags) pour la configuration côté implémenteur.
+Un feature flag peut être activé ou désactivé depuis l’onglet « Feature Flags » des Implementer Tools. Ce choix est stocké dans le `localStorage` du navigateur, il s'applique donc à ce profil de navigateur plutôt qu'à un compte utilisateur OpenMRS. Les feature flags peuvent aussi être activés pour tout le monde avec la clé de configuration de l'app shell `Enabled feature flags`; voir l'[aperçu de la configuration O3](/docs/configure-o3#feature-flags) pour la configuration côté implémenteur. L'app shell ne peut activer que les flags déjà enregistrés. Si un flag configuré n'a pas été enregistré, l'app shell consigne une erreur et laisse ce flag désactivé.
 
 L’API des feature flags se trouve dans les [API Docs](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#feature-flags-functions).
 
@@ -26,7 +26,24 @@ Il y a deux étapes : enregistrer le feature flag, puis l’utiliser avec `useFe
 }
 ```
 
-Si vous devez enregistrer un flag depuis le code, `registerFeatureFlag(flagName, label, description)` reste disponible dans `@openmrs/esm-framework`.
+Si vous devez enregistrer un flag depuis le code, `registerFeatureFlag(flagName, label, description)` reste disponible dans `@openmrs/esm-framework`. L'enregistrement conserve l'état activé actuel, il est donc sûr d'enregistrer le même flag plusieurs fois pendant le démarrage de l'app.
+
+Vous pouvez aussi rattacher un flag enregistré directement à une extension dans `routes.json` :
+
+```json filename="routes.json"
+{
+  "extensions": [
+    {
+      "name": "laser-eye-installation-link",
+      "slot": "laser-optometry-actions-slot",
+      "component": "laserEyeInstallationLink",
+      "featureFlag": "laser-eyes"
+    }
+  ]
+}
+```
+
+Le système d'extensions omettra cette extension jusqu'à l'activation du flag.
 
 Le feature flag apparaîtra alors dans les Implementer Tools comme ci‑dessous :
 
@@ -60,7 +77,9 @@ export default function LaserOptometryClinicManagement() {
 }
 ```
 
-Vous pouvez maintenant déployer des changements dans l’app d’optométrie laser qui incluent ce code en cours, sans que les utilisateurs ne voient la fonctionnalité masquée par le flag. Les administrateurs peuvent ouvrir les Implementer Tools et activer le feature flag « Laser Eye Installation Service » dans leur navigateur pour prévisualiser la fonctionnalité. Les implémenteurs peuvent ensuite activer le même flag pour tout le monde via la configuration de l'app shell.
+`useFeatureFlag` renvoie `false` lorsque le flag est désactivé ou n'a pas été enregistré. L'interface protégée par un flag doit donc continuer à se comporter normalement lorsque le flag est absent.
+
+Vous pouvez maintenant déployer des changements dans l’app d’optométrie laser qui incluent ce code en cours, sans que les utilisateurs ne voient la fonctionnalité masquée par le flag. Les administrateurs peuvent ouvrir les Implementer Tools et activer le feature flag « Laser Eye Installation Service » dans leur navigateur pour prévisualiser la fonctionnalité localement. Les implémenteurs peuvent ensuite activer le même flag enregistré pour tout le monde via la configuration de l'app shell.
 
 Voici une vidéo explicative sur les feature flags par Brandon :
 

@@ -4,7 +4,7 @@ import Image from "next/image";
 
 Work in progress can be hidden behind feature flags. This is useful for complex features that may take some time and multiple iterations to get fully working.
 
-A feature flag can be toggled from the "Feature Flags" tab of the Implementer Tools. That toggle is stored for the current user in their browser. Feature flags can also be enabled for everyone through the app shell configuration key `Enabled feature flags`; see the [Configure O3 overview](/docs/configure-o3#feature-flags) for implementer-facing configuration.
+A feature flag can be toggled from the "Feature Flags" tab of the Implementer Tools. That toggle is stored in the browser's `localStorage`, so it applies to that browser profile rather than to an OpenMRS user account. Feature flags can also be enabled for everyone through the app shell configuration key `Enabled feature flags`; see the [Configure O3 overview](/docs/configure-o3#feature-flags) for implementer-facing configuration. The app shell can only enable flags that have already been registered. If a configured flag has not been registered, the app shell logs an error and leaves that flag off.
 
 The API for feature flags can be found in the [API Docs](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#feature-flags-functions).
 
@@ -26,7 +26,24 @@ There are two steps: the feature flag must be registered, and then it can be use
 }
 ```
 
-If you need to register a flag from code, `registerFeatureFlag(flagName, label, description)` is still available from `@openmrs/esm-framework`.
+If you need to register a flag from code, `registerFeatureFlag(flagName, label, description)` is still available from `@openmrs/esm-framework`. Registration preserves the current enabled state, so it is safe to register the same flag more than once during app startup.
+
+You can also attach a registered flag directly to an extension definition in `routes.json`:
+
+```json filename="routes.json"
+{
+  "extensions": [
+    {
+      "name": "laser-eye-installation-link",
+      "slot": "laser-optometry-actions-slot",
+      "component": "laserEyeInstallationLink",
+      "featureFlag": "laser-eyes"
+    }
+  ]
+}
+```
+
+The extension system will omit that extension until the flag is enabled.
 
 Now the feature flag will appear in the Implementer Tools as shown below:
 
@@ -60,7 +77,9 @@ export default function LaserOptometryClinicManagement() {
 }
 ```
 
-Now you can deploy changes to the laser optometry app which include this in-progress code, and users will not see the feature hidden behind the flag. Administrators can open the Implementer Tools and toggle the "Laser Eye Installation Service" feature flag in their browser to preview the feature. Implementers can enable the same flag for everyone through app shell configuration once they are ready.
+`useFeatureFlag` returns `false` when the flag is off or has not been registered, so guarded UI should be written to behave normally when the flag is absent.
+
+Now you can deploy changes to the laser optometry app which include this in-progress code, and users will not see the feature hidden behind the flag. Administrators can open the Implementer Tools and toggle the "Laser Eye Installation Service" feature flag in their browser to preview the feature locally. Implementers can enable the same registered flag for everyone through app shell configuration once they are ready.
 
 Here's a cool explainer video about feature flags by Brandon:
 

@@ -20,7 +20,7 @@ Vous devez utiliser l'OpenMRS Frontend Framework pour rendre les modules configu
 
 La tâche principale est de créer un schéma de configuration pour votre module. Le schéma de configuration indique au framework à quoi doivent ressembler les fichiers de configuration, y compris les valeurs par défaut et les validations.
 
-**Note** : Les schémas de configuration sont optionnels. Si votre module n'a pas besoin d'options de configuration (par exemple, s'il s'agit d'un module bibliothèque comme le [React Form Engine](https://github.com/openmrs/openmrs-form-engine-lib) qui reçoit toute sa configuration via des props ou des paramètres de fonction), vous n'avez pas besoin de définir un schéma. Le système de configuration fonctionnera toujours—les modules sans schémas auront simplement un objet de configuration vide (ou un contenant uniquement les clés de schéma implicites comme `Translation overrides`).
+**Note** : Les schémas de configuration sont optionnels. Si votre module n'a pas besoin d'options de configuration (par exemple, s'il s'agit d'un module bibliothèque comme le [React Form Engine](https://github.com/openmrs/openmrs-esm-form-engine-lib) qui reçoit toute sa configuration via des props ou des paramètres de fonction), vous n'avez pas besoin de définir un schéma. Le système de configuration fonctionnera toujours; les modules sans schéma utilisent le schéma implicite pour `Display conditions` et `Translation overrides`.
 
 #### Conception d'un schéma
 
@@ -155,7 +155,7 @@ Pour des raisons de commodité, certains validateurs courants sont fournis d'off
 
 #### Tableaux
 
-Vous pouvez accepter et valider des tableaux, et des tableaux contenant des objets, dans votre schéma de configuration. Ceci est configuré avec le paramètre `elements`, utilisé avec `_type: Type.Array`. Par exemple, un schéma qui accepterait un tableau de chaînes de caractères d'une longueur maximale de 30 caractères ressemblerait à ceci:
+Vous pouvez accepter et valider des tableaux, et des tableaux contenant des objets, dans votre schéma de configuration. Ceci est configuré avec le paramètre `_elements`, utilisé avec `_type: Type.Array`. Par exemple, un schéma qui accepterait un tableau de chaînes de caractères d'une longueur maximale de 30 caractères ressemblerait à ceci:
 
 ```ts
 virtualProvider: {
@@ -199,9 +199,9 @@ robots: {
 }
 ```
 
-Ce schéma impose que tous les objets du tableau robots ne possèdent que les clés `name` et `homeworld`, et que `name` soit obligatoire.
+Ce schéma valide les clés et les types de valeurs des objets du tableau `robots`. Les clés inconnues sont consignées comme erreurs de configuration, et les valeurs par défaut sont appliquées lorsqu'une entrée de `_elements` fournit une `_default`.
 
-Les objets dans les tableaux n'ont pas besoin d'avoir des valeurs par défaut. Si un objet qui n'a pas de `name` est fourni au tableau `robots`, une erreur sera levée.
+Les objets dans les tableaux n'ont pas besoin de fournir des valeurs par défaut pour chaque clé. Si un champ comme `name` est indispensable au bon fonctionnement de votre module, ajoutez un validateur qui vérifie chaque objet et renvoie un message d'erreur utile lorsque le champ est absent.
 
 #### Utilisation des valeurs de configuration
 

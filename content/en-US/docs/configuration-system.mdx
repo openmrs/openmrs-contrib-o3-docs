@@ -20,7 +20,7 @@ You should use the OpenMRS Frontend Framework to make modules configurable.
 
 The main task is to create a config schema for your module. The config schema is what tells the framework what configuration files should look like, including defaults and validations.
 
-**Note**: Configuration schemas are optional. If your module doesn't need any configuration options (for example, if it's a library module like the [React Form Engine](https://github.com/openmrs/openmrs-form-engine-lib) that receives all its configuration through props or function parameters), you don't need to define a schema. The configuration system will still work—modules without schemas will simply have an empty configuration object (or one containing only the implicit schema keys like `Translation overrides`).
+**Note**: Configuration schemas are optional. If your module doesn't need any configuration options (for example, if it's a library module like the [React Form Engine](https://github.com/openmrs/openmrs-esm-form-engine-lib) that receives all its configuration through props or function parameters), you don't need to define a schema. The configuration system will still work; modules without schemas use the implicit schema for `Display conditions` and `Translation overrides`.
 
 #### Designing a schema
 
@@ -155,7 +155,7 @@ For convenience, some common validators are provided out of the box. See the [AP
 
 #### Arrays
 
-You can accept and validate arrays, and arrays containing objects, in your configuration schema. This is configured with the `elements` parameter, used with `_type: Type.Array`. For example, a schema which would accept an array of strings up to 30 characters long would look like this:
+You can accept and validate arrays, and arrays containing objects, in your configuration schema. This is configured with the `_elements` parameter, used with `_type: Type.Array`. For example, a schema which would accept an array of strings up to 30 characters long would look like this:
 
 ```ts
 virtualProvider: {
@@ -199,9 +199,9 @@ robots: {
 }
 ```
 
-This schema will require that any objects in the robots array must only have the keys `name` and `homeworld`, and that `name` is required.
+This schema validates the keys and value types of objects in the `robots` array. Unknown keys are logged as configuration errors, and defaults are filled in when an `_elements` entry provides an `_default`.
 
-Objects within arrays do not have to have defaults. If an object is supplied to the `robots` array that does not have a `name`, an error will be thrown.
+Objects within arrays do not have to provide defaults for every key. If a field such as `name` is required for your module to work correctly, add a validator that checks each object and returns a helpful error message when the field is missing.
 
 #### Using config values
 
