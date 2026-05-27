@@ -4,7 +4,9 @@ To create a workspace, implement a React component and register it with the work
 
 ## Workspace Component
 
-Workspace v2 components receive `Workspace2DefinitionProps` from `@openmrs/esm-framework`. Custom launch props are available on `workspaceProps`; shared group context is available on `groupProps`; and the component can close itself with `closeWorkspace`.
+Workspace v2 components receive `Workspace2DefinitionProps` from `@openmrs/esm-framework`. Custom launch props are available on `workspaceProps`; shared window and group context is available on `windowProps` and `groupProps`; and the component can close itself with `closeWorkspace`.
+
+The same props object also includes `launchChildWorkspace`, `workspaceName`, `windowName`, `isRootWorkspace`, and `showActionMenu`. Use `launchChildWorkspace` only from inside an open workspace when you want to push another workspace onto the same window's stack. Use `launchWorkspace2` for top-level launches from buttons, pages, or other app code.
 
 Wrap the workspace content in `<Workspace2>`. The wrapper owns the workspace header, title, maximize and close controls, and unsaved changes state.
 
@@ -105,7 +107,9 @@ If your app owns the group, declare it in `workspaceGroups2`:
 }
 ```
 
-`scopePattern` is a regular expression matched against the current URL. If it is omitted, the group closes only when navigating to a different app. If it is defined, O3 closes the group when the new URL no longer matches the pattern; if the pattern has capture groups, O3 also closes the group when the captured values change. Anchor the pattern with `^` so it only matches the intended route prefix.
+Window `width` can be `narrow`, `wider`, or `extra-wide`. Adding `icon` to a window turns on the workspace group's action menu and registers the icon component as an extension in the slot named after the group.
+
+`scopePattern` is a regular expression matched against the old and new URL pathnames when navigation happens within the same app. If it is omitted, the group closes only when navigating to a different app. If it is defined, O3 closes the group when either URL no longer matches the pattern; if the pattern has capture groups, O3 also closes the group when the captured values change. Anchor the pattern with `^` when the pattern should only match a route prefix.
 
 Then export the workspace component from `index.ts`:
 

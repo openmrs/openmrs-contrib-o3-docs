@@ -18,8 +18,9 @@ Le store v2 suit les définitions enregistrées et l'interface actuellement ouve
 - `openedGroup` - le groupe actuellement ouvert et ses props de groupe
 - `openedWindows` - les fenêtres ouvertes dans ce groupe, y compris la pile d'espaces de travail de chaque fenêtre
 - `isMostRecentlyOpenedWindowHidden` - indique si la fenêtre au premier plan est actuellement masquée
+- `workspaceTitleByWorkspaceName` - les titres fournis par chaque wrapper `<Workspace2>` rendu
 
-Chaque fenêtre ouverte contient `windowName`, `props`, `maximized` et `openedWorkspaces`. Chaque espace de travail ouvert stocke son `workspaceName`, ses props de lancement et son état `hasUnsavedChanges`.
+Chaque fenêtre ouverte contient `windowName`, `props`, `maximized` et `openedWorkspaces`. Chaque espace de travail ouvert stocke son `workspaceName`, ses props de lancement, son `uuid` généré et son état `hasUnsavedChanges`.
 
 ## Lire le contexte d'un espace de travail
 
@@ -49,7 +50,7 @@ export function WorkspaceDebugPanel() {
 }
 ```
 
-Le store d'espaces de travail de bas niveau est un détail d'implémentation. Préférez les APIs publiques de lancement, fermeture, groupe et contexte sauf si vous travaillez dans le framework lui-même.
+Le store d'espaces de travail de bas niveau est un détail d'implémentation. Préférez les APIs publiques de lancement, fermeture, groupe et contexte sauf si vous travaillez dans le framework lui-même. Si un composant doit fermer toute la fenêtre au lieu de se fermer seulement lui-même avec ses espaces de travail enfants, appelez `closeWorkspace({ closeWindow: true })`.
 
 ## Changements non enregistrés
 

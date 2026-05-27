@@ -18,8 +18,9 @@ The v2 store tracks registered definitions and currently opened UI:
 - `openedGroup` - the currently open workspace group and its group props
 - `openedWindows` - the open windows in that group, including each window's workspace stack
 - `isMostRecentlyOpenedWindowHidden` - whether the front-most window is currently hidden
+- `workspaceTitleByWorkspaceName` - titles supplied by each rendered `<Workspace2>` wrapper
 
-Each opened window contains `windowName`, `props`, `maximized`, and `openedWorkspaces`. Each opened workspace stores its `workspaceName`, launch props, and `hasUnsavedChanges` state.
+Each opened window contains `windowName`, `props`, `maximized`, and `openedWorkspaces`. Each opened workspace stores its `workspaceName`, launch props, generated `uuid`, and `hasUnsavedChanges` state.
 
 ## Reading Workspace Context
 
@@ -49,7 +50,7 @@ export function WorkspaceDebugPanel() {
 }
 ```
 
-The lower-level workspace store is an implementation detail. Prefer the public launch, close, group, and context APIs unless you are working inside the framework itself.
+The lower-level workspace store is an implementation detail. Prefer the public launch, close, group, and context APIs unless you are working inside the framework itself. If a component needs to close the entire window instead of only itself and its child workspaces, call `closeWorkspace({ closeWindow: true })`.
 
 ## Unsaved Changes
 

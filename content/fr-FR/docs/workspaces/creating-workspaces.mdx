@@ -4,7 +4,9 @@ Pour créer un espace de travail, implémentez un composant React et enregistrez
 
 ## Composant d'espace de travail
 
-Les composants Workspace v2 reçoivent `Workspace2DefinitionProps` depuis `@openmrs/esm-framework`. Les props personnalisées passées au lancement sont disponibles dans `workspaceProps`; le contexte partagé du groupe est disponible dans `groupProps`; et le composant peut se fermer avec `closeWorkspace`.
+Les composants Workspace v2 reçoivent `Workspace2DefinitionProps` depuis `@openmrs/esm-framework`. Les props personnalisées passées au lancement sont disponibles dans `workspaceProps`; les contextes partagés de fenêtre et de groupe sont disponibles dans `windowProps` et `groupProps`; et le composant peut se fermer avec `closeWorkspace`.
+
+Le même objet de props inclut aussi `launchChildWorkspace`, `workspaceName`, `windowName`, `isRootWorkspace` et `showActionMenu`. Utilisez `launchChildWorkspace` uniquement depuis un espace de travail ouvert lorsque vous voulez pousser un autre espace de travail dans la même pile de fenêtre. Utilisez `launchWorkspace2` pour les lancements de premier niveau depuis des boutons, des pages ou d'autres parties de l'app.
 
 Enveloppez le contenu de l'espace de travail dans `<Workspace2>`. Ce composant gère l'en-tête, le titre, les contrôles d'agrandissement et de fermeture, ainsi que l'état des changements non enregistrés.
 
@@ -105,7 +107,9 @@ Si votre application possède le groupe, déclarez-le dans `workspaceGroups2` :
 }
 ```
 
-`scopePattern` est une expression régulière comparée à l'URL courante. S'il est omis, le groupe ne se ferme que lors de la navigation vers une autre app. S'il est défini, O3 ferme le groupe lorsque la nouvelle URL ne correspond plus au pattern ; si le pattern contient des groupes de capture, O3 ferme aussi le groupe lorsque les valeurs capturées changent. Ancrez le pattern avec `^` afin qu'il ne corresponde qu'au préfixe de route prévu.
+La valeur `width` d'une fenêtre peut être `narrow`, `wider` ou `extra-wide`. Ajouter `icon` à une fenêtre active le menu d'actions du groupe d'espaces de travail et enregistre le composant d'icône comme extension dans l'emplacement nommé d'après le groupe.
+
+`scopePattern` est une expression régulière comparée aux pathnames de l'ancienne et de la nouvelle URL lors d'une navigation dans la même app. S'il est omis, le groupe ne se ferme que lors de la navigation vers une autre app. S'il est défini, O3 ferme le groupe lorsque l'une des deux URL ne correspond plus au pattern ; si le pattern contient des groupes de capture, O3 ferme aussi le groupe lorsque les valeurs capturées changent. Ancrez le pattern avec `^` lorsque le pattern ne doit correspondre qu'à un préfixe de route.
 
 Exportez ensuite le composant d'espace de travail depuis `index.ts` :
 
