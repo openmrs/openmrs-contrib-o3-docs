@@ -41,7 +41,7 @@ The `run` function orchestrates the complete initialization sequence. It is resp
 - Calling `setupCoreConfig` to initialize core configuration.
 - Calling `setupApps`, which reads route maps and registers module metadata without importing the module code yet.
 - After modules are registered, it calls `finishRegisteringAllApps` to finalize the registration process.
-- If offline mode is enabled, it sets up offline CSS classes and handlers, and registers the service worker.
+- If offline mode is enabled, it sets up offline CSS classes and connectivity handlers before configuration is provided. After `runShell()` starts single-spa and the loading spinner closes, it registers the service worker and activates offline support.
 - Loading configuration from the provided `configUrls`.
 - Calling `runShell` which starts single-spa and initializes internationalization.
 - Handling initialization failures with `handleInitFailure` if anything goes wrong.
@@ -103,11 +103,13 @@ The complete initialization sequence follows this order:
    - Runs the legacy core-extension registration hook
    - Loads route maps and registers module metadata via `setupApps()`
    - Finalizes module registration
-   - Sets up offline support (if enabled)
+   - Sets up offline CSS classes and connectivity handlers if offline mode is enabled
    - Loads configuration files
    - Starts single-spa routing via `runShell()`
    - Handles any initialization errors
-   - Cleans up obsolete feature flags
+   - Closes the startup loading spinner
+   - Registers the service worker and activates offline support if offline mode is enabled
+   - Fires the `started` event, which triggers follow-up work such as obsolete feature flag cleanup
 4. **runShell()**: Finalizes the startup by:
    - Setting up internationalization (i18n)
    - Registering the default calendar
@@ -118,7 +120,7 @@ The complete initialization sequence follows this order:
 When offline mode is enabled (via the `offline` configuration option), the app shell:
 
 - Registers a service worker (`service-worker.js`) for caching and offline functionality
-- Sets up CSS classes (`omrs-online` / `omrs-offline`) on the body element based on connectivity
+- Toggles the `omrs-offline` class on the body element based on connectivity
 - Registers offline handlers for connectivity changes
 - Activates offline capability for data synchronization
 - Sets up static dependency precaching for offline use

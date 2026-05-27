@@ -41,7 +41,7 @@ La fonction `run` orchestre toute la séquence d'initialisation. Elle est respon
 - Appeler `setupCoreConfig` pour initialiser la configuration core.
 - Appeler `setupApps`, qui lit les route maps et enregistre les métadonnées des modules sans encore importer leur code.
 - Une fois les modules enregistrés, appeler `finishRegisteringAllApps` pour finaliser le processus d'enregistrement.
-- Si le mode hors ligne est activé, mettre en place les classes et handlers CSS hors ligne, puis enregistrer le service worker.
+- Si le mode hors ligne est activé, mettre en place les classes CSS hors ligne et les handlers de connectivité avant de fournir la configuration. Après que `runShell()` a démarré single-spa et que l'indicateur de chargement est fermé, enregistrer le service worker et activer le support hors ligne.
 - Charger la configuration depuis les `configUrls` fournis.
 - Appeler `runShell`, qui démarre single-spa et initialise l'internationalisation.
 - Gérer les échecs d'initialisation avec `handleInitFailure` si quelque chose se passe mal.
@@ -103,11 +103,13 @@ La séquence complète d'initialisation suit cet ordre:
    - Exécute le hook historique d'enregistrement des extensions core.
    - Charge les route maps et enregistre les métadonnées des modules via `setupApps()`.
    - Finalise l'enregistrement des modules.
-   - Met en place le support hors ligne si activé.
+   - Met en place les classes CSS hors ligne et les handlers de connectivité si le mode hors ligne est activé.
    - Charge les fichiers de configuration.
    - Démarre le routage single-spa via `runShell()`.
    - Gère toute erreur d'initialisation.
-   - Nettoie les feature flags obsolètes.
+   - Ferme l'indicateur de chargement initial.
+   - Enregistre le service worker et active le support hors ligne si le mode hors ligne est activé.
+   - Déclenche l'événement `started`, qui lance des tâches de suivi comme le nettoyage des feature flags obsolètes.
 4. **runShell()**: finalise le démarrage:
    - Met en place l'internationalisation (i18n).
    - Enregistre le calendrier par défaut.
@@ -118,7 +120,7 @@ La séquence complète d'initialisation suit cet ordre:
 Quand le mode hors ligne est activé via l'option de configuration `offline`, l'app shell:
 
 - Enregistre un service worker (`service-worker.js`) pour le cache et les fonctionnalités hors ligne.
-- Met en place les classes CSS (`omrs-online` / `omrs-offline`) sur l'élément body selon la connectivité.
+- Active ou désactive la classe `omrs-offline` sur l'élément body selon la connectivité.
 - Enregistre des handlers hors ligne pour les changements de connectivité.
 - Active la capacité hors ligne pour la synchronisation des données.
 - Met en place le précaching des dépendances statiques pour l'utilisation hors ligne.
