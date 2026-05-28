@@ -4,11 +4,17 @@ import { Callout } from "nextra/components";
 
 ## Aperçu
 
-Les schémas de formulaire O3 sont conformes à un [schéma](https://github.com/openmrs/openmrs-contrib-json-schemas/blob/main/form.schema.json) JSON standard. Les formulaires qui correspondent à ce schéma peuvent être utilisés avec le [moteur de formulaires React](/docs/key-repositories#react-form-engine) qui alimente le rendu des formulaires O3. Cela signifie que si vous avez un formulaire qui ne correspond pas à ce schéma, vous devrez le convertir en une représentation JSON compatible avec le schéma O3 avant de pouvoir l'utiliser avec O3.
+Les schémas de formulaire O3 sont conformes à un [schéma](https://github.com/openmrs/openmrs-contrib-json-schemas/blob/main/form.schema.json) JSON standard. Les formulaires qui correspondent à ce schéma peuvent être utilisés avec le [moteur de formulaires React](/docs/key-repositories#react-form-engine) qui alimente le rendu des formulaires JSON O3. Si vous voulez qu'un formulaire HTML Form Entry s'exécute comme un formulaire React Form Engine, vous devrez le convertir en une représentation JSON compatible avec le schéma O3.
 
   <Callout emoji="ℹ️" type="info">
     Pour en savoir plus sur les différentes propriétés qui composent le schéma, lisez la [documentation du moteur de formulaires React](https://openmrs.atlassian.net/wiki/spaces/projects/pages/68747273/O3+Form+Docs).
   </Callout>
+
+<Callout emoji="ℹ️" type="info">
+  Le dossier patient peut toujours rendre des formulaires HTML Form Entry configurés via
+  `@openmrs/esm-patient-forms-app`. Utilisez ce guide de conversion lorsque vous voulez transformer ces formulaires en
+  formulaires JSON O3 modifiables dans le constructeur de formulaires et rendus par le React Form Engine.
+</Callout>
 
 De nombreux implémenteurs ont des formulaires construits en utilisant le module HTML Form Entry. Pour faciliter la migration de ces formulaires vers O3, l'équipe de Palladium Kenya a créé un outil qui vous aide à convertir vos [formulaires HTML Form Entry en schéma O3](https://github.com/openmrs/hfe-o3-form-schema-converter). Cet outil de conversion de schéma HFE en O3 vous aide à migrer vos formulaires en prenant en charge certains aspects importants, y compris:
 

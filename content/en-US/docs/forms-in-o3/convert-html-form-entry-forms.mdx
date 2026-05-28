@@ -4,11 +4,17 @@ import { Callout } from 'nextra/components';
 
 ## Overview
 
-O3 form schemas conform to a standard JSON [schema](https://github.com/openmrs/openmrs-contrib-json-schemas/blob/main/form.schema.json). Forms that match this schema can be used with the [React Form Engine](/docs/key-repositories#react-form-engine) that powers O3's form rendering. This means that if you have a form that doesn't match this schema, you'll need to convert it to a JSON representation that is compatible with the O3 schema before you can use it with O3.
+O3 form schemas conform to a standard JSON [schema](https://github.com/openmrs/openmrs-contrib-json-schemas/blob/main/form.schema.json). Forms that match this schema can be used with the [React Form Engine](/docs/key-repositories#react-form-engine) that powers O3's JSON form rendering. If you want an HTML Form Entry form to run as a React Form Engine form, you'll need to convert it to a JSON representation that is compatible with the O3 schema.
 
   <Callout emoji="ℹ️" type="info">
     To learn more about the various properties that make up the schema, read the [React Form Engine documentation](https://openmrs.atlassian.net/wiki/spaces/projects/pages/68747273/O3+Form+Docs).
   </Callout>
+
+<Callout emoji="ℹ️" type="info">
+  The patient chart can still render configured HTML Form Entry forms through `@openmrs/esm-patient-forms-app`. Use this
+  conversion guide when you want those forms to become O3 JSON forms that can be edited in the Form Builder and rendered
+  by the React Form Engine.
+</Callout>
 
 Many implementers have forms built using the HTML Form Entry module. To make it easier to migrate these forms to O3, the Palladium Kenya team built a tool that helps you convert your HTML Form Entry forms to O3 schema. This [HFE to O3 schema converter](https://github.com/openmrs/hfe-o3-form-schema-converter) tool helps you migrate your forms by taking care of some important aspects, including:
 
