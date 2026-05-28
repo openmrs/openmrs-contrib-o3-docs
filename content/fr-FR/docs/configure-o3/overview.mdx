@@ -153,63 +153,6 @@ Pour des informations détaillées sur les formats de fichiers, les conventions 
 
 **Obtenir de l'aide** : Si vous avez des questions ou rencontrez des problèmes avec la configuration Initializer, la communauté OpenMRS recommande de publier sur le [forum OpenMRS Talk](https://talk.openmrs.org/) et de taguer votre sujet avec "initializer" pour que les membres de la communauté puissent aider.
 
-Les propriétés globales sont des paires clé-valeur stockées dans la base de données OpenMRS qui vous permettent de configurer des paramètres à l'échelle du système sans modifier le code. Elles fonctionnent de manière similaire aux variables d'environnement, permettant des ajustements dynamiques du comportement du système.
-
-**Utilisations courantes des propriétés globales** :
-- **Configuration système** - Ajuster les types de rencontre par défaut, les formats d'identifiants de patients et d'autres paramètres à l'échelle du système
-- **Comportement des modules** - Configurer le comportement de modules backend spécifiques
-- **Optimisation des performances** - Optimiser les performances du système en modifiant les propriétés liées aux comportements de recherche, à la mise en cache et à d'autres paramètres liés aux performances
-- **Paramètres d'intégration** - Configurer les intégrations de systèmes externes et les points de terminaison d'API
-
-**Comment configurer les propriétés globales** :
-
-Les propriétés globales sont configurées à l'aide de fichiers XML dans le module Initializer. Placez votre fichier XML de propriétés globales dans l'un de ces emplacements :
-
-1. **Packages de contenu** - Dans le répertoire `configuration/globalproperties/`
-2. **Répertoire de configuration de la distribution** - Dans le répertoire `distro/configuration/globalproperties/`
-3. **Répertoire de données d'application** - Dans `/openmrs/data/configuration/globalproperties/` ou `~/.OpenMRS/configuration/globalproperties/`
-
-**Format de fichier XML** :
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<globalProperties>
-  <globalProperty>
-    <property>property.name.here</property>
-    <value>property value</value>
-    <description>Description de ce que fait cette propriété</description>
-  </globalProperty>
-  <globalProperty>
-    <property>another.property.name</property>
-    <value>another value</value>
-  </globalProperty>
-</globalProperties>
-```
-
-**Exemples de propriétés globales** :
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<globalProperties>
-  <globalProperty>
-    <property>patientmatching.strategy</property>
-    <value>probabilistic</value>
-    <description>Stratégie de correspondance des patients (probabiliste ou déterministe)</description>
-  </globalProperty>
-  <globalProperty>
-    <property>default.encounter.type</property>
-    <value>67a71486-1a54-468f-ac3e-7091a9a79584</value>
-    <description>UUID du type de rencontre par défaut</description>
-  </globalProperty>
-</globalProperties>
-```
-
-**Notes importantes** :
-- Les propriétés globales peuvent être mises à jour à l'exécution via l'interface d'administration OpenMRS (Paramètres avancés), mais l'utilisation de fichiers Initializer garantit qu'elles sont contrôlées par version et appliquées automatiquement lors du déploiement
-- Les modifications des propriétés globales dans `distro/configuration` nécessitent une reconstruction du WAR backend
-- Les modifications des propriétés globales dans le répertoire de données d'application prennent effet au prochain redémarrage du backend (pas de reconstruction nécessaire)
-- Pour une liste complète des propriétés globales disponibles, consultez la [documentation des propriétés globales OpenMRS](https://wiki.openmrs.org/display/docs/Global+Properties) ou vérifiez la documentation pour des modules spécifiques
-
 ## Configuration des modules frontend individuels
 
 La configuration par application est disponible dans O3 via le [système de configuration](/docs/configuration-system) intégré. Chaque module frontend peut définir son propre schéma de configuration dans un fichier `config-schema.ts` à l'intérieur de son répertoire `src`. L'extrait suivant est tiré du config-schema du module frontend Programs :
