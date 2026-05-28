@@ -9,13 +9,13 @@ Dans O3, l'app shell correspond au code du paquet `esm-app-shell`. Il gère tout
 - Le favicon de l'application.
 - Une balise `<link>` qui référence l'import map.
 - Une balise `<script>` pour l'import map.
-- Une balise `<link>` qui référence un registre de toutes les pages et extensions agrégées depuis les modules frontend.
+- Une balise `<link>` qui précharge le registre des routes, c'est-à-dire les métadonnées `routes.json` agrégées depuis les modules frontend.
 - Une balise `<script>` pour le registre des routes.
 
 Le template contient aussi une référence au fichier JavaScript principal généré par le bundle Rspack de l'app shell (`openmrs.js` en développement et un fichier `openmrs.[contenthash].js` en production). Ce bundle crée une fonction appelée `initializeSpa` et l'ajoute à l'objet `window`, ce qui la rend disponible dans le scope global. Cette fonction est appelée depuis le template `index.ejs` et démarre l'application. Le template contient aussi:
 
 - Des `<div>` dans lesquels sont rendus les conteneurs de modales, notifications inline, notifications actionnables, snackbars et toasts.
-- Un indicateur de chargement affiché pendant que l'app shell charge les modules frontend.
+- Un indicateur de chargement affiché pendant le démarrage de l'app shell, avant que single-spa ne commence le routage.
 - Un état d'erreur affiché quand l'application n'arrive pas à se charger.
 
 ## initializeSpa

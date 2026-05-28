@@ -9,13 +9,13 @@ In O3, the app shell refers to the code inside the `esm-app-shell` package. It h
 - The app's favicon.
 - A `<link>` tag that is a reference to the import map.
 - A `<script>` tag for the import map.
-- A `<link>` tag that is a reference to a registry of all the pages and extensions aggregated from all the frontend modules.
+- A `<link>` tag that preloads the routes registry, which is the aggregated `routes.json` metadata for the frontend modules.
 - A `<script>` tag for the routes registry.
 
 The template also contains a reference to the main JavaScript file generated from the Rspack app-shell bundle (`openmrs.js` in development and a hashed `openmrs.[contenthash].js` file in production). That bundle creates a function called `initializeSpa` and appends it to the window object, making it available to the global scope. This function is called from the `index.ejs` template and is responsible for bootstrapping the application. The template also includes:
 
 - `<div>`s where containers for modals, inline notifications, actionable notifications, snackbars, and toast notifications get rendered in the UI.
-- A loading spinner that gets rendered when frontend modules are getting loaded by the app shell.
+- A loading spinner that is shown during app-shell startup, before single-spa begins routing.
 - An error state that gets rendered when the application fails to load.
 
 ## initializeSpa
