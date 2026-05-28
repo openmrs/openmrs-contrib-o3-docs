@@ -80,8 +80,10 @@ Add the following snippet to the `config-core_demo.json` file in the `frontend` 
 ```yaml
 frontend:
   environment:
-    SPA_CONFIG_URLS: ${SPA_PATH}/config-core_demo.json
+    SPA_CONFIG_URLS: /openmrs/spa/config-core_demo.json
 ```
+
+Use the public path where your SPA is actually served. The Reference Application default is `/openmrs/spa`; if you set a different `SPA_PATH`, use that path in `SPA_CONFIG_URLS`.
 
 **Option B - Build-time configuration (requires rebuild)**: Add the config file URL to the `configUrls` array in `spa-build-config.json`:
 
