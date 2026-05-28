@@ -165,7 +165,6 @@ Display observations as colored tags (e.g., problem lists):
           "id": "pregnancy-complications",
           "conceptUuid": "1284AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
           "summaryLabel": "Other Problems",
-          "summaryLabelI18nModule": "",
           "summaryLabelColor": "gray",
           "tags": [
             {
@@ -188,7 +187,6 @@ Display observations as colored tags (e.g., problem lists):
 - `id` - Unique identifier for this element (required). This must match the ward card component's `id`; the built-in maternal ward cards use `pregnancy-complications`.
 - `conceptUuid` - Concept UUID for the observations (required)
 - `summaryLabel` - Label for the summary tag (shows count of unconfigured values) (optional, defaults to concept name)
-- `summaryLabelI18nModule` - Custom module to use for translation of the summary label (optional)
 - `summaryLabelColor` - Color for the summary tag (optional). See [Carbon Design System Tag colors](https://react.carbondesignsystem.com/?path=/docs/components-tag--overview) for available colors.
 - `tags` - Array of tag configurations (optional)
   - `color` - Tag color. See [Carbon Design System Tag colors](https://react.carbondesignsystem.com/?path=/docs/components-tag--overview) for available colors.
@@ -197,6 +195,7 @@ Display observations as colored tags (e.g., problem lists):
 **How it works**: Observations with values in the configured concept sets display as individual colored tags. Any observation values not belonging to any configured concept sets are summarized as a count in the summary tag.
 
 Colored observation tags only consider observations from the patient's current visit.
+The built-in ward cards translate `summaryLabel` with the ward app's translation namespace.
 
 ## Ward Types
 

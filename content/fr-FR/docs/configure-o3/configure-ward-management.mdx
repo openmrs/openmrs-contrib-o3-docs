@@ -165,7 +165,6 @@ Affichez les observations sous forme de tags colorés (par ex. listes de problè
           "id": "pregnancy-complications",
           "conceptUuid": "1284AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
           "summaryLabel": "Other Problems",
-          "summaryLabelI18nModule": "",
           "summaryLabelColor": "gray",
           "tags": [
             {
@@ -188,7 +187,6 @@ Affichez les observations sous forme de tags colorés (par ex. listes de problè
 - `id` - Identifiant unique pour cet élément (requis). Il doit correspondre à l'`id` du composant de carte du service; les cartes de service maternité intégrées utilisent `pregnancy-complications`.
 - `conceptUuid` - UUID du concept pour les observations (requis)
 - `summaryLabel` - Libellé pour le tag de résumé (affiche le nombre de valeurs non configurées) (optionnel, par défaut le nom du concept)
-- `summaryLabelI18nModule` - Module personnalisé à utiliser pour la traduction du libellé de résumé (optionnel)
 - `summaryLabelColor` - Couleur pour le tag de résumé (optionnel). Voir [Couleurs des tags Carbon Design System](https://react.carbondesignsystem.com/?path=/docs/components-tag--overview) pour les couleurs disponibles.
 - `tags` - Tableau des configurations de tags (optionnel)
   - `color` - Couleur du tag. Voir [Couleurs des tags Carbon Design System](https://react.carbondesignsystem.com/?path=/docs/components-tag--overview) pour les couleurs disponibles.
@@ -197,6 +195,7 @@ Affichez les observations sous forme de tags colorés (par ex. listes de problè
 **Fonctionnement** : Les observations avec des valeurs dans les ensembles de concepts configurés s'affichent comme des tags colorés individuels. Toutes les valeurs d'observation n'appartenant à aucun ensemble de concepts configuré sont résumées comme un compte dans le tag de résumé.
 
 Les tags d'observation colorés ne prennent en compte que les observations de la visite actuelle du patient.
+Les cartes de service intégrées traduisent `summaryLabel` avec l'espace de noms de traduction de l'application de service.
 
 ## Types de services
 
