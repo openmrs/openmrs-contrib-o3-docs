@@ -28,7 +28,7 @@ La terminologie clinique (concepts) peut avoir des traductions attachées. Par e
 
 Si vous avez des traductions attachées aux concepts que vous utilisez dans les formulaires, ces traductions apparaîtront automatiquement dans vos formulaires. Il suffit de ne pas fournir d'étiquette dans le Form Builder, et le formulaire utilisera le nom du concept à la place.
 
-**Note** : En raison des différences entre les moteurs de formulaires, les questions sans étiquette peuvent apparaître dans le Form Builder, mais elles fonctionneront correctement dans le Angular Form Engine.
+**Note** : Le Form Builder peut afficher une question sans étiquette pendant l'édition s'il n'a pas encore résolu les métadonnées du concept. À l'exécution, le React Form Engine utilise l'affichage du concept résolu comme libellé de secours, et l'app Angular form-entry utilise la carte `conceptReferences` du schéma du formulaire pour le même type de repli.
 
 **Nouvelles locales** : Si vous ajoutez une toute nouvelle locale qui n'était pas dans O3 auparavant, notez que le formulaire-entry-app s'attend à ce que les fichiers de traduction (par ex. `ar.json`) existent. Vous pouvez voir des problèmes avec le chargement des formulaires. Voir [Problème O3-2492](https://issues.openmrs.org/browse/O3-2492) pour une solution de contournement.
 
@@ -95,7 +95,7 @@ Remplacez les traductions pour une extension spécifique dans un emplacement sp�
 ### Fonctionnement des remplacements de traduction
 
 1. **Fusion et priorité** : Les remplacements de traduction sont fusionnés dans cet ordre (les remplacements ultérieurs prennent la priorité) :
-   - Traductions de base (depuis Transifex)
+   - Traductions de base provenant des fichiers de traduction du module
    - Remplacements au niveau module
    - Remplacements au niveau extension
 
@@ -105,8 +105,8 @@ Remplacez les traductions pour une extension spécifique dans un emplacement sp�
    - Exemples valides : `en`, `fr`, `en-US`, `fr-CA`, `swa`
    - Exemples invalides : `EN`, `en_us`, `english`
 
-3. **Clés de traduction** : La clé de traduction (par ex. `startVisit`) doit correspondre exactement à ce qui est dans le fichier de traduction du module.
-   - Si vous remplacez une clé qui n'existe pas dans les fichiers de traduction du module, elle sera ignorée (pas d'erreur, mais aucun effet)
+3. **Clés de traduction** : La clé de traduction (par ex. `startVisit`) doit correspondre à la clé que le composant lit à l'exécution.
+   - Dans la plupart des cas, il s'agit d'une clé des fichiers de traduction du module. Ajouter une nouvelle clé qu'aucun composant ne lit n'aura aucun effet visible.
    - Les clés de traduction sont sensibles à la casse
    - Voir la section "Trouver les clés de traduction" ci-dessous pour obtenir de l'aide pour localiser les clés correctes
 
@@ -116,12 +116,12 @@ Remplacez les traductions pour une extension spécifique dans un emplacement sp�
 
 Pour trouver les clés de traduction correctes à remplacer :
 
-1. **Inspecter le code** : Regardez dans le dépôt du module pour les fichiers de traduction (généralement des fichiers JSON dans `src/translations/` ou des répertoires similaires). Le nom du module correspond généralement au nom du package (par ex. `@openmrs/esm-patient-chart-app` → cherchez les fichiers dans le dépôt de ce module).
+1. **Inspecter le code** : Regardez dans le dépôt du module pour les fichiers de traduction. Les modules O3 actuels gardent généralement les fichiers JSON dans un répertoire `translations/` au niveau du package, par exemple `translations/en.json`. Le nom du module correspond généralement au nom du package (par ex. `@openmrs/esm-patient-chart-app`).
 
-2. **DevTools du navigateur** : Utilisez la console du navigateur pour inspecter les espaces de noms i18n. D'abord, identifiez l'espace de noms du module (généralement le nom du module sans le préfixe `@openmrs/`), puis :
+2. **DevTools du navigateur** : Utilisez la console du navigateur pour inspecter les espaces de noms i18n. L'espace de noms de base est le nom complet du package du module. Les remplacements au niveau extension utilisent un espace de noms dérivé au format `moduleName___slotName___extensionId`, mais la plupart des recherches de clés commencent avec l'espace de noms de base du module :
    ```javascript
    // Obtenir toutes les traductions pour un module
-   window.i18next.getResourceBundle('en', 'esm-patient-chart-app')
+   window.i18next.getResourceBundle('en', '@openmrs/esm-patient-chart-app')
    
    // Ou lister tous les espaces de noms disponibles
    window.i18next.store.data
@@ -129,7 +129,7 @@ Pour trouver les clés de traduction correctes à remplacer :
 
 3. **Documentation du module** : Certains modules documentent leurs clés de traduction dans leur README ou fichiers de documentation.
 
-4. **Outils de mise en œuvre** : Si le module est chargé, vous pouvez voir "Translation overrides" dans l'interface de configuration des outils de mise en œuvre, ce qui peut aider à identifier les clés disponibles.
+4. **Outils de mise en œuvre** : Si le module est chargé, l'interface de configuration peut confirmer que "Translation overrides" est disponible pour ce module. Elle n'énumère pas toutes les clés de traduction, donc utilisez les fichiers source ou les ressources i18next ci-dessus pour trouver les clés.
 
 ### Exemple complet
 
@@ -169,7 +169,7 @@ Cette configuration démontre :
 ### Dépannage
 
 **Le remplacement de traduction ne fonctionne pas ?**
-- Vérifiez que la clé de traduction existe dans les fichiers de traduction du module (les clés inexistantes sont silencieusement ignorées)
+- Vérifiez que la clé de traduction correspond à une clé que le composant lit à l'exécution
 - Vérifiez que `"Translation overrides"` est orthographié exactement comme indiqué (sensible à la casse)
 - Assurez-vous que le code de langue suit le format correct (par ex. `en`, pas `EN` ou `en-US` pas `en_us`)
 - Vérifiez que le module est chargé (voir le [guide Aperçu](/docs/configure-o3/overview) pour les détails sur le chargement des modules)

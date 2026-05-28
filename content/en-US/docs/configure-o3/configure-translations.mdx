@@ -28,7 +28,7 @@ Clinical terminology (concepts) can have translations attached to them. For exam
 
 If you have translations attached to concepts you're using in forms, those translations will automatically appear in your forms. Simply don't supply a label in the Form Builder, and the form will use the concept name instead.
 
-**Note**: Because of differences in form engines, unlabeled questions may appear in the Form Builder, but they will work correctly in the Angular Form Engine.
+**Note**: The Form Builder may show an unlabeled question while editing if it has not resolved the concept metadata yet. At runtime, the React Form Engine uses the resolved concept display as the fallback label, and the Angular form-entry app uses the form schema's `conceptReferences` map for the same kind of fallback.
 
 **New locales**: If you add a brand-new locale not previously in O3, note that the form-entry-app expects translation files (e.g., `ar.json`) to exist. You may see issues with forms loading. See [Issue O3-2492](https://issues.openmrs.org/browse/O3-2492) for a workaround.
 
@@ -95,7 +95,7 @@ Override translations for a specific extension in a specific slot. These overrid
 ### How Translation Overrides Work
 
 1. **Merging and precedence**: Translation overrides are merged in this order (later overrides take precedence):
-   - Base translations (from Transifex)
+   - Base translations from the module's translation files
    - Module-level overrides
    - Extension-level overrides
 
@@ -105,8 +105,8 @@ Override translations for a specific extension in a specific slot. These overrid
    - Valid examples: `en`, `fr`, `en-US`, `fr-CA`, `swa`
    - Invalid examples: `EN`, `en_us`, `english`
 
-3. **Translation keys**: The translation key (e.g., `startVisit`) must match exactly what is in the module's translation file. 
-   - If you override a key that doesn't exist in the module's translation files, it will be ignored (no error, but no effect)
+3. **Translation keys**: The translation key (e.g., `startVisit`) must match the key the component reads at runtime.
+   - In most cases, that means a key from the module's translation files. Adding a new key that no component reads has no visible effect.
    - Translation keys are case-sensitive
    - See the "Finding Translation Keys" section below for help locating the correct keys
 
@@ -116,12 +116,12 @@ Override translations for a specific extension in a specific slot. These overrid
 
 To find the correct translation keys to override:
 
-1. **Inspect the code**: Look in the module's repository for translation files (typically JSON files in `src/translations/` or similar directories). The module name usually matches the package name (e.g., `@openmrs/esm-patient-chart-app` → look for files in that module's repo).
+1. **Inspect the code**: Look in the module's repository for translation files. Current O3 modules typically keep JSON files in a package-level `translations/` directory, such as `translations/en.json`. The module name usually matches the package name (e.g., `@openmrs/esm-patient-chart-app`).
 
-2. **Browser DevTools**: Use the browser console to inspect i18n namespaces. First, identify the module namespace (usually the module name without the `@openmrs/` prefix), then:
+2. **Browser DevTools**: Use the browser console to inspect i18n namespaces. The base namespace is the full module package name. Extension-scoped overrides use a derived namespace in the form `moduleName___slotName___extensionId`, but most key lookup starts with the base module namespace:
    ```javascript
    // Get all translations for a module
-   window.i18next.getResourceBundle('en', 'esm-patient-chart-app')
+   window.i18next.getResourceBundle('en', '@openmrs/esm-patient-chart-app')
    
    // Or list all available namespaces
    window.i18next.store.data
@@ -129,7 +129,7 @@ To find the correct translation keys to override:
 
 3. **Module documentation**: Some modules document their translation keys in their README or documentation files.
 
-4. **Implementer Tools**: If the module is loaded, you can see "Translation overrides" in the Implementer Tools configuration UI, which may help identify available keys.
+4. **Implementer Tools**: If the module is loaded, the configuration UI can confirm that "Translation overrides" is available for that module. It does not enumerate every translation key, so use the source files or i18next resources above for key lookup.
 
 ### Complete Example
 
@@ -169,7 +169,7 @@ This configuration demonstrates:
 ### Troubleshooting
 
 **Translation override not working?**
-- Verify the translation key exists in the module's translation files (non-existent keys are silently ignored)
+- Verify the translation key matches a key the component reads at runtime
 - Check that `"Translation overrides"` is spelled exactly as shown (case-sensitive)
 - Ensure the language code follows the correct format (e.g., `en`, not `EN` or `en-US` not `en_us`)
 - Verify the module is loaded (see the [Overview guide](/docs/configure-o3/overview) for details on module loading)
