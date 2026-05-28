@@ -126,8 +126,8 @@ Le helper de plus bas niveau `duration` retourne l'objet structuré `Intl.Durati
 
 ### isOmrsDateStrict
 
-Cet utilitaire est STRICTE sur le fait de vérifier si une chaîne de date est au format openmrs. Le format doit être `YYYY-MM-DDTHH:mm:ss.SSSZZ`.
-Elle accepte une chaîne `omrsPayloadString` et retourne un `boolean`.
+Cet utilitaire vérifie strictement si une chaîne de date correspond au format date-heure de payload OpenMRS. Le format doit être `YYYY-MM-DDTHH:mm:ss.SSSZZ`.
+Il accepte une chaîne `omrsPayloadString` et retourne un `boolean`.
 
 ```ts
   isOmrsDateStrict(omrsPayloadString: string): boolean
@@ -159,7 +159,7 @@ Pour une locale française, la valeur retournée serait une chaîne de caractèr
 
 ### toDateObjectStrict
 
-Cette fonction utilitaire convertit un objet en un objet date s'il est une chaîne de caractères de date et heure ISO valide. Elle accepte `omrsDateString` et retourne une `date` ou `null`.
+Cette fonction utilitaire convertit une chaîne date-heure de payload OpenMRS en objet `Date`. Elle accepte `omrsDateString` et retourne un `Date` ou `null`.
 
 ```ts
   toDateObjectStrict(omrsDateString: string): Date | null

@@ -120,7 +120,7 @@ Launch [Docker Desktop](https://docs.docker.com/desktop/) or [Docker Compose (v2
 From the cloned repository, start the default QA-tagged images:
 
 ```sh
-docker compose up -d
+docker compose -f docker-compose.yml up -d
 ```
 
 The reference application compose file defaults `TAG` to `qa`, which tracks the current QA images and is convenient for local evaluation. For reproducible testing, fetch the repository tags and run a fixed release tag instead:
@@ -135,7 +135,7 @@ This command does the following:
 
 - `TAG=<release-tag>`: Sets the Docker image tag for the gateway, frontend, backend, and related images.
 - `docker compose`: Runs Docker Compose v2.
-- `-f docker-compose.yml`: Specifies the Compose file to use.
+- `-f docker-compose.yml`: Uses only the base Compose file, so Docker Compose runs published images instead of the local build contexts from `docker-compose.override.yml`.
 - `up -d`: Starts the services defined in the Compose file in detached mode.
 
 ### Step 4

@@ -7,6 +7,7 @@ Les fonctionnalités en cours de développement peuvent être cachées derrière
 Un feature flag peut être activé ou désactivé depuis l’onglet « Feature Flags » des Implementer Tools. Ce choix est stocké dans le `localStorage` du navigateur, il s'applique donc à ce profil de navigateur plutôt qu'à un compte utilisateur OpenMRS. Les feature flags peuvent aussi être activés pour tout le monde avec la clé de configuration de l'app shell `Enabled feature flags`; voir l'[aperçu de la configuration O3](/docs/configure-o3#feature-flags) pour la configuration côté implémenteur. L'app shell ne peut activer que les flags déjà enregistrés. Si un flag configuré n'a pas été enregistré, l'app shell consigne une erreur et laisse ce flag désactivé.
 
 Les principales API des feature flags sont [`registerFeatureFlag`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/registerFeatureFlag.md), [`useFeatureFlag`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useFeatureFlag.md) et [`getFeatureFlag`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/getFeatureFlag.md).
+Utilisez `getFeatureFlag` seulement après l'enregistrement du flag. Pour l'interface React, préférez `useFeatureFlag`; il renvoie `false` sans erreur quand un flag est absent.
 
 ## Utiliser les feature flags
 

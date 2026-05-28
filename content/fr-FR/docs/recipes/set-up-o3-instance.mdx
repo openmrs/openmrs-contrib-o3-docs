@@ -118,7 +118,7 @@ Lancez [Docker Desktop](https://docs.docker.com/desktop/) ou [Docker Compose (v2
 Depuis le dépôt cloné, démarrez les images taguées QA par défaut:
 
 ```sh
-docker compose up -d
+docker compose -f docker-compose.yml up -d
 ```
 
 Le fichier compose de l'application de référence utilise `TAG=qa` par défaut, ce qui suit les images QA actuelles et convient bien à une évaluation locale. Pour des tests reproductibles, récupérez les tags du dépôt et exécutez plutôt un tag de version fixe:
@@ -133,7 +133,7 @@ Cette commande fait les actions suivantes:
 
 - `TAG=<release-tag>`: définit le tag d'image Docker pour gateway, frontend, backend et les images associées.
 - `docker compose`: exécute Docker Compose v2.
-- `-f docker-compose.yml`: spécifie le fichier Compose à utiliser.
+- `-f docker-compose.yml`: utilise seulement le fichier Compose de base, afin que Docker Compose lance les images publiées au lieu des contextes de build locaux de `docker-compose.override.yml`.
 - `up -d`: démarre les services définis dans le fichier Compose en mode détaché.
 
 ### Étape 4

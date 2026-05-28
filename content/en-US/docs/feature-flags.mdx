@@ -7,6 +7,7 @@ Work in progress can be hidden behind feature flags. This is useful for complex 
 A feature flag can be toggled from the "Feature Flags" tab of the Implementer Tools. That toggle is stored in the browser's `localStorage`, so it applies to that browser profile rather than to an OpenMRS user account. Feature flags can also be enabled for everyone through the app shell configuration key `Enabled feature flags`; see the [Configure O3 overview](/docs/configure-o3#feature-flags) for implementer-facing configuration. The app shell can only enable flags that have already been registered. If a configured flag has not been registered, the app shell logs an error and leaves that flag off.
 
 The main feature flag APIs are [`registerFeatureFlag`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/registerFeatureFlag.md), [`useFeatureFlag`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useFeatureFlag.md), and [`getFeatureFlag`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/getFeatureFlag.md).
+Use `getFeatureFlag` only after the flag has been registered. For React UI, prefer `useFeatureFlag`; it safely returns `false` when a flag is absent.
 
 ## Using Feature Flags
 

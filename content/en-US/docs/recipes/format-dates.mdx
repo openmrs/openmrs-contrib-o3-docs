@@ -126,7 +126,7 @@ The lower-level `duration` helper returns the structured `Intl.DurationInput` ob
 
 ### isOmrsDateStrict
 
-This utility is STRICT on checking whether a date string is the openmrs format. The format should be `YYYY-MM-DDTHH:mm:ss.SSSZZ`.
+This utility strictly checks whether a date string matches the OpenMRS payload date-time format. The format should be `YYYY-MM-DDTHH:mm:ss.SSSZZ`.
 It accepts an `omrsPayloadString` and returns a `boolean`.
 
 ```ts
@@ -159,7 +159,7 @@ For an English locale, the returned value would be a string in the format `18-Ma
 
 ### toDateObjectStrict
 
-This utility function converts an object to a date object if it is a valid ISO date time string. It accepts `omrsDateString` and returns a `date` or `null`.
+This utility function converts an OpenMRS payload date-time string to a `Date` object. It accepts `omrsDateString` and returns a `Date` or `null`.
 
 ```ts
   toDateObjectStrict(omrsDateString: string): Date | null
