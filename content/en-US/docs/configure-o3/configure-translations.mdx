@@ -41,9 +41,8 @@ You can use the configuration system to override translations for specific O3 co
 
 **Important**: Translation overrides should **not** be used to translate components into a new locale. For full translations, please contribute to the RefApp using [Transifex](https://explore.transifex.com/openmrs/).
 
-Translation overrides are available at multiple configuration levels:
+Translation overrides are available at two configuration levels:
 - Module-level (applies to all uses of the module)
-- Extension slot-level (applies to extensions in a specific slot)
 - Extension-level (applies to a specific extension in a specific slot)
 
 ### Module-Level Overrides
@@ -56,35 +55,11 @@ Override translations for an entire module:
     "Translation overrides": {
       "en": {
         "startVisit": "Check-in",
-        "endVisit": "Check-out"
+        "startNewVisit": "Begin a visit"
       },
       "fr": {
         "startVisit": "Enregistrement",
-        "endVisit": "Sortie"
-      }
-    }
-  }
-}
-```
-
-### Extension Slot-Level Overrides
-
-Override translations for all extensions in a specific slot. These overrides apply to all extensions in the slot, but extension-specific overrides (see below) take precedence.
-
-**Important**: Extension slot configuration is specified under the **module that owns the slot**, not the extension's module.
-
-```json
-{
-  "@openmrs/esm-patient-chart-app": {
-    "extensionSlots": {
-      "action-menu-patient-chart-items-slot": {
-        "configure": {
-          "Translation overrides": {
-            "en": {
-              "addNote": "Add Clinical Note"
-            }
-          }
-        }
+        "startNewVisit": "Démarrer une visite"
       }
     }
   }
@@ -93,18 +68,20 @@ Override translations for all extensions in a specific slot. These overrides app
 
 ### Extension-Level Overrides
 
-Override translations for a specific extension in a specific slot. These overrides take precedence over slot-level and module-level overrides for that extension.
+Override translations for a specific extension in a specific slot. These overrides take precedence over module-level overrides for that extension.
+
+**Important**: Extension configuration is specified under the **module that owns the slot**, not the extension's module. The translation keys still come from the extension module's translation namespace.
 
 ```json
 {
   "@openmrs/esm-patient-chart-app": {
     "extensionSlots": {
-      "action-menu-patient-chart-items-slot": {
+      "patient-chart-dashboard-slot": {
         "configure": {
-          "my-extension-id": {
+          "results-summary-dashboard": {
             "Translation overrides": {
               "en": {
-                "customAction": "Custom Action Label"
+                "Vitals & Biometrics": "Vitals"
               }
             }
           }
@@ -120,10 +97,9 @@ Override translations for a specific extension in a specific slot. These overrid
 1. **Merging and precedence**: Translation overrides are merged in this order (later overrides take precedence):
    - Base translations (from Transifex)
    - Module-level overrides
-   - Extension slot-level overrides
    - Extension-level overrides
 
-   If the same translation key is overridden at multiple levels, the most specific override wins. For example, if `"addNote"` is overridden at both the slot level and extension level, the extension-level override will be used for that specific extension.
+   If the same translation key is overridden at multiple levels, the extension-level override will be used for that specific extension instance.
 
 2. **Language codes**: Language codes must follow the format: `[a-z]{2,3}(-[A-Z]{2,3})?`
    - Valid examples: `en`, `fr`, `en-US`, `fr-CA`, `swa`
@@ -157,7 +133,7 @@ To find the correct translation keys to override:
 
 ### Complete Example
 
-Here's a complete example showing multiple override levels:
+Here's a complete example showing both override levels:
 
 ```json
 {
@@ -168,17 +144,12 @@ Here's a complete example showing multiple override levels:
       }
     },
     "extensionSlots": {
-      "action-menu-patient-chart-items-slot": {
+      "patient-chart-dashboard-slot": {
         "configure": {
-          "Translation overrides": {
-            "en": {
-              "addNote": "Add Clinical Note"
-            }
-          },
-          "vitals-and-biometrics": {
+          "results-summary-dashboard": {
             "Translation overrides": {
               "en": {
-                "recordVitals": "Record Vital Signs"
+                "Vitals & Biometrics": "Vitals"
               }
             }
           }
@@ -191,10 +162,9 @@ Here's a complete example showing multiple override levels:
 
 This configuration demonstrates:
 - **Module-level**: `startVisit` is overridden for the entire patient chart module (affects all uses of this translation key in the module)
-- **Slot-level**: `addNote` is overridden for all extensions in the action menu slot (unless overridden at extension level)
-- **Extension-level**: `recordVitals` is overridden specifically for the `vitals-and-biometrics` extension in the action menu slot (takes precedence over slot-level and module-level overrides for this extension)
+- **Extension-level**: `Vitals & Biometrics` is overridden only for the `results-summary-dashboard` extension when it is rendered in `patient-chart-dashboard-slot`
 
-**Note**: If `addNote` were also overridden at the extension level for `vitals-and-biometrics`, that extension-level override would take precedence over the slot-level override for that specific extension.
+**Note**: O3 does not currently support one slot-wide `Translation overrides` block that automatically applies to every extension in a slot. Configure each extension ID that needs slot-specific wording.
 
 ### Troubleshooting
 

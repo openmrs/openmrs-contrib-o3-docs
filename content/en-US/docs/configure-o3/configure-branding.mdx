@@ -6,6 +6,8 @@ Implementers can configure various aspects of the user interface to match their 
 
 - Changing the logo on the login screen
 - Changing the logo on the navbar
+- Changing the login page background
+- Adding login page announcements
 - Changing brand colors
 - Changing the favicon
 - Setting the implementation name (displayed in page headers)
@@ -161,7 +163,7 @@ This scopes the logo to the primary navigation app only. Remember to ensure the 
 - `alt` - Alternative text for accessibility (used when `src` is provided)
 
 <Callout emoji="ℹ️" type="info">
-  If the image you're using for the logo is hosted outside the OpenMRS distribution, you might need to modify the Content Security Policy to allow the image to be loaded. To do so, you would need to tweak the map block that defines CSP headers in the [nginx configuration file](https://github.com/openmrs/openmrs-distro-referenceapplication/blob/main/gateway/default.conf.template#L4) in the `gateway` directory. You might want to add a `img-src *` directive that allows all images to be loaded. `img-src *` allows loading images from any origin, including your domain, any external domains and data URIs.
+  If the image you're using for the logo is hosted outside the OpenMRS distribution, you might need to modify the Content Security Policy to allow the image to be loaded. To do so, tweak the map block that defines CSP headers in the [nginx configuration file](https://github.com/openmrs/openmrs-distro-referenceapplication/blob/main/gateway/default.conf.template#L4) in the `gateway` directory. The Reference Application default allows same-origin images and `data:` URIs with `img-src 'self' data:`. Add the specific external image origin you need, and include `data:` explicitly if you still need data URI images.
 </Callout>
 
 ### Adding External Links to the App Menu
@@ -190,6 +192,46 @@ Each external link requires:
 - `redirect` - The external URL to navigate to (must be a valid external URL)
 
 External links appear in the app menu alongside your application modules. They open in a new tab when clicked.
+
+## Changing the login page background
+
+You can configure the login page background with either an image URL or a CSS color value. If both are set, the image is used.
+
+```json
+{
+  "@openmrs/esm-login-app": {
+    "background": {
+      "image": "${openmrsSpaBase}/login-background.jpg",
+      "color": "#f4f4f4"
+    }
+  }
+}
+```
+
+- `image` - URL or path to a background image. Relative paths can use template variables such as `${openmrsBase}` or `${openmrsSpaBase}`.
+- `color` - CSS color value used when no background image is configured.
+
+## Adding login page announcements
+
+You can add announcement banners above the login form, for example to warn users about planned downtime. Announcement `title` and `text` values may be literal strings or translation keys.
+
+```json
+{
+  "@openmrs/esm-login-app": {
+    "announcements": [
+      {
+        "title": "plannedDowntime",
+        "text": "The system will be unavailable on Friday from 18:00 to 19:00.",
+        "kind": "warning"
+      }
+    ]
+  }
+}
+```
+
+- `title` - Optional title shown at the top of the banner.
+- `text` - Required banner body text.
+- `kind` - Visual style. Supported values are `info`, `warning`, `error`, and `success`. The default is `info`.
 
 ## Changing the favicon
 

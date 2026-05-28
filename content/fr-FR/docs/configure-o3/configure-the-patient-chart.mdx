@@ -137,29 +137,6 @@ Chaque configuration de type d'attribut de visite comprend :
 - `uuid` - L'UUID du type d'attribut de visite (requis)
 - `required` - Si le champ est requis dans le formulaire de visite (par défaut : `false`)
 - `displayInThePatientBanner` - S'il faut afficher la valeur de cet attribut dans la bannière du patient (par défaut : `true`)
-- `showWhenExpression` - (facultatif) Une expression JavaScript qui détermine quand afficher ce type d'attribut. L'expression a accès à un objet `visitAttributes` contenant toutes les valeurs actuelles des attributs de visite. Par exemple, `"visitAttributes['some-attribute-uuid'] === 'some-value'"` n'affichera cet attribut que lorsqu'un autre attribut a une valeur précise.
-
-**Exemple avec affichage conditionnel**:
-
-```json
-{
-  "@openmrs/esm-patient-chart-app": {
-    "visitAttributeTypes": [
-      {
-        "uuid": "57ea0cbb-064f-4d09-8cf4-e8228700491c",
-        "required": false,
-        "displayInThePatientBanner": true
-      },
-      {
-        "uuid": "aac48226-d143-4274-80e0-264db4e368ee",
-        "required": false,
-        "displayInThePatientBanner": false,
-        "showWhenExpression": "visitAttributes['57ea0cbb-064f-4d09-8cf4-e8228700491c'] === 'yes'"
-      }
-    ]
-  }
-}
-```
 
 ### Ajout d'attributs de visite supplémentaires
 
@@ -299,17 +276,17 @@ Dans certains cas, vous pouvez vouloir utiliser un formulaire spécifique (par e
     "vitals": {
       "useFormEngine": true,
       "formName": "Opération chirurgicale",
-      "formUuid": "96637f12-3c04-311f-b477-3fa6a866e895",
-      "encounterTypeUuid": "67a71486-1a54-468f-ac3e-7091a9a79584"
+      "formUuid": "96637f12-3c04-311f-b477-3fa6a866e895"
     }
   }
 }
 ```
 
-**Propriétés requises lorsque `useFormEngine` est `true`** :
-- `formUuid` - L'UUID du formulaire à utiliser
-- `encounterTypeUuid` - L'UUID du type de rencontre pour les rencontres de signes vitaux
-- `formName` - Un nom d'affichage pour le formulaire (optionnel, par défaut : "Vitals")
+**Propriétés utilisées lorsque `useFormEngine` est `true`** :
+- `formUuid` - L'UUID du formulaire à lancer dans le workspace du Form Engine
+- `formName` - Un nom d'affichage pour le titre du workspace (optionnel, par défaut : `"Vitals"`)
+
+Le paramètre `encounterTypeUuid` s'applique toujours au formulaire structuré intégré des signes vitaux et des données biométriques. Il n'est pas transmis au workspace du Form Engine lorsque `useFormEngine` est activé.
 
 Pour plus d'informations sur la configuration des formulaires dans O3, consultez la documentation [Formulaires dans O3](/docs/forms-in-o3).
 
@@ -429,7 +406,7 @@ Vous pouvez créer des widgets personnalisés qui affichent les observations au 
         "configure": {
           "obs-by-encounter-widget#hiv": {
             "title": "Widget VIH",
-            "resultName": "HIV",
+            "resultsName": "HIV",
             "data": [
               {
                 "concept": "1132AAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
@@ -455,7 +432,7 @@ Vous pouvez créer des widgets personnalisés qui affichent les observations au 
 
 **Propriétés de configuration** :
 - `title` - Le titre du widget affiché dans le tableau de bord (peut également être une clé de traduction)
-- `resultName` - Un identifiant de nom pour le widget, affiché dans les messages concernant ces données
+- `resultsName` - Un identifiant de nom pour le widget, affiché dans les messages concernant ces données
 - `data` - Un tableau de configurations de concepts, chacune avec :
   - `concept` - L'UUID du concept à afficher (requis)
   - `label` - L'étiquette d'affichage pour ce concept (par défaut, utilise le nom d'affichage du concept si non fourni)
@@ -469,6 +446,7 @@ Vous pouvez créer des widgets personnalisés qui affichent les observations au 
 - `showEncounterType` - (optionnel) S'il faut afficher la colonne du type de rencontre dans la vue tableau (par défaut : `false`)
 - `showGraphByDefault` - (optionnel) S'il faut afficher la vue graphique par défaut au lieu de la vue tableau (par défaut : `false`)
 - `graphOldestFirst` - (optionnel) S'il faut trier les valeurs du graphique du plus ancien au plus récent (par défaut : `false`, affiche le plus récent en premier)
+- `tableSortOldestFirst` - (optionnel) S'il faut trier initialement le tableau du plus ancien au plus récent (par défaut : `false`)
 - `interpretationSlot` - (optionnel) Nom de l'emplacement d'extension pour afficher les interprétations sous le graphique. Si spécifié, les extensions dans cet emplacement seront rendues sous la visualisation du graphique.
 
 **Note** : La propriété `color` détermine la couleur de la ligne de données dans la visualisation du graphique. Choisissez des couleurs qui offrent un bon contraste et sont accessibles. Lors de l'utilisation de `graphGroup`, plusieurs concepts peuvent être affichés sur le même graphique, ce qui est utile pour les mesures connexes (par exemple, regrouper la tension artérielle systolique et diastolique ensemble).

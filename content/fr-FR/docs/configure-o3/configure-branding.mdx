@@ -6,6 +6,8 @@ Les implémenteurs peuvent configurer divers aspects de l'interface utilisateur 
 
 - Changer le logo sur l'écran de connexion
 - Changer le logo sur la barre de navigation
+- Changer l'arrière-plan de la page de connexion
+- Ajouter des annonces sur la page de connexion
 - Changer les couleurs de la marque
 - Changer le favicon
 - Définir le nom de l'implémentation (affiché dans les en-têtes de page)
@@ -160,7 +162,7 @@ Cela limite le logo à l'application de navigation primaire uniquement. N'oublie
 - `alt` - Texte alternatif pour l'accessibilité (utilisé lorsque `src` est fourni)
 
 <Callout emoji="ℹ️" type="info">
-  Si l'image que vous utilisez pour le logo est hébergée en dehors de la distribution OpenMRS, vous devrez peut-être modifier la Politique de Sécurité du Contenu pour permettre le chargement de l'image. Pour ce faire, vous devriez ajuster le bloc map qui définit les en-têtes CSP dans le [fichier de configuration nginx](https://github.com/openmrs/openmrs-distro-referenceapplication/blob/main/gateway/default.conf.template#L4) dans le répertoire `gateway`. Vous voudrez peut-être ajouter une directive `img-src *` qui permet le chargement de toutes les images. `img-src *` permet le chargement d'images depuis n'importe quelle origine, y compris votre domaine, tous les domaines externes et les URI de données.
+  Si l'image que vous utilisez pour le logo est hébergée en dehors de la distribution OpenMRS, vous devrez peut-être modifier la Politique de Sécurité du Contenu pour permettre le chargement de l'image. Pour ce faire, ajustez le bloc map qui définit les en-têtes CSP dans le [fichier de configuration nginx](https://github.com/openmrs/openmrs-distro-referenceapplication/blob/main/gateway/default.conf.template#L4) dans le répertoire `gateway`. L'application de référence autorise par défaut les images de même origine et les URI `data:` avec `img-src 'self' data:`. Ajoutez l'origine externe précise dont vous avez besoin et incluez explicitement `data:` si vous avez encore besoin d'images sous forme d'URI de données.
 </Callout>
 
 ### Ajout de liens externes au menu des applications
@@ -189,6 +191,46 @@ Chaque lien externe nécessite :
 - `redirect` - L'URL externe vers laquelle naviguer (doit être une URL externe valide)
 
 Les liens externes apparaissent dans le menu des applications aux côtés de vos modules d'application. Ils s'ouvrent dans un nouvel onglet lorsqu'ils sont cliqués.
+
+## Changement de l'arrière-plan de la page de connexion
+
+Vous pouvez configurer l'arrière-plan de la page de connexion avec une URL d'image ou une valeur de couleur CSS. Si les deux sont définies, l'image est utilisée.
+
+```json
+{
+  "@openmrs/esm-login-app": {
+    "background": {
+      "image": "${openmrsSpaBase}/login-background.jpg",
+      "color": "#f4f4f4"
+    }
+  }
+}
+```
+
+- `image` - URL ou chemin vers une image d'arrière-plan. Les chemins relatifs peuvent utiliser des variables de modèle comme `${openmrsBase}` ou `${openmrsSpaBase}`.
+- `color` - Valeur de couleur CSS utilisée lorsqu'aucune image d'arrière-plan n'est configurée.
+
+## Ajout d'annonces sur la page de connexion
+
+Vous pouvez ajouter des bannières d'annonce au-dessus du formulaire de connexion, par exemple pour prévenir les utilisateurs d'une maintenance planifiée. Les valeurs `title` et `text` peuvent être des chaînes littérales ou des clés de traduction.
+
+```json
+{
+  "@openmrs/esm-login-app": {
+    "announcements": [
+      {
+        "title": "plannedDowntime",
+        "text": "Le système sera indisponible vendredi de 18:00 à 19:00.",
+        "kind": "warning"
+      }
+    ]
+  }
+}
+```
+
+- `title` - Titre optionnel affiché en haut de la bannière.
+- `text` - Corps requis de la bannière.
+- `kind` - Style visuel. Les valeurs prises en charge sont `info`, `warning`, `error` et `success`. La valeur par défaut est `info`.
 
 ## Changement du favicon
 

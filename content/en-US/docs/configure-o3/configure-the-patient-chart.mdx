@@ -137,29 +137,6 @@ Each visit attribute type configuration includes:
 - `uuid` - The UUID of the visit attribute type (required)
 - `required` - Whether the field is required in the visit form (default: `false`)
 - `displayInThePatientBanner` - Whether to show this attribute's value in the patient banner (default: `true`)
-- `showWhenExpression` - (optional) A JavaScript expression that determines when to show this attribute type. The expression has access to a `visitAttributes` object containing all current visit attribute values. For example, `"visitAttributes['some-attribute-uuid'] === 'some-value'"` would only show this attribute when another attribute has a specific value.
-
-**Example with conditional display**:
-
-```json
-{
-  "@openmrs/esm-patient-chart-app": {
-    "visitAttributeTypes": [
-      {
-        "uuid": "57ea0cbb-064f-4d09-8cf4-e8228700491c",
-        "required": false,
-        "displayInThePatientBanner": true
-      },
-      {
-        "uuid": "aac48226-d143-4274-80e0-264db4e368ee",
-        "required": false,
-        "displayInThePatientBanner": false,
-        "showWhenExpression": "visitAttributes['57ea0cbb-064f-4d09-8cf4-e8228700491c'] === 'yes'"
-      }
-    ]
-  }
-}
-```
 
 ### Adding Extra Visit Attributes
 
@@ -299,17 +276,17 @@ In some cases, you may want to use a specific form (e.g., an existing Triage Ass
     "vitals": {
       "useFormEngine": true,
       "formName": "Surgical Operation",
-      "formUuid": "96637f12-3c04-311f-b477-3fa6a866e895",
-      "encounterTypeUuid": "67a71486-1a54-468f-ac3e-7091a9a79584"
+      "formUuid": "96637f12-3c04-311f-b477-3fa6a866e895"
     }
   }
 }
 ```
 
-**Required properties when `useFormEngine` is `true`**:
-- `formUuid` - The UUID of the form to use
-- `encounterTypeUuid` - The UUID of the encounter type for vitals encounters
-- `formName` - A display name for the form (optional, defaults to "Vitals")
+**Properties used when `useFormEngine` is `true`**:
+- `formUuid` - The UUID of the form to launch in the Form Engine workspace
+- `formName` - A display name for the workspace title (optional, defaults to `"Vitals"`)
+
+The `encounterTypeUuid` setting still applies to the built-in structured vitals and biometrics form. It is not passed to the Form Engine workspace when `useFormEngine` is enabled.
 
 For more information on setting up forms in O3, see the [Forms in O3](/docs/forms-in-o3) documentation.
 
@@ -429,7 +406,7 @@ You can create custom widgets that display observations over time using the `obs
         "configure": {
           "obs-by-encounter-widget#hiv": {
             "title": "HIV Widget",
-            "resultName": "HIV",
+            "resultsName": "HIV",
             "data": [
               {
                 "concept": "1132AAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
@@ -464,7 +441,7 @@ You can create custom widgets that display observations over time using the `obs
 
 **Configuration properties**:
 - `title` - The widget title displayed in the dashboard (can also be a translation key)
-- `resultName` - A name identifier for the widget, displayed in messages about this data
+- `resultsName` - A name identifier for the widget, displayed in messages about this data
 - `data` - An array of concept configurations, each with:
   - `concept` - The concept UUID to display (required)
   - `label` - The display label for this concept (defaults to concept display name if not provided)
@@ -478,6 +455,7 @@ You can create custom widgets that display observations over time using the `obs
 - `showEncounterType` - (optional) Whether to display the encounter type column in the table view (default: `false`)
 - `showGraphByDefault` - (optional) Whether to display the graph view by default instead of the table view (default: `false`)
 - `graphOldestFirst` - (optional) Whether to sort graph values from oldest to most recent (default: `false`, shows newest first)
+- `tableSortOldestFirst` - (optional) Whether the table initially sorts from oldest to most recent (default: `false`)
 - `interpretationSlot` - (optional) Extension slot name to display interpretations below the graph. If specified, extensions in this slot will be rendered below the graph visualization.
 
 **Note**: The `color` property determines the color of the data line in the chart visualization. Choose colors that provide good contrast and are accessible. When using `graphGroup`, multiple concepts can be displayed on the same graph, which is useful for related measurements (e.g., grouping systolic and diastolic blood pressure together).
