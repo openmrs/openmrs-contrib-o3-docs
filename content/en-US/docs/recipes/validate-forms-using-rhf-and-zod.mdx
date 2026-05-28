@@ -59,7 +59,7 @@ Below is an example that demonstrates how to use React Hook Form with Zod:
     </Button>
     <Button className={styles.submitButton} onClick={handleSubmit} disabled={isChangingPassword} type="submit">
       {isChangingPassword ? (
-        <InlineLoading description={t("changingLanguage", "Changing password") + "..."} />
+        <InlineLoading description={t("changingPassword", "Changing password") + "..."} />
       ) : (
         <span>{t("change", "Change")}</span>
       )}
@@ -255,14 +255,23 @@ There are cases where you may need to define your schema outside of the componen
 In these scenarios, you can create a factory function that returns the schema. Something like this:
 
 ```tsx
-import { type TFunction } from "react-i18next";
+import { z } from "zod";
+import type { TFunction } from "react-i18next";
 
 const createChangePasswordSchema = (t: TFunction) => {
+  const requiredString = (key: string, defaultValue: string) =>
+    z
+      .string({
+        required_error: t(key, defaultValue),
+      })
+      .trim()
+      .min(1, t(key, defaultValue));
+
   return z
     .object({
-      oldPassword: oldPasswordValidation,
-      newPassword: newPasswordValidation,
-      passwordConfirmation: passwordConfirmationValidation,
+      oldPassword: requiredString("oldPasswordRequired", "Old password is required"),
+      newPassword: requiredString("newPasswordRequired", "New password is required"),
+      passwordConfirmation: requiredString("passwordConfirmationRequired", "Password confirmation is required"),
     })
     .refine((data) => data.newPassword === data.passwordConfirmation, {
       message: t("passwordsDoNotMatch", "Passwords do not match"),

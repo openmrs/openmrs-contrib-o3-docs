@@ -23,7 +23,7 @@ formatDate(date: Date, options?: {
 ```
 
 The mode parameter can be set to `standard` or `wide`.
-When set to `standard`, the date is displayed in the format `16-May-2023`, and when set to `wide`, the date is displayed as `16 — May — 2023`.
+For English dates, `standard` mode displays a date such as `16-May-2023`, while `wide` mode displays a date such as `16 — May — 2023`. Other locales may use locale-specific month names, calendars, and punctuation.
 
 By default, `formatDate` uses `{ mode: "standard", time: "for today", day: true, month: true, year: true, noToday: false }`. If the date is today, then `Today` is produced instead of the actual day in the locale language, and the time is appended because the default `time` option is `"for today"`. Pass `{ time: false }` to suppress the time for today's date, or `{ noToday: true }` to format today like any other date.
 
@@ -39,15 +39,17 @@ function AppointmentDetails({ appointment }: AppointmentDetailsProps) {
 }
 ```
 
-The returned value will be a string in this format `18-May-2023`
+For an English locale, the returned value would be a string in the format `18-May-2023`.
 
 ### formatDatetime
 
 This utility function accepts a `Date` object and returns a `string`.
 It formats the input date to display both the date and time, separated by a comma, according to the current locale and the given options.
 
+`formatDatetime` accepts the same options as `formatDate` except for `time`, which is always included:
+
 ```ts
-  formatDatetime(date: Date, options?: { mode?: "standard" | "wide" }): string
+formatDatetime(date: Date, options?: Partial<Omit<FormatDateOptions, "time">>): string
 ```
 
 Here's an example of how to use `formatDatetime`:
@@ -60,7 +62,7 @@ function AppointmentDetails({ appointment }: AppointmentDetailsProps) {
 }
 ```
 
-The returned value will be `18-May-2023, 08:21`
+For an English locale, the returned value would be a string such as `18-May-2023, 08:21`.
 
 ### formatTime
 
@@ -80,7 +82,7 @@ function AppointmentDetails({ appointment }: AppointmentDetailsProps) {
 }
 ```
 
-The returned value will be `08:21`
+The returned value depends on the locale. For example, it may be `08:21` in a 24-hour locale or `08:21 AM` in a 12-hour locale.
 
 ### isOmrsDateStrict
 
@@ -113,7 +115,7 @@ function EncounterDate({ encounter }: EncounterDateProps) {
 }
 ```
 
-The returned value will be a string in this format `18-May-2023`
+For an English locale, the returned value would be a string in the format `18-May-2023`.
 
 ### toDateObjectStrict
 

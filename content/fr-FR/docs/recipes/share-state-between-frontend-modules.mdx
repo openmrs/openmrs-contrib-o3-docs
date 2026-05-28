@@ -83,6 +83,6 @@ import { bookStore } from "./bookStore";
 bookStore.setState({ books: ["A History of Global Health"] });
 ```
 
-Les global stores sont stockés en mémoire par défaut. Si un store doit survivre à un rafraîchissement du navigateur dans la même session d'onglet, passez `"sessionStorage"` comme troisième argument à `createGlobalStore()`.
+Les global stores sont stockés en mémoire par défaut. Si un store doit survivre à un rafraîchissement du navigateur dans la même session d'onglet, passez `"sessionStorage"` comme troisième argument à `createGlobalStore()`. Le framework prend actuellement en charge les stores en mémoire et les stores adossés à `sessionStorage`.
 
 Voir la [documentation Zustand](https://docs.pmnd.rs/zustand/getting-started/introduction) pour plus d'informations sur les stores.

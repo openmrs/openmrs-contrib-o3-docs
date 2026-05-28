@@ -9,7 +9,7 @@ frontend module.
 
 In some cases, you may need to manage state outside React, such as when you
 have separate React applications that need to share state.
-This can come up, for example, if you your frontend module has multiple extensions
+This can come up, for example, if your frontend module has multiple extensions
 that need to share state with each other.
 
 In these cases you can use the
@@ -85,7 +85,7 @@ import { bookStore } from "./bookStore";
 bookStore.setState({ books: ["A History of Global Health"] });
 ```
 
-Global stores are in memory by default. If a store needs to survive a browser refresh within the same tab session, pass `"sessionStorage"` as the third argument to `createGlobalStore()`.
+Global stores are in memory by default. If a store needs to survive a browser refresh within the same tab session, pass `"sessionStorage"` as the third argument to `createGlobalStore()`. The framework currently supports in-memory stores and session-storage-backed stores.
 
 See the [Zustand docs](https://docs.pmnd.rs/zustand/getting-started/introduction) for more
 information about stores.

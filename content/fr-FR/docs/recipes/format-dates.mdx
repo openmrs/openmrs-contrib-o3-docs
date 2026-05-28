@@ -23,7 +23,7 @@ formatDate(date: Date, options?: {
 ```
 
 Le paramètre mode peut être réglé sur `standard` ou `wide`.
-Lorsqu'il vaut `standard`, la date est affichée au format `16-May-2023`, et lorsqu'il vaut `wide`, la date est affichée au format `16 — May — 2023`.
+Pour les dates en anglais, le mode `standard` affiche une date comme `16-May-2023`, tandis que le mode `wide` affiche une date comme `16 — May — 2023`. Les autres locales peuvent utiliser des noms de mois, des calendriers et une ponctuation propres à la locale.
 
 Par défaut, `formatDate` utilise `{ mode: "standard", time: "for today", day: true, month: true, year: true, noToday: false }`. Si la date est aujourd'hui, `Today` est produit à la place du jour réel dans la langue locale, et l'heure est ajoutée parce que l'option `time` vaut `"for today"` par défaut. Passez `{ time: false }` pour masquer l'heure pour la date du jour, ou `{ noToday: true }` pour formater aujourd'hui comme une date ordinaire.
 
@@ -39,15 +39,17 @@ function AppointmentDetails({ appointment }: AppointmentDetailsProps) {
 }
 ```
 
-La valeur retournée sera une chaîne au format `18-May-2023`.
+Pour une locale anglaise, la valeur retournée serait une chaîne au format `18-May-2023`.
 
 ### formatDatetime
 
 Cette fonction utilitaire accepte un objet `Date` et renvoie une `string`.
 Elle formate la date pour afficher la date et l’heure, séparées par une virgule, selon la locale courante et les options fournies.
 
+`formatDatetime` accepte les mêmes options que `formatDate`, sauf `time`, qui est toujours inclus:
+
 ```ts
-  formatDatetime(date: Date, options?: { mode?: "standard" | "wide" }): string
+formatDatetime(date: Date, options?: Partial<Omit<FormatDateOptions, "time">>): string
 ```
 
 Voici un exemple d’utilisation de `formatDatetime` :
@@ -60,7 +62,7 @@ function AppointmentDetails({ appointment }: AppointmentDetailsProps) {
 }
 ```
 
-La valeur retournée sera `18-May-2023, 08:21`.
+Pour une locale anglaise, la valeur retournée serait une chaîne comme `18-May-2023, 08:21`.
 
 ### formatTime
 
@@ -80,7 +82,7 @@ function AppointmentDetails({ appointment }: AppointmentDetailsProps) {
 }
 ```
 
-La valeur retournée sera `08:21`.
+La valeur retournée dépend de la locale. Par exemple, elle peut être `08:21` dans une locale au format 24 heures ou `08:21 AM` dans une locale au format 12 heures.
 
 ### isOmrsDateStrict
 
@@ -113,7 +115,7 @@ function EncounterDate({ encounter }: EncounterDateProps) {
 }
 ```
 
-La valeur retournée sera une chaîne de caractères dans ce format `18-Mai-2023`
+Pour une locale française, la valeur retournée serait une chaîne de caractères dans le format propre à la locale, par exemple `18 mai 2023`.
 
 ### toDateObjectStrict
 

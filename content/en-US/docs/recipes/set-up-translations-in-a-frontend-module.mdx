@@ -9,10 +9,10 @@ In order to internationalize your frontend module, add this line in the `src/ind
 export const importTranslation = require.context("../translations", false, /.json$/, "lazy");
 ```
 
-All translations are added in the `translations` directory which is at the top level of the package. The source file for translations is the `en.json` which contains english translations of all hardcoded text.
-To add translations of another language eg. Spanish, create a new `es.json` file in the `translations` directory. When the user changes their preferred language, the application loads the appropriate resource file and displays the text in the user's preferred language.
+All translations are added in the `translations` directory, which is at the top level of the package. The source file for translations is `en.json`, which contains English translations of all hardcoded text.
+To add translations for another language, for example Spanish, create a new `es.json` file in the `translations` directory. When the user changes their preferred language, the application loads the appropriate resource file and displays the text in the user's preferred language.
 
-Here is an example of using react-i18next localization in your react components.
+Here is an example of using react-i18next localization in your React components.
 
 ```ts
 import { useTranslation } from "react-i18next";
@@ -24,7 +24,7 @@ const ActiveVisitsTable = () => {
 };
 ```
 
-The framework provides a set of *core translations* that are used in many frontend modules. These can be used with the [`getCoreTranslation`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#getcoretranslation) function. This function takes two arguments: the first is the key of the core translation, and the second is the default value to return if the requested translation is not found.  A Typescript type error is shown if the provided key is not valid.
+The framework provides a set of *core translations* that are used in many frontend modules. These can be used with the [`getCoreTranslation`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#getcoretranslation) function. This function takes a core translation key, an optional default value, and optional i18next interpolation options. A TypeScript type error is shown if the provided key is not valid.
 
 The valid core translations are defined in the [CoreTranslationKey](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-translations/src/translations.ts#L15) type. These include common strings used in many apps, such as `Cancel`, `Confirm`, `Female`, and `Other`. The corresponding translation JSON files themselves live in the [esm-translations](https://github.com/openmrs/openmrs-esm-core/tree/main/packages/framework/esm-translations/translations) app.
 

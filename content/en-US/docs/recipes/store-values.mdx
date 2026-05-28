@@ -1,10 +1,10 @@
 # Storing values
 
-There are several forms of storage available in modern browsers. Here is a break-down of them and when they should be preferred.
+There are several forms of storage available in modern browsers. Here is a breakdown of them and when they should be preferred.
 
 ### In-Memory
 
-In general, in memory storage refers to anything stored in Javascript that is not part of a persistent storage. In general, values stored in memory remain valid for:
+In general, in-memory storage refers to anything stored in JavaScript that is not part of persistent storage. Values stored in memory remain valid for:
 
 | Type          | Duration                |
 | ------------- | ----------------------- |
@@ -14,7 +14,7 @@ In general, in memory storage refers to anything stored in Javascript that is no
 | React Context | React subtree lifecycle |
 | Global Store  | Until page reload       |
 
-No in-memory values survive page reload. For values that need to persist across a page-reload (and note that this means browser page refresh and not merely in-application navigation), use persistent storage.
+No in-memory values survive page reload. For values that need to persist across a page reload, which means browser page refresh and not merely in-application navigation, use persistent storage.
 
 #### Variables
 
@@ -24,9 +24,9 @@ Simplest way to store a value. Looks something like:
 const value = /* some value */;
 ```
 
-The lifecycle of this variable depends on it's [scope](https://developer.mozilla.org/en-US/docs/Glossary/Scope). In general, it's preferable to store values in the narrowest scope possible, that is, prefer function-scope to module-scope and module-scope to global-scope.
+The lifecycle of this variable depends on its [scope](https://developer.mozilla.org/en-US/docs/Glossary/Scope). In general, it's preferable to store values in the narrowest scope possible, that is, prefer function scope to module scope and module scope to global scope.
 
-Inside React, it is generally preferrable to use simple variables unless recomputing the variable is expensive. For example:
+Inside React, it is generally preferable to use simple variables unless recomputing the variable is expensive. For example:
 
 ```ts
 const name = `${patient.first} ${patient.last}`;
@@ -40,7 +40,7 @@ Is likely to be fine, unless operating on a large list of items or performing po
 const [value, setValue] = useState(/* some value */);
 ```
 
-Sometimes we need variables which maintain consistent values across component renders. Where these values are component-specific, `useState()` allows us to store a component-specific version of a value that only gets updated when it's setter is called.
+Sometimes we need variables which maintain consistent values across component renders. Where these values are component-specific, `useState()` allows us to store a component-specific version of a value that only gets updated when its setter is called.
 
 #### React Memo
 
@@ -148,7 +148,7 @@ const { dateRange, setDateRange } = dateFilterContext;
 
 ### Persistent Storage
 
-Persistent storage refers to any storage mechanism that persists beyond a render of the single-page.
+Persistent storage refers to any storage mechanism that persists beyond a render of the single-page application.
 
 #### The Backend
 

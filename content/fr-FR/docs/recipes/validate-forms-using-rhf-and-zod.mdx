@@ -59,7 +59,7 @@ Voici un exemple qui démontre comment utiliser React Hook Form avec Zod:
     </Button>
     <Button className={styles.submitButton} onClick={handleSubmit} disabled={isChangingPassword} type="submit">
       {isChangingPassword ? (
-        <InlineLoading description={t("changingLanguage", "Changement du mot de passe") + "..."} />
+        <InlineLoading description={t("changingPassword", "Changement du mot de passe") + "..."} />
       ) : (
         <span>{t("change", "Changer")}</span>
       )}
@@ -255,14 +255,23 @@ Dans certains cas, vous devrez peut-être définir votre schéma en dehors du co
 Dans ces scénarios, vous pouvez créer une fonction factory qui retourne le schéma. Par exemple:
 
 ```tsx
-import { type TFunction } from "react-i18next";
+import { z } from "zod";
+import type { TFunction } from "react-i18next";
 
 const createChangePasswordSchema = (t: TFunction) => {
+  const requiredString = (key: string, defaultValue: string) =>
+    z
+      .string({
+        required_error: t(key, defaultValue),
+      })
+      .trim()
+      .min(1, t(key, defaultValue));
+
   return z
     .object({
-      oldPassword: oldPasswordValidation,
-      newPassword: newPasswordValidation,
-      passwordConfirmation: passwordConfirmationValidation,
+      oldPassword: requiredString("oldPasswordRequired", "Old password is required"),
+      newPassword: requiredString("newPasswordRequired", "New password is required"),
+      passwordConfirmation: requiredString("passwordConfirmationRequired", "Password confirmation is required"),
     })
     .refine((data) => data.newPassword === data.passwordConfirmation, {
       message: t("passwordsDoNotMatch", "Passwords do not match"),

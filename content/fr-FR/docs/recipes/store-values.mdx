@@ -4,7 +4,7 @@ Il existe plusieurs formes de stockage dans les navigateurs modernes. Voici un a
 
 ### En mémoire
 
-En général, le stockage en mémoire fait référence à tout ce qui est stocké en Javascript et qui ne fait pas partie d'un stockage persistant. En général, les valeurs stockées en mémoire restent valables pendant:
+En général, le stockage en mémoire fait référence à tout ce qui est stocké en JavaScript et qui ne fait pas partie d'un stockage persistant. Les valeurs stockées en mémoire restent valables pendant:
 
 | Type          | Durée                                      |
 | ------------- | ------------------------------------------ |
@@ -158,6 +158,6 @@ Il s'agit d'une API [Storage](https://developer.mozilla.org/en-US/docs/Web/API/S
 
 #### Stockage local
 
-Il s'agit d'une API [Storage](https://developer.mozilla.org/en-US/docs/Web/API/Storage) pour les valeurs qui persistent jusqu'à ce qu'elles soient modifiées. Elles sont spécifiques à une origine web, mais s'appliquent à tous les onglets et à toutes les pages. Ceci est utile pour stocker les préférences de l'utilisateur au niveau de l'application (par exemple, la langue), mais ne doit pas être utilisé pour le stockage des données.
+Il s'agit d'une API [Storage](https://developer.mozilla.org/en-US/docs/Web/API/Storage) pour les valeurs qui persistent jusqu'à ce qu'elles soient modifiées. Elles sont spécifiques à une origine web, mais s'appliquent à tous les onglets et à toutes les pages. Ceci est utile pour stocker les préférences de l'utilisateur au niveau de l'application (par exemple, la langue), mais ne doit être utilisé que si la valeur doit être associée à la combinaison utilisateur et navigateur.
 
 Évitez de stocker des secrets ou des données identifiant un patient dans le stockage du navigateur, sauf si une fonctionnalité l'exige explicitement et que le compromis de confidentialité a été examiné.
