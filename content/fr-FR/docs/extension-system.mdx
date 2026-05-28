@@ -18,7 +18,7 @@ Le système d'extension repose sur deux concepts: les `extensions` et les `slots
 Les extensions sont rendues dans des slots. Une extension est associée à un slot de l'une des manières suivantes:
 
 - L'extension nomme le slot dans sa définition, en utilisant la propriété `slot` ou `slots`.
-- Un appel à la fonction [attach](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#attach).
+- Un appel à la fonction [`attach`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/attach.md).
 - Un administrateur système ajoute l'extension au slot avec le tableau `add` du slot.
 
 Les noms de slots sont globaux au runtime. Si deux modules rendent le même nom de slot, O3 le traite comme le même point d'extension; s'ils essaient d'enregistrer des propriétaires différents, le runtime affiche un avertissement et garde le premier propriétaire.
@@ -43,7 +43,7 @@ Pensez à exporter le composant et à l'utiliser de la manière habituelle.
 
 Les extensions sont définies dans le fichier `routes.json` d'un module. C'est l'approche actuelle pour les modules frontend O3. L'ancienne approche d'enregistrement avec `setupOpenMRS`, utilisée dans Core v4 et antérieur, n'est plus prise en charge dans Core v5+. Chaque définition d'extension inclut un nom et une référence de composant. Elle peut aussi préciser les slots auxquels l'extension est attachée par défaut, les privilèges requis, les contraintes de connectivité, les feature flags, les expressions d'affichage et `meta`.
 
-Les slots sont des composants. Il existe un composant React [ExtensionSlot](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#extensionslot). Si vous travaillez dans un framework différent et que vous souhaitez créer un slot d'extension, veuillez contacter l'équipe OpenMRS Frontend 3.0 sur Slack.
+Les slots sont des composants. Il existe un composant React [`ExtensionSlot`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/ExtensionSlot.md). Si vous travaillez dans un framework différent et que vous souhaitez créer un slot d'extension, veuillez contacter l'équipe OpenMRS Frontend 3.0 sur Slack.
 
 Au runtime, le flux est le suivant:
 
@@ -239,7 +239,7 @@ import { ExtensionSlot, Extension } from "@openmrs/esm-framework";
 
 Si vous ne fournissez pas d'enfants à `ExtensionSlot`, le composant `Extension` est automatiquement rendu pour chaque extension.
 
-Voir [ExtensionSlot API docs](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#extensionslot) pour plus d'informations.
+Voir les [API docs de `ExtensionSlot`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/ExtensionSlot.md) pour plus d'informations.
 
 ### Meta
 
@@ -247,7 +247,7 @@ Parfois, les extensions peuvent vouloir transmettre des informations au slot qui
 
 Les métadonnées sont fournies par les extensions dans leur définition dans `routes.json`. (Dans Core v4 et antérieur, cela se faisait dans la fonction `setupOpenMRS`, mais cette approche n'est plus prise en charge dans Core v5+.)
 
-Les slots peuvent accéder à la méta via l'API du système d'extension, par exemple en utilisant [useExtensionSlotMeta](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#useextensionslotmeta). `meta` vient de la définition de l'extension; utilisez les réglages `configure` du slot quand les administrateurs doivent remplacer une configuration spécifique à l'extension.
+Les slots peuvent accéder à la méta via l'API du système d'extension, par exemple en utilisant [`useExtensionSlotMeta`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useExtensionSlotMeta.md). `meta` vient de la définition de l'extension; utilisez les réglages `configure` du slot quand les administrateurs doivent remplacer une configuration spécifique à l'extension.
 
 ### Ordre
 

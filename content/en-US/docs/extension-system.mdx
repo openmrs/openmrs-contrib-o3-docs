@@ -18,7 +18,7 @@ The extension system posits two concepts: `extensions` and `slots`. An `extensio
 Extensions get rendered into slots. An extension gets associated with a slot in one of the following ways:
 
 - The extension names the slot in its definition, using the `slot` or `slots` property.
-- A call to the [attach](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#attach) function.
+- A call to the [`attach`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/attach.md) function.
 - A system administrator adds the extension to the slot using the slot's `add` array.
 
 Slot names are global at runtime. If two modules render the same slot name, O3 treats that as the same extension point; if they try to register ownership from different modules, the runtime warns and keeps the first owner.
@@ -43,7 +43,7 @@ Consider exporting the component and using it the normal way.
 
 Extensions are defined in a module's `routes.json` file. This is the current approach for O3 frontend modules. The older `setupOpenMRS` registration approach from Core v4 and earlier is not supported in Core v5+. Each extension definition includes a name and a component reference. It may also specify the names of slots to attach the extension to by default, required privileges for role-based access control, connectivity requirements, feature flags, display expressions, and `meta`.
 
-Slots are components. There is an [ExtensionSlot](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#extensionslot) React component. If you are working in a different framework and would like to create an extension slot, please get in touch with the OpenMRS Frontend 3.0 team on Slack.
+Slots are components. There is an [`ExtensionSlot`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/ExtensionSlot.md) React component. If you are working in a different framework and would like to create an extension slot, please get in touch with the OpenMRS Frontend 3.0 team on Slack.
 
 At runtime, the flow is:
 
@@ -239,7 +239,7 @@ import { ExtensionSlot, Extension } from "@openmrs/esm-framework";
 
 If you don't provide children to `ExtensionSlot`, the `Extension` component is automatically rendered for each extension.
 
-See the [ExtensionSlot API docs](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#extensionslot) for more.
+See the [`ExtensionSlot` API docs](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/ExtensionSlot.md) for more.
 
 ### Meta
 
@@ -247,7 +247,7 @@ Sometimes, extensions might want to pass information to the slot that receives t
 
 Meta is provided by extensions in their definition in `routes.json`. (In Core v4 and earlier, this was done in the `setupOpenMRS` function, but that approach is no longer supported in Core v5+.)
 
-Slots can access meta through the extension system API, such as by using [useExtensionSlotMeta](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#useextensionslotmeta). `meta` comes from the extension definition; use slot `configure` settings when administrators need to override extension-specific configuration.
+Slots can access meta through the extension system API, such as by using [`useExtensionSlotMeta`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useExtensionSlotMeta.md). `meta` comes from the extension definition; use slot `configure` settings when administrators need to override extension-specific configuration.
 
 ### Order
 

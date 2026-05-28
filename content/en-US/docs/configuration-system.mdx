@@ -155,7 +155,7 @@ colorPicker: {
 }
 ```
 
-For convenience, some common validators are provided out of the box. See the [API / validators docs](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#validators).
+For convenience, some common validators are provided out of the box, including [`inRange`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/inRange.md), [`oneOf`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/oneOf.md), and [`isUrlWithTemplateParameters`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/isUrlWithTemplateParameters.md).
 
 #### Arrays
 
@@ -419,9 +419,9 @@ Can be used anywhere within the schema structure.
 
 An array of validator objects.
 
-Some common validators are provided: [API / validators](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#config-validation-functions).
+Some common validators are provided, including [`inRange`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/inRange.md), [`oneOf`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/oneOf.md), and [`isUrlWithTemplateParameters`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/isUrlWithTemplateParameters.md).
 
-Custom validators should be created with the [validator](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#validator) function.
+Custom validators should be created with the [`validator`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/validator.md) function.
 
 Can be used anywhere within the schema structure.
 

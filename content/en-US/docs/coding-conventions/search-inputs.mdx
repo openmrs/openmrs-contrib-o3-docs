@@ -2,7 +2,7 @@
 
 The following are some general guidelines for search inputs:
 
-- Prefer using server-side search functionality over implementing search filtering on the client side. The latter requires fetching the entire data set and can be inefficient. However, client-side search might be the right choice in cases where the server-side search functionality is insufficient or the expected result size is small. In either case, be careful with handling server-side pagination, as most REST resources have a search result [size limit](https://openmrs.atlassian.net/wiki/spaces/docs/pages/25469882/REST+Module) per request. Use the [useOpenmrsPagination](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#useopenmrspagination), [useOpenmrsFetchAll](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#useopenmrsfetchall), and [useOpenmrsInfinite](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#useopenmrsinfinite) hooks from `@openmrs/esm-framework` to handle server-side pagination for different use cases.
+- Prefer using server-side search functionality over implementing search filtering on the client side. The latter requires fetching the entire data set and can be inefficient. However, client-side search might be the right choice in cases where the server-side search functionality is insufficient or the expected result size is small. In either case, be careful with handling server-side pagination, as most REST resources have a search result [size limit](https://openmrs.atlassian.net/wiki/spaces/docs/pages/25469882/REST+Module) per request. Use the [`useOpenmrsPagination`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useOpenmrsPagination.md), [`useOpenmrsFetchAll`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useOpenmrsFetchAll.md), and [`useOpenmrsInfinite`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useOpenmrsInfinite.md) hooks from `@openmrs/esm-framework` to handle server-side pagination for different use cases.
 
   ```tsx
   import { restBaseUrl, useOpenmrsFetchAll } from "@openmrs/esm-framework";
@@ -12,7 +12,7 @@ The following are some general guidelines for search inputs:
   // do something with the data
   ```
 
-- Debounce search inputs to prevent unnecessary requests to the backend. Use the [useDebounce](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#usedebounce) hook from `@openmrs/esm-framework` to debounce search inputs. Here's a snippet (some bits are omitted for brevity) showing how you could use the hook:
+- Debounce search inputs to prevent unnecessary requests to the backend. Use the [`useDebounce`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useDebounce.md) hook from `@openmrs/esm-framework` to debounce search inputs. Here's a snippet (some bits are omitted for brevity) showing how you could use the hook:
 
   ```tsx
   import { useDebounce } from "@openmrs/esm-framework";
