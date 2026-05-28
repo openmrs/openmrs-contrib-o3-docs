@@ -41,6 +41,20 @@ function AppointmentDetails({ appointment }: AppointmentDetailsProps) {
 
 Pour une locale anglaise, la valeur retournée serait une chaîne au format `18-May-2023`.
 
+### formatPartialDate
+
+Utilisez `formatPartialDate` lorsqu'une valeur peut ne contenir qu'une année, ou une année et un mois. C'est fréquent pour des dates cliniques approximatives. La fonction analyse la chaîne avec la locale courante, masque les parties absentes de l'entrée, puis délègue le formatage à `formatDate`.
+
+```ts
+formatPartialDate(dateString: string, options?: Partial<FormatDateOptions>): string | null
+```
+
+```ts
+formatPartialDate("2021"); // "2021"
+formatPartialDate("2021-04"); // "Apr 2021"
+formatPartialDate("2021-04-09"); // "09-Apr-2021"
+```
+
 ### formatDatetime
 
 Cette fonction utilitaire accepte un objet `Date` et renvoie une `string`.
@@ -69,7 +83,7 @@ Pour une locale anglaise, la valeur retournée serait une chaîne comme `18-May-
 Cette fonction utilitaire accepte un objet `Date` et renvoie une chaîne. Elle formate l’heure selon la locale courante en utilisant le format 12 ou 24 heures.
 
 ```ts
-  formatTime(date: Date): string
+formatTime(date: Date): string
 ```
 
 Voici un exemple d’utilisation de `formatTime` :
@@ -83,6 +97,32 @@ function AppointmentDetails({ appointment }: AppointmentDetailsProps) {
 ```
 
 La valeur retournée dépend de la locale. Par exemple, elle peut être `08:21` dans une locale au format 24 heures ou `08:21 AM` dans une locale au format 12 heures.
+
+### Durées
+
+Utilisez `formatDuration` lorsque vous avez déjà une valeur structurée `Intl.DurationInput`, ou `formatDurationBetween` lorsque vous voulez calculer et formater la durée entre deux dates.
+
+```ts
+formatDuration(duration: Intl.DurationInput, options?: Intl.DurationFormatOptions): string
+formatDurationBetween(
+  startDate: dayjs.ConfigType,
+  endDate?: dayjs.ConfigType,
+  options?: DurationUnit | DurationOptionsWithFormat
+): string | null
+```
+
+```ts
+import { formatDurationBetween } from "@openmrs/esm-framework";
+
+formatDurationBetween("2022-01-01", "2024-07-30"); // "2 yrs"
+formatDurationBetween("2022-01-01", "2024-07-30", {
+  largestUnit: "years",
+  smallestUnit: "days",
+  formatOptions: { style: "long" },
+}); // "2 years, 6 months, 29 days"
+```
+
+Le helper de plus bas niveau `duration` retourne l'objet structuré `Intl.DurationInput` au lieu d'un texte formaté. Il utilise les mêmes seuils de sélection automatique que `formatDurationBetween` et accepte les noms d'unités au singulier ou au pluriel, comme `"year"` ou `"years"`.
 
 ### isOmrsDateStrict
 
@@ -144,3 +184,9 @@ body: {
   startedAt: toOmrsIsoString(new Date()),
 }
 ```
+
+### Calendriers de locale
+
+O3 peut formater les dates avec des calendriers propres à une locale. Le shell de l'application enregistre les préférences de calendrier de l'implémentation depuis la configuration styleguide `preferredCalendar`, et `formatDate` accepte aussi une option `calendar` pour les remplacements ponctuels.
+
+Utilisez `registerDefaultCalendar(locale, calendar)` pour enregistrer un calendrier par défaut pour une locale, `getDefaultCalendar(locale)` pour inspecter le calendrier résolu, et `convertToLocaleCalendar(date, locale)` lorsque vous travaillez avec des valeurs de calendrier de `@internationalized/date`.
