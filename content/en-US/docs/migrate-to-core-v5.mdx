@@ -325,7 +325,7 @@ To move `extensions` from `index.ts` to `routes.json`, we need to extract the fo
 - `name` - we can extract this directly from the `name` property of the extension definition. In the Login example, this would be `location-picker`, `logout-button`, and `location-changer` respectively.
 - `slot` - we can extract this directly from the `slot` property of the extension definition. In the Login example, this would be `location-picker`, `user-panel-actions-slot`, and `user-panel-slot` respectively.
 - `online` - we'll use the default value `true`.
-- `offline` - we'll set this to `true` explicitly so these login-related extensions can render while offline.
+- `offline` - we'll set this to `true` for the extensions that used `sharedOnlineOfflineProps`, and leave `logout-button` as `false` because the original definition disabled it offline.
 - `order` - we'll grab the `order` property from the `location-changer` extension definition, which is 1.
 
 Putting this all together gives us the following `extensions` definition:
@@ -363,7 +363,7 @@ Putting this all together gives us the following `extensions` definition:
       "slot": "user-panel-actions-slot",
       "component": "logoutButton",
       "online": true,
-      "offline": true
+      "offline": false
     },
     {
       "name": "location-changer",
@@ -414,7 +414,7 @@ The final `routes.json` file looks like this:
       "slot": "user-panel-actions-slot",
       "component": "logoutButton",
       "online": true,
-      "offline": true
+      "offline": false
     },
     {
       "name": "location-changer",
