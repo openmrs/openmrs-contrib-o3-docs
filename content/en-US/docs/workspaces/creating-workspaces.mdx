@@ -109,6 +109,8 @@ If your app owns the group, declare it in `workspaceGroups2`:
 
 Window `width` can be `narrow`, `wider`, or `extra-wide`. Adding `icon` to a window turns on the workspace group's action menu and registers the icon component as an extension in the slot named after the group.
 
+Group `persistence` controls how long the group stays open and how the action menu behaves. The default behavior is app-wide: the group can keep multiple windows open and closes on an app change or scope change. Set `persistence` to `closable` for focused workflows that should show a group close button; when a different window in a closable group is launched, O3 checks for unsaved changes and then closes the other windows in that group.
+
 `scopePattern` is a regular expression matched against the old and new URL pathnames when navigation happens within the same app. If it is omitted, the group closes only when navigating to a different app. If it is defined, O3 closes the group when either URL no longer matches the pattern; if the pattern has capture groups, O3 also closes the group when the captured values change. Anchor the pattern with `^` when the pattern should only match a route prefix.
 
 Then export the workspace component from `index.ts`:

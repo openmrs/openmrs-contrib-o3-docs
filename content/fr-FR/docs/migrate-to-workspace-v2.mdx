@@ -111,6 +111,8 @@ Les groupes supportent les propriétés optionnelles suivantes :
 | `persistence` | `"app-wide" \| "closable"` | Mode de persistance du cycle de vie. Utilisez `"closable"` pour rendre le menu d'actions du groupe avec un bouton de fermeture. |
 | `scopePattern` | `string` | Modèle d'URL définissant où les workspaces persistent |
 
+Si `persistence` est omis, le groupe se comporte comme un groupe app-wide : il peut garder plusieurs fenêtres ouvertes et ne se ferme que lors d'un changement d'app ou de `scopePattern`. Utilisez `"closable"` pour les flux ciblés où le menu d'actions doit inclure un bouton de fermeture. Dans un groupe closable, lancer une autre fenêtre vérifie les workspaces concernés pour détecter les changements non enregistrés puis ferme les autres fenêtres de ce groupe.
+
 ### Initialiser le groupe de workspaces uniquement si nécessaire
 
 Déclarer un groupe dans `workspaceGroups2` ne signifie pas automatiquement que vous devez appeler `launchWorkspaceGroup2`. Un appel normal à `launchWorkspace2` ouvre le groupe du workspace, la fenêtre cible et le workspace s'ils ne sont pas déjà ouverts.
