@@ -2,7 +2,7 @@ import { Callout, Steps } from "nextra/components";
 
 # Building forms using the O3 Form Builder
 
-O3 comes out of the box with a built-in form builder that you can use to build form schemas. The Form Builder is provided by `@openmrs/esm-form-builder-app` and uses the [React Form Engine](https://github.com/openmrs/openmrs-esm-form-engine-lib) to render form previews and, when validation is enabled, validate schemas. To access it, go to `${openmrsSpaBase}/form-builder`, or click the app switcher icon in the navigation bar, open `System Administration`, and select the `Form Builder` card. The app expects the backend to provide FHIR2 `>=1.2` and REST Web Services `>=2.2.0`.
+O3 comes out of the box with a built-in form builder that you can use to build form schemas. The Form Builder is provided by `@openmrs/esm-form-builder-app` and uses the [React Form Engine](https://github.com/openmrs/openmrs-esm-form-engine-lib) to render form previews. When validation is enabled, the builder also runs schema checks against configured rendering-type mappings, dictionary concepts, answer concepts, patient identifier types, and person attribute types. To access it, go to `${openmrsSpaBase}/form-builder`, or click the app switcher icon in the navigation bar, open `System Administration`, and select the `Form Builder` card. The app expects the backend to provide FHIR2 `>=1.2` and REST Web Services `>=2.2.0`.
 
 ## 5 Minute Demo Video (Explained in Detail Below)
 
@@ -23,7 +23,7 @@ The main pages in the O3 form builder are:
 
 Once you've built out your form schema to fit your requirements, you could choose to:
 
-- `Validate form` - when `@openmrs/esm-form-builder-app` is configured with `enableFormValidation: true`, the editor shows validation actions powered by the React Form Engine. By default this validation workflow is disabled, and the form can be published with the regular publish action. The related `blockRenderingWithErrors` setting controls whether schema errors block the preview from rendering when you click `Render changes`; it is `false` by default.
+- `Validate form` - when `@openmrs/esm-form-builder-app` is configured with `enableFormValidation: true`, the editor shows validation actions that check the schema against concepts and configured rendering rules. By default this validation workflow is disabled, and the form can be published with the regular publish action. The related `blockRenderingWithErrors` setting controls whether schema errors block the preview from rendering when you click `Render changes`; it is `false` by default.
 - `Save` your form to the server - saving your schema persists it in your OpenMRS database. Shared demo or test servers can be reset, so keep version-controlled backups of important schemas and avoid relying on a demo server as the only copy.
 - `Publish` or `unpublish` your form - once you've saved your form, you can choose to publish it. Only published O3 JSON forms are shown in the default React Form Engine workflow in the patient chart. If form validation is enabled, the publish action becomes `Validate and publish form`; otherwise, it appears as `Publish form`. You can unpublish existing published forms when you want to remove an older version from clinical use while preserving its history.
 

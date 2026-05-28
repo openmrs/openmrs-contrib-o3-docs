@@ -210,7 +210,7 @@ Le composant `FormEngine` accepte les props suivantes :
 - **`encounterUUID`** (string) - L'UUID d'une rencontre existante à modifier. Lorsqu'il est fourni, le formulaire sera pré-rempli avec les données de la rencontre et rendu en mode édition.
 - **`visit`** (Visit) - L'objet visite à associer à la rencontre soumise. L'espace de travail de formulaire du dossier patient fournit la visite active pour les nouveaux formulaires, ou la visite de la rencontre lorsque vous modifiez une rencontre existante.
 - **`mode`** (`'enter' | 'edit' | 'view' | 'embedded-view'`) - Le mode de rendu du formulaire. Voir [Modes de rendu des formulaires](#modes-de-rendu-des-formulaires) ci-dessous.
-- **`formSessionIntent`** (string) - L'intention de la session du formulaire. Utilisé pour filtrer les sessions de formulaire lors du chargement des valeurs initiales. L'extension form renderer transmet `'*'` par défaut; lorsque vous utilisez `FormEngine` directement, transmettez `'*'` explicitement si vous voulez le comportement d'intention générique.
+- **`formSessionIntent`** (string) - L'intention de formulaire utilisée lors de l'affinage du schéma. Elle applique les valeurs et comportements propres à une intention, comme `availableIntents.defaultPage`, les champs `readonly`, les champs `hide`, les `defaultValue` de champs et la sélection d'intention des sous-formulaires. L'extension form renderer transmet `'*'` par défaut; lorsque vous utilisez `FormEngine` directement, transmettez `'*'` explicitement si vous voulez le comportement d'intention générique.
 - **`onSubmit`** (function) - Fonction de rappel appelée lorsque le formulaire est soumis avec succès. Reçoit un tableau de résultats de processeur. Pour les formulaires qui utilisent `EncounterFormProcessor`, ces résultats sont les rencontres créées ou mises à jour.
 - **`onCancel`** (function) - Fonction de rappel appelée lorsque l'utilisateur annule le formulaire.
 - **`handleClose`** (function) - Fonction de rappel appelée lorsque le formulaire doit être fermé.
@@ -500,13 +500,13 @@ Les clés dans `preFilledQuestions` doivent correspondre à la propriété `id` 
 
 ## Intention de session de formulaire
 
-La prop `formSessionIntent` vous permet de filtrer les sessions de formulaire lors du chargement des valeurs initiales. C'est utile lorsque vous souhaitez pré-remplir un formulaire avec des données d'un type spécifique de rencontre ou de session. L'extension form renderer du dossier patient utilise `'*'` par défaut, mais l'utilisation directe de `FormEngine` laisse cette valeur vide sauf si vous la transmettez :
+La prop `formSessionIntent` sélectionne les comportements propres à une intention dans le schéma de formulaire. Utilisez-la lorsqu'un schéma définit des valeurs par défaut, des champs en lecture seule ou masqués, des pages par défaut ou des comportements de sous-formulaires différents selon les workflows. L'extension form renderer du dossier patient utilise `'*'` par défaut, mais l'utilisation directe de `FormEngine` laisse cette valeur vide sauf si vous la transmettez :
 
 ```tsx
 <FormEngine
   patientUUID={patientUuid}
   formUUID={formUuid}
-  formSessionIntent="VITALS" // Charger uniquement les valeurs des rencontres VITALS
+  formSessionIntent="VITALS" // Appliquer les comportements du schéma pour l'intention VITALS
 />
 ```
 

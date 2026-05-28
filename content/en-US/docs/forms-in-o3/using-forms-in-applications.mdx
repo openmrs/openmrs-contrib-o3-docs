@@ -210,7 +210,7 @@ The `FormEngine` component accepts the following props:
 - **`encounterUUID`** (string) - The UUID of an existing encounter to edit. When provided, the form will be pre-filled with encounter data and rendered in edit mode.
 - **`visit`** (Visit) - The visit object to associate with a submitted encounter. The patient chart form workspace supplies the active visit for new forms, or the encounter's own visit when editing an existing encounter.
 - **`mode`** (`'enter' | 'edit' | 'view' | 'embedded-view'`) - The rendering mode for the form. See [Form rendering modes](#form-rendering-modes) below.
-- **`formSessionIntent`** (string) - The intent of the form session. Used to filter form sessions when loading initial values. The form renderer extension passes `'*'` by default; when using `FormEngine` directly, pass `'*'` explicitly if you want wildcard intent behavior.
+- **`formSessionIntent`** (string) - The form intent used while refining the schema. It applies intent-specific defaults and behaviours such as `availableIntents.defaultPage`, field `readonly`, field `hide`, field `defaultValue`, and subform intent selection. The form renderer extension passes `'*'` by default; when using `FormEngine` directly, pass `'*'` explicitly if you want wildcard intent behavior.
 - **`onSubmit`** (function) - Callback function called when the form is successfully submitted. Receives an array of processor results. For forms that use `EncounterFormProcessor`, those results are created or updated encounters.
 - **`onCancel`** (function) - Callback function called when the user cancels the form.
 - **`handleClose`** (function) - Callback function called when the form should be closed.
@@ -500,13 +500,13 @@ The keys in `preFilledQuestions` should match the `id` property of the questions
 
 ## Form session intent
 
-The `formSessionIntent` prop allows you to filter form sessions when loading initial values. This is useful when you want to pre-fill a form with data from a specific type of encounter or session. The patient chart form renderer extension defaults this to `'*'`, but direct `FormEngine` usage leaves it unset unless you pass a value:
+The `formSessionIntent` prop selects the intent-specific behaviours defined in the form schema. Use it when a schema has different defaults, readonly or hidden fields, default pages, or subform behaviours for different workflows. The patient chart form renderer extension defaults this to `'*'`, but direct `FormEngine` usage leaves it unset unless you pass a value:
 
 ```tsx
 <FormEngine
   patientUUID={patientUuid}
   formUUID={formUuid}
-  formSessionIntent="VITALS" // Only load values from VITALS encounters
+  formSessionIntent="VITALS" // Apply schema behaviours for the VITALS intent
 />
 ```
 

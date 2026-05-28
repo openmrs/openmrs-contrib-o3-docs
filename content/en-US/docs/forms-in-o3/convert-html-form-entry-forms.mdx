@@ -20,7 +20,6 @@ Many implementers have forms built using the HTML Form Entry module. To make it 
 
 - Handling obs with defined `answerConceptId` or `answerConceptIds`, and obs whose answers should be inferred from the dictionary
 - Handling of obs styling for radio, checkbox, dropdown
-- Handling obs fields that are marked as required
 - Handling diagnosis-style obs that use `answerClasses="Drug"`
 - Handling of custom labels as defined in answerLabel/answerLabels
 - Schema generation for the `obsgroup` tag. The logic can group questions within an obs group. It also generates a schema for groups marked as `repeating`
@@ -70,7 +69,7 @@ The converter tool has some limitations:
 - **Supported tags**: Only `obs` and `obsgroup` tags are currently supported. Other HTML Form Entry tags are not converted automatically.
 - **Pages and sections**: The converter generates questions but does not automatically create pages and sections. You'll need to manually organize the converted questions into pages and sections using the O3 Form Builder.
 - **Rendering aliases**: Review generated rendering values against the Form Builder's current field types. In particular, change `repeat` to `repeating` for repeating groups.
-- **Validation rules**: Validation support is limited. Review any generated `required` flags and add missing validation rules manually.
+- **Validation rules**: Validation support is limited. The converter detects `required="true"` on `obs` tags, but current generated question JSON does not reliably emit those required flags, so review the source HFE form and add required validation rules manually.
 - **Manual adjustments**: After conversion, you may need to manually adjust the generated schema, especially for complex forms or forms using unsupported features.
 
 While this won't get you all the way there in terms of migrating your forms, it should get you far along enough that you can use O3's built-in form builder to make the remaining changes to your schemas.
