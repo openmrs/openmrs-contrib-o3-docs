@@ -6,15 +6,15 @@ There are several forms of storage available in modern browsers. Here is a break
 
 In general, in-memory storage refers to anything stored in JavaScript that is not part of persistent storage. Values stored in memory remain valid for:
 
-| Type          | Duration                |
-| ------------- | ----------------------- |
-| Variable      | Variable scope          |
-| React State   | Component's lifecycle   |
-| React Memo    | Component's lifecycle   |
-| React Context | React subtree lifecycle |
-| Global Store  | Until page reload       |
+| Type                     | Duration                |
+| ------------------------ | ----------------------- |
+| Variable                 | Variable scope          |
+| React State              | Component's lifecycle   |
+| React Memo               | Component's lifecycle   |
+| React Context            | React subtree lifecycle |
+| Global Store (in-memory) | Until page reload       |
 
-No in-memory values survive page reload. For values that need to persist across a page reload, which means browser page refresh and not merely in-application navigation, use persistent storage.
+No in-memory values survive page reload. For values that need to persist across a page reload, which means browser page refresh and not merely in-application navigation, use persistent storage or a session-storage-backed global store.
 
 #### Variables
 
@@ -71,7 +71,7 @@ This is useful for ensuring that an entire React tree has a consistent version o
 
 #### Global Store
 
-Provided by `@openmrs/esm-framework` (specifically, `esm-state`); this gives us access to [Zustand stores](https://github.com/pmndrs/zustand). This is useful for storing values that are shared across more than one component and need to be consistent across them. Note that while the underlying implementation uses Zustand, it is preferable to use [the framework-provided API](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#store-functions), e.g.,
+Provided by `@openmrs/esm-framework` (specifically, `esm-state`); this gives us access to [Zustand stores](https://github.com/pmndrs/zustand). This is useful for storing values that are shared across more than one component and need to be consistent across them. Note that while the underlying implementation uses Zustand, it is preferable to use the framework-provided APIs, such as [`createGlobalStore`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/createGlobalStore.md) and [`useStore`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useStore.md), e.g.,
 
 ```ts
 import { createGlobalStore, useStore } from "@openmrs/esm-framework";
@@ -99,9 +99,11 @@ userStore.setState((state) => ({ ...state, user: /* value from somewhere */ }));
 
 Updating the store using `setState()` will update all variables subscribed to the store, including (like in the example) `user`.
 
+Global stores are in memory by default. If a store needs to survive a browser refresh within the same tab session, pass `"sessionStorage"` as the third argument to `createGlobalStore()`.
+
 #### App context
 
-[App Context](https://github.com/openmrs/openmrs-esm-core/pull/976) is a mechanism for sharing state across different parts of the application, specifically designed for cross-component communication within the currently active application. Unlike global stores which persist between component renders, App Context is tied to the lifecycle of specific components.
+[App Context](https://github.com/openmrs/openmrs-esm-core/tree/main/packages/framework/esm-context) is a mechanism for sharing state across different parts of the application. It is global by namespace, so any application can read a registered namespace, but the namespace is owned by the component that defines it and is removed when that component unmounts.
 
 Common use cases for App Context include:
 - Sharing state between components that exist in different React trees
@@ -110,8 +112,8 @@ Common use cases for App Context include:
 
 The framework provides two hooks for working with App Context:
 
-- [useDefineAppContext](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#usedefineappcontext) for defining the context.
-- [useAppContext](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#useappcontext) for accessing the context.
+- [useDefineAppContext](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useDefineAppContext.md) for defining the context.
+- [useAppContext](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useAppContext.md) for accessing the context.
 
 ##### Defining a context
 
@@ -127,7 +129,7 @@ useDefineAppContext<DateFilterContext>("laboratory-date-filter", {
 });
 ```
 
-`useDefineAppContext()` removes the namespace when the defining component unmounts. App context namespaces should use `null` rather than `undefined` when they need to represent an empty value.
+`useDefineAppContext()` removes the namespace when the defining component unmounts. App context values should use `null` rather than `undefined` when they need to represent an empty value.
 
 ##### Accessing the context
 
@@ -143,7 +145,7 @@ const { dateRange, setDateRange } = dateFilterContext;
 
 **When to use App Context vs Global Store**
 
-- Use **App Context** when you need to share state between components that should only exist while those components are active in the application.
+- Use **App Context** when you need shared state that should exist only while its owning component is mounted.
 - Use **Global Store** when you need state to persist between component renders or across the entire application lifecycle.
 
 ### Persistent Storage

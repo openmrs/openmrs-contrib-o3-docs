@@ -15,7 +15,7 @@ proviennent de packages comme
 
 ## FHIR
 
-Pour utiliser l'API FHIR dans des composants React, préférez `useOpenmrsSWR` depuis `@openmrs/esm-framework`. Il encapsule [SWR](https://swr.vercel.app/docs/data-fetching), appelle [`openmrsFetch`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#openmrsfetch) et attache un abort controller afin que la requête puisse être annulée si le composant est démonté.
+Pour utiliser l'API FHIR dans des composants React, préférez `useOpenmrsSWR` depuis `@openmrs/esm-framework`. Il encapsule [SWR](https://swr.vercel.app/docs/data-fetching), appelle [`openmrsFetch`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/openmrsFetch.md) et attache un abort controller afin que la requête puisse être annulée si le composant est démonté.
 
 Voici un exemple d'utilisation de `useOpenmrsSWR` pour récupérer un patient depuis l'API FHIR.
 
@@ -137,5 +137,5 @@ useEffect(() => {
 
 Certains objets de l'API sont mis à disposition via des crochets React (ou via des abonnements agnostiques au cadre).
 Importez les hooks et les équivalents par abonnement depuis `@openmrs/esm-framework`.
-Voir par exemple [`useVisitTypes`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#usevisittypes)
-et le correspondant [`getVisitTypes`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#getvisittypes).
+Voir par exemple [`useVisitTypes`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useVisitTypes.md)
+et le correspondant [`getVisitTypes`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/getVisitTypes.md).

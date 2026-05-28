@@ -6,15 +6,15 @@ Il existe plusieurs formes de stockage dans les navigateurs modernes. Voici un a
 
 En général, le stockage en mémoire fait référence à tout ce qui est stocké en JavaScript et qui ne fait pas partie d'un stockage persistant. Les valeurs stockées en mémoire restent valables pendant:
 
-| Type          | Durée                                      |
-| ------------- | ------------------------------------------ |
-| Variable      | Champ d'application de la variable         |
-| React State   | Cycle de vie d'un composant                |
-| React Memo    | Cycle de vie du composant                  |
-| React Context | Cycle de vie de la sous-arborescence React |
-| Global Store  | Jusqu'au rechargement de la page           |
+| Type                       | Durée                                      |
+| -------------------------- | ------------------------------------------ |
+| Variable                   | Champ d'application de la variable         |
+| React State                | Cycle de vie d'un composant                |
+| React Memo                 | Cycle de vie du composant                  |
+| React Context              | Cycle de vie de la sous-arborescence React |
+| Global Store (en mémoire)  | Jusqu'au rechargement de la page           |
 
-Aucune valeur en mémoire ne survit au rechargement de la page. Pour les valeurs qui doivent persister après un rechargement de page (et notez que cela signifie un rafraîchissement de la page du navigateur et pas seulement une navigation dans l'application), utilisez le stockage persistant.
+Aucune valeur en mémoire ne survit au rechargement de la page. Pour les valeurs qui doivent persister après un rechargement de page (et notez que cela signifie un rafraîchissement de la page du navigateur et pas seulement une navigation dans l'application), utilisez le stockage persistant ou un global store adossé à `sessionStorage`.
 
 #### Variables
 
@@ -69,7 +69,7 @@ Ceci est utile pour s'assurer que tout un arbre React a une version cohérente d
 
 #### Global Store
 
-Fourni par `@openmrs/esm-framework` (spécifiquement, `esm-state`); cela nous donne accès aux [Zustand stores](https://github.com/pmndrs/zustand). Ceci est utile pour stocker des valeurs qui sont partagées entre plusieurs composants et qui doivent être cohérentes entre elles. Notez que bien que l'implémentation sous-jacente utilise Zustand, il est préférable d'utiliser [l'API fournie par le framework](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#store-functions), par exemple,
+Fourni par `@openmrs/esm-framework` (spécifiquement, `esm-state`); cela nous donne accès aux [Zustand stores](https://github.com/pmndrs/zustand). Ceci est utile pour stocker des valeurs qui sont partagées entre plusieurs composants et qui doivent être cohérentes entre elles. Notez que bien que l'implémentation sous-jacente utilise Zustand, il est préférable d'utiliser les API fournies par le framework, comme [`createGlobalStore`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/createGlobalStore.md) et [`useStore`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useStore.md), par exemple,
 
 ```ts
 import { createGlobalStore, useStore } from "@openmrs/esm-framework";
@@ -97,9 +97,11 @@ userStore.setState((state) => ({ ...state, user: /* valeur provenant de quelque 
 
 La mise à jour du magasin en utilisant `setState()` mettra à jour toutes les variables souscrites au magasin, y compris (comme dans l'exemple) `user`.
 
+Les global stores sont en mémoire par défaut. Si un store doit survivre à un rafraîchissement du navigateur dans la même session d'onglet, passez `"sessionStorage"` comme troisième argument à `createGlobalStore()`.
+
 #### App context
 
-[App Context](https://github.com/openmrs/openmrs-esm-core/pull/976) est un mécanisme de partage d'état entre différentes parties de l'application. Il est conçu spécifiquement pour la communication entre composants dans l'application actuellement active. Contrairement aux global stores, qui persistent entre les rendus de composants, App Context est lié au cycle de vie de composants précis.
+[App Context](https://github.com/openmrs/openmrs-esm-core/tree/main/packages/framework/esm-context) est un mécanisme de partage d'état entre différentes parties de l'application. Il est global par namespace, donc toute application peut lire un namespace enregistré, mais ce namespace appartient au composant qui le définit et il est supprimé lorsque ce composant est démonté.
 
 Les cas d'utilisation courants d'App Context incluent:
 - Partager de l'état entre des composants qui existent dans différents arbres React.
@@ -108,8 +110,8 @@ Les cas d'utilisation courants d'App Context incluent:
 
 Le framework fournit deux hooks pour travailler avec App Context:
 
-- [useDefineAppContext](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#usedefineappcontext) pour définir le contexte.
-- [useAppContext](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#useappcontext) pour accéder au contexte.
+- [useDefineAppContext](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useDefineAppContext.md) pour définir le contexte.
+- [useAppContext](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useAppContext.md) pour accéder au contexte.
 
 ##### Définir un contexte
 
@@ -125,7 +127,7 @@ useDefineAppContext<DateFilterContext>("laboratory-date-filter", {
 });
 ```
 
-`useDefineAppContext()` supprime le namespace lorsque le composant qui le définit est démonté. Les namespaces d'app context doivent utiliser `null` plutôt que `undefined` lorsqu'ils doivent représenter une valeur vide.
+`useDefineAppContext()` supprime le namespace lorsque le composant qui le définit est démonté. Les valeurs d'app context doivent utiliser `null` plutôt que `undefined` lorsqu'elles doivent représenter une valeur vide.
 
 ##### Accéder au contexte
 
@@ -141,7 +143,7 @@ const { dateRange, setDateRange } = dateFilterContext;
 
 **Quand utiliser App Context plutôt qu'un Global Store**
 
-- Utilisez **App Context** quand vous devez partager de l'état entre des composants qui ne doivent exister que pendant que ces composants sont actifs dans l'application.
+- Utilisez **App Context** quand vous devez partager un état qui ne doit exister que pendant que le composant qui le possède est monté.
 - Utilisez **Global Store** quand vous avez besoin que l'état persiste entre les rendus de composants ou pendant tout le cycle de vie de l'application.
 
 ### Stockage persistant

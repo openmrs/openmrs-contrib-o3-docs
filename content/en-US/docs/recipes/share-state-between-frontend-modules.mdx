@@ -20,7 +20,7 @@ managing state using [Zustand](https://docs.pmnd.rs/zustand/getting-started/intr
 ## Usage
 
 A Zustand store can be created using
-[`createGlobalStore`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#createglobalstore):
+[`createGlobalStore`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/createGlobalStore.md):
 
 ```ts
 import { createGlobalStore } from "@openmrs/esm-framework";
@@ -35,7 +35,7 @@ export const bookStore = createGlobalStore<BooksStore>("books", {
 ```
 
 The store can then be accessed using
-[`getGlobalStore`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#getglobalstore)
+[`getGlobalStore`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/getGlobalStore.md)
 
 ```ts
 import { getGlobalStore, subscribeTo } from "@openmrs/esm-framework";
