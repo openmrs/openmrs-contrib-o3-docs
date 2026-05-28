@@ -188,7 +188,7 @@ Quelques points à noter:
 - La propriété `meta` contient la configuration du tableau de bord que le shell peut inspecter:
   - La propriété `name` est fixée à `patient-lists`, qui est le segment de chemin utilisé dans l'URL.
   - La propriété `slot` est fixée à `patient-lists-dashboard-slot`, qui est le nom du slot où le contenu du tableau de bord de l'application Listes de patients sera rendu.
-  - La propriété `title` est fixée à `Patient lists`, qui est le texte d'affichage du lien.
+  - La propriété `title` est fixée à `Patient lists`, comme métadonnée lisible du tableau de bord. Le texte du lien rendu vient de la valeur `title` transmise à `DashboardExtension` dans `dashboardMeta`.
 
 La deuxième définition d'extension enregistre le composant `root` pour qu'il soit rendu dans le `patient-lists-dashboard-slot` lorsque l'application Listes de patients est active.
 

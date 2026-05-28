@@ -188,7 +188,7 @@ Some things to note:
 - The `meta` property contains the dashboard configuration that the shell can inspect:
   - The `name` property is set to `patient-lists`, which is the path segment used in the URL.
   - The `slot` property is set to `patient-lists-dashboard-slot`, which is the name of the slot where the Patient Lists app dashboard content will be rendered.
-  - The `title` property is set to `Patient lists`, which is the display text for the link.
+  - The `title` property is set to `Patient lists`, which is human-readable dashboard metadata. The rendered link text comes from the `title` value passed to `DashboardExtension` in `dashboardMeta`.
 
 The second extension definition registers the `root` component to render in the `patient-lists-dashboard-slot` when the Patient Lists app is active.
 
