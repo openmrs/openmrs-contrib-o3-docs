@@ -131,7 +131,7 @@ useEffect(() => {
 }, [patient, patientUuid, visitContext, mutateVisitContext]);
 ```
 
-Un seul groupe de workspaces peut être ouvert à la fois. Si `launchWorkspaceGroup2` est appelé avec un nom de groupe différent (ou des props incompatibles), l'utilisateur sera invité à fermer les workspaces ouverts avant que le nouveau groupe ne soit ouvert.
+Un seul groupe de workspaces peut être ouvert à la fois. Si `launchWorkspaceGroup2` est appelé avec un nom de groupe différent (ou des props incompatibles), O3 vérifie les workspaces ouverts pour détecter des changements non enregistrés et demande confirmation si nécessaire avant d'ouvrir le nouveau groupe.
 
 La plupart des modules n'ont **pas** besoin de cette étape. Les modules qui ajoutent des workspaces à un groupe existant, comme `patient-chart`, doivent ignorer entièrement l'initialisation du groupe. Les modules qui possèdent un groupe simple peuvent aussi s'appuyer sur `launchWorkspace2`, sauf si le groupe a besoin d'un contexte app-wide ou d'un menu d'actions avant l'ouverture d'un workspace.
 

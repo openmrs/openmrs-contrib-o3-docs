@@ -61,9 +61,9 @@ If visits are enabled and the patient has no active visit, O3 prompts the user t
 `launchWorkspace2` follows the workspace v2 group and window model:
 
 1. If the target group is not open, O3 opens the group, opens the target window, and renders the requested workspace.
-2. If another group is open, or if the existing group props are incompatible, O3 prompts before closing the current group and its windows.
+2. If another group is open, or if the existing group props are incompatible, O3 checks the affected workspaces for unsaved changes, prompts when needed, and then closes the current group and its windows.
 3. If the target window is already open with compatible window props, launching an already-open workspace with compatible workspace props restores that window.
-4. If the target window or workspace has incompatible props, O3 prompts before closing the window and opening a fresh instance.
+4. If the target window or workspace has incompatible props, O3 checks for unsaved changes before closing the window and opening a fresh instance.
 5. `launchWorkspace2` does not create child workspaces. From inside a workspace, use the `launchChildWorkspace` prop supplied by `Workspace2DefinitionProps`.
 
 Workspace titles are set by the `<Workspace2 title="...">` wrapper. The v1 `workspaceTitle` launch option is not used by workspace v2.

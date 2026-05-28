@@ -61,9 +61,9 @@ Si les visites sont activées et que le patient n'a pas de visite active, O3 inv
 `launchWorkspace2` suit le modèle de groupe et de fenêtre de Workspace v2 :
 
 1. Si le groupe cible n'est pas ouvert, O3 ouvre le groupe, ouvre la fenêtre cible et rend l'espace de travail demandé.
-2. Si un autre groupe est ouvert, ou si les props du groupe existant sont incompatibles, O3 demande confirmation avant de fermer le groupe actuel et ses fenêtres.
+2. Si un autre groupe est ouvert, ou si les props du groupe existant sont incompatibles, O3 vérifie les espaces de travail concernés pour détecter des changements non enregistrés, demande confirmation si nécessaire, puis ferme le groupe actuel et ses fenêtres.
 3. Si la fenêtre cible est déjà ouverte avec des props de fenêtre compatibles, le lancement d'un espace de travail déjà ouvert avec des props compatibles restaure cette fenêtre.
-4. Si la fenêtre cible ou l'espace de travail a des props incompatibles, O3 demande confirmation avant de fermer la fenêtre et d'ouvrir une nouvelle instance.
+4. Si la fenêtre cible ou l'espace de travail a des props incompatibles, O3 vérifie les changements non enregistrés avant de fermer la fenêtre et d'ouvrir une nouvelle instance.
 5. `launchWorkspace2` ne crée pas d'espace de travail enfant. Depuis un espace de travail, utilisez la prop `launchChildWorkspace` fournie par `Workspace2DefinitionProps`.
 
 Les titres sont définis par le wrapper `<Workspace2 title="...">`. L'option v1 `workspaceTitle` n'est pas utilisée par Workspace v2.
