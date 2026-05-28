@@ -31,11 +31,11 @@ Using Initializer configuration files instead of configuring everything through 
 
 Metadata can be provided in three ways:
 
-1. **Content packages** - Maven artifacts that bundle metadata as configuration files. These are referenced in `distro.properties` and loaded automatically when the backend starts. Content packages can include both backend metadata (loaded by the Initializer module) and frontend configuration files (located in `configuration/frontend_configuration/config.json`). The reference application uses two content packages:
+1. **Content packages** - Maven artifacts that bundle metadata as configuration files. These are referenced in `distro.properties` and loaded automatically when the backend starts. Content packages can include backend metadata for Initializer and, separately, frontend configuration files at `configuration/frontend_configuration/config.json`. The current Reference Application keeps its baseline and demo metadata in content packages:
    - [`openmrs-content-referenceapplication`](https://github.com/openmrs/openmrs-content-referenceapplication) - Core baseline metadata required to run O3 (e.g., "Login Location" tag, CIEL concept sets)
    - [`openmrs-content-referenceapplication-demo`](https://github.com/openmrs/openmrs-content-referenceapplication-demo) - Optional demo/starter kit metadata (labs, diagnoses, drugs, etc.) useful for demos and quick starts. This package also includes frontend configuration for extension slot setup.
 
-2. **Distro configuration directory** - Configuration files in the `distro/configuration` directory of your distro repository. These files are packaged into the backend WAR during build and loaded by Initializer at runtime. Files are organized by domain (e.g., `configuration/concepts/`, `configuration/locations/`). The reference application's configuration files are located [here](https://github.com/openmrs/openmrs-distro-referenceapplication/tree/main/distro/configuration).
+2. **Distro-packaged configuration directory** - Configuration files in your distro repository that your build copies into the backend package. Initializer expects a `configuration/` folder organized by domain (for example, `configuration/concepts/`, `configuration/locations/`, and `configuration/globalproperties/`). The current Reference Application does not keep a `distro/configuration` tree in the distro repository; it references content packages from `distro.properties` instead.
 
 3. **Application data directory** - Configuration files placed in OpenMRS' application data directory (typically `/openmrs/data/configuration/` or `~/.OpenMRS/configuration/`). This allows runtime updates without rebuilding. The Initializer module processes files from this directory if it exists, making it useful for post-deployment metadata updates.
 
@@ -45,15 +45,15 @@ Metadata can be provided in three ways:
 3. **Application data directory** files are loaded last (can override both content packages and distro configuration)
 
 **Important**: 
-- Changes to files in `distro/configuration` require rebuilding the backend WAR to take effect
+- Changes to files packaged into the backend WAR require rebuilding the backend WAR to take effect
 - Changes to files in the application data directory take effect on the next backend restart (no rebuild needed)
 - The Initializer module uses checksums to track file changes—files are only reprocessed if their checksum changes, improving performance
 
-**Docker-specific note**: In Docker deployments, `distro/configuration` files are baked into the backend Docker image during build. To update metadata without rebuilding, you can:
+**Docker-specific note**: In Docker deployments, configuration files packaged with the backend are baked into the backend Docker image during build. To update metadata without rebuilding, you can:
 - Mount the application data directory as a volume and place configuration files there
 - Or rebuild the backend image (see the [Setting up an O3 instance](/docs/recipes/set-up-o3-instance#updating-metadata) guide)
 
-SDK deployments can update either `distro/configuration` (requires WAR rebuild) or the application data directory (requires restart only).
+SDK deployments can update either backend-packaged configuration (requires WAR rebuild) or the application data directory (requires restart only).
 
 The initializer module supports loading a wide variety of data and metadata types, including but not limited to:
 
@@ -86,7 +86,7 @@ Global properties are **configuration settings** (not metadata) that are stored 
 
 Global properties are configured using XML files in the Initializer module. Place your global properties XML file in one of these locations:
 
-1. **Content packages** - In `configuration/globalproperties/` directory
+1. **Content packages** - In the package's backend configuration tree. In current Reference Application content packages, this is `configuration/backend_configuration/globalproperties/`.
 2. **Distro configuration directory** - In `distro/configuration/globalproperties/` directory
 3. **Application data directory** - In `/openmrs/data/configuration/globalproperties/` or `~/.OpenMRS/configuration/globalproperties/`
 
@@ -127,7 +127,7 @@ Global properties are configured using XML files in the Initializer module. Plac
 
 **Important notes**:
 - Global properties can be updated at runtime through the OpenMRS Administration UI (Advanced Settings), but using Initializer files ensures they're version-controlled and automatically applied on deployment
-- Changes to global properties in `distro/configuration` require rebuilding the backend WAR
+- Changes to global properties packaged into the backend WAR require rebuilding the backend WAR
 - Changes to global properties in the application data directory take effect on the next backend restart (no rebuild needed)
 - For a comprehensive list of available global properties, see the [OpenMRS Global Properties documentation](https://wiki.openmrs.org/display/docs/Global+Properties) or check the documentation for specific modules
 

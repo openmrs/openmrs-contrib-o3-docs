@@ -31,11 +31,11 @@ Utiliser les fichiers de configuration Initializer au lieu de tout configurer vi
 
 Les métadonnées peuvent être fournies de trois façons :
 
-1. **Packages de contenu** - Artéfacts Maven qui regroupent les métadonnées sous forme de fichiers de configuration. Ceux-ci sont référencés dans `distro.properties` et chargés automatiquement au démarrage du backend. Les packages de contenu peuvent inclure à la fois des métadonnées backend (chargées par le module Initializer) et des fichiers de configuration frontend (situés dans `configuration/frontend_configuration/config.json`). L'application de référence utilise deux packages de contenu :
+1. **Packages de contenu** - Artéfacts Maven qui regroupent les métadonnées sous forme de fichiers de configuration. Ceux-ci sont référencés dans `distro.properties` et chargés automatiquement au démarrage du backend. Les packages de contenu peuvent inclure des métadonnées backend pour Initializer et, séparément, des fichiers de configuration frontend à `configuration/frontend_configuration/config.json`. L'application de référence actuelle garde ses métadonnées de base et de démonstration dans des packages de contenu :
    - [`openmrs-content-referenceapplication`](https://github.com/openmrs/openmrs-content-referenceapplication) - Métadonnées de base essentielles requises pour exécuter O3 (par exemple, le tag "Login Location", les ensembles de concepts CIEL)
    - [`openmrs-content-referenceapplication-demo`](https://github.com/openmrs/openmrs-content-referenceapplication-demo) - Métadonnées de démonstration/kit de démarrage optionnelles (laboratoires, diagnostics, médicaments, etc.) utiles pour les démos et les démarrages rapides. Ce package inclut également une configuration frontend pour la configuration des emplacements d'extensions.
 
-2. **Répertoire de configuration de la distribution** - Fichiers de configuration dans le répertoire `distro/configuration` de votre dépôt de distribution. Ces fichiers sont empaquetés dans le WAR backend pendant la construction et chargés par Initializer à l'exécution. Les fichiers sont organisés par domaine (par exemple, `configuration/concepts/`, `configuration/locations/`). Les fichiers de configuration de l'application de référence se trouvent [ici](https://github.com/openmrs/openmrs-distro-referenceapplication/tree/main/distro/configuration).
+2. **Répertoire de configuration empaqueté avec la distribution** - Fichiers de configuration dans votre dépôt de distribution que votre build copie dans le package backend. Initializer attend un dossier `configuration/` organisé par domaine (par exemple, `configuration/concepts/`, `configuration/locations/` et `configuration/globalproperties/`). L'application de référence actuelle ne garde pas d'arborescence `distro/configuration` dans le dépôt de distribution ; elle référence plutôt des packages de contenu depuis `distro.properties`.
 
 3. **Répertoire de données d'application** - Fichiers de configuration placés dans le répertoire de données d'application d'OpenMRS (généralement `/openmrs/data/configuration/` ou `~/.OpenMRS/configuration/`). Cela permet des mises à jour à l'exécution sans reconstruction. Le module Initializer traite les fichiers de ce répertoire s'il existe, ce qui est utile pour les mises à jour de métadonnées post-déploiement.
 
@@ -45,15 +45,15 @@ Les métadonnées peuvent être fournies de trois façons :
 3. **Répertoire de données d'application** - Les fichiers sont chargés en dernier (peuvent remplacer à la fois les packages de contenu et la configuration de la distribution)
 
 **Important** : 
-- Les modifications des fichiers dans `distro/configuration` nécessitent une reconstruction du WAR backend pour prendre effet
+- Les modifications des fichiers empaquetés dans le WAR backend nécessitent une reconstruction du WAR backend pour prendre effet
 - Les modifications des fichiers dans le répertoire de données d'application prennent effet au redémarrage suivant du backend (pas de reconstruction nécessaire)
 - Le module Initializer utilise des sommes de contrôle pour suivre les changements de fichiers—les fichiers ne sont retraités que si leur somme de contrôle change, améliorant les performances
 
-**Note spécifique à Docker** : Dans les déploiements Docker, les fichiers `distro/configuration` sont intégrés dans l'image Docker backend pendant la construction. Pour mettre à jour les métadonnées sans reconstruire, vous pouvez :
+**Note spécifique à Docker** : Dans les déploiements Docker, les fichiers de configuration empaquetés avec le backend sont intégrés dans l'image Docker backend pendant la construction. Pour mettre à jour les métadonnées sans reconstruire, vous pouvez :
 - Monter le répertoire de données d'application comme volume et y placer les fichiers de configuration
 - Ou reconstruire l'image backend (voir le guide [Configuration d'une instance O3](/docs/recipes/set-up-o3-instance#updating-metadata))
 
-Les déploiements SDK peuvent mettre à jour soit `distro/configuration` (nécessite une reconstruction WAR) soit le répertoire de données d'application (nécessite uniquement un redémarrage).
+Les déploiements SDK peuvent mettre à jour soit la configuration empaquetée avec le backend (nécessite une reconstruction WAR), soit le répertoire de données d'application (nécessite uniquement un redémarrage).
 
 Le module initializer prend en charge le chargement d'une grande variété de types de données et de métadonnées, incluant mais sans s'y limiter :
 
@@ -86,7 +86,7 @@ Les propriétés globales sont des **paramètres de configuration** (pas des mé
 
 Les propriétés globales sont configurées à l'aide de fichiers XML dans le module Initializer. Placez votre fichier XML de propriétés globales dans l'un de ces emplacements :
 
-1. **Packages de contenu** - Dans le répertoire `configuration/globalproperties/`
+1. **Packages de contenu** - Dans l'arborescence de configuration backend du package. Dans les packages de contenu actuels de l'application de référence, il s'agit de `configuration/backend_configuration/globalproperties/`.
 2. **Répertoire de configuration de la distribution** - Dans le répertoire `distro/configuration/globalproperties/`
 3. **Répertoire de données d'application** - Dans `/openmrs/data/configuration/globalproperties/` ou `~/.OpenMRS/configuration/globalproperties/`
 
@@ -127,7 +127,7 @@ Les propriétés globales sont configurées à l'aide de fichiers XML dans le mo
 
 **Notes importantes** :
 - Les propriétés globales peuvent être mises à jour à l'exécution via l'interface d'administration OpenMRS (Paramètres avancés), mais l'utilisation de fichiers Initializer garantit qu'elles sont contrôlées par version et appliquées automatiquement lors du déploiement
-- Les modifications des propriétés globales dans `distro/configuration` nécessitent une reconstruction du WAR backend
+- Les modifications des propriétés globales empaquetées dans le WAR backend nécessitent une reconstruction du WAR backend
 - Les modifications des propriétés globales dans le répertoire de données d'application prennent effet au prochain redémarrage du backend (pas de reconstruction nécessaire)
 - Pour une liste complète des propriétés globales disponibles, consultez la [documentation des propriétés globales OpenMRS](https://wiki.openmrs.org/display/docs/Global+Properties) ou vérifiez la documentation pour des modules spécifiques
 
