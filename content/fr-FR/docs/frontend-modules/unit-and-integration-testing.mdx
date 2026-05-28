@@ -72,10 +72,10 @@ Note: Cette fonction d'aide `renderWithSwr` enveloppe un composant dans un conte
 Nous ne voulons pas directement atteindre la base de données avec notre test et pour éviter cela, nous pourrions simuler la logique de récupération des données comme suit:
 
 ```ts
-mockedOpenmrsFetch.mockReturnValueOnce({ data: { results: [] } });
+mockedOpenmrsFetch.mockResolvedValueOnce({ data: { results: [] } });
 ```
 
-Ce code simule la fonction `openmrsFetch`, en remplaçant son implémentation par une simulation qui renvoie un objet avec une propriété `results` qui est un tableau vide.
+Ce code simule la fonction `openmrsFetch`, en remplaçant son implémentation par une promesse qui se résout avec un objet dont la propriété `results` est un tableau vide.
 
 Ensuite, nous voulons rendre le composant:
 
@@ -113,7 +113,7 @@ it("renders an error state view if there was a problem fetching module data", as
     },
   };
 
-  // Syntactic sugar for `mockedOpenmrsFetch.mockReturnValue(Promise.resolve(error))`
+  // Équivaut à renvoyer une promesse rejetée depuis openmrsFetch
   mockedOpenmrsFetch.mockRejectedValueOnce(error);
 
   renderModuleManagement();
@@ -177,7 +177,7 @@ it("renders detailed information about the module", async () => {
   ];
 
   // Return the `testModules` object defined above in the API response. The nested `data` property below corresponds to the `data` property returned from calling the `useSWR` hook
-  mockedOpenmrsFetch.mockReturnValueOnce({
+  mockedOpenmrsFetch.mockResolvedValueOnce({
     data: { results: testModules },
   });
 
@@ -239,7 +239,7 @@ Bien que ce test passe et puisse nous donner une certaine confiance que ce compo
 
 Lors de l'écriture de tests, vous aurez souvent besoin de simuler des dépendances. Voici quelques modèles que vous pouvez utiliser pour écrire des tests plus efficaces, maintenables et sûrs sur le plan du typage pour vos modules frontend:
 
-Core exporte des mocks de modules qui peuvent être utilisés pour tester les fonctionnalités dans `@openmrs/esm-framework`. Le framework fournit deux fichiers de mock :
+Le framework exporte des mocks de modules qui peuvent être utilisés pour tester les fonctionnalités dans `@openmrs/esm-framework`. Le framework fournit deux fichiers de mock :
 
 - `mock.tsx` - Utilisé lors d'importations via les modules ES (`import`)
 - `mock-jest.tsx` - Utilisé lors d'importations via CommonJS (`require`)
@@ -250,7 +250,7 @@ Dans la configuration de test de chaque module frontend, vous verrez une configu
 
 **Exemple d'alias de configuration Vitest :**
 
-```ts {9} filename="tools/vitest.shared.ts"
+```ts {9} filename="vitest.config.ts"
 import { fileURLToPath } from "node:url";
 import { defineConfig } from 'vitest/config';
 
@@ -258,7 +258,14 @@ const r = (relativePath: string) => fileURLToPath(new URL(relativePath, import.m
 
 export default defineConfig({
   test: {
-    setupFiles: [r('./setup-tests.ts')],
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: [r('./tools/setup-tests.ts')],
+    server: {
+      deps: {
+        inline: [/@openmrs/],
+      },
+    },
     alias: [
       { find: /^@openmrs\/esm-framework$/, replacement: '@openmrs/esm-framework/mock' },
     ],

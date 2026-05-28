@@ -138,28 +138,43 @@ Each frontend module has a root-level `package.json` file that defines its depen
   "source": true,
   "scripts": {
     "start": "openmrs develop",
-    "serve": "rspack serve --mode=development",
     "build": "rspack --mode production",
+    "build:development": "rspack --mode development",
     "analyze": "rspack --mode=production --env.analyze=true",
+    "serve": "rspack serve --mode=development",
     "lint": "eslint src --ext ts,tsx",
     "typescript": "tsc",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest watch",
     "coverage": "vitest run --coverage --passWithNoTests",
-    "extract-translations": "i18next 'src/**/*.component.tsx' 'src/**/*.extension.tsx' 'src/**/*.modal.tsx' 'src/index.ts' --config ./tools/i18next-parser.config.js"
+    "extract-translations": "i18next 'src/**/*.component.tsx' 'src/**/*.extension.tsx' 'src/**/*.modal.tsx' 'src/index.ts' --config ./tools/i18next-parser.config.js",
+    "prettier": "prettier --config prettier.config.js --write \"src/**/*.{ts,tsx,css,scss}\"",
+    "postinstall": "husky install"
+  },
+  "dependencies": {
+    "@carbon/react": "^1.83.0"
   },
   "peerDependencies": {
+    "@carbon/react": "1.x",
     "@openmrs/esm-framework": "*",
+    "dayjs": "1.x",
+    "i18next": "25.x",
     "react": "18.x",
-    "react-i18next": "16.x"
+    "react-dom": "18.x",
+    "react-i18next": "16.x",
+    "react-router-dom": "6.x",
+    "swr": "2.x"
   },
   "devDependencies": {
     "openmrs": "next",
     "@openmrs/esm-framework": "next",
     "@openmrs/rspack-config": "next",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.5.2",
     "@rspack/cli": "^1.7.10",
     "@rspack/core": "^1.7.10",
     "jsdom": "^28.0.0",
+    "typescript": "^5.9.3",
     "vitest": "^4.1.2"
   },
   "packageManager": "yarn@4.10.3"
@@ -180,55 +195,32 @@ Some key things to note from looking at this file include:
 Frontend modules define their entry point in `src/index.ts`.
 
 ```ts
-import { defineConfigSchema, getSyncLifecycle, registerBreadcrumbs } from "@openmrs/esm-framework";
+import { defineConfigSchema, getAsyncLifecycle, getSyncLifecycle } from "@openmrs/esm-framework";
 import { configSchema } from "./config-schema";
-import rootComponent from "./root.component";
-import systemAdministrationFormBuilderCardLinkComponent from "./form-builder-admin-card-link.component";
+import ActivePrescriptionsSummary from "./active-prescriptions-summary.component";
+import { moduleName } from "./constants";
 
-const moduleName = "@openmrs/esm-form-builder-app";
+export const importTranslation = require.context("../translations", false, /.json$/, "lazy");
 
 const options = {
-  featureName: "form-builder",
+  featureName: "active-prescriptions",
   moduleName,
 };
 
-export const importTranslation = require.context("../translations", true, /.json$/, "lazy");
-
 export function startupApp() {
   defineConfigSchema(moduleName, configSchema);
-
-  registerBreadcrumbs([
-    {
-      path: `${window.spaBase}/form-builder`,
-      title: "Form Builder",
-      parent: `${window.spaBase}/home`,
-    },
-    {
-      path: `${window.spaBase}/form-builder/new`,
-      title: "Form Editor",
-      parent: `${window.spaBase}/form-builder`,
-    },
-    {
-      path: `${window.spaBase}/form-builder/edit/:uuid`,
-      title: "Form Editor",
-      parent: `${window.spaBase}/form-builder`,
-    },
-  ]);
 }
 
-export const root = getSyncLifecycle(rootComponent, options);
+export const root = getAsyncLifecycle(() => import("./root.component"), options);
 
-export const systemAdministrationFormBuilderCardLink = getSyncLifecycle(
-  (systemAdministrationFormBuilderCardLinkComponent),
-  options
-);
+export const activePrescriptionsSummary = getSyncLifecycle(ActivePrescriptionsSummary, options);
 ```
 
 This file is the entry point of the frontend module. It is the first file that gets executed when the frontend module gets loaded. It is responsible for setting up the frontend module and exporting the module’s configuration. Specifically, in this example:
 
 - It exports an `importTranslation` function which is used to load the module’s translations.
-- It also exports two named lifecycle functions, `root` and `systemAdministrationFormBuilderCardLink`. These names must match the component names declared in `routes.json`. The app shell calls them when the corresponding page or extension needs to render.
-- It also exports a `startupApp` function which is used to set up the frontend module. In this case, the frontend module's configuration schema is defined here, as well as the breadcrumbs for the module.
+- It also exports two named lifecycle functions, `root` and `activePrescriptionsSummary`. These names must match the component names declared in `routes.json`. The app shell calls them when the corresponding page or extension needs to render.
+- It also exports a `startupApp` function which is used to set up the frontend module. In this case, the frontend module's configuration schema is defined here. Modules that need breadcrumbs or other framework registration can do that in `startupApp` too.
 
 #### The `startupApp` function
 
