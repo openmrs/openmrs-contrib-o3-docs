@@ -6,7 +6,7 @@ Pour travailler sur le frontend O3, vous devez disposer des outils et technologi
 
 - **Git** - Nous utilisons git pour le contrôle de version.
 - **Node.js** - Nous utilisons Node pour compiler et regrouper le code du frontend. Nous n'utilisons pas Node pour faire tourner le backend ou le serveur. Utilisez la version de Node attendue par le dépôt, généralement documentée dans `.nvmrc`, `.node-version`, la configuration CI ou le README. Si le dépôt ne précise rien, utilisez la version active `LTS` et gérez les versions avec [nvm](https://github.com/nvm-sh/nvm) ou un outil similaire.
-- **Yarn** - La plupart des dépôts frontend actuels utilisent Yarn `v4`, mais certains dépôts plus anciens utilisent encore Yarn `v3` ou Yarn `v1`. Vérifiez le champ `packageManager` dans le `package.json` du dépôt et utilisez la version correspondante. Corepack est le moyen le plus simple d'activer la version déclarée par le dépôt.
+- **Yarn et Corepack** - La plupart des dépôts frontend actuels utilisent Yarn `v4`, mais certains dépôts plus anciens utilisent encore Yarn `v3` ou Yarn `v1`. Vérifiez le champ `packageManager` dans le `package.json` du dépôt et utilisez la version correspondante. Lancez `corepack enable` une fois sur votre machine pour que la version de Yarn déclarée par le dépôt soit activée automatiquement.
 - **Accès à un backend OpenMRS** - Vous aurez besoin d’un backend OpenMRS (dev3 ou local) pour que `yarn start` fonctionne.
 
 ## Organisation du code
@@ -22,7 +22,9 @@ Le code dans O3 est organisé en plusieurs monorepos spécifiques au domaine:
 La plupart du temps, vous travaillerez au sein d'un monorepo. En général, pour installer un de ces monorepos localement, vous devez:
 
 - Cloner le repo qui vous intéresse.
-- `cd` dans le répertoire racine du repo sur votre copie locale et lancer `yarn` pour installer les dépendances.
+- `cd` dans le répertoire racine du repo sur votre copie locale.
+- Lancez `corepack enable` si Corepack n'est pas encore activé sur votre machine.
+- Lancez `yarn` pour installer les dépendances avec la version déclarée par le dépôt.
 
 ## Configuration de l'éditeur
 

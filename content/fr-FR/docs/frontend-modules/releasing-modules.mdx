@@ -53,7 +53,7 @@ Relire le changelog généré avec ces règles de titre en tête devrait vous do
 
 ### Incrémenter les versions
 
-À ce stade, vous pouvez passer à votre IDE pour lancer le processus de release. Nous utilisons généralement `yarn` pour versionner les modules frontend.
+À ce stade, vérifiez si le dépôt contient un workflow `.github/workflows/open-release-pr.yml`. Beaucoup de dépôts de modules frontend actuels fournissent une action GitHub **Open release PR** avec une entrée `release_type` (`patch`, `minor` ou `major`). Préférez ce workflow quand il existe: il lance la commande de release du dépôt, vérifie le diff de release et ouvre une PR avec le bump de version. Si le dépôt n'a pas ce workflow, ou si vous faites le bump manuellement, utilisez les scripts `yarn` du dépôt comme décrit ci-dessous.
 
 #### Monorepos
 
@@ -100,7 +100,7 @@ Veillez à suivre les instructions indiquées dans les [docs Cutting a release](
 
 Une fois le versionnement terminé, vous devriez voir dans votre éditeur un diff contenant un bump de version pour tous les packages du dépôt. Lancez `yarn` ou `yarn install` pour mettre à jour votre fichier `yarn.lock`.
 
-Créez une nouvelle branche nommée `chore/release-vX.X.X`, où `X.X.X` est le numéro de version que vous publiez. Committez ces changements avec le titre `(chore) Release vX.X.X`. Voir cet exemple de [commit](https://github.com/openmrs/openmrs-esm-patient-chart/pull/1279) qui incrémente `Patient Chart` vers `v5.0.0`.
+Si le workflow Open release PR du dépôt a créé la branche et le commit pour vous, relisez cette PR puis continuez à partir de là. Si vous faites le bump manuellement, créez une branche de release selon la convention du dépôt, souvent `release/vX.X.X` ou `chore/release-vX.X.X`, où `X.X.X` est le numéro de version publié. Committez le bump avec un titre comme `(chore) Release vX.X.X`. Voir cet exemple de [commit](https://github.com/openmrs/openmrs-esm-patient-chart/pull/1279) qui incrémente `Patient Chart` vers `v5.0.0`.
 
 Une fois le commit de release fusionné dans `main`, CI publie une version pre-release taguée `next` sur npm. C'est utile pour les tests anticipés avant de publier `latest`. Le nom exact du script dépend du dépôt: `openmrs-esm-core` utilise `ci:publish-next`, beaucoup de dépôts de modules frontend utilisent `ci:prepublish`, et certains dépôts passent la commande au workflow partagé `release-frontend-module`.
 
@@ -136,6 +136,7 @@ Pour voir à quelle version correspond le tag `latest` d'un module frontend, all
 Tous les dépôts ne câblent pas les releases de la même manière. Avant de publier, vérifiez:
 
 - `package.json` pour les scripts `release`, `ci:publish`, `ci:publish-next` ou `ci:prepublish`.
+- `.github/workflows/open-release-pr.yml` pour un workflow automatisé de PR de bump de release.
 - `.github/workflows/ci.yml`, `.github/workflows/node.js.yml` ou une référence à un workflow partagé pour voir quels tags sont publiés sur `push` et sur `release`.
 
 Suivez toujours les scripts définis dans le dépôt, même si leurs noms diffèrent de ce guide.
