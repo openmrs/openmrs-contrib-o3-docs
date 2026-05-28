@@ -1,0 +1,13 @@
+# Guides de migration
+
+Utilisez ces guides lorsque vous mettez à jour un module frontend ou une distribution O3 existante vers une version plus récente du framework, des workspaces, des tests ou de l'outillage de build.
+
+## Quel guide utiliser?
+
+- **Core v9**: utilisez ce guide pour passer les modules à la base framework Core v9.
+- **Rspack et Vitest**: utilisez ce guide lorsqu'un module a déjà terminé la migration Core v6 et doit passer de Webpack/Jest à Rspack/Vitest.
+- **Workspace v2**: utilisez ce guide pour remplacer les APIs workspace v1 dépréciées, comme `launchWorkspace`, `ActionMenuButton`, le `type` de workspace, `canHide` ou `promptBeforeClosing`.
+- **Core v6**: utilisez ce guide pour les modules plus anciens qui doivent encore recevoir les mises à jour framework Core v6 avant de passer au nouvel outillage de build et de test.
+- **Core v5**: utilisez ce guide pour les modules legacy qui enregistrent encore des pages, extensions ou métadonnées dynamiques avec les anciens modèles pré-Core v5.
+
+Pour les modules activement maintenus, le chemin habituel est Core v6, puis Rspack et Vitest, puis toute migration plus récente propre au framework, comme Core v9. Workspace v2 peut être fait séparément lorsqu'un module utilise les workspaces.

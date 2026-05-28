@@ -38,7 +38,7 @@
   });
   ```
 
-  La différence clé est l'emplacement du code du composant. `getAsyncLifecycle` utilise un import dynamique, ce qui permet au bundler de créer un chunk séparé qu'O3 ne charge que lorsque le composant est nécessaire. `getSyncLifecycle` enveloppe un composant déjà importé statiquement ; il reste donc dans le bundle principal du module frontend et est disponible dès que ce module se charge. Évitez de rendre chaque export asynchrone par défaut : beaucoup de petits chunks dynamiques peuvent ajouter des requêtes à l'exécution. Lisez-en plus sur la différence entre les métadonnées statiques et dynamiques [ici](/docs/migrate-to-core-v5).
+  La différence clé est l'emplacement du code du composant. `getAsyncLifecycle` utilise un import dynamique, ce qui permet au bundler de créer un chunk séparé qu'O3 ne charge que lorsque le composant est nécessaire. `getSyncLifecycle` enveloppe un composant déjà importé statiquement ; il reste donc dans le bundle principal du module frontend et est disponible dès que ce module se charge. Évitez de rendre chaque export asynchrone par défaut : beaucoup de petits chunks dynamiques peuvent ajouter des requêtes à l'exécution. Lisez-en plus sur la différence entre les métadonnées statiques et dynamiques [ici](/docs/migration-guides/migrate-to-core-v5).
 
 - Préférez les icônes et pictogrammes exportés par `@openmrs/esm-framework` lorsqu'un asset OpenMRS correspondant existe. Ils proviennent des sprites du styleguide O3 et évitent d'importer des icônes individuelles depuis `@carbon/react/icons` quand le système de design fournit déjà l'asset.
 

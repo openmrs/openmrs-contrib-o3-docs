@@ -46,10 +46,11 @@ export default {
   "framework-api-reference": "Référence de l'API du framework",
   "modal-system": "Système modal",
   breadcrumbs: "Miettes de pain",
-  "migrate-to-workspace-v2": "Migrer vers Workspace v2",
-  "migrate-to-rspack-and-vitest": "Migrer vers Rspack et Vitest",
-  "migrate-to-core-v9": "Migrer vers Core v9",
-  "migrate-to-core-v6": "Migrer vers Core v6",
-  "migrate-to-core-v5": "Migrer vers Core v5",
+  "migration-guides": {
+    title: "Guides de migration",
+    theme: {
+      collapsed: true
+    }
+  },
   changelog: "Journal des modifications"
 }

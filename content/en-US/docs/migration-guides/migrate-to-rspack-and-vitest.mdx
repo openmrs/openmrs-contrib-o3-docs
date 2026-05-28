@@ -4,7 +4,7 @@ import { Callout, Steps } from "nextra/components";
 
 This guide walks you through swapping a frontend module's bundler from Webpack to [Rspack](https://rspack.dev) and its test runner from Jest to [Vitest](https://vitest.dev). In the single-package OpenMRS repos the two migrations have typically shipped as adjacent PRs, so this guide treats them as a single piece of work. (The monorepos took them on at different times — see the [Monorepo considerations](#monorepo-considerations) section.)
 
-If you haven't yet upgraded your module to Core v6, do that first. See [Migrating to Core v6](/docs/migrate-to-core-v6). The Core v6 guide leaves your module on Jest and Webpack on purpose; this guide picks up where it leaves off.
+If you haven't yet upgraded your module to Core v6, do that first. See [Migrating to Core v6](/docs/migration-guides/migrate-to-core-v6). The Core v6 guide leaves your module on Jest and Webpack on purpose; this guide picks up where it leaves off.
 
 <Callout type="info">
   This guide is based on the [`(chore) Migrate to rspack`](https://github.com/openmrs/openmrs-esm-laboratory-app/pull/759) and [`(chore) Migrate from jest to vitest`](https://github.com/openmrs/openmrs-esm-laboratory-app/pull/757) PRs in `openmrs-esm-laboratory-app`. If you'd rather work from a real diff than this checklist, those two PRs are a good template.
@@ -14,8 +14,8 @@ If you haven't yet upgraded your module to Core v6, do that first. See [Migratin
 
 ### Why Rspack instead of Webpack
 
-- **Faster builds.** Rspack is Rust-based. The [Core v6 migration notes](/docs/migrate-to-core-v6) report roughly 3× faster app build times in practice and sub-one-minute builds where Webpack was several minutes. Watch-mode incremental rebuilds are also noticeably tighter.
-- **Reliable sequential builds.** Core v5's Webpack pipeline ran into memory exhaustion on repeated builds — see the [Core v6 migration guide](/docs/migrate-to-core-v6#background-why-this-migration-was-necessary) for the original incident. Rspack doesn't have that pathology.
+- **Faster builds.** Rspack is Rust-based. The [Core v6 migration notes](/docs/migration-guides/migrate-to-core-v6) report roughly 3× faster app build times in practice and sub-one-minute builds where Webpack was several minutes. Watch-mode incremental rebuilds are also noticeably tighter.
+- **Reliable sequential builds.** Core v5's Webpack pipeline ran into memory exhaustion on repeated builds — see the [Core v6 migration guide](/docs/migration-guides/migrate-to-core-v6#background-why-this-migration-was-necessary) for the original incident. Rspack doesn't have that pathology.
 - **Webpack-compatible config.** Rspack accepts Webpack's plugin and configuration shape, so the migration is mechanical rather than a rewrite.
 - **Native ES module support.** Rspack handles the framework's ESM exports without the custom transform plumbing Webpack needed.
 
@@ -292,7 +292,7 @@ All four should be green. Run `yarn test:watch` to confirm the watch mode works 
 
 - **Tests pass locally but fail in CI on Windows.** Almost always a path-alias issue. Use `fileURLToPath` for any alias that resolves to a filesystem path. See the `vitest.config.ts` snippet above.
 - **`expect(...).toBeInTheDocument is not a function`.** You forgot the `/vitest` subpath on the `jest-dom` import in `setup-tests.ts`, or `@testing-library/jest-dom` is still on 5.x.
-- **`Cannot find module '@openmrs/esm-framework/mock'`.** Either your `@openmrs/esm-framework` version predates the dual-mock layout (see [Migrating to Core v6](/docs/migrate-to-core-v6#fix-mock-import-paths)) or your `vitest.config.ts` alias is misspelled.
+- **`Cannot find module '@openmrs/esm-framework/mock'`.** Either your `@openmrs/esm-framework` version predates the dual-mock layout (see [Migrating to Core v6](/docs/migration-guides/migrate-to-core-v6#fix-mock-import-paths)) or your `vitest.config.ts` alias is misspelled.
 - **React tests fail with cryptic scheduler errors after enabling fake timers.** You likely added `queueMicrotask` or `nextTick` to `fakeTimers.toFake` by hand — both break React's scheduler. Vitest's default fake timers already exclude them, so leaving `fakeTimers` unset is usually the right move. If you do supply an explicit list, keep both APIs out.
 - **`@openmrs/*` imports resolve to the built CJS rather than ESM.** Add `server.deps.inline: [/@openmrs/]` to the Vitest config.
 - **TypeScript complains that `require.context` doesn't exist after dropping `@types/webpack-env`.** Rspack supports `require.context` at runtime exactly the same way Webpack does, so the runtime call site is fine — what disappeared is the *type definition* that used to come from `@types/webpack-env`. Add the `RequireContext` declaration from Part 1 to `src/declarations.d.ts` to restore the types.

@@ -46,10 +46,11 @@ export default {
   "framework-api-reference": "Framework API reference",
   "modal-system": "Modal system",
   breadcrumbs: "Breadcrumbs",
-  "migrate-to-workspace-v2": "Migrate to Workspace v2",
-  "migrate-to-rspack-and-vitest": "Migrate to Rspack and Vitest",
-  "migrate-to-core-v9": "Migrate to Core v9",
-  "migrate-to-core-v6": "Migrate to Core v6",
-  "migrate-to-core-v5": "Migrate to Core v5",
+  "migration-guides": {
+    title: "Migration guides",
+    theme: {
+      collapsed: true
+    }
+  },
   changelog: "Changelog"
 }
