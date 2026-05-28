@@ -338,9 +338,9 @@ Les changements architecturaux apportent des gains de performance mesurables :
 
 **Meilleure performance d'exécution :**
 
-- Les modules se chargent à la demande au lieu de tous au démarrage
-- Le navigateur peut mettre en cache les modules individuellement
-- Temps d'exécution JavaScript réduit au chargement initial de la page
+- Le chargement des modules à la demande introduit par Core v5 reste en place, et Core v6 réduit le code framework que chaque build d'app doit transformer
+- Les bundlers consomment des packages framework compilés et des fichiers `.d.ts` au lieu de recompiler les sources TypeScript du framework dans chaque build d'app
+- Taille de bundle réduite et moins de travail framework au chargement initial de la page
 
 ### Évolution du système de build : Webpack vers Rspack
 
@@ -457,15 +457,13 @@ Le travail de migration que vous faites maintenant paie des dividendes en cycles
 
 ## Qu'est-ce qui vient ensuite ?
 
-### Statut de migration actuel
+Cette page Core v6 est un guide de migration historique pour les modules qui doivent encore passer de l'outillage de l'ère Core v5 aux packages framework en modules ES. La plupart des modules frontend O3 actifs ont depuis terminé les migrations suivantes vers Rspack et Vitest.
 
-- **Outil Core** migré vers Rspack (OpenMRS CLI)
-- **Application Login** peut utiliser Rspack avec le flag `--use-rspack`.
-- **Autres applications** prévues pour migration future
-- **Webpack toujours supporté** pour les applications existantes pendant la transition
-- **Dépôts migrés :** Nous avons migré plusieurs dépôts vers Core v6. Voir la section [Exemples de migration](#exemples-de-migration) ci-dessus pour la liste complète.
+Statut actuel de l'écosystème :
 
-### Travail restant
+- **L'outillage Core** et l'outillage d'app O3 par défaut utilisent maintenant Rspack.
+- **Les monorepos frontend actifs** comme Patient Chart et Patient Management utilisent Rspack et Vitest, avec de petites exceptions legacy indiquées dans leurs configs.
+- **Webpack et Jest** restent utiles comme ponts de migration pour les modules qui n'ont pas encore migré, mais ne sont plus le point de départ recommandé.
+- **Les nouveaux modules** devraient démarrer avec [`@openmrs/create-o3-app`](/docs/recipes/create-a-frontend-module), qui génère la configuration Rspack et Vitest actuelle.
 
-- Migrer tous les modules frontend vers le nouveau système de build basé sur Rspack.
-- Migrer tous les modules frontend de l'utilisation de Jest vers Vitest.
+Après cette migration Core v6, continuez avec [Migration vers Rspack et Vitest](/docs/migrate-to-rspack-and-vitest), sauf si votre dépôt a déjà terminé ce travail.

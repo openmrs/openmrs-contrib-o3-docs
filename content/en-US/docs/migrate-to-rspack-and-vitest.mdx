@@ -120,7 +120,6 @@ Remove the Jest packages and add the Vitest equivalents:
 +   "@testing-library/jest-dom": "^6.8.0",
 -   "@types/jest": "^28.1.8",
 +   "@vitest/coverage-v8": "^4.1.2",
-+   "cross-env": "^10.1.0",
 -   "jest": "^28.1.3",
 -   "jest-cli": "^28.1.3",
 -   "jest-environment-jsdom": "^28.1.3",
@@ -132,16 +131,16 @@ A few notes on the version pins:
 
 - `@testing-library/jest-dom` must be on `^6.x`. Earlier versions don't expose the `/vitest` subpath import you'll need in `setup-tests.ts`.
 - `@testing-library/dom` jumps from 8.x to 10.x as a general modernisation alongside the `jest-dom@6` upgrade. The two don't have a strict peer-dependency relationship — `jest-dom@6` declares no peers — but bumping both at once is the path most OpenMRS apps have taken.
-- `cross-env` is used to set `TZ=UTC` for the test scripts (Vitest does not set this for you, and time-sensitive tests will be flaky without it).
+- Set `TZ=UTC` for deterministic date and time assertions. The current scaffold does this in `vitest.config.ts` with `process.env.TZ = 'UTC'`. If your repository already uses `cross-env` for script-level environment variables, setting `TZ=UTC` in the test scripts is also fine.
 
 ### Update the test scripts
 
 ```diff filename="package.json"
 -   "test": "jest --config jest.config.js --passWithNoTests --color",
 -   "coverage": "yarn test -- --coverage",
-+   "test": "cross-env TZ=UTC vitest run --passWithNoTests",
-+   "test:watch": "cross-env TZ=UTC vitest watch",
-+   "coverage": "cross-env TZ=UTC vitest run --coverage --passWithNoTests",
++   "test": "vitest run --passWithNoTests",
++   "test:watch": "vitest watch",
++   "coverage": "vitest run --coverage --passWithNoTests",
 ```
 
 ### Add `vitest.config.ts`
@@ -151,6 +150,8 @@ Create `vitest.config.ts` at the repo root:
 ```ts filename="vitest.config.ts"
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
+
+process.env.TZ = "UTC";
 
 const r = (relativePath: string) => fileURLToPath(new URL(relativePath, import.meta.url));
 
@@ -162,7 +163,7 @@ export default defineConfig({
     environment: "jsdom",
     globals: true,
     clearMocks: true,
-    setupFiles: ["./tools/setup-tests.ts"],
+    setupFiles: [r("./tools/setup-tests.ts")],
     exclude: ["**/node_modules/**", "**/e2e/**", "**/dist/**"],
     server: {
       deps: {
@@ -182,11 +183,11 @@ export default defineConfig({
         "Date",
       ],
     },
-    alias: {
-      "@openmrs/esm-framework/src/internal": "@openmrs/esm-framework/mock",
-      "@openmrs/esm-framework": "@openmrs/esm-framework/mock",
-      "react-i18next": r("./__mocks__/react-i18next.js"),
-    },
+    alias: [
+      { find: /^@openmrs\/esm-framework\/src\/internal$/, replacement: "@openmrs/esm-framework/mock" },
+      { find: /^@openmrs\/esm-framework$/, replacement: "@openmrs/esm-framework/mock" },
+      { find: "react-i18next", replacement: r("./__mocks__/react-i18next.js") },
+    ],
   },
 });
 ```
@@ -194,8 +195,9 @@ export default defineConfig({
 A few things worth understanding rather than copy-pasting blindly:
 
 - **`environment: 'jsdom'`.** This is the dominant choice across the migrated O3 modules (laboratory-app, patient-chart, patient-management, form-builder, billing-app, and a handful of others all use it). The alternative is `'happy-dom'`, which is faster but has narrower DOM API coverage (notably less complete layout, measurement, and CSSOM APIs). `openmrs-esm-core` mixes both (some packages on happy-dom, pure-logic packages on `'node'`). The published `@openmrs/create-o3-app` scaffold uses jsdom, while the older `openmrs-esm-template-app` fallback still defaults to happy-dom. When in doubt, start with jsdom (matches the bulk of the ecosystem); switch to happy-dom only if test runtime becomes a real bottleneck and you've confirmed your tests don't depend on a DOM API happy-dom doesn't implement.
+- **`process.env.TZ = 'UTC'`.** Keeps date-sensitive tests deterministic without requiring every test script to wrap Vitest in `cross-env TZ=UTC`.
 - **CSS aliasing.** The regex `^.*\.s?css$/` anchors both ends so the whole import path is replaced with `identity-obj-proxy`. Without the anchors, only the extension gets matched and Vitest fails to resolve the module.
-- **`fileURLToPath` for path aliases.** Using `new URL(...).pathname` directly works on macOS and Linux, but on Windows it yields `/C:/...`, which Vite's resolver rejects. `fileURLToPath` normalises this.
+- **`fileURLToPath` for filesystem paths.** Use it for `setupFiles` and aliases that resolve to local files. Using `new URL(...).pathname` directly works on macOS and Linux, but on Windows it yields `/C:/...`, which Vite's resolver rejects. `fileURLToPath` normalises this.
 - **`server.deps.inline: [/@openmrs/]`.** Forces Vite to process `@openmrs/*` packages through its transform pipeline instead of treating them as external. Without this, ES module exports from the framework won't resolve correctly in tests.
 - **`fakeTimers.toFake`.** This is a narrower, OpenMRS-tested list, not the Vitest default. Vitest's default fakes every timer-like API sinon detects (typically including `requestIdleCallback`, `cancelIdleCallback`, `performance`, and `process.hrtime`) minus `nextTick` and `queueMicrotask`. The list above sticks to the timers actual OpenMRS tests need, which keeps the surface area smaller. You can omit `fakeTimers` entirely if you're happy with the broader default — neither choice breaks React's scheduler, because both keep `queueMicrotask` and `nextTick` out.
 - **Framework mock alias.** Both the public and the internal entry points map to `@openmrs/esm-framework/mock`. Tests that import from the internal path (e.g. `@openmrs/esm-framework/src/internal`) get the same mock.
