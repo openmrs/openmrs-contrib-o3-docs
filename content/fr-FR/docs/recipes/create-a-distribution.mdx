@@ -114,7 +114,11 @@ cd ./spa
 python3 -m http.server 8080
 ```
 
-Ensuite, ouvrez `http://localhost:8080/openmrs/spa/` dans votre navigateur (ajustez le chemin en fonction de votre configuration `spaPath`).
+Ensuite, ouvrez l'URL qui correspond à la façon dont les fichiers sont servis. Un simple `python3 -m http.server` lancé
+depuis `./spa` sert le répertoire à la racine web. C'est donc surtout utile pour un test rapide lorsque la construction
+utilise `"spaPath": "/"`; dans ce cas, ouvrez `http://localhost:8080/`. Si votre construction utilise l'exemple
+`"spaPath": "/openmrs/spa/"`, utilisez un serveur web ou un proxy qui mappe `/openmrs/spa/` vers le répertoire `./spa`
+construit, comme dans l'exemple nginx ci-dessous.
 
 **Note**: Pour que la SPA fonctionne pleinement, vous devrez:
 - La servir derrière un proxy qui transfère les requêtes API vers votre backend OpenMRS
@@ -352,7 +356,8 @@ Pour tester votre distribution localement, vous pouvez:
    cd ./spa
    python3 -m http.server 8080
    ```
-   Puis y accéder à `http://localhost:8080/openmrs/spa/` (ajustez le chemin en fonction de votre configuration `spaPath`).
+   Cela sert le contenu de `./spa` à `http://localhost:8080/`. Utilisez-le avec une construction dont le `spaPath` vaut
+   `/`, ou passez à nginx/Docker lorsque vous devez conserver un chemin imbriqué comme `/openmrs/spa/`.
 
 2. **Utiliser la commande `openmrs start`** pour le développement (bien que cela utilise une carte d'importation par défaut, pas votre carte personnalisée).
 
