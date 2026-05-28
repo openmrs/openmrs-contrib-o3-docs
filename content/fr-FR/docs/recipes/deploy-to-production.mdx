@@ -523,11 +523,11 @@ docker compose exec gateway nginx -s reload
 
 **Vérifier la connectivité à la base:**
 ```bash
-# Test connection from backend container (check if backend can reach db)
-docker compose exec backend ping -c 3 db
-
-# Check database is accepting connections
+# Vérifier que la base de données accepte les connexions
 docker compose exec db mysqladmin ping -h localhost -u${OMRS_DB_USER:-openmrs} -p${OMRS_DB_PASSWORD:-openmrs}
+
+# Vérifier les erreurs de connexion côté backend
+docker compose logs backend
 ```
 
 **Vérifier les logs de la base de données:**
