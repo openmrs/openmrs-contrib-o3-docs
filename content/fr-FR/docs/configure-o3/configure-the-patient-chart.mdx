@@ -520,27 +520,6 @@ Vous pouvez configurer l'UUID du type de commande "Drug" utilisé pour récupér
 
 La valeur par défaut est `131168f4-15f5-102d-96e4-000c29c2a5d7`.
 
-### Logo du dossier du patient
-
-Vous pouvez configurer un logo spécifiquement pour le dossier du patient (distinct du logo de la barre de navigation) :
-
-```json
-{
-  "@openmrs/esm-patient-chart-app": {
-    "logo": {
-      "src": "${openmrsSpaBase}/assets/patient-chart-logo.svg",
-      "alt": "Logo du dossier du patient",
-      "name": "Ma Clinique"
-    }
-  }
-}
-```
-
-La configuration du logo prend en charge :
-- `src` - URL ou chemin vers un fichier image (si vide, utilise par défaut le sprite SVG OpenMRS)
-- `alt` - Texte alternatif pour l'accessibilité
-- `name` - Texte à afficher lorsque l'image est absente (utilisé uniquement si `src` est vide)
-
 ## Tutoriels vidéo
 
 ### Configuration du dossier du patient O3

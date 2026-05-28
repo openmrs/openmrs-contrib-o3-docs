@@ -520,27 +520,6 @@ You can configure the UUID for the "Drug" order type used to fetch medications:
 
 The default is `131168f4-15f5-102d-96e4-000c29c2a5d7`.
 
-### Patient Chart Logo
-
-You can configure a logo specifically for the patient chart (separate from the navbar logo):
-
-```json
-{
-  "@openmrs/esm-patient-chart-app": {
-    "logo": {
-      "src": "${openmrsSpaBase}/assets/patient-chart-logo.svg",
-      "alt": "Patient Chart Logo",
-      "name": "My Clinic"
-    }
-  }
-}
-```
-
-The logo configuration supports:
-- `src` - URL or path to an image file (if empty, defaults to OpenMRS SVG sprite)
-- `alt` - Alternative text for accessibility
-- `name` - Text to display when image is absent (only used if `src` is empty)
-
 ## Tutorial Videos
 
 ### O3 Patient Chart Configuration
