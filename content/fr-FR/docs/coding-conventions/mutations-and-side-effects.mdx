@@ -11,13 +11,12 @@
 
   // Utilisation de mutate liée pour mettre à jour une ressource spécifique
   const patientUrl = `${restBaseUrl}/patient/${patientUuid}`;
-  const { data: response, mutate } = useOpenmrsSWR<Patient>(patientUrl);
-  const patient = response?.data;
+  const { mutate } = useOpenmrsSWR<Patient>(patientUrl);
 
-  const handleSave = async (updates) => {
+  const handleSave = async (updates: Partial<Patient>) => {
     try {
-      const result = await savePatient(updates);
-      await mutate(result, { revalidate: false });
+      await savePatient(updates);
+      await mutate();
       showSnackbar({ title: t('patientSaved', 'Patient enregistré avec succès') });
       await closeWorkspace({ discardUnsavedChanges: true });
     } catch (error) {
@@ -29,6 +28,8 @@
     }
   };
   ```
+
+  `useOpenmrsSWR<T>` met en cache `FetchResponse<T>`. Ne passez donc des données explicites à `mutate` que lorsque vous avez la même forme de réponse. Sinon, revalidez la ressource après une mutation réussie.
 
   2. Utilisation de `useSWRConfig().mutate` pour des mises à jour de cache plus larges :
 

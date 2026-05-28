@@ -11,13 +11,12 @@
 
   // Using bound mutate to update a specific resource
   const patientUrl = `${restBaseUrl}/patient/${patientUuid}`;
-  const { data: response, mutate } = useOpenmrsSWR<Patient>(patientUrl);
-  const patient = response?.data;
+  const { mutate } = useOpenmrsSWR<Patient>(patientUrl);
 
-  const handleSave = async (updates) => {
+  const handleSave = async (updates: Partial<Patient>) => {
     try {
-      const result = await savePatient(updates);
-      await mutate(result, { revalidate: false });
+      await savePatient(updates);
+      await mutate();
       showSnackbar({ title: t('patientSaved', 'Patient saved successfully') });
       await closeWorkspace({ discardUnsavedChanges: true });
     } catch (error) {
@@ -29,6 +28,8 @@
     }
   };
   ```
+
+  `useOpenmrsSWR<T>` caches `FetchResponse<T>`, so only pass explicit data to `mutate` when you have the same response shape. Otherwise, revalidate the resource after a successful mutation.
 
   2. Using `useSWRConfig().mutate` for broader cache updates:
 

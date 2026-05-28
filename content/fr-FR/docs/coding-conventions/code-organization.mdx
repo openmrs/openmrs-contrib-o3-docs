@@ -3,7 +3,7 @@
 - Colocalisez les fichiers connexes dans le même répertoire. Chaque composant doit avoir son propre répertoire contenant tous ses fichiers associés. Ceci inclut :
   - Fichier de composant (par exemple, `patient-banner.component.tsx`) - C'est un composant React.
   - Fichier de test (par exemple, `patient-banner.test.tsx`) - C'est un fichier de test unitaire ou d'intégration.
-  - Feuille de style (par exemple, `patient-banner.module.scss`) - C'est une feuille de style de module CSS.
+  - Feuille de style (par exemple, `patient-banner.scss`) - Elle contient les styles du composant.
   - Fichier de ressource (par exemple, `patient-banner.resource.ts`) - C'est un fichier qui contient la logique de récupération de données.
   - Tous les autres fichiers connexes (par exemple, constantes, types, utilitaires)
 
@@ -14,7 +14,7 @@
   └── patient-banner/
       ├── patient-banner.component.tsx
       ├── patient-banner.test.tsx
-      ├── patient-banner.module.scss
+      ├── patient-banner.scss
       └── patient-banner.resource.ts
   ```
 
@@ -50,7 +50,7 @@
   - Imports de composants Carbon (par exemple, `Button`, `InlineLoading`)
   - Imports OpenMRS (par exemple, `@openmrs/esm-framework`, `@openmrs/esm-patient-common-lib`)
   - Imports locaux (composants, hooks, utilitaires, etc.)
-  - Imports d'actifs (par exemple `import styles from './user.module.scss'`)
+  - Imports d'actifs (par exemple `import styles from './user.scss'`)
 
   Dans un avenir proche, nous pourrons utiliser le tri d'ordre d'import ESLint pour faire respecter cette convention. Suivre cette convention facilite le maintien de la cohérence dans la base de code.
 

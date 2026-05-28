@@ -10,7 +10,7 @@
   - `.workspace` for components that render forms in the workspace e.g. [order-basket.workspace.tsx](https://github.com/openmrs/openmrs-esm-patient-chart/blob/main/packages/esm-patient-orders-app/src/order-basket/order-basket.workspace.tsx#L4) for the `Order Basket` workspace.
 - Unit and integration test files should contain the `.test` suffix in their name (e.g. `user.test.tsx`). Do not include the word `component` in the test file name.
 - Playwright e2e tests should contain the `.spec` suffix in their name (e.g. `user.spec.ts`).
-- Stylesheets should not contain `.component` suffix in their name. This is because stylesheets are not components, and are not translated by the translation system. Instead, stylesheets should be named after the component they are styling and use the `.module.scss` extension for CSS modules (e.g. `user.module.scss` for a component named `user.component.tsx`).
+- Stylesheets should not contain `.component` in their name. Name them after the component or feature they style, usually with the `.scss` extension (for example, `user.scss` for `user.component.tsx`). Use `.module.scss` only when the package is intentionally using CSS Modules.
 - Resource files that encapsulate data fetching logic should contain the `.resource` suffix in their name (e.g. `user.resource.ts`). This is to distinguish them from other files such as components, stylesheets, and tests.
 - Use appropriate extensions for TypeScript files:
   - Use the `.tsx` extension for files that contain JSX.

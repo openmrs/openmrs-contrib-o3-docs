@@ -3,7 +3,7 @@
 - Colocate related files in the same directory. Each component should have its own directory containing all its associated files. This includes:
   - Component file (e.g., `patient-banner.component.tsx`) - This is a React component.
   - Test file (e.g., `patient-banner.test.tsx`) - This is a unit or integration test file.
-  - Stylesheet (e.g., `patient-banner.module.scss`) - This is a CSS module stylesheet.
+  - Stylesheet (e.g., `patient-banner.scss`) - This contains styles for the component.
   - Resource file (e.g., `patient-banner.resource.ts`) - This is a file that contains data fetching logic.
   - Any other related files (e.g., constants, types, utilities)
 
@@ -14,7 +14,7 @@
   └── patient-banner/
       ├── patient-banner.component.tsx
       ├── patient-banner.test.tsx
-      ├── patient-banner.module.scss
+      ├── patient-banner.scss
       └── patient-banner.resource.ts
   ```
 
@@ -50,7 +50,7 @@
   - Carbon component imports (e.g., `Button`, `InlineLoading`)
   - OpenMRS imports (e.g., `@openmrs/esm-framework`, `@openmrs/esm-patient-common-lib`)
   - Local imports (components, hooks, utilities, etc.)
-  - Asset imports (e.g `import styles from './user.module.scss'`)
+  - Asset imports (e.g. `import styles from './user.scss'`)
 
   In the near future, we'll be able to use ESLint import order sorting to enforce this convention. Following this convention makes it easier to maintain consistency across the codebase.
 

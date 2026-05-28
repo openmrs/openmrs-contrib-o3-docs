@@ -14,6 +14,8 @@
     }).min(1, t('nameRequired', 'Name is required')),
     email: z.string().email(t('invalidEmail', 'Invalid email address')),
     age: z.number().min(18, t('ageMustBe18', 'Age must be at least 18')),
+    password: z.string().min(8, t('passwordTooShort', 'Password must be at least 8 characters')),
+    confirmPassword: z.string(),
   }).refine((data) => data.password === data.confirmPassword, {
     message: t('passwordsDoNotMatch', 'Passwords do not match'),
     path: ['confirmPassword'],
@@ -30,6 +32,8 @@
       name: '',
       email: '',
       age: 18,
+      password: '',
+      confirmPassword: '',
     },
   });
 

@@ -2,10 +2,10 @@ import { Callout } from "nextra/components";
 
 # Styling
 
-- We use CSS modules for styling. This means that all styles are scoped to the component that defines them. This is important because it helps to prevent unintended side effects and makes the codebase easier to maintain. Stylesheets should use the `.module.scss` extension to enable CSS module functionality.
+- Keep styles scoped to the component or feature that defines them. Most O3 modules import colocated Sass files such as `user.scss`; use `.module.scss` only in packages that intentionally use CSS Modules.
 
   ```scss
-  // user.module.scss
+  // user.scss
   .container {
     display: flex;
     gap: 1rem;
@@ -14,9 +14,8 @@ import { Callout } from "nextra/components";
 
   ```tsx
   // user.component.tsx
-  import styles from './user.module.scss';
+  import styles from './user.scss';
   
-  // The class name will be automatically transformed to something like "container_abc123"
   return <div className={styles.container}>...</div>;
   ```
 

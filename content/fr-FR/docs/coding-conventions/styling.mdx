@@ -2,10 +2,10 @@ import { Callout } from "nextra/components";
 
 # Styles
 
-- Nous utilisons les modules CSS pour le style. Cela signifie que tous les styles sont limités au composant qui les définit. C'est important car cela aide à prévenir les effets secondaires non intentionnés et rend la base de code plus facile à maintenir. Les feuilles de style doivent utiliser l'extension `.module.scss` pour activer la fonctionnalité des modules CSS.
+- Gardez les styles limités au composant ou à la fonctionnalité qui les définit. La plupart des modules O3 importent des fichiers Sass colocalisés tels que `user.scss`; utilisez `.module.scss` uniquement dans les packages qui utilisent intentionnellement les modules CSS.
 
   ```scss
-  // user.module.scss
+  // user.scss
   .container {
     display: flex;
     gap: 1rem;
@@ -14,9 +14,8 @@ import { Callout } from "nextra/components";
 
   ```tsx
   // user.component.tsx
-  import styles from './user.module.scss';
+  import styles from './user.scss';
   
-  // Le nom de classe sera automatiquement transformé en quelque chose comme "container_abc123"
   return <div className={styles.container}>...</div>;
   ```
 
