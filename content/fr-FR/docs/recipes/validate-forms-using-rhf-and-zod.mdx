@@ -26,7 +26,7 @@ Combiner RHF et Zod vous permet de tirer parti des forces des deux bibliothèque
 
 ## Exemple
 
-Voici un exemple qui démontre comment utiliser React Hook Form avec Zod:
+L'exemple ci-dessous part d'un formulaire Carbon contrôlé, puis le réécrit avec React Hook Form et Zod:
 
 ```tsx
 <Form>
@@ -77,7 +77,7 @@ Ceci est un extrait d'un formulaire permettant aux utilisateurs de changer leur 
 
 ### Étape 1
 
-Installer les packages requis:
+Installez les packages requis dans votre module frontend si le package ne les déclare pas déjà:
 
 ```bash
 yarn add react-hook-form zod @hookform/resolvers
@@ -111,7 +111,7 @@ const passwordConfirmationValidation = z
   .trim()
   .min(1, t('passwordConfirmationRequired', 'Password confirmation is required'));
 
-const schema = z
+const changePasswordFormSchema = z
   .object({
     oldPassword: oldPasswordValidation,
     newPassword: newPasswordValidation,
@@ -127,7 +127,7 @@ Ce schéma définit les règles de validation pour les champs du formulaire. Cha
 
 ### Étape 3
 
-Créer un résolveur personnalisé pour React Hook Form qui utilise Zod pour la validation:
+Configurer React Hook Form pour utiliser le résolveur Zod:
 
 ```tsx
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -137,8 +137,8 @@ const {
   handleSubmit,
   control,
   formState: { errors },
-} = useForm<z.infer<typeof schema>>({
-  resolver: zodResolver(schema),
+} = useForm<z.infer<typeof changePasswordFormSchema>>({
+  resolver: zodResolver(changePasswordFormSchema),
   defaultValues: {
     oldPassword: "",
     newPassword: "",
@@ -147,7 +147,7 @@ const {
 });
 ```
 
-Ce code crée un résolveur personnalisé en utilisant `zodResolver` de `@hookform/resolvers`. Le résolveur utilise le schéma Zod défini à l'étape 2 pour valider les données du formulaire. La propriété `defaultValues` est optionnelle mais recommandée pour s'assurer que les champs du formulaire sont initialisés avec des chaînes vides. Le paramètre de type générique `<z.infer<typeof schema>>` fournit l'inférence de type pour les données du formulaire.
+Ce code utilise `zodResolver` de `@hookform/resolvers` pour valider les données du formulaire avec le schéma Zod défini à l'étape 2. La propriété `defaultValues` est optionnelle mais recommandée pour s'assurer que les champs du formulaire sont initialisés avec des chaînes vides. Le paramètre de type générique `<z.infer<typeof changePasswordFormSchema>>` fournit l'inférence de type pour les données du formulaire.
 
 ### Étape 4
 
@@ -156,7 +156,7 @@ Ajouter la fonction `handleSubmit` à votre formulaire:
 ```tsx
 import type { SubmitHandler } from "react-hook-form";
 
-const onSubmit: SubmitHandler<z.infer<typeof schema>> = async (data) => {
+const onSubmit: SubmitHandler<z.infer<typeof changePasswordFormSchema>> = async (data) => {
   const { oldPassword, newPassword } = data;
 
   try {
@@ -256,6 +256,7 @@ Dans ces scénarios, vous pouvez créer une fonction factory qui retourne le sch
 
 ```tsx
 import { z } from "zod";
+import { useMemo } from "react";
 import type { TFunction } from "i18next";
 
 const createChangePasswordSchema = (t: TFunction) => {
@@ -285,7 +286,7 @@ export type ChangePasswordFormData = z.infer<ReturnType<typeof createChangePassw
 // Plus bas dans le composant
 const ChangePasswordModal = () => {
   const { t } = useTranslation();
-  const changePasswordSchema = createChangePasswordSchema(t);
+  const changePasswordSchema = useMemo(() => createChangePasswordSchema(t), [t]);
 
   const {
     handleSubmit,
