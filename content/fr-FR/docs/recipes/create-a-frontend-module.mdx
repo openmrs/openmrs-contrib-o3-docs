@@ -77,7 +77,7 @@ Vérifiez d'abord les fichiers que la plupart des modules modifient:
 - `src/active-prescriptions.component.tsx` est le composant de page généré.
 - `translations/en.json` contient les chaînes de traduction de départ.
 
-Le module généré inclut aussi `src/index.ts`, `src/root.component.tsx`, la configuration de build choisie, Vitest avec jsdom, ESLint, Prettier, Husky et l'extraction des traductions. `src/routes.json` mappe la route `/active-prescriptions` au lifecycle exporté `root`, et `root.component.tsx` rend le composant de route. Si vous générez un module avec des extensions, le même modèle crée des fichiers de composants d'extension et exporte leurs lifecycles depuis `src/index.ts`.
+Le module généré inclut aussi `src/index.ts`, `src/root.component.tsx`, la configuration de build choisie (`rspack.config.js` par défaut), un test de départ `src/root.component.test.tsx`, Vitest avec jsdom, ESLint, Prettier, Husky et l'extraction des traductions. `src/routes.json` mappe la route `/active-prescriptions` au lifecycle exporté `root`, et `root.component.tsx` rend le composant de route. Si vous générez un module avec des extensions, le même modèle crée des fichiers de composants d'extension et exporte leurs lifecycles depuis `src/index.ts`.
 
 ### Prévisualiser sans écrire de fichiers
 

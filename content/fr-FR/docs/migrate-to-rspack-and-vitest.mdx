@@ -58,15 +58,22 @@ Gardez la dépendance de développement `openmrs`. `yarn start` passe toujours p
 
 ### Renommer le fichier de configuration
 
-Renommez `webpack.config.js` en `rspack.config.js` et importez la nouvelle configuration par défaut:
+Renommez `webpack.config.js` en `rspack.config.js` et importez la nouvelle configuration par défaut. Le scaffold actuel de `npm create @openmrs/o3-app@latest` désactive aussi les avertissements de taille d'asset en production, car le budget générique de 244 KiB produit beaucoup de bruit pour les modules O3 qui partagent les dépendances framework et Carbon au runtime:
 
 ```js filename="rspack.config.js"
 const config = require("@openmrs/rspack-config");
+const base = config.default ?? config;
 
-module.exports = config.default ?? config;
+const disablePerformanceHints = (cfg) => ({
+  ...cfg,
+  performance: { ...(cfg.performance ?? {}), hints: false },
+});
+
+module.exports =
+  typeof base === "function" ? (...args) => disablePerformanceHints(base(...args)) : disablePerformanceHints(base);
 ```
 
-Si votre app passe des overrides à la configuration par défaut, leur forme ne change pas. Rspack accepte le format de configuration de Webpack.
+Si votre app passe des overrides à la configuration par défaut, appliquez-les avant d'exporter la configuration finale. Leur forme ne change pas, car Rspack accepte le format de configuration de Webpack.
 
 Les modules plus anciens peuvent encore utiliser `openmrs/default-rspack-config`, un export de compatibilité du paquet d'outillage `openmrs`. Préférez `@openmrs/rspack-config` pour les nouvelles migrations afin que la dépendance corresponde au scaffold publié par `@openmrs/create-o3-app`.
 

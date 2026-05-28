@@ -12,15 +12,22 @@ Vous n'êtes pas obligé d'utiliser la configuration par défaut. Les applicatio
 
 ## Mise en place
 
-La configuration minimale générée par `npm create @openmrs/o3-app@latest` charge la configuration standard depuis `@openmrs/rspack-config`:
+La configuration générée par `npm create @openmrs/o3-app@latest` charge la configuration standard depuis `@openmrs/rspack-config`, puis désactive les avertissements de taille d'asset en production. Ces avertissements utilisent le budget générique de 244 KiB de Webpack, qui n'est pas très pertinent pour les modules O3 lorsque les dépendances framework et Carbon sont partagées via l'app shell:
 
 ```js filename="rspack.config.js"
 const config = require("@openmrs/rspack-config");
+const base = config.default ?? config;
 
-module.exports = config.default ?? config;
+const disablePerformanceHints = (cfg) => ({
+  ...cfg,
+  performance: { ...(cfg.performance ?? {}), hints: false },
+});
+
+module.exports =
+  typeof base === "function" ? (...args) => disablePerformanceHints(base(...args)) : disablePerformanceHints(base);
 ```
 
-Cette configuration délègue tout aux valeurs par défaut décrites ci-dessous.
+Si vous écrivez une configuration à la main, `module.exports = config.default ?? config` reste le minimum réel. Le wrapper généré garde les builds de nouveaux modules silencieux tout en déléguant les règles de fédération, de dépendances partagées et de loaders aux valeurs par défaut décrites ci-dessous.
 
 Les modules plus anciens peuvent encore utiliser l'export de compatibilité `openmrs/default-rspack-config`. Il fonctionne toujours quand le module dépend du paquet d'outillage `openmrs`, mais les nouveaux modules devraient dépendre directement de `@openmrs/rspack-config`.
 

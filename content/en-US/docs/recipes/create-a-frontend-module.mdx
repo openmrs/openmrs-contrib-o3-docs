@@ -77,7 +77,7 @@ Review the files most modules change first:
 - `src/active-prescriptions.component.tsx` is the generated page component.
 - `translations/en.json` contains the starter translation strings.
 
-The generated module also includes `src/index.ts`, `src/root.component.tsx`, the selected build config, Vitest with jsdom, ESLint, Prettier, Husky, and translation extraction wiring. `src/routes.json` maps the `/active-prescriptions` route to the exported `root` lifecycle, and `root.component.tsx` renders the route component. If you generate a module with extensions, the same template pattern creates extension component files and exports their lifecycles from `src/index.ts`.
+The generated module also includes `src/index.ts`, `src/root.component.tsx`, the selected build config (`rspack.config.js` by default), a starter `src/root.component.test.tsx`, Vitest with jsdom, ESLint, Prettier, Husky, and translation extraction wiring. `src/routes.json` maps the `/active-prescriptions` route to the exported `root` lifecycle, and `root.component.tsx` renders the route component. If you generate a module with extensions, the same template pattern creates extension component files and exports their lifecycles from `src/index.ts`.
 
 ### Preview before writing files
 
