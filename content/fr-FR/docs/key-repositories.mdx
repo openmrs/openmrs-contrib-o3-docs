@@ -6,10 +6,10 @@ Le code dans chaque dépôt est axé sur une préoccupation particulière. Par e
 
 Les dépôts que vous devez connaître dans O3 incluent :
 
-- [Core](#core) - contient des modules frontend pour les préoccupations de bas niveau telles que l'authentification. Il contient également l'application de base qui charge et assemble tous les modules frontend, l'app shell. Cet app shell fournit la bibliothèque JavaScript `@openmrs/esm-framework`, qui fournit des préoccupations transversales essentielles telles que la configuration, l'internationalisation, les indicateurs de fonctionnalités et la gestion de l'état global. Ce dépôt contient également les outils pour O3.
+- [Core](#core) - contient des modules frontend pour les préoccupations de bas niveau telles que l'authentification. Il contient également l'app shell, l'application de base qui charge et assemble tous les modules frontend. Core publie aussi la bibliothèque JavaScript `@openmrs/esm-framework`, qui fournit des préoccupations transversales essentielles telles que la configuration, l'internationalisation, les indicateurs de fonctionnalités et la gestion de l'état global. Ce dépôt contient également les outils pour O3.
 - [Home](#home) - rend l'interface utilisateur de la page d'accueil après la connexion de l'utilisateur. Cette app vit maintenant dans le monorepo Patient Management. Les implémenteurs peuvent personnaliser cette page pour afficher des tableaux de bord pour les rendez-vous, les listes de patients, les files d'attente de services, les visualisations de données, et plus encore.
 - [Template](#template) - un dépôt modèle de démarrage qui reste utile comme référence pour la structure générée par `npm create @openmrs/o3-app@latest`.
-- [Patient Chart](#patient-chart) - regroupe les modules frontend qui constituent ensemble le tableau de bord patient, y compris les widgets pour les pièces jointes, les allergies, les rendez-vous, les conditions, les indicateurs patient, les formulaires, les vaccinations, l'impression d'étiquettes, les listes, les médicaments, les notes, les programmes, les résultats de tests et les signes vitaux.
+- [Patient Chart](#patient-chart) - regroupe les modules frontend qui constituent ensemble le tableau de bord patient, y compris les widgets pour les pièces jointes, les allergies, les rendez-vous, les conditions, les indicateurs patient, les formulaires, les vaccinations, l'impression d'étiquettes, les listes, les médicaments, les notes, les programmes, les tâches, les résultats de tests et les signes vitaux.
 - [Patient Management](#patient-management) - regroupe les modules frontend qui gèrent les préoccupations liées à la gestion des patients telles que la planification des rendez-vous, la recherche de patients, la gestion des listes de patients, l'enregistrement de nouveaux patients, ainsi que la gestion des files d'attente de services, des lits, des services et de la page d'accueil.
 - [Laboratory app](#laboratory-app) - Un module frontend pour gérer les demandes et les files d'attente de laboratoire construit sur OpenMRS 3.x
 - [Angular Form Engine](#angular-form-engine) - une bibliothèque de moteur de formulaires construite en Angular. Elle exploite le puissant support d'Angular pour les formulaires pour fournir une solution robuste avec des capacités telles que la validation des champs, l'injection de sources de données personnalisées, le rendu conditionnel, les expressions historiques, et plus encore.
@@ -73,6 +73,7 @@ Contient divers modules frontend qui constituent des widgets dans un tableau de 
 - [Ordonnances](https://github.com/openmrs/openmrs-esm-patient-chart/blob/main/packages/esm-patient-orders-app) - affiche le Panier d'ordonnances dans l'espace de travail qui permet aux utilisateurs de prescrire de nouvelles ordonnances de médicaments et d'examens, de modifier les existantes, et plus encore.
 - [Bannière Patient](https://github.com/openmrs/openmrs-esm-patient-chart/blob/main/packages/esm-patient-banner-app) - affiche une bannière qui montre le nom du patient, son avatar, son genre, son âge et ses identifiants. Elle fournit également un panneau extensible qui montre son adresse, ses coordonnées et ses relations avec d'autres patients. La bannière patient peut aussi afficher des étiquettes personnalisées pour indiquer si un patient a une visite active en cours ou s'il est décédé entre autres.
 - [Programmes](https://github.com/openmrs/openmrs-esm-patient-chart/blob/main/packages/esm-patient-programs-app) - fournit une vue tabulaire des programmes auxquels un patient est inscrit ainsi qu'un formulaire pour inscrire le patient à de nouveaux programmes.
+- [Tâches](https://github.com/openmrs/openmrs-esm-patient-chart/blob/main/packages/esm-patient-task-list-app) - fournit un workspace du dossier patient pour créer, consulter et gérer les tâches du patient. Il dépend du module backend Tasks.
 - [Tests](https://github.com/openmrs/openmrs-esm-patient-chart/blob/main/packages/esm-patient-tests-app) - fournit des fonctionnalités pour prescrire et visualiser les résultats de tests pour un patient. Cela peut inclure des tests de laboratoire, des examens radiologiques, et plus encore.
 - [Signes Vitaux](https://github.com/openmrs/openmrs-esm-patient-chart/blob/main/packages/esm-patient-vitals-app) - fournit des vues tabulaires et graphiques des signes vitaux et biométriques enregistrés pour un patient ainsi qu'un formulaire pour enregistrer les signes vitaux et biométriques. Il fournit également un en-tête des signes vitaux qui affiche un résumé des signes vitaux les plus récemment enregistrés.
 
@@ -145,12 +146,14 @@ L'[application d'intégration des utilisateurs](https://github.com/openmrs/openm
 
 ### Application de référence de distribution
 
-Ce projet contient la configuration de build pour l'application de référence OpenMRS 3.0, disponible sur https://dev3.openmrs.org et https://o3.openmrs.org. Cette distribution se compose de quatre images docker :
+Ce projet contient la configuration de build pour l'application de référence OpenMRS 3.0, disponible sur https://dev3.openmrs.org et https://o3.openmrs.org. La distribution de base se compose de quatre images Docker :
 
 - `db` - C'est simplement l'image MariaDB standard fournie pour être utilisée comme base de données
 - `backend` - Cette image est le backend OpenMRS. Elle est construite à partir du Dockerfile principal inclus dans la racine du projet et basée sur le fichier Docker core OpenMRS. Le contenu supplémentaire pour cette image est tiré du sous-répertoire distro qui inclut une configuration complète Initializer pour l'application de référence destinée comme point de départ.
-- `frontend` - Cette image est un simple conteneur nginx qui intègre le frontend 3.x, y compris les modules décrits dans le fichier.
-- `proxy` - Cette image est un proxy inverse nginx encore plus simple qui se situe devant les conteneurs backend et frontend et fournit une interface commune aux deux. Fondamentalement, cela aide à atténuer les problèmes CORS.
+- `frontend` - Cette image est un simple conteneur nginx qui intègre le frontend 3.x, y compris les modules décrits dans `frontend/spa-assemble-config.json`.
+- `gateway` - Cette image est un proxy inverse nginx qui se situe devant les conteneurs backend et frontend et fournit une interface commune aux deux. Cela aide à atténuer les problèmes CORS.
+
+Lorsque l'overlay SSL est activé, la distribution inclut aussi un service `certbot` pour générer et renouveler les certificats.
 
 ### Packages de contenu
 
