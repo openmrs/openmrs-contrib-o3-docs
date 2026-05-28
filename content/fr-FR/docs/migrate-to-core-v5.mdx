@@ -152,10 +152,13 @@ Chaque page du tableau `pages` est représentée par un objet JSON avec les prop
 - `component` - une propriété de type chaîne qui représente le nom du composant exporté par ce module frontend.
 - `route` - propriété de type chaîne ou booléen qui représente la route par laquelle la page est accessible. C'est la même chose que la propriété `route` dans le tableau original `pages`. Si elle est définie comme une chaîne de caractères, elle est utilisée pour indiquer que cette page est accessible par la route spécifiée. Par exemple, `name` correspondra à la page courante `${window.spaBase/name}`. S'il s'agit d'un booléen, cela indique que le composant doit toujours être rendu ou ne doit jamais être rendu.
 - `routeRegex` - Une expression régulière qui est utilisée pour faire correspondre la route courante afin de déterminer si cette page doit être rendue. Notez que `${window.spaBase}` est supprimé avant d'essayer de faire correspondre la route, donc en mettant `^nom.+`, toute route commençant par `${window.spaBase}/nom` sera prise en compte. Vous ne pouvez spécifier que `route` ou `routeRegex`.
-- `privilege` - tableau ou chaîne de caractères qui représente un ou plusieurs privilèges que l'utilisateur doit avoir pour que cette page soit affichée. Si l'utilisateur n'a pas les privilèges spécifiés, la page ne sera pas rendue.
 - `online` - propriété booléenne optionnelle. La valeur par défaut est `true`. Détermine si le composant est affiché lorsque le navigateur est connecté à Internet. Si false, la page ne sera pas rendue en ligne.
 - `offline` - propriété booléenne optionnelle. La valeur par défaut est `false`. Détermine si le composant est rendu lorsque le navigateur n'est pas connecté à Internet. Si false, la page ne sera pas rendue lorsque le navigateur n'est pas connecté à Internet.
-- `order` - propriété entière. Détermine l'ordre dans lequel l'élément DOM qui rend cette page est rendu. Cette propriété doit être utilisée avec parcimonie, mais elle est parfois nécessaire pour s'assurer que le balisage résultant est correct. La valeur minimale est 0.
+- `order` - les anciens schémas de routes incluent cette propriété entière, mais le runtime actuel trie les pages par nom d'app et n'utilise pas `order` au niveau des pages. Ne vous y fiez pas pour l'ordre de rendu.
+
+  <Callout emoji="ℹ️" type="info">
+    Le runtime actuel n'applique pas `privilege` ni `privileges` sur les `pages`. Gérez l'accès dans la page elle-même, ou exposez les points d'entrée privilégiés sous forme d'extensions avec `privileges`.
+  </Callout>
 
   <Callout emoji="ℹ️" type="info">
     `component` est la seule propriété requise. Toutes les autres propriétés sont facultatives.
@@ -235,7 +238,7 @@ Chaque extension dans le tableau `extensions` est représentée par un objet JSO
 - `name` - propriété `string` qui fait référence au nom de l'extension. C'est la même chose que la propriété `name` dans le tableau `extensions` original.
 - `component` - Propriété `string` qui fait référence au nom du composant exporté par ce module frontal. C'est la même chose que la propriété `component` du tableau `pages` de l'étape précédente.
 - `slot` - Propriété `string` qui fait référence au nom du slot dans lequel cette extension doit être montée. C'est la même chose que la propriété `slot` dans le tableau original `extensions`.
-- `privilege` - propriété `string` ou `array` qui fait référence au(x) privilège(s) qu'un utilisateur doit avoir pour que cette extension soit rendue.
+- `privileges` - propriété `string` ou `array` qui fait référence au(x) privilège(s) qu'un utilisateur doit avoir pour que cette extension soit rendue.
 - `online` - propriété booléenne optionnelle. La valeur par défaut est `true`. Détermine si le composant est rendu lorsque le navigateur est connecté à Internet. Si false, la page ne sera pas rendue lorsque le navigateur est en ligne.
 - `offline` - propriété booléenne optionnelle. La valeur par défaut est `false`. Détermine si le composant est rendu lorsque le navigateur n'est pas connecté à Internet. Si false, la page ne sera pas rendue lorsque le navigateur n'est pas connecté à Internet.
 - `order` - Propriété `integer`. Détermine l'ordre de rendu de ce composant dans son slot d'extension par défaut. Notez que ceci peut être surchargé par la configuration. La valeur minimale est 0.

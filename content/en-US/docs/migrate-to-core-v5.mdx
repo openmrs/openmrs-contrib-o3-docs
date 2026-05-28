@@ -227,10 +227,13 @@ Each page in the `pages` array is represented by a JSON object with the followin
 - `component` - a string property that represents the name of the component exported by this frontend module.
 - `route` - string or boolean property that represents the route that the page is accessible at. This is the same as the `route` property in the original `pages` array. If set to a string property, this is used to indicate that this page is accessible at the specified route. For example, `name` will match when the current page is `${window.spaBase/name}`. If a boolean, this indicates the component should always be rendered or should never be rendered.
 - `routeRegex` - A regular expression that is used to match the current route to determine if this page should be rendered. Note that `${window.spaBase}` gets removed before attempting to match the route, so setting this to `^name.+` will any route that starts with `${window.spaBase}/name`. You can only specify one of `route` or `routeRegex`.
-- `privilege` - array or string property that represents one or more privileges that a user must have in order for this page to be rendered. If the user does not have the specified privileges, the page will not be rendered.
 - `online` - optional boolean property. Defaults to `true`. Determines whether the component renders while the browser is connected to the internet. If false, the page will not be rendered while online.
 - `offline` - optional boolean property. Defaults to `false`. Determines whether the component renders while the browser is not connected to the internet. If false, the page will not be rendered while offline.
-- `order` - integer property. Determines the order in which the DOM element that renders this page is rendered. Should be used sparingly, but is sometimes necessary to ensure the resulting markup is correct. Minimum value is 0.
+- `order` - older route schemas include this integer property, but the current runtime sorts pages by app name and does not use page-level `order`. Avoid relying on it for rendering order.
+
+  <Callout emoji="ℹ️" type="info">
+    The current runtime does not enforce `privilege` or `privileges` on `pages`. Gate page access inside the page itself, or expose privileged entry points as extensions with `privileges`.
+  </Callout>
 
   <Callout emoji="ℹ️" type="info">
     `component` is the only required property. All other properties are optional.
@@ -310,7 +313,7 @@ Each extension in the `extensions` array is represented by a JSON object with th
 - `name` - `string` property that refers to the name of the extension. This is the same as the `name` property in the original `extensions` array.
 - `component` - `string` property that refers to the name of the component exported by this frontend module. This is the same as the `component` property of the `pages` array from the previous step.
 - `slot` - `string` property that refers to the name of the slot that this extension should be mounted in. This is the same as the `slot` property in the original `extensions` array.
-- `privilege` - `string` or `array` property that refers to the privilege(s) that a user must have in order for this extension to be rendered.
+- `privileges` - `string` or `array` property that refers to the privilege(s) that a user must have in order for this extension to be rendered.
 - `online` - optional boolean property. Defaults to `true`. Determines whether the component renders while the browser is connected to the internet. If false, the page will not be rendered while online.
 - `offline` - optional boolean property. Defaults to `false`. Determines whether the component renders while the browser is not connected to the internet. If false, the page will not be rendered while offline.
 - `order` - `integer` property. Determines the order in which this component renders in its default extension slot. Note that this can be overridden by configuration. Minimum value is 0.
