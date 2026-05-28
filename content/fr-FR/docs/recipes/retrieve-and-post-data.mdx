@@ -84,14 +84,11 @@ La fonction `mutate` retournée par `useOpenmrsSWR` peut être utilisée pour me
 
 ```ts
 try {
-  const response = await saveVisitNote(payload);
+  await saveVisitNote(payload);
+  await mutate();
+  closeWorkspace({ discardUnsavedChanges: true });
 
-  if (response.status === 201) {
-    await mutate();
-    closeWorkspace({ discardUnsavedChanges: true });
-
-    // montre le succès toast
-  }
+  // affiche le toast de succès
 } catch (error) {
   // gère l'erreur
 }

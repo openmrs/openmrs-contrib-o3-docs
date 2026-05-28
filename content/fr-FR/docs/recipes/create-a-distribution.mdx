@@ -261,7 +261,12 @@ Le fichier `spa-build-config.json` doit inclure:
 - `routes`: Chemin, URL ou JSON inline pour le registre des routes créé par `assemble`. Les chemins relatifs sont résolus depuis le répertoire où vous exécutez la commande.
 - `supportOffline`: S'il faut activer le support hors ligne via un service worker
 
-Vous pouvez également utiliser des variables d'environnement dans le fichier de configuration (elles seront interpolées au moment de la construction):
+La CLI OpenMRS lit `spa-build-config.json` comme du JSON littéral. Elle ne développe pas les variables d'environnement
+shell dans ce fichier pendant `openmrs build`. Si vous construisez directement des fichiers statiques, placez les URLs
+finales dans le fichier JSON ou passez les options CLI correspondantes.
+
+La distribution Reference Application utilise intentionnellement des valeurs de substitution comme `$SPA_PATH`,
+`$API_URL` et `$SPA_CONFIG_URLS`, car son conteneur Docker frontend remplace ces valeurs au démarrage:
 
 ```json filename="spa-build-config.json"
 {

@@ -89,14 +89,11 @@ The `mutate` function returned by `useOpenmrsSWR` can be used to update the cach
 
 ```ts
 try {
-  const response = await saveVisitNote(payload);
+  await saveVisitNote(payload);
+  await mutate();
+  closeWorkspace({ discardUnsavedChanges: true });
 
-  if (response.status === 201) {
-    await mutate();
-    closeWorkspace({ discardUnsavedChanges: true });
-
-    // show success toast
-  }
+  // show success toast
 } catch (error) {
   // handle error
 }
