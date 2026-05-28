@@ -63,7 +63,7 @@ corepack yarn install
 corepack yarn start
 ```
 
-The CLI installs dependencies automatically unless installation is skipped, interrupted, or you used `--dry-run`, but running `corepack yarn install` is safe when you are checking out or resuming a generated project. The app should be available at `http://localhost:8080/openmrs/spa/active-prescriptions`. Use username `admin` and password `Admin123` for the default development backend.
+For standalone modules, the CLI installs dependencies automatically unless installation is skipped, interrupted, or you used `--dry-run`, but running `corepack yarn install` is safe when you are checking out or resuming a generated project. The app should be available at `http://localhost:8080/openmrs/spa/active-prescriptions`. Use username `admin` and password `Admin123` for the default development backend.
 
 Use `corepack yarn start --port <port>` for a different port. Use `corepack yarn start --backend <url>` to point the development shell at another OpenMRS backend, such as `corepack yarn start --backend http://localhost`.
 
@@ -101,7 +101,7 @@ npm create @openmrs/o3-app@latest active-prescriptions -- --dry-run
 | `--route-component <name>` | Set the React component name for the page route. Use it with `--route`. |
 | `--webpack` | Use Webpack instead of the default Rspack build config. |
 | `--no-git` | Skip Git initialization. |
-| `--no-ci` | Skip generated CI workflow files. |
+| `--no-ci` | Reserved for generated CI workflow support. The current template accepts the flag but does not emit workflow files yet. |
 | `--dry-run` | Preview generated files without writing them. |
 | `--quiet` | Suppress output and use defaults where possible. |
 | `--verbose` | Print more detailed output. |
