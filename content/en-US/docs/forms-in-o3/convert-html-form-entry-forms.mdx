@@ -18,10 +18,10 @@ O3 form schemas conform to a standard JSON [schema](https://github.com/openmrs/o
 
 Many implementers have forms built using the HTML Form Entry module. To make it easier to migrate these forms to O3, the Palladium Kenya team built a tool that helps you convert your HTML Form Entry forms to O3 schema. This [HFE to O3 schema converter](https://github.com/openmrs/hfe-o3-form-schema-converter) tool helps you migrate your forms by taking care of some important aspects, including:
 
-- Handling obs with defined `answerConcepts` and where the answers should be inferred from the dictionary
+- Handling obs with defined `answerConceptId` or `answerConceptIds`, and obs whose answers should be inferred from the dictionary
 - Handling of obs styling for radio, checkbox, dropdown
 - Handling obs fields that are marked as required
-- Handling diagnosis `answerClass`
+- Handling diagnosis-style obs that use `answerClasses="Drug"`
 - Handling of custom labels as defined in answerLabel/answerLabels
 - Schema generation for the `obsgroup` tag. The logic can group questions within an obs group. It also generates a schema for groups marked as `repeating`
 - Exporting the HFE schema to a configurable directory. This is helpful in cases where the HFE schema requires further updates to generate the correct JSON schema
