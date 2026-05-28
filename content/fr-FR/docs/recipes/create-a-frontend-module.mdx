@@ -53,7 +53,7 @@ Pour les modules autonomes, le répertoire généré est basé sur le nom du pac
 
 Les projets générés épinglent Yarn avec le champ `packageManager`, donc utilisez les commandes `corepack yarn ...` pour respecter la version indiquée dans le `package.json` généré. Si Corepack n'est pas activé sur votre machine, lancez `corepack enable` une fois, puis relancez l'installation.
 
-Les projets générés dépendent déjà de `openmrs@next`, `@openmrs/esm-framework@next` et de la configuration de build OpenMRS sélectionnée. Utilisez `corepack yarn up openmrs@next @openmrs/esm-framework@next` uniquement si vous voulez volontairement récupérer les bibliothèques core prerelease les plus récentes. Pour un travail de release, épinglez plutôt des versions testées.
+Les projets générés dépendent déjà de `openmrs@next`, `@openmrs/esm-framework@next` et de la configuration de build OpenMRS sélectionnée. Utilisez `corepack yarn up openmrs@next @openmrs/esm-framework@next @openmrs/rspack-config@next` (ou `@openmrs/webpack-config@next` si vous avez généré le module avec `--webpack`) uniquement si vous voulez volontairement récupérer les bibliothèques core prerelease les plus récentes. Pour un travail de release, épinglez plutôt des versions testées.
 
 Exécutez `corepack yarn start` pour lancer l'application. Pour exécuter l'application sur un port spécifique, vous pouvez ajouter le suffixe `--port portNumber` à la commande start.
 
@@ -67,7 +67,7 @@ Vous remarquerez que le code de la page d'accueil et de la page de connexion n'e
 
 Les données sont récupérées à partir du serveur de développement hébergé. Si vous souhaitez le connecter à un autre backend, vous pouvez ajouter le suffixe `--backend https://your-backend-url` à la commande `corepack yarn start`.
 
-TL;DR : la commande `corepack yarn start` exécute en fait `openmrs develop` qui, selon une certaine configuration, configure le tout (lisez-en plus sur la [configuration](/docs/configuration-system)).
+TL;DR : la commande `corepack yarn start` exécute en fait `openmrs develop`, qui configure le shell local selon sa configuration. Lisez-en plus sur la [configuration](/docs/configuration-system).
 
 <Callout emoji="ℹ️" type="info">
   Pour en savoir plus sur le fonctionnement de `openmrs develop`, consultez [`runDevelop`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/tooling/openmrs/src/commands/develop.ts). Notez que le dépôt Template est déjà configuré pour Core v5+ et utilise `routes.json` et `startupApp()` pour l'enregistrement des modules. Si vous migrez un module plus ancien, consultez le [guide de migration](/docs/migrate-to-core-v5).
@@ -131,7 +131,7 @@ Pour en savoir plus sur les possibilités des modules frontaux, consultez le gui
 
 Une fois que vous avez créé un module frontal, vous voudrez l'intégrer dans votre application. Il y a deux étapes à suivre pour cela.
 
-Tout d'abord, publiez votre package de module frontal sur NPM. À la fin, votre package devrait être visible sur npm.js,
+Tout d'abord, publiez votre package de module frontal sur npm. À la fin, votre package devrait être visible sur npmjs.com,
 comme [`@openmrs/esm-login-app`](https://www.npmjs.com/package/@openmrs/esm-login-app).
 
 Ensuite, vous devrez intégrer ce package dans votre distribution. Ajoutez votre module à l'objet `frontendModules` dans le fichier `spa-assemble-config.json` de votre distribution. Pour plus d'informations, consultez le guide [Créer une distribution](/docs/recipes/create-a-distribution) et le guide [Vue d'ensemble de la configuration](/docs/configure-o3/overview#spa-assemble-configjson).

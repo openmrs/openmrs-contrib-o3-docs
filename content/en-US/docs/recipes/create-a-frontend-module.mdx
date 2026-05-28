@@ -53,7 +53,7 @@ For standalone modules, the generated directory is based on the package name. In
 
 Generated projects pin Yarn with the `packageManager` field, so use `corepack yarn ...` commands to respect the version in the generated `package.json`. If Corepack is not enabled on your machine, run `corepack enable` once and then rerun the install command.
 
-Generated projects already depend on `openmrs@next`, `@openmrs/esm-framework@next`, and the selected OpenMRS build config. Use `corepack yarn up openmrs@next @openmrs/esm-framework@next` only when you intentionally want to pull the newest prerelease core libraries into the project. For release work, pin tested versions instead of leaving them on moving tags.
+Generated projects already depend on `openmrs@next`, `@openmrs/esm-framework@next`, and the selected OpenMRS build config. Use `corepack yarn up openmrs@next @openmrs/esm-framework@next @openmrs/rspack-config@next` (or `@openmrs/webpack-config@next` if you scaffolded with `--webpack`) only when you intentionally want to pull the newest prerelease core libraries into the project. For release work, pin tested versions instead of leaving them on moving tags.
 
 Run `corepack yarn start` to get the app running. To run the app on a specific port, add the suffix `--port portNumber` to the start command.
 
@@ -61,12 +61,12 @@ The app should automatically open up in your browser, and you can use the below 
 Username: `admin` 
 Password: `Admin123`
 
-Once logged in, you should be redirected to the home page of the dashboard. But, wait a second, what's the fancy home page with the side bar and all the data, and where did the login page come from?
+Once logged in, you should be redirected to the home page of the dashboard. But, wait a second, what's the fancy home page with the sidebar and all the data, and where did the login page come from?
 You'll notice that the code for the home page and the login page is not actually in your project directory. The [home](https://github.com/openmrs/openmrs-esm-patient-management/tree/main/packages/esm-home-app) and [login](https://github.com/openmrs/openmrs-esm-core/tree/main/packages/apps/esm-login-app) modules live in separate packages.
 
 The data is fetched from the hosted dev server. If you want to connect it to a different backend, append the suffix `--backend https://your-backend-url` to the `corepack yarn start` command.
 
-TLDR; the `corepack yarn start` command actually runs `openmrs develop` which according to some configuration sets it all up (read more about [configuration](/docs/configuration-system)).
+TL;DR: the `corepack yarn start` command actually runs `openmrs develop`, which sets up the local app shell according to its configuration. Read more about [configuration](/docs/configuration-system).
 
 <Callout emoji="ℹ️" type="info">
   To learn more about how `openmrs develop` works, check out [`runDevelop`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/tooling/openmrs/src/commands/develop.ts). Note that the Template repository is already set up for Core v5+ and uses `routes.json` and `startupApp()` for module registration. If you're migrating an older module, see the [migration guide](/docs/migrate-to-core-v5).
@@ -103,7 +103,7 @@ Next, review the generated files and adapt them to your needs. If you used `@ope
   }
   ```
 
-Now that the route is setup, it can be accessed via `http://localhost:8080/openmrs/spa/active-prescriptions`, which should show the generated boilerplate for the new app.
+Now that the route is set up, it can be accessed via `http://localhost:8080/openmrs/spa/active-prescriptions`, which should show the generated boilerplate for the new app.
 The boilerplate has useful resources about key features of the O3 framework that will likely help you in the development of your frontend module. To understand the underlying template, you can read the `README.md` of the [template repository](https://github.com/openmrs/openmrs-esm-template-app/blob/main/README.md).
 
 ### Step 4
@@ -131,7 +131,7 @@ To learn more about what's possible with frontend modules, read the [Overview](/
 
 Once you've created a frontend module, you'll want to integrate it into your application. There are two steps to doing so.
 
-First, publish your frontend module package to NPM. At the end, your package should be visible on npm.js,
+First, publish your frontend module package to npm. At the end, your package should be visible on npmjs.com,
 such as [`@openmrs/esm-login-app`](https://www.npmjs.com/package/@openmrs/esm-login-app).
 
 Then, you'll need to integrate this package into your distribution. Add your module to the `frontendModules` object in your distro's `spa-assemble-config.json` file. For more information, see the [Creating a distribution](/docs/recipes/create-a-distribution) guide and the [Configuration overview](/docs/configure-o3/overview#spa-assemble-configjson) guide.
