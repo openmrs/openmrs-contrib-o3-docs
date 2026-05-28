@@ -13,7 +13,7 @@ Le module Files d'attente de service gère les files d'attente de patients dans 
 - Configuration des signes vitaux et biométries
 - Numéros de file d'attente de visite
 - URLs du dossier patient
-- Types de visite recommandés
+- Intégration avec le formulaire de début de visite
 
 ## Titre du tableau de bord
 
@@ -46,6 +46,23 @@ Définissez la file d'attente de service sélectionnée par défaut lors de l'ou
 ```
 
 La valeur par défaut est `"Outpatient Triage"`.
+
+## Intégration avec le formulaire de début de visite
+
+L'app des files d'attente de service fournit l'extension `visit-form-queue-fields` au formulaire de début de visite du dossier patient. Ces champs sont rendus lorsque la configuration du dossier patient active les champs de file de service, ou lorsque le formulaire de début de visite est ouvert depuis le flux d'ajout de patient aux files de service :
+
+```json
+{
+  "@openmrs/esm-patient-chart-app": {
+    "showServiceQueueFields": true
+  },
+  "@openmrs/esm-service-queues-app": {
+    "defaultInitialServiceQueue": "Outpatient Triage"
+  }
+}
+```
+
+Les onglets de types de visite recommandés sont également contrôlés par le formulaire de début de visite du dossier patient. Configurez `showRecommendedVisitTypeTab` et `visitTypeResourceUrl` sur `@openmrs/esm-patient-chart-app`, pas sur `@openmrs/esm-service-queues-app`.
 
 ## Configuration des priorités
 
@@ -371,40 +388,3 @@ Configurez l'affichage des biométries :
 ```
 
 - `bmiUnit` - Unité pour l'affichage de l'IMC (par défaut : `"kg / m²"`)
-
-## Types de visite recommandés
-
-Activez l'onglet des types de visite recommandés :
-
-```json
-{
-  "@openmrs/esm-service-queues-app": {
-    "showRecommendedVisitTypeTab": true,
-    "visitTypeResourceUrl": "/etl-latest/etl/patient/"
-  }
-}
-```
-
-- `showRecommendedVisitTypeTab` - S'il faut afficher l'onglet des types de visite recommandés
-- `visitTypeResourceUrl` - URL personnalisée pour charger les ressources des types de visite recommandés (requis si `showRecommendedVisitTypeTab` est `true`)
-
-## Statuts de rendez-vous
-
-Configurez les statuts de rendez-vous (partagés avec l'application de rendez-vous) :
-
-```json
-{
-  "@openmrs/esm-service-queues-app": {
-    "appointmentStatuses": [
-      "Requested",
-      "Scheduled",
-      "CheckedIn",
-      "Completed",
-      "Cancelled",
-      "Missed"
-    ]
-  }
-}
-```
-
-Les statuts par défaut sont : `Requested`, `Scheduled`, `CheckedIn`, `Completed`, `Cancelled`, `Missed`.

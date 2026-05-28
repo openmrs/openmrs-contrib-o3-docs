@@ -13,7 +13,7 @@ The Service Queues module manages patient queues in outpatient settings. You can
 - Vitals and biometrics configuration
 - Visit queue numbers
 - Patient chart URLs
-- Recommended visit types
+- Start Visit form integration
 
 ## Dashboard Title
 
@@ -46,6 +46,23 @@ Set the default service queue selected when opening the start visit form:
 ```
 
 The default is `"Outpatient Triage"`.
+
+## Start Visit Form Integration
+
+The service queues app contributes the `visit-form-queue-fields` extension to the Patient Chart Start Visit form. Those fields render when the Patient Chart config enables service queue fields, or when the Start Visit form is opened from the service queues add-patient flow:
+
+```json
+{
+  "@openmrs/esm-patient-chart-app": {
+    "showServiceQueueFields": true
+  },
+  "@openmrs/esm-service-queues-app": {
+    "defaultInitialServiceQueue": "Outpatient Triage"
+  }
+}
+```
+
+Recommended visit type tabs are also controlled by the Patient Chart Start Visit form. Configure `showRecommendedVisitTypeTab` and `visitTypeResourceUrl` on `@openmrs/esm-patient-chart-app`, not on `@openmrs/esm-service-queues-app`.
 
 ## Priority Configuration
 
@@ -371,40 +388,3 @@ Configure biometrics display:
 ```
 
 - `bmiUnit` - Unit for BMI display (default: `"kg / m²"`)
-
-## Recommended Visit Types
-
-Enable recommended visit types tab:
-
-```json
-{
-  "@openmrs/esm-service-queues-app": {
-    "showRecommendedVisitTypeTab": true,
-    "visitTypeResourceUrl": "/etl-latest/etl/patient/"
-  }
-}
-```
-
-- `showRecommendedVisitTypeTab` - Whether to display recommended visit type tab
-- `visitTypeResourceUrl` - Custom URL to load resources for recommended visit types (required if `showRecommendedVisitTypeTab` is `true`)
-
-## Appointment Statuses
-
-Configure appointment statuses (shared with appointments app):
-
-```json
-{
-  "@openmrs/esm-service-queues-app": {
-    "appointmentStatuses": [
-      "Requested",
-      "Scheduled",
-      "CheckedIn",
-      "Completed",
-      "Cancelled",
-      "Missed"
-    ]
-  }
-}
-```
-
-The default statuses are: `Requested`, `Scheduled`, `CheckedIn`, `Completed`, `Cancelled`, `Missed`.
