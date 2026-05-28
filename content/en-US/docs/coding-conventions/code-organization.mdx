@@ -25,10 +25,10 @@
   - Makes it clear which files belong to which component
 
 - Avoid placing styles for multiple components in the same stylesheet. Instead, create a separate stylesheet for each component. This makes it easier to find the styles for a particular component.
-- Use [`@openmrs/create-o3-app`](https://www.npmjs.com/package/@openmrs/create-o3-app) to quickly seed new O3 frontend modules:
+- Use [`@openmrs/create-o3-app`](https://www.npmjs.com/package/@openmrs/create-o3-app) through npm's `create` initializer to quickly seed new O3 frontend modules:
 
   ```sh
-  npm exec @openmrs/create-o3-app@latest -- my-module --standalone
+  npm create @openmrs/o3-app@latest my-module -- --standalone
   ```
 
   The generator provides:
@@ -40,9 +40,9 @@
   - ESLint and Prettier configurations
   - Husky and lint-staged setup
   - Basic project structure following O3 conventions
-  - Example components and tests
+  - Starter page and extension component templates
 
-  The [template app](https://github.com/openmrs/openmrs-esm-template-app) remains useful as a reference or manual fallback.
+  The [template app](https://github.com/openmrs/openmrs-esm-template-app) remains useful as a reference for the generated structure.
 
 - Group imports alphabetically based on their type. The recommended order is:
   - React and framework imports (e.g., `React`, `useState`, `useEffect`)

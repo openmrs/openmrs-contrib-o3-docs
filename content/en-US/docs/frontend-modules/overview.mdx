@@ -13,7 +13,7 @@ Frontend modules are the fundamental building blocks for creating applications i
 These components would be defined in the frontend module's `src` directory and exported from `src/index.ts`. The module's `routes.json` file names those exports and declares where they should appear. During distro assembly, `spa-assemble-config.json` produces both an import map and a routes registry. The app shell uses the routes registry to discover pages and extensions, then uses the import map to fetch the module code when one of those pages or extensions needs to render.
 
 <Callout type="info">
-  If you are creating a new module rather than trying to understand an existing one, start with the [Creating a frontend module](/docs/recipes/create-a-frontend-module) recipe. This overview explains the moving parts; the recipe walks through the published `@openmrs/create-o3-app` generator and the template-app fallback.
+  If you are creating a new module rather than trying to understand an existing one, start with the [Creating a frontend module](/docs/recipes/create-a-frontend-module) recipe. This overview explains the moving parts; the recipe walks through the published `npm create @openmrs/o3-app@latest` workflow.
 </Callout>
 
 ## Critical concepts (don’t skip these)

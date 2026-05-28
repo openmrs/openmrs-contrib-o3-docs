@@ -1,137 +1,147 @@
 import { Callout, Steps } from "nextra/components";
 
-# Création d'un module frontal
+# Création d'un module frontend
 
-OpenMRS publie [`@openmrs/create-o3-app`](https://www.npmjs.com/package/@openmrs/create-o3-app), un générateur pour créer des modules O3. Il peut créer des modules autonomes, des modules dans un monorepo existant et de nouveaux monorepos avec les conventions O3 habituelles déjà configurées. Il nécessite Node.js 20 ou plus récent. Le code source du générateur se trouve dans [`openmrs/create-o3-app`](https://github.com/openmrs/create-o3-app). Le module frontal [Template](https://github.com/openmrs/openmrs-esm-template-app) reste utile comme référence stable ou comme solution manuelle.
+OpenMRS publie [`@openmrs/create-o3-app`](https://www.npmjs.com/package/@openmrs/create-o3-app), un générateur pour créer des modules frontend O3. Les auteurs de modules devraient l'exécuter avec l'initialiseur `create` de npm, sous la forme `npm create @openmrs/o3-app@latest`. Le code source du générateur se trouve dans [`openmrs/create-o3-app`](https://github.com/openmrs/create-o3-app), et le module frontend [Template](https://github.com/openmrs/openmrs-esm-template-app) reste utile comme référence pour la structure générée.
 
 <Callout type="warning">
-  Ne lancez pas `npx create-o3-app`. Le package `create-o3-app` non scopé sur npm est un projet tiers sans rapport. Le générateur OpenMRS est publié sous le nom scopé `@openmrs/create-o3-app`.
+  Incluez toujours le scope `@openmrs/`. Le package npm non scopé `create-o3-app` est un projet tiers sans rapport, donc les commandes comme `npx create-o3-app ...` récupèrent le mauvais outil. Utilisez `npm create @openmrs/o3-app@latest ...` ou `npx @openmrs/create-o3-app@latest ...`.
 </Callout>
 
-## Exemple : Création d'un nouveau module frontal
+## Prérequis
 
-<Callout emoji="ℹ️" type="info">
-  Notez que nous configurons ce dépôt en tant que
-  [polyrepo](https://monorepo.tools/#what-is-a-monorepo). Si vous souhaitez créer
-  un nouveau module frontal dans un monorepo, consultez la note sur les monorepos ci-dessous.
-</Callout>
+- Node.js 20 ou plus récent.
+- Corepack activé, afin que la version de Yarn épinglée par le projet généré fonctionne sans installation séparée de Yarn. Si Corepack n'est pas encore activé, lancez `corepack enable` une fois.
 
-Supposons que vous souhaitiez créer un module frontal qui fournit une interface utilisateur pour afficher les prescriptions actives. Notre objectif est de tenter de recréer l'onglet [`Active Prescriptions`](https://dev3.openmrs.org/openmrs/spa/dispensing) de l'application [`openmrs-esm-dispensing-app`](https://github.com/openmrs/openmrs-esm-dispensing-app).
-Le processus pour cela serait le suivant :
+## Démarrage rapide
+
+Lancez le générateur depuis le répertoire où le nouveau dossier de module doit être créé:
+
+```sh
+npm create @openmrs/o3-app@latest active-prescriptions
+```
+
+Cette commande crée un module de page autonome avec les valeurs par défaut du CLI. Dans les répertoires où le CLI détecte un monorepo existant, il peut demander s'il faut ajouter le module à ce monorepo. Si `npm create` n'est pas votre habitude, la commande `npx` scopée équivalente est:
+
+```sh
+npx @openmrs/create-o3-app@latest active-prescriptions
+```
+
+## Exemple: prescriptions actives
+
+Supposons que vous souhaitiez créer un module frontend qui fournit une interface pour afficher les prescriptions actives. Notre objectif est de recréer l'onglet [`Active Prescriptions`](https://dev3.openmrs.org/openmrs/spa/dispensing) de [`openmrs-esm-dispensing-app`](https://github.com/openmrs/openmrs-esm-dispensing-app).
 
 <Steps>
 
-### Étape 1
+### Générer le module
 
-Lancez le générateur OpenMRS publié depuis le répertoire où le nouveau dossier de module doit être créé. Pour cet exemple, créez un module autonome nommé `active-prescriptions`:
+Pour une commande répétable et adaptée à la CI, passez les flags explicites après le séparateur `--` de npm:
 
 ```sh
-npm exec @openmrs/create-o3-app@latest -- active-prescriptions --standalone --package-name "@openmrs/esm-active-prescriptions-app" --route "/active-prescriptions" --route-component "ActivePrescriptions"
+npm create @openmrs/o3-app@latest active-prescriptions -- \
+  --standalone \
+  --package-name "@openmrs/esm-active-prescriptions-app" \
+  --route "/active-prescriptions" \
+  --route-component "ActivePrescriptions" \
+  --no-git \
+  --quiet
 ```
 
-Rspack est l'outil de build par défaut. Ajoutez `--webpack` uniquement si vous avez besoin d'un scaffold Webpack. Si vous préférez accepter les valeurs par défaut et répondre aux prompts qui s'appliquent au répertoire courant, lancez `npm exec @openmrs/create-o3-app@latest -- active-prescriptions`.
+Le séparateur `--` est obligatoire pour transmettre des flags via `npm create`. Rspack est l'outil de build par défaut; ajoutez `--webpack` uniquement si vous avez besoin d'un scaffold Webpack.
 
 <Callout emoji="ℹ️" type="info">
-  Pourquoi le préfixe `esm`?
-  Les modules frontaux ont la convention d'être préfixés par `esm`. Voir la note sur [les modules frontaux](/docs/frontend-modules/overview).
+  Pourquoi le préfixe `esm`? Les modules frontend utilisent par convention des noms de package qui commencent par `esm`. Consultez l'[aperçu des modules frontend](/docs/frontend-modules/overview).
 </Callout>
 
-<Callout emoji="ℹ️" type="info">
-  Si vous devez partir directement du dépôt Template, ouvrez l'application seed [Template](https://github.com/openmrs/openmrs-esm-template-app), cliquez sur `Use this template`, choisissez `Create a new repository`, puis clonez le nouveau dépôt sur votre machine locale.
-</Callout>
+### Lancer le module localement
 
-### Étape 2
-
-Entrez dans votre répertoire de projet. Le CLI installe automatiquement les dépendances sauf si l'installation est ignorée, interrompue ou si Corepack n'est pas disponible. Si vous devez installer manuellement, lancez:
+Le répertoire généré est basé sur le nom du package. Pour la commande ci-dessus, entrez dans le projet généré et démarrez le shell O3 local:
 
 ```sh
 cd openmrs-esm-active-prescriptions-app
 corepack yarn install
+corepack yarn start
 ```
 
-Pour les modules autonomes, le répertoire généré est basé sur le nom du package. Dans cet exemple, le flag `--package-name "@openmrs/esm-active-prescriptions-app"` crée le répertoire `openmrs-esm-active-prescriptions-app`.
+Le CLI installe automatiquement les dépendances sauf si l'installation est ignorée, interrompue ou si vous avez utilisé `--dry-run`, mais lancer `corepack yarn install` reste sûr lorsque vous récupérez ou reprenez un projet généré. L'application devrait être disponible sur `http://localhost:8080/openmrs/spa/active-prescriptions`. Utilisez l'identifiant `admin` et le mot de passe `Admin123` pour le backend de développement par défaut.
 
-Les projets générés épinglent Yarn avec le champ `packageManager`, donc utilisez les commandes `corepack yarn ...` pour respecter la version indiquée dans le `package.json` généré. Si Corepack n'est pas activé sur votre machine, lancez `corepack enable` une fois, puis relancez l'installation.
+Utilisez `corepack yarn start --port <port>` pour choisir un autre port. Utilisez `corepack yarn start --backend <url>` pour pointer le shell de développement vers un autre backend OpenMRS, par exemple `corepack yarn start --backend http://localhost`.
 
-Les projets générés dépendent déjà de `openmrs@next`, `@openmrs/esm-framework@next` et de la configuration de build OpenMRS sélectionnée. Utilisez `corepack yarn up openmrs@next @openmrs/esm-framework@next @openmrs/rspack-config@next` (ou `@openmrs/webpack-config@next` si vous avez généré le module avec `--webpack`) uniquement si vous voulez volontairement récupérer les bibliothèques core prerelease les plus récentes. Pour un travail de release, épinglez plutôt des versions testées.
+### Personnaliser les fichiers générés
 
-Exécutez `corepack yarn start` pour lancer l'application. Pour exécuter l'application sur un port spécifique, vous pouvez ajouter le suffixe `--port portNumber` à la commande start.
+Vérifiez d'abord les fichiers que la plupart des modules modifient:
 
-L'application devrait s'ouvrir automatiquement dans votre navigateur, et vous pouvez utiliser les identifiants ci-dessous pour vous connecter.
+- `src/constants.ts` exporte le `moduleName` du package.
+- `src/routes.json` enregistre les pages et extensions auprès de l'app shell.
+- `src/config-schema.ts` définit la configuration runtime.
+- `src/active-prescriptions.component.tsx` est le composant de page généré.
+- `translations/en.json` contient les chaînes de traduction de départ.
 
-Nom d'utilisateur : `admin` 
-Mot de passe : `Admin123`
+Le module généré inclut aussi `src/index.ts`, `src/root.component.tsx`, la configuration de build choisie, Vitest avec jsdom, ESLint, Prettier, Husky et l'extraction des traductions. `src/routes.json` mappe la route `/active-prescriptions` au lifecycle exporté `root`, et `root.component.tsx` rend le composant de route. Si vous générez un module avec des extensions, le même modèle crée des fichiers de composants d'extension et exporte leurs lifecycles depuis `src/index.ts`.
 
-Une fois connecté, vous devriez être redirigé vers la page d'accueil du tableau de bord. Mais, attendez une seconde, d'où vient cette page d'accueil sophistiquée avec la barre latérale et toutes les données, et où est passée la page de connexion ?
-Vous remarquerez que le code de la page d'accueil et de la page de connexion n'est en fait pas dans votre répertoire de projet. Les modules [home](https://github.com/openmrs/openmrs-esm-patient-management/tree/main/packages/esm-home-app) et [login](https://github.com/openmrs/openmrs-esm-core/tree/main/packages/apps/esm-login-app) vivent dans des packages séparés.
+### Prévisualiser sans écrire de fichiers
 
-Les données sont récupérées à partir du serveur de développement hébergé. Si vous souhaitez le connecter à un autre backend, vous pouvez ajouter le suffixe `--backend https://your-backend-url` à la commande `corepack yarn start`.
+Utilisez `--dry-run` pour voir ce qui serait créé sans écrire de fichiers, installer les dépendances ni initialiser Git:
 
-TL;DR : la commande `corepack yarn start` exécute en fait `openmrs develop`, qui configure le shell local selon sa configuration. Lisez-en plus sur la [configuration](/docs/configuration-system).
-
-<Callout emoji="ℹ️" type="info">
-  Pour en savoir plus sur le fonctionnement de `openmrs develop`, consultez [`runDevelop`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/tooling/openmrs/src/commands/develop.ts). Notez que le dépôt Template est déjà configuré pour Core v5+ et utilise `routes.json` et `startupApp()` pour l'enregistrement des modules. Si vous migrez un module plus ancien, consultez le [guide de migration](/docs/migrate-to-core-v5).
-</Callout>
-
-### Étape 3
-
-Ensuite, vérifiez les fichiers générés et adaptez-les à vos besoins. Si vous avez utilisé `@openmrs/create-o3-app`, la plupart de ces valeurs devraient déjà correspondre aux options ou aux réponses données au CLI. Si vous avez utilisé le Template directement, vous devrez renommer les valeurs du template vous-même. Vérifiez les points suivants:
-
-- Remplacer toutes les instances de `template` par `active-prescriptions`.
-- Vérifier les métadonnées du module:
-
-  - `src/constants.ts` doit exporter `moduleName = "@openmrs/esm-active-prescriptions-app"`.
-  - `src/index.ts` doit passer ce `moduleName` dans les options de lifecycle.
-  - Si le point d'entrée généré contient encore un `featureName` de placeholder, remplacez-le par une valeur plus utile pour ce module.
-  - Assurez-vous d'avoir une fonction `startupApp()` qui appelle `defineConfigSchema()` si votre module a une configuration. Pour les modules Core v5+, cela est requis pour que les schémas de configuration soient correctement enregistrés.
-
-- Mettre à jour la route vers le module frontal.
-
-  - Nous avons besoin d'une URL de route pour accéder au module frontal. Celle-ci est spécifiée dans `src/routes.json` dans la propriété `pages`. `create-o3-app` enregistre la route générée contre le lifecycle exporté `root`, et `root.component.tsx` rend le composant de route.
-
-  ```json filename="src/routes.json"
-  {
-    "$schema": "https://json.openmrs.org/routes.schema.json",
-    "pages": [
-      {
-        "route": "active-prescriptions",
-        "component": "root",
-        "online": true,
-        "offline": true
-      }
-    ],
-    "extensions": []
-  }
-  ```
-
-Maintenant que la route est configurée, elle peut être accessible via `http://localhost:8080/openmrs/spa/active-prescriptions`, ce qui devrait afficher le boilerplate généré pour la nouvelle app.
-Le boilerplate contient des ressources utiles sur les fonctionnalités clés du framework O3 qui vous aideront probablement dans le développement de votre module frontal. Pour comprendre le template sous-jacent, vous pouvez lire le `README.md` du [dépôt template](https://github.com/openmrs/openmrs-esm-template-app/blob/main/README.md).
-
-### Étape 4
-
-Profitez ! Vous devriez maintenant avoir un module frontal personnalisé que vous pouvez utiliser dans votre application OpenMRS.
+```sh
+npm create @openmrs/o3-app@latest active-prescriptions -- --dry-run
+```
 
 </Steps>
 
-### Création d'un module frontal dans un monorepo
+## Flags courants
 
-Le processus de création d'un nouveau module frontal dans un monorepo est presque identique à celui de la création dans un polyrepo, avec quelques ajustements :
+| Flag | Utilisation |
+| --- | --- |
+| `--standalone` | Crée un module autonome, qui est la valeur par défaut hors d'un monorepo détecté. |
+| `--monorepo` | Ajoute un module au monorepo courant et utilise le chemin de package par défaut. |
+| `--new-monorepo` | Crée un nouveau monorepo racine avec ce module comme premier package. |
+| `--package-name <name>` | Définit le nom du package npm, par exemple `@openmrs/esm-active-prescriptions-app`. |
+| `--route <route>` | Définit le chemin de route d'un module de page. À utiliser avec `--route-component`. |
+| `--route-component <name>` | Définit le nom du composant React pour la route de page. À utiliser avec `--route`. |
+| `--webpack` | Utilise Webpack au lieu de la configuration Rspack par défaut. |
+| `--no-git` | Ignore l'initialisation Git. |
+| `--no-ci` | Ignore les fichiers de workflow CI générés. |
+| `--dry-run` | Prévisualise les fichiers générés sans les écrire. |
+| `--quiet` | Réduit la sortie et utilise les valeurs par défaut lorsque possible. |
+| `--verbose` | Affiche une sortie plus détaillée. |
 
-1. Depuis la racine du monorepo, lancez `npm exec @openmrs/create-o3-app@latest -- referrals-queue --monorepo`. Comme `--monorepo` est un flag explicite de type de projet, le CLI utilise les valeurs par défaut non interactives et place le module dans `packages/apps/esm-referrals-queue`. Pour créer un nouveau monorepo racine à la place, utilisez `--new-monorepo`.
-2. Si vous copiez le Template manuellement, placez son contenu dans un nouveau répertoire de package qui suit la convention du monorepo existant. Pour un nouveau monorepo généré, ce serait `packages/apps/esm-referrals-queue`.
-3. Supprimez les fichiers de configuration déjà présents au niveau de l'espace de travail. Il s'agit de fichiers et de dossiers tels que `.github` et `.eslintrc`.
-4. Supprimez les `devDependencies` du nouveau module frontal dans le `package.json`
-   qui sont déjà dans les `devDependencies` du `package.json` au niveau de l'espace de travail.
+`--rspack` existe seulement comme flag de compatibilité déprécié, car Rspack est déjà la valeur par défaut.
 
-C'est tout !
+## Monorepos
 
-Pour en savoir plus sur les possibilités des modules frontaux, consultez le guide [Aperçu](/docs/frontend-modules/overview).
+### Monorepo existant
 
-## Intégration de votre module frontal dans votre application
+Depuis la racine du monorepo, lancez:
 
-Une fois que vous avez créé un module frontal, vous voudrez l'intégrer dans votre application. Il y a deux étapes à suivre pour cela.
+```sh
+npm create @openmrs/o3-app@latest referrals-queue -- --monorepo
+```
 
-Tout d'abord, publiez votre package de module frontal sur npm. À la fin, votre package devrait être visible sur npmjs.com,
-comme [`@openmrs/esm-login-app`](https://www.npmjs.com/package/@openmrs/esm-login-app).
+Le CLI utilise le chemin de package par défaut `packages/apps/esm-referrals-queue` et met à jour la configuration de workspace lorsqu'il détecte un fichier de workspace pris en charge.
 
-Ensuite, vous devrez intégrer ce package dans votre distribution. Ajoutez votre module à l'objet `frontendModules` dans le fichier `spa-assemble-config.json` de votre distribution. Pour plus d'informations, consultez le guide [Créer une distribution](/docs/recipes/create-a-distribution) et le guide [Vue d'ensemble de la configuration](/docs/configure-o3/overview#spa-assemble-configjson).
+### Nouveau monorepo
+
+Pour créer un nouveau monorepo racine avec le module généré comme premier package, lancez:
+
+```sh
+npm create @openmrs/o3-app@latest referrals-workspace -- --new-monorepo
+```
+
+Le CLI crée le projet racine et place le module sous `packages/apps/esm-referrals-workspace`.
+
+## Publier et ajouter à une distribution
+
+Une fois le module frontend prêt, publiez le package sur npm. Le package devrait ensuite être visible sur npmjs.com, par exemple [`@openmrs/esm-login-app`](https://www.npmjs.com/package/@openmrs/esm-login-app).
+
+Pour inclure le module dans une distribution, ajoutez-le à l'objet `frontendModules` du fichier `spa-assemble-config.json` de la distribution:
+
+```json filename="spa-assemble-config.json"
+{
+  "frontendModules": {
+    "@openmrs/esm-active-prescriptions-app": "1.0.0"
+  }
+}
+```
+
+Utilisez une version testée pour les distributions de release. Pour plus d'informations, consultez le guide [Créer une distribution](/docs/recipes/create-a-distribution) et le guide [Vue d'ensemble de la configuration](/docs/configure-o3/overview#spa-assemble-configjson).

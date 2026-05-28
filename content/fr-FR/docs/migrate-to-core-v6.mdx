@@ -18,8 +18,8 @@ Si vous utilisez déjà Core v6 ou supérieur, vous n'avez pas besoin de migrer.
   Cette page documente la migration historique vers Core v6. Elle met les modules à niveau pour consommer les packages
   framework en ESM tout en gardant les configurations Webpack et Jest existantes fonctionnelles. Pour l'outillage actuel
   Rspack et Vitest, poursuivez avec [Migrer vers Rspack et Vitest](/docs/migrate-to-rspack-and-vitest). Pour de nouveaux
-  modules, commencez par [Créer un module frontend](/docs/recipes/create-a-frontend-module), qui utilise le générateur
-  publié `@openmrs/create-o3-app`.
+  modules, commencez par [Créer un module frontend](/docs/recipes/create-a-frontend-module), qui utilise le workflow
+  publié `npm create @openmrs/o3-app@latest`.
 </Callout>
 
 ## Contexte : Pourquoi cette migration était nécessaire
@@ -464,6 +464,6 @@ Statut actuel de l'écosystème :
 - **L'outillage Core** et l'outillage d'app O3 par défaut utilisent maintenant Rspack.
 - **Les monorepos frontend actifs** comme Patient Chart et Patient Management utilisent Rspack et Vitest, avec de petites exceptions legacy indiquées dans leurs configs.
 - **Webpack et Jest** restent utiles comme ponts de migration pour les modules qui n'ont pas encore migré, mais ne sont plus le point de départ recommandé.
-- **Les nouveaux modules** devraient démarrer avec [`@openmrs/create-o3-app`](/docs/recipes/create-a-frontend-module), qui génère la configuration Rspack et Vitest actuelle.
+- **Les nouveaux modules** devraient démarrer avec la recette [Créer un module frontend](/docs/recipes/create-a-frontend-module), qui génère la configuration Rspack et Vitest actuelle avec `npm create @openmrs/o3-app@latest`.
 
 Après cette migration Core v6, continuez avec [Migration vers Rspack et Vitest](/docs/migrate-to-rspack-and-vitest), sauf si votre dépôt a déjà terminé ce travail.
