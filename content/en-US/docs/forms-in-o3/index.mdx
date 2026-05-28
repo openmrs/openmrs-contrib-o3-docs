@@ -1,0 +1,14 @@
+# Overview
+
+Forms in O3 are JSON schemas rendered by the React Form Engine. A form can be created directly in the O3 Form Builder, converted from an existing HTML Form Entry form, or rendered by a custom frontend module when an application needs a focused form workflow.
+
+The main pieces are:
+
+- `@openmrs/esm-form-builder-app` provides the Form Builder at `${openmrsSpaBase}/form-builder`. It previews forms with the React Form Engine and expects FHIR2 `>=1.2` and REST Web Services `>=2.2.0` on the backend.
+- `@openmrs/esm-patient-forms-app` provides the patient chart form entry workspace. It renders configured HTML Form Entry forms in an iframe and renders O3 JSON forms through the `form-widget-slot`.
+- `@openmrs/esm-form-engine-app` registers the `react-form-engine-widget` extension in `form-widget-slot`.
+- `@openmrs/esm-form-engine-lib` provides the `FormEngine` component for custom rendering, submission handling, and embedded form views.
+
+Start with [building forms with the O3 Form Builder](/docs/forms-in-o3/build-forms-with-o3-form-builder) when you are authoring a new O3 form. Use [converting HTML Form Entry forms](/docs/forms-in-o3/convert-html-form-entry-forms) when you are migrating existing HFE forms. Read [using forms in applications](/docs/forms-in-o3/using-forms-in-applications) when you need to launch the patient chart form workspace or render `FormEngine` directly.
+
+Only published O3 forms are shown in the default forms workspace in the patient chart. Keep important schemas in version control or in a distribution repo, especially when working on demo servers that can be reset.

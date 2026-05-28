@@ -12,7 +12,7 @@ O3 comes out of the box with a built-in form builder that you can use to build f
 
 The main pages in the O3 form builder are:
 
-- The `Forms Dashboard` - where you'll see a tabular list of form schemas saved in your server. You can search through the available forms and filter them by publish status. You can also click on the Edit icon next to each form to launch it in the form editor, where you can make changes to it.
+- The `Forms Dashboard` - where you'll see a tabular list of form schemas saved in your server. You can search through the available forms and filter them by `Active`, `All`, `Published`, `Unpublished`, or `Retired` status. The dashboard defaults to `Active`. You can also click on a form name or the edit action next to each form to launch it in the form editor, where you can make changes to it.
 - The `Form Editor` - where you can create a new form schema or edit an existing one. The Form Editor consists of the following things:
 
   - `Schema Editor` - contains an embedded JSON editor that uses the [React Ace](https://github.com/securingsincity/react-ace) library. You can import a schema, load a sample schema when creating a new form, copy or download the current schema, and click `Render changes` to sync manual JSON edits to the preview. JSON code typed into the editor should match the [standard O3 form schema](https://github.com/openmrs/openmrs-contrib-json-schemas/blob/main/form.schema.json). Read the [React Form Engine documentation](https://openmrs.atlassian.net/wiki/spaces/projects/pages/68747273/O3+Form+Docs) to learn more about what schema properties are available.
@@ -61,6 +61,17 @@ Questions can be rendered in various ways depending on the `rendering` property 
 
 For comprehensive documentation on all available features, rendering types, validation options, and advanced capabilities, see the [React Form Engine documentation](https://openmrs.atlassian.net/wiki/spaces/projects/pages/68747273/O3+Form+Docs).
 
+## Configuring the Form Builder
+
+`@openmrs/esm-form-builder-app` exposes configuration for the builder UI and schema validation workflow:
+
+- `questionTypes` controls the question types available in the Interactive Builder. The default set includes `control`, encounter metadata types, `obs`, `obsGroup`, `patientIdentifier`, `personAttribute`, `testOrder`, and `programState`.
+- `fieldTypes` controls the rendering types available for questions. The default list matches the common rendering types above.
+- `dataTypeToRenderingMap` maps concept datatypes to suggested rendering types when the builder is working from dictionary concepts. For coded concepts, the default map includes the legacy `multiCheckbox` alias; the Form Engine normalizes that to searchable checkbox behavior, so new schemas should use `checkbox-searchable`.
+- `showSchemaSaveWarning` defaults to `true` and controls the dashboard warning about saving schemas outside demo or resettable servers.
+- `enableFormValidation` defaults to `false`. When set to `true`, the editor shows validation actions and the publish action changes to `Validate and publish form`.
+- `blockRenderingWithErrors` defaults to `false`. When set to `true`, schema errors prevent the preview from rendering after you click `Render changes`.
+
 ## Using the Form Builder
 
 <Callout emoji="ℹ️" type="info">
@@ -89,7 +100,7 @@ To use the Schema Editor:
 - Press the `Load sample schema` button (this button only appears when creating a new form with no existing schema) to get a scaffold in your editor where you can begin editing from. Amend the scaffold by deleting or replacing the values of the properties highlighted below with your own content:
 - After making changes to your schema, click the `Render changes` button (located at the top of the Schema Editor) to sync your changes to the Form Preview
 
-```json {3, 7, 10, 13, 16, 17, 19, 20-21, 23, 28, 32-33, 35, 38-52, 55}
+```json
 {
   "encounterType": "",
   "name": "Sample Form",
@@ -129,18 +140,15 @@ To use the Schema Editor:
                 "answers": [
                   {
                     "concept": "another-system-defined-concept-uuid",
-                    "label": "Choice 1",
-                    "conceptMappings": []
+                    "label": "Choice 1"
                   },
                   {
                     "concept": "yet-another-system-defined-concept-uuid",
-                    "label": "Choice 2",
-                    "conceptMappings": []
+                    "label": "Choice 2"
                   },
                   {
                     "concept": "yet-one-more-system-defined-concept-uuid",
-                    "label": "Choice 3",
-                    "conceptMappings": []
+                    "label": "Choice 3"
                   }
                 ]
               },

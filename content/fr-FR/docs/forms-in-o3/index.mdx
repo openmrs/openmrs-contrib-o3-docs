@@ -1,0 +1,14 @@
+# Vue d'ensemble
+
+Les formulaires dans O3 sont des schémas JSON rendus par le React Form Engine. Un formulaire peut être créé directement dans le constructeur de formulaires O3, converti depuis un formulaire HTML Form Entry existant, ou rendu par un module frontend personnalisé lorsqu'une application a besoin d'un flux de formulaire dédié.
+
+Les principaux éléments sont:
+
+- `@openmrs/esm-form-builder-app` fournit le constructeur de formulaires à `${openmrsSpaBase}/form-builder`. Il affiche les aperçus avec le React Form Engine et attend FHIR2 `>=1.2` et REST Web Services `>=2.2.0` sur le backend.
+- `@openmrs/esm-patient-forms-app` fournit l'espace de travail de saisie de formulaire dans le dossier patient. Il rend les formulaires HTML Form Entry configurés dans un iframe et les formulaires JSON O3 via le `form-widget-slot`.
+- `@openmrs/esm-form-engine-app` enregistre l'extension `react-form-engine-widget` dans le `form-widget-slot`.
+- `@openmrs/esm-form-engine-lib` fournit le composant `FormEngine` pour le rendu personnalisé, la gestion de soumission et les vues de formulaires intégrées.
+
+Commencez par [construire des formulaires avec le constructeur de formulaires O3](/docs/forms-in-o3/build-forms-with-o3-form-builder) lorsque vous créez un nouveau formulaire O3. Utilisez [la conversion des formulaires HTML Form Entry](/docs/forms-in-o3/convert-html-form-entry-forms) lorsque vous migrez des formulaires HFE existants. Lisez [utiliser les formulaires dans les applications](/docs/forms-in-o3/using-forms-in-applications) lorsque vous devez lancer l'espace de travail de formulaire du dossier patient ou rendre `FormEngine` directement.
+
+Seuls les formulaires O3 publiés sont affichés dans l'espace de travail de formulaires par défaut du dossier patient. Conservez les schémas importants dans le contrôle de version ou dans un dépôt de distribution, surtout lorsque vous travaillez sur des serveurs de démonstration qui peuvent être réinitialisés.

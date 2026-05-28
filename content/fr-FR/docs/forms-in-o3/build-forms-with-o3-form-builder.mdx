@@ -12,7 +12,7 @@ O3 est livré avec un constructeur de formulaires intégré que vous pouvez util
 
 Les principales pages du constructeur de formulaires O3 sont:
 
-- Le `Tableau de bord des formulaires` - où vous verrez une liste tabulaire des schémas de formulaires enregistrés sur votre serveur. Vous pouvez rechercher parmi les formulaires disponibles et les filtrer par statut de publication. Vous pouvez également cliquer sur l'icône d'édition à côté de chaque formulaire pour le lancer dans l'éditeur de formulaires, où vous pouvez y apporter des modifications.
+- Le `Tableau de bord des formulaires` - où vous verrez une liste tabulaire des schémas de formulaires enregistrés sur votre serveur. Vous pouvez rechercher parmi les formulaires disponibles et les filtrer par statut `Active`, `All`, `Published`, `Unpublished` ou `Retired`. Le tableau de bord utilise `Active` par défaut. Vous pouvez également cliquer sur le nom d'un formulaire ou sur l'action d'édition à côté de chaque formulaire pour le lancer dans l'éditeur de formulaires, où vous pouvez y apporter des modifications.
 - `L'Éditeur de formulaires` - où vous pouvez créer un nouveau schéma de formulaire ou en modifier un existant. L'éditeur de formulaires se compose des éléments suivants:
 
   - `Éditeur de schéma` - contient un éditeur JSON intégré qui utilise la bibliothèque [React Ace](https://github.com/securingsincity/react-ace). Vous pouvez importer un schéma, charger un schéma d'exemple lors de la création d'un nouveau formulaire, copier ou télécharger le schéma actuel, puis cliquer sur `Rendre les modifications` pour synchroniser les modifications JSON manuelles avec l'aperçu. Le code JSON saisi dans l'éditeur doit correspondre au [schéma de formulaire O3 standard](https://github.com/openmrs/openmrs-contrib-json-schemas/blob/main/form.schema.json). Lisez la [documentation du moteur de formulaires React](https://openmrs.atlassian.net/wiki/spaces/projects/pages/68747273/O3+Form+Docs) pour en savoir plus sur les propriétés de schéma disponibles.
@@ -61,6 +61,17 @@ Les questions peuvent être rendues de différentes manières selon la propriét
 
 Pour une documentation complète sur toutes les fonctionnalités disponibles, les types de rendu, les options de validation et les capacités avancées, consultez la [documentation du moteur de formulaires React](https://openmrs.atlassian.net/wiki/spaces/projects/pages/68747273/O3+Form+Docs).
 
+## Configurer le constructeur de formulaires
+
+`@openmrs/esm-form-builder-app` expose des options de configuration pour l'interface du constructeur et le flux de validation des schémas:
+
+- `questionTypes` contrôle les types de questions disponibles dans le Constructeur interactif. La liste par défaut inclut `control`, les types de métadonnées de rencontre, `obs`, `obsGroup`, `patientIdentifier`, `personAttribute`, `testOrder` et `programState`.
+- `fieldTypes` contrôle les types de rendu disponibles pour les questions. La liste par défaut correspond aux types de rendu courants ci-dessus.
+- `dataTypeToRenderingMap` associe les types de données de concepts aux types de rendu suggérés lorsque le constructeur travaille à partir des concepts du dictionnaire. Pour les concepts codés, la configuration par défaut inclut l'alias historique `multiCheckbox`; le Form Engine le normalise en comportement de case à cocher recherchable. Les nouveaux schémas devraient donc utiliser `checkbox-searchable`.
+- `showSchemaSaveWarning` vaut `true` par défaut et contrôle l'avertissement du tableau de bord sur la sauvegarde des schémas en dehors des serveurs de démonstration ou réinitialisables.
+- `enableFormValidation` vaut `false` par défaut. Lorsqu'il vaut `true`, l'éditeur affiche les actions de validation et l'action de publication devient `Validate and publish form`.
+- `blockRenderingWithErrors` vaut `false` par défaut. Lorsqu'il vaut `true`, les erreurs de schéma empêchent le rendu de l'aperçu après avoir cliqué sur `Rendre les modifications`.
+
 ## Utilisation du constructeur de formulaires
 
 <Callout emoji="ℹ️" type="info">
@@ -90,7 +101,7 @@ Pour utiliser l'Éditeur de Schémas:
 - Appuyez sur le bouton `Load sample schema` (ce bouton n'apparaît que lors de la création d'un nouveau formulaire sans schéma existant) pour obtenir une ébauche dans votre éditeur à partir de laquelle vous pouvez commencer à éditer. Modifiez l'ébauche en supprimant et en remplaçant les valeurs des propriétés mises en évidence ci-dessous par votre propre contenu:
 - Après avoir apporté des modifications à votre schéma, cliquez sur le bouton `Rendre les modifications` (situé en haut de l'Éditeur de Schémas) pour synchroniser vos modifications avec l'Aperçu du Formulaire
 
-```json {3, 7, 10, 13, 16, 17, 19, 20-21, 23, 28, 32-33, 35, 38-52, 55}
+```json
 {
   "encounterType": "",
   "name": "Sample Form",
@@ -130,18 +141,15 @@ Pour utiliser l'Éditeur de Schémas:
                 "answers": [
                   {
                     "concept": "another-system-defined-concept-uuid",
-                    "label": "Choice 1",
-                    "conceptMappings": []
+                    "label": "Choice 1"
                   },
                   {
                     "concept": "yet-another-system-defined-concept-uuid",
-                    "label": "Choice 2",
-                    "conceptMappings": []
+                    "label": "Choice 2"
                   },
                   {
                     "concept": "yet-one-more-system-defined-concept-uuid",
-                    "label": "Choice 3",
-                    "conceptMappings": []
+                    "label": "Choice 3"
                   }
                 ]
               },
