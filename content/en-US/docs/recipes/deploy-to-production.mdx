@@ -136,6 +136,10 @@ volumes:
 **Note**: Port 443 (HTTPS) is only exposed when using the SSL compose file (`docker-compose.ssl.yml`). The base configuration only exposes port 80. The reference application README recommends setting `COMPOSE_FILE=docker-compose.yml:docker-compose.ssl.yml` in `.env` so all Compose commands automatically include the SSL overlay.
 </Callout>
 
+The upstream reference application's base `docker-compose.yml` uses `OMRS_CONFIG_AUTO_UPDATE_DATABASE: "true"` and
+`OMRS_CONFIG_CREATE_TABLES: "true"` so the demo and QA environments can bootstrap themselves. For production, keep
+those values `false` after the database has been prepared through your controlled setup and migration process.
+
 #### Step 3: Configure environment variables
 
 Create a `.env` file with your production configuration:
@@ -222,6 +226,10 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget --quiet --tries=1 --spider http://localhost/ || exit 1
 ```
 
+This simple image serves files that were already built. If you want Reference Application-style runtime environment
+overrides for `$SPA_PATH`, `$API_URL`, or `$SPA_CONFIG_URLS`, include an entrypoint like the Reference Application
+frontend `startup.sh` that runs `envsubst`, or build the SPA with the final values in `spa-build-config.json`.
+
 ### Method 3: Static hosting + API proxy
 
 For cloud deployments (AWS S3 + CloudFront, Azure Blob Storage, etc.):
@@ -229,7 +237,7 @@ For cloud deployments (AWS S3 + CloudFront, Azure Blob Storage, etc.):
 1. **Upload frontend assets** to your static hosting service
 2. **Configure CDN** to serve the SPA
 3. **Set up API proxy** to route `/openmrs/*` requests to your backend
-4. **Configure CORS** on your backend to allow requests from your frontend domain
+4. **Configure CORS** on your backend only if the browser calls the backend on a different origin. If your CDN or gateway proxies `/openmrs/*` on the same origin as the SPA, CORS changes are usually not needed.
 
 ## Environment configuration
 
@@ -240,7 +248,7 @@ The frontend container requires these environment variables:
 - **`SPA_PATH`** - Path where the SPA is served (e.g., `/openmrs/spa`)
 - **`API_URL`** - Backend API URL (e.g., `/openmrs` or `https://api.example.com/openmrs`)
 - **`SPA_CONFIG_URLS`** - Comma-separated list of configuration JSON file URLs (e.g., `/openmrs/spa/config-core_demo.json`)
-- **`SPA_DEFAULT_LOCALE`** - Default language code (e.g., `en`, `fr`). Leave empty to use browser default
+- **`SPA_DEFAULT_LOCALE`** - Default locale code (e.g., `en`, `fr`, `en_GB`). In the Reference Application frontend container, leaving it unset or empty falls back to `en_GB`.
 
 ### Backend configuration
 
@@ -282,14 +290,26 @@ If you have your own SSL certificates:
 Before going live, test with Let's Encrypt staging:
 
 ```bash
-SSL_STAGING=true docker compose up -d
+SSL_MODE=prod SSL_STAGING=true docker compose up -d
 ```
+
+### Certificate profiles and IP address certificates
+
+The Reference Application certbot image supports Let's Encrypt certificate profiles through `CERT_PROFILE`:
+
+- `classic` - 90-day certificates, the Let's Encrypt default
+- `tlsserver` - 45-day certificates
+- `shortlived` - 6-day certificates, required for public IP address certificates
+
+If any value in `CERT_WEB_DOMAINS` is a public IP address, the certbot entrypoint automatically selects
+`CERT_PROFILE=shortlived` when no profile is set. If you set a different profile while using an IP address, certificate
+generation fails because Let's Encrypt requires the `shortlived` profile for IP address certificates.
 
 ## Health checks and monitoring
 
 ### Container health checks
 
-All services include health checks:
+The compose example includes health checks for the frontend, backend, and database services:
 
 ```bash
 # Check container health status
@@ -483,6 +503,14 @@ docker compose exec certbot certbot renew --force-renewal --webroot -w /var/www/
 docker compose exec gateway nginx -s reload
 ```
 
+If the certbot service is not running, use a one-off container instead:
+
+```bash
+docker compose run --rm --entrypoint certbot certbot \
+  renew --force-renewal --webroot -w /var/www/certbot
+docker compose exec gateway nginx -s reload
+```
+
 **Domain validation failures:**
 - Verify DNS is correctly configured
 - Ensure port 80 is accessible for HTTP-01 challenge
@@ -658,6 +686,9 @@ TAG=previous-version docker compose up -d
 docker compose down -v
 TAG=previous-version docker compose up -d
 ```
+
+`docker compose down -v` removes named volumes for this Compose project, including database and OpenMRS data volumes.
+Use it only when you have a verified backup and a tested restore plan.
 
 **Database rollback:**
 - Restore from backup if schema changes were made

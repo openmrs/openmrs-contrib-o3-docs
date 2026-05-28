@@ -136,6 +136,11 @@ volumes:
 **Remarque**: le port 443 (HTTPS) n'est exposé que lorsque vous utilisez le fichier compose SSL (`docker-compose.ssl.yml`). La configuration de base n'expose que le port 80. Le README de l'application de référence recommande de définir `COMPOSE_FILE=docker-compose.yml:docker-compose.ssl.yml` dans `.env` afin que toutes les commandes Compose incluent automatiquement l'overlay SSL.
 </Callout>
 
+Le fichier `docker-compose.yml` de l'application de référence définit `OMRS_CONFIG_AUTO_UPDATE_DATABASE: "true"` et
+`OMRS_CONFIG_CREATE_TABLES: "true"` afin que les environnements de démonstration et QA puissent se préparer
+automatiquement. En production, gardez ces valeurs à `false` après avoir préparé la base de données avec votre processus
+contrôlé de configuration et de migration.
+
 #### Étape 3: Configurer les variables d'environnement
 
 Créez un fichier `.env` avec votre configuration de production:
@@ -222,6 +227,11 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget --quiet --tries=1 --spider http://localhost/ || exit 1
 ```
 
+Cette image simple sert des fichiers déjà construits. Si vous voulez des remplacements d'environnement au runtime comme
+dans l'application de référence pour `$SPA_PATH`, `$API_URL` ou `$SPA_CONFIG_URLS`, ajoutez un entrypoint comme le
+`startup.sh` frontend de l'application de référence qui exécute `envsubst`, ou construisez la SPA avec les valeurs
+finales dans `spa-build-config.json`.
+
 ### Méthode 3: Hébergement statique + proxy API
 
 Pour les déploiements cloud, par exemple AWS S3 + CloudFront ou Azure Blob Storage:
@@ -229,7 +239,7 @@ Pour les déploiements cloud, par exemple AWS S3 + CloudFront ou Azure Blob Stor
 1. **Téléversez les assets frontend** vers votre service d'hébergement statique.
 2. **Configurez le CDN** pour servir la SPA.
 3. **Mettez en place un proxy API** pour router les requêtes `/openmrs/*` vers votre backend.
-4. **Configurez CORS** sur votre backend pour autoriser les requêtes depuis votre domaine frontend.
+4. **Configurez CORS** sur votre backend uniquement si le navigateur appelle le backend sur une origine différente. Si votre CDN ou gateway proxifie `/openmrs/*` sur la même origine que la SPA, les changements CORS ne sont généralement pas nécessaires.
 
 ## Configuration de l'environnement
 
@@ -240,7 +250,7 @@ Le conteneur frontend nécessite ces variables d'environnement:
 - **`SPA_PATH`** - chemin où la SPA est servie, par exemple `/openmrs/spa`.
 - **`API_URL`** - URL de l'API backend, par exemple `/openmrs` ou `https://api.example.com/openmrs`.
 - **`SPA_CONFIG_URLS`** - liste d'URLs de fichiers JSON de configuration séparées par des virgules, par exemple `/openmrs/spa/config-core_demo.json`.
-- **`SPA_DEFAULT_LOCALE`** - code de langue par défaut, par exemple `en` ou `fr`. Laissez vide pour utiliser la valeur par défaut du navigateur.
+- **`SPA_DEFAULT_LOCALE`** - code de locale par défaut, par exemple `en`, `fr` ou `en_GB`. Dans le conteneur frontend de l'application de référence, une valeur absente ou vide retombe sur `en_GB`.
 
 ### Configuration backend
 
@@ -282,14 +292,27 @@ Si vous avez vos propres certificats SSL:
 Avant la mise en production, testez avec l'environnement staging de Let's Encrypt:
 
 ```bash
-SSL_STAGING=true docker compose up -d
+SSL_MODE=prod SSL_STAGING=true docker compose up -d
 ```
+
+### Profils de certificat et certificats pour adresses IP
+
+L'image certbot de l'application de référence prend en charge les profils de certificat Let's Encrypt avec
+`CERT_PROFILE`:
+
+- `classic` - certificats de 90 jours, valeur par défaut de Let's Encrypt
+- `tlsserver` - certificats de 45 jours
+- `shortlived` - certificats de 6 jours, requis pour les certificats d'adresses IP publiques
+
+Si une valeur de `CERT_WEB_DOMAINS` est une adresse IP publique, l'entrypoint certbot sélectionne automatiquement
+`CERT_PROFILE=shortlived` lorsqu'aucun profil n'est défini. Si vous définissez un autre profil avec une adresse IP,
+la génération du certificat échoue, car Let's Encrypt exige le profil `shortlived` pour les certificats d'adresses IP.
 
 ## Health checks et monitoring
 
 ### Health checks des conteneurs
 
-Tous les services incluent des health checks:
+L'exemple Compose inclut des health checks pour les services frontend, backend et base de données:
 
 ```bash
 # Vérifier l'état de santé des conteneurs
@@ -483,6 +506,14 @@ docker compose exec certbot certbot renew --force-renewal --webroot -w /var/www/
 docker compose exec gateway nginx -s reload
 ```
 
+Si le service certbot n'est pas en cours d'exécution, utilisez plutôt un conteneur ponctuel:
+
+```bash
+docker compose run --rm --entrypoint certbot certbot \
+  renew --force-renewal --webroot -w /var/www/certbot
+docker compose exec gateway nginx -s reload
+```
+
 **Échecs de validation de domaine:**
 - Vérifiez que le DNS est correctement configuré.
 - Assurez-vous que le port 80 est accessible pour le challenge HTTP-01.
@@ -658,6 +689,9 @@ TAG=previous-version docker compose up -d
 docker compose down -v
 TAG=previous-version docker compose up -d
 ```
+
+`docker compose down -v` supprime les volumes nommés de ce projet Compose, y compris les volumes de base de données et
+de données OpenMRS. Utilisez-le uniquement si vous avez une sauvegarde vérifiée et un plan de restauration testé.
 
 **Rollback de base de données:**
 - Restaurez depuis une sauvegarde si des changements de schéma ont été faits.
