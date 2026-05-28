@@ -352,7 +352,7 @@ The SPA assemble configuration file defines which frontend modules are included 
 The SPA assemble configuration file contains:
 
 - `frontendModules` - an object that describes all the apps that make up your distro and their specific versions (as published on an NPM registry). Keys are module names (e.g., `@openmrs/esm-patient-chart-app`) and values are version strings (e.g., `"4.3.1"` or `"next"` for pre-release versions).
-- `excludedFrontendModules` - (optional) an array of module names to exclude from the distro.
+- `frontendModuleExcludes` - (optional) an array of module names to exclude from the distro. This is the property consumed by the current `openmrs assemble` command.
 
 If you want to add a new module to your distro, add it to the `frontendModules` object. To remove a frontend module, remove its entry from the `frontendModules` object.
 
@@ -360,20 +360,20 @@ If you want to add a new module to your distro, add it to the `frontendModules` 
 
 The SPA build configuration file specifies runtime configuration properties for your frontend application. These properties are embedded into the built application during the build process. The file is located in the `frontend` directory of your distro. The reference application's spa-build-config file lives [here](https://github.com/openmrs/openmrs-distro-referenceapplication/blob/main/frontend/spa-build-config.json).
 
-**Important**: Changes to `spa-build-config.json` require rebuilding the frontend SPA to take effect. However, many properties can be overridden at runtime using environment variables (see Docker-specific notes below).
+**Important**: Changes to `spa-build-config.json` require rebuilding the frontend SPA to take effect. The `openmrs build` command reads this file as literal JSON and does not expand shell environment variables. Runtime environment overrides are a Reference Application Docker pattern handled by its frontend `startup.sh` script after the SPA has been built.
 
 The SPA build configuration file can specify the following properties:
 
-- `spaPath` - the URL path which your SPA will be served from (can be overridden via `SPA_PATH` environment variable).
-- `apiUrl` - the URL of the OpenMRS backend that your SPA will be communicating with (can be overridden via `API_URL` environment variable). Defaults to `/openmrs`.
-- `configUrls` - an array of URLs pointing to JSON configuration files that will be loaded into your SPA at runtime (can be overridden via `SPA_CONFIG_URLS` environment variable). These URLs can use template variables like `${openmrsSpaBase}` or `${openmrsBase}` which will be interpolated at runtime using the `interpolateUrl()` function. For example, `${openmrsSpaBase}/config.json` will resolve to `/openmrs/spa/config.json`.
-- `defaultLocale` - the default locale that your SPA will be served in (can be overridden via `SPA_DEFAULT_LOCALE` environment variable). Defaults to `en_GB` (note: uses underscore, not hyphen).
+- `spaPath` - the URL path which your SPA will be served from.
+- `apiUrl` - the URL of the OpenMRS backend that your SPA will be communicating with. Defaults to `/openmrs`.
+- `configUrls` - an array of URLs pointing to JSON configuration files that will be loaded into your SPA at runtime. These URLs can use template variables like `${openmrsSpaBase}` or `${openmrsBase}` which will be interpolated at runtime using the `interpolateUrl()` function. For example, `${openmrsSpaBase}/config.json` will resolve to `/openmrs/spa/config.json`.
+- `defaultLocale` - the default locale that your SPA will be served in. The app shell build defaults to `en` when no default locale is provided. The Reference Application Docker startup script defaults an empty `SPA_DEFAULT_LOCALE` to `en_GB` (note: uses underscore, not hyphen).
 - `supportOffline` - boolean value that determines whether or not your SPA will be able to function offline. Defaults to `false`.
 - `pageTitle` - the default page title that will be used by your SPA. Defaults to `OpenMRS`.
 - `importmap` - URL or path to the import map (typically `$SPA_PATH/importmap.json`).
 - `routes` - URL or path to the routes registry (typically `$SPA_PATH/routes.registry.json`).
 
-**Docker-specific note**: The reference application uses environment variable substitution in `spa-build-config.json` (e.g., `$SPA_PATH`, `$SPA_CONFIG_URLS`). These are processed at container startup by the `startup.sh` script, allowing runtime overrides without rebuilding. You can set these in your `docker-compose.yml` environment section.
+**Docker-specific note**: The Reference Application intentionally places placeholders such as `$SPA_PATH`, `$API_URL`, `$SPA_CONFIG_URLS`, and `$SPA_DEFAULT_LOCALE` in `spa-build-config.json`. The CLI treats those as literal strings during `openmrs build`; the generated files still contain those placeholders, and the frontend container replaces them at startup with `startup.sh`. You can set the corresponding values in your `docker-compose.yml` environment section when you use that container pattern.
 
 ## Additional configuration guides
 
