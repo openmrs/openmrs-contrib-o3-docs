@@ -154,7 +154,7 @@ Chaque page du tableau `pages` est représentée par un objet JSON avec les prop
 - `routeRegex` - Une expression régulière qui est utilisée pour faire correspondre la route courante afin de déterminer si cette page doit être rendue. Notez que `${window.spaBase}` est supprimé avant d'essayer de faire correspondre la route, donc en mettant `^nom.+`, toute route commençant par `${window.spaBase}/nom` sera prise en compte. Vous ne pouvez spécifier que `route` ou `routeRegex`.
 - `privilege` - tableau ou chaîne de caractères qui représente un ou plusieurs privilèges que l'utilisateur doit avoir pour que cette page soit affichée. Si l'utilisateur n'a pas les privilèges spécifiés, la page ne sera pas rendue.
 - `online` - propriété booléenne optionnelle. La valeur par défaut est `true`. Détermine si le composant est affiché lorsque le navigateur est connecté à Internet. Si false, la page ne sera pas rendue en ligne.
-- `offline` - propriété booléenne optionnelle. La valeur par défaut est `true`. Détermine si le composant est rendu lorsque le navigateur n'est pas connecté à Internet. Si false, la page ne sera pas rendue lorsque le navigateur n'est pas connecté à Internet.
+- `offline` - propriété booléenne optionnelle. La valeur par défaut est `false`. Détermine si le composant est rendu lorsque le navigateur n'est pas connecté à Internet. Si false, la page ne sera pas rendue lorsque le navigateur n'est pas connecté à Internet.
 - `order` - propriété entière. Détermine l'ordre dans lequel l'élément DOM qui rend cette page est rendu. Cette propriété doit être utilisée avec parcimonie, mais elle est parfois nécessaire pour s'assurer que le balisage résultant est correct. La valeur minimale est 0.
 
   <Callout emoji="ℹ️" type="info">
@@ -199,7 +199,7 @@ Pour déplacer `pages` de `index.ts` vers `routes.json`, nous devons extraire le
 - `route` - nous pouvons l'extraire directement de la propriété `route` de la définition de la page. Dans l'exemple du login, ce serait respectivement `"login"` et `"logout"`. Ces routes utilisent le même composant, donc nous pouvons utiliser la même propriété `component` pour les deux.
 
 - `online` - nous utiliserons la valeur par défaut `true`.
-- `offline` - nous utiliserons la valeur par défaut `true`.
+- `offline` - nous définirons explicitement cette valeur à `true` afin que les routes de connexion et de déconnexion puissent être rendues hors ligne.
 
 En assemblant tout cela, nous obtenons la définition suivante de `pages`:
 
@@ -237,7 +237,7 @@ Chaque extension dans le tableau `extensions` est représentée par un objet JSO
 - `slot` - Propriété `string` qui fait référence au nom du slot dans lequel cette extension doit être montée. C'est la même chose que la propriété `slot` dans le tableau original `extensions`.
 - `privilege` - propriété `string` ou `array` qui fait référence au(x) privilège(s) qu'un utilisateur doit avoir pour que cette extension soit rendue.
 - `online` - propriété booléenne optionnelle. La valeur par défaut est `true`. Détermine si le composant est rendu lorsque le navigateur est connecté à Internet. Si false, la page ne sera pas rendue lorsque le navigateur est en ligne.
-- `offline` - propriété booléenne optionnelle. La valeur par défaut est `true`. Détermine si le composant est rendu lorsque le navigateur n'est pas connecté à Internet. Si false, la page ne sera pas rendue lorsque le navigateur n'est pas connecté à Internet.
+- `offline` - propriété booléenne optionnelle. La valeur par défaut est `false`. Détermine si le composant est rendu lorsque le navigateur n'est pas connecté à Internet. Si false, la page ne sera pas rendue lorsque le navigateur n'est pas connecté à Internet.
 - `order` - Propriété `integer`. Détermine l'ordre de rendu de ce composant dans son slot d'extension par défaut. Notez que ceci peut être surchargé par la configuration. La valeur minimale est 0.
 - `meta` - Propriété `objet` qui décrit toutes les propriétés qui sont transmises à l'extension lorsqu'elle est chargée.
 
@@ -250,7 +250,7 @@ Pour déplacer `extensions` de `index.ts` vers `routes.json`, nous devons extrai
 - `name` - nous pouvons l'extraire directement de la propriété `name` de la définition de l'extension. Dans l'exemple de Login, ce serait respectivement `location-picker`, `logout-button`, et `location-changer`.
 - `slot` - nous pouvons l'extraire directement de la propriété `slot` de la définition de l'extension. Dans l'exemple de Login, ce serait respectivement `location-picker`, `user-panel-actions-slot`, et `user-panel-slot`.
 - `online` - nous utiliserons la valeur par défaut `true`.
-- `offline` - nous utiliserons la valeur par défaut `true`.
+- `offline` - nous définirons explicitement cette valeur à `true` afin que ces extensions liées à la connexion puissent être rendues hors ligne.
 - `order` - nous prendrons la propriété `order` de la définition de l'extension `location-changer`, qui est 1.
 
 En rassemblant tout cela, nous obtenons la définition suivante de `extensions`:
