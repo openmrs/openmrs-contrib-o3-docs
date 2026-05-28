@@ -93,7 +93,7 @@ Before running E2E tests locally, make sure you have:
 
 - A running OpenMRS backend (dev3 or local).
 - A frontend dev server for the module under test.
-- Any required environment variables configured (at minimum `E2E_BASE_URL`).
+- Any required environment variables configured. At minimum, set `E2E_BASE_URL` to the OpenMRS base URL, such as `http://localhost:8080/openmrs`; do not include `/spa`.
 
 ## Running tests locally
 
@@ -111,7 +111,7 @@ yarn start --sources "packages/esm-patient-conditions-app"
 
 ```sh
 # 8080 is the default port for the dev server
-export E2E_BASE_URL=http://localhost:8080
+export E2E_BASE_URL=http://localhost:8080/openmrs
 ```
 
 ### Run tests in [headed](https://playwright.dev/docs/ci#running-headed) and [UI](https://playwright.dev/docs/test-ui-mode) modes:
