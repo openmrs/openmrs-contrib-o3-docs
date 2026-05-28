@@ -170,7 +170,7 @@ openmrs build --build-config spa-build-config.json --target ./spa
 
 By building the app shell you'll already get a rudimentary version of an import map, which can be used for development purposes. Generally, however, you should provide your own.
 
-An import map can also be specified as an URL. For instance, for the development instance at `dev3.openmrs.org` we have [https://dev3.openmrs.org/openmrs/spa/import-map.json](https://dev3.openmrs.org/openmrs/spa/import-map.json). The contents of this import map are updated once an update to any (official) frontend module has been pushed. Thus, while this import map may be great for development purposes, it should be considered unstable. Avoid this for your distribution or any application that should not break unexpectedly.
+An import map can also be specified as a URL. For instance, for the development instance at `dev3.openmrs.org` we have [https://dev3.openmrs.org/openmrs/spa/importmap.json](https://dev3.openmrs.org/openmrs/spa/importmap.json). The contents of this import map are updated once an update to any official frontend module has been pushed. Thus, while this import map may be useful for development, it should be considered unstable. Avoid this for your distribution or any application that should not break unexpectedly.
 
 A custom import map can be created using the `openmrs assemble` command. If run directly the command will open a command line survey, guiding you through the different options. It will list all OpenMRS frontend modules that can be found on the NPM registry.
 
@@ -224,7 +224,7 @@ Example:
 }
 ```
 
-In this case the resulting `import-map.json` could look as follows:
+In this case the resulting `importmap.json` could look as follows:
 
 ```json
 {

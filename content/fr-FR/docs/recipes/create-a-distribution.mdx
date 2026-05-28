@@ -171,7 +171,7 @@ openmrs build --build-config spa-build-config.json --target ./spa
 
 En construisant le shell de l'application, vous obtiendrez déjà une version rudimentaire d'une carte d'importation, qui peut être utilisée à des fins de développement. En général, cependant, vous devriez fournir votre propre carte d'importation.
 
-Une carte d'importation peut également être spécifiée sous la forme d'une URL. Par exemple, pour l'instance de développement à `dev3.openmrs.org` nous avons [https://dev3.openmrs.org/openmrs/spa/import-map.json](https://dev3.openmrs.org/openmrs/spa/import-map.json). Le contenu de cette carte d'importation est mis à jour dès qu'une mise à jour de n'importe quel module (officiel) du frontend a été poussée. Ainsi, bien que cette carte d'importation puisse être intéressante pour le développement, elle doit être considérée comme instable. Évitez-la pour votre distribution ou pour toute application qui ne doit pas tomber en panne de manière inattendue.
+Une carte d'importation peut également être spécifiée sous la forme d'une URL. Par exemple, pour l'instance de développement à `dev3.openmrs.org` nous avons [https://dev3.openmrs.org/openmrs/spa/importmap.json](https://dev3.openmrs.org/openmrs/spa/importmap.json). Le contenu de cette carte d'importation est mis à jour dès qu'une mise à jour d'un module frontend officiel a été poussée. Ainsi, bien que cette carte d'importation puisse être utile pour le développement, elle doit être considérée comme instable. Évitez-la pour votre distribution ou pour toute application qui ne doit pas tomber en panne de manière inattendue.
 
 Une carte d'importation personnalisée peut être créée à l'aide de la commande `openmrs assemble`. Si elle est lancée directement, la commande ouvrira une enquête en ligne de commande, vous guidant à travers les différentes options. Elle listera tous les modules frontaux d'OpenMRS qui peuvent être trouvés dans le registre NPM.
 
@@ -225,7 +225,7 @@ Exemple:
 }
 ```
 
-Dans ce cas, le fichier `import-map.json` résultant pourrait ressembler à ce qui suit:
+Dans ce cas, le fichier `importmap.json` résultant pourrait ressembler à ce qui suit:
 
 ```json
 {
