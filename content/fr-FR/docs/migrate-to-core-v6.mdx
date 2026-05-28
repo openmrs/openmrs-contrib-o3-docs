@@ -80,20 +80,20 @@ yarn up @carbon/react@^1.83.0 webpack@^5.99.9 webpack-cli@^6.0.1 webpack-dev-ser
 
 ### Mettre à jour la version Node.js
 
-Mettez à niveau votre version Node.js vers [v22](https://nodejs.org/en/blog/release/v22.16.0) (la version LTS actuelle au moment de la rédaction) ou supérieure.
+Mettez à niveau votre version Node.js vers v22 ou supérieure. Node v22 est le minimum pour cette migration, et Node v24 est la ligne LTS active depuis mai 2026. Préférez donc Node v24 sauf si votre dépôt épingle explicitement v22.
 
 Nous recommandons d'utiliser [fnm](https://github.com/Schniz/fnm) pour gérer plusieurs versions Node.js sur votre système :
 
 ```bash
-fnm install 22
-fnm use 22
+fnm install 24
+fnm use 24
 ```
 
 Alternativement, si vous utilisez [nvm](https://github.com/nvm-sh/nvm), vous pouvez exécuter :
 
 ```bash
-nvm install 22
-nvm use 22
+nvm install 24
+nvm use 24
 ```
 
 ### Mettre à jour la configuration Jest
@@ -233,7 +233,7 @@ Error [ERR_REQUIRE_ESM]: require() of ES Module ... not supported.
 Instead change the require of index.js ... to a dynamic import() which is available in all CommonJS modules.
 ```
 
-lors de l'exécution d'un serveur de développement, cela signifie que Node.js refuse de charger un module ES (.mjs ou type: "module") en utilisant `require()`. CommonJS (require()) et ES Modules (import) sont des systèmes différents. Node.js ne vous permet pas d'utiliser `require()` pour charger un module ES sauf si vous utilisez [Node.js v22.12.0+](https://nodejs.org/api/esm.html#esm_node_js_es_modules) avec la nouvelle fonctionnalité expérimentale activée. Vous pouvez corriger cela en mettant à jour votre version Node.js vers [v22](https://nodejs.org/en/blog/release/v22.16.0) (la version LTS actuelle au moment de la rédaction) ou supérieure.
+lors de l'exécution d'un serveur de développement, cela signifie que Node.js refuse de charger un module ES (.mjs ou type: "module") en utilisant `require()`. CommonJS (require()) et ES Modules (import) sont des systèmes différents. Node.js ne vous permet pas d'utiliser `require()` pour charger un module ES sauf si vous utilisez [Node.js v22.12.0+](https://nodejs.org/api/esm.html#esm_node_js_es_modules) avec la nouvelle fonctionnalité expérimentale activée. Vous pouvez corriger cela en mettant à jour votre version Node.js vers v22 ou supérieure; préférez la ligne LTS active, Node v24, pour les nouveaux environnements locaux.
 
 Voir la section [Mettre à jour la version Node.js](#mettre-à-jour-la-version-nodejs) ci-dessus pour plus de détails.
 
@@ -441,7 +441,7 @@ Nous avons conçu la migration pour être **incrémentale, pas disruptive :**
 
 - **Navigateurs modernes :** Le support natif des modules ES assure des performances optimales.
 - **Anciens navigateurs :** La transpilation automatique est fournie, donc votre application reste compatible même si le navigateur ne supporte pas entièrement les modules ES.
-- **Node.js :** Vous devez utiliser Node.js v22 ou supérieur pour le développement et les builds avec Core v6 et supérieur. Notez que Node v22 est la version LTS actuelle au moment de la rédaction. Voir la section [Mettre à jour la version Node.js](#mettre-à-jour-la-version-nodejs) ci-dessus pour plus de détails.
+- **Node.js :** Vous devez utiliser Node.js v22 ou supérieur pour le développement et les builds avec Core v6 et supérieur. Préférez Node v24 pour les nouveaux environnements locaux, car c'est la ligne LTS active depuis mai 2026. Voir la section [Mettre à jour la version Node.js](#mettre-à-jour-la-version-nodejs) ci-dessus pour plus de détails.
 - **Note sur le bundling du framework :** Bien que les composants du framework soient distribués comme modules ES (ESM), les navigateurs utilisent en fait des ESM émulés sous le capot. Cela signifie que vous obtenez les avantages du chargement de modules moderne, mais avec une compatibilité pour une large gamme d'environnements.
 
 ### Pourquoi cette migration est importante à long terme

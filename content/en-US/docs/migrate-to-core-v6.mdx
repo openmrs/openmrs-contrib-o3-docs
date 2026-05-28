@@ -80,20 +80,20 @@ yarn up @carbon/react@^1.83.0 webpack@^5.99.9 webpack-cli@^6.0.1 webpack-dev-ser
 
 ### Bump Node.js version
 
-Upgrade your Node.js version to [v22](https://nodejs.org/en/blog/release/v22.16.0) (the current LTS version at the time of writing) or higher.
+Upgrade your Node.js version to v22 or higher. Node v22 is the minimum for this migration, and Node v24 is the active LTS line as of May 2026, so prefer Node v24 unless your repository explicitly pins v22.
 
 We recommend using [fnm](https://github.com/Schniz/fnm) to manage multiple Node.js versions on your system:
 
 ```bash
-fnm install 22
-fnm use 22
+fnm install 24
+fnm use 24
 ```
 
 Alternatively, if you're using [nvm](https://github.com/nvm-sh/nvm), you can run:
 
 ```bash
-nvm install 22
-nvm use 22
+nvm install 24
+nvm use 24
 ```
 
 ### Update Jest configuration
@@ -233,7 +233,7 @@ Error [ERR_REQUIRE_ESM]: require() of ES Module ... not supported.
 Instead change the require of index.js ... to a dynamic import() which is available in all CommonJS modules.
 ```
 
-when running a dev server, this means that Node.js is refusing to load an ES Module (.mjs or type: "module") using `require()`. CommonJS (require()) and ES Modules (import) are different systems. Node.js does not allow you to use `require()` to load an ES Module unless you are using [Node.js v22.12.0+](https://nodejs.org/api/esm.html#esm_node_js_es_modules) with the new experimental feature enabled. You can fix this by bumping your Node.js version to [v22](https://nodejs.org/en/blog/release/v22.16.0) (the current LTS version at the time of writing) or higher.
+when running a dev server, this means that Node.js is refusing to load an ES Module (.mjs or type: "module") using `require()`. CommonJS (require()) and ES Modules (import) are different systems. Node.js does not allow you to use `require()` to load an ES Module unless you are using [Node.js v22.12.0+](https://nodejs.org/api/esm.html#esm_node_js_es_modules) with the new experimental feature enabled. You can fix this by bumping your Node.js version to v22 or higher; prefer the active LTS line, Node v24, for new local setups.
 
 See the [Bump Node.js version](#bump-nodejs-version) section above for more details.
 
@@ -441,7 +441,7 @@ We designed the migration to be **incremental, not disruptive:**
 
 - **Modern browsers:** Native ES module support ensures optimal performance.
 - **Older browsers:** Automatic transpilation is provided, so your application remains compatible even if the browser doesn’t fully support ES modules.
-- **Node.js:** You must use Node.js v22 or higher for development and builds with Core v6 and above. Note that Node v22 is the current LTS version at the time of writing. See the [Bump Node.js version](#bump-nodejs-version) section above for more details.
+- **Node.js:** You must use Node.js v22 or higher for development and builds with Core v6 and above. Prefer Node v24 for new local setups because it is the active LTS line as of May 2026. See the [Bump Node.js version](#bump-nodejs-version) section above for more details.
 - **Framework bundling note:** While framework components are distributed as ES modules (ESMs), browsers actually use emulated ESMs under the hood. This means you get the benefits of modern module loading, but with compatibility for a wide range of environments.
 
 ### Why this migration matters long-term
