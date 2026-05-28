@@ -9,6 +9,7 @@ import { Callout } from "nextra/components";
 - Memoize the return value of your SWR hook using `useMemo` to prevent unnecessary rerenders. This is especially important if the hook is used in a component that is rendered many times, such as a table row. When creating custom hooks that wrap SWR, always memoize the return object:
 
   ```tsx
+  import { useMemo } from 'react';
   import { restBaseUrl, useOpenmrsSWR } from '@openmrs/esm-framework';
 
   // Good - memoized return value
@@ -30,7 +31,7 @@ import { Callout } from "nextra/components";
   }
   ```
 - Data fetching hooks should follow the naming convention `use<resource>`. For example, `useUser` is the hook for fetching user data.
-- Use [`openmrsFetch`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/openmrsFetch.md) from `@openmrs/esm-framework` to fetch data from the backend. `openmrsFetch` is a wrapper around the `fetch` API that adds authentication and authorization headers and handles errors. If you pass it directly to `useSWR`, type the SWR data as `FetchResponse<T>` and read the payload from `response.data`. For most resource hooks, prefer `useOpenmrsSWR`, which supplies `openmrsFetch` and an abort signal for you.
+- Use [`openmrsFetch`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/openmrsFetch.md) from `@openmrs/esm-framework` to fetch data from the backend. `openmrsFetch` is a wrapper around the `fetch` API that resolves OpenMRS-relative URLs, sets JSON-friendly request headers, handles OpenMRS REST UI headers, parses response bodies, and throws on non-2xx responses. If you pass it directly to `useSWR`, type the SWR data as `FetchResponse<T>` and read the payload from `response.data`. For most resource hooks, prefer `useOpenmrsSWR`, which supplies `openmrsFetch` and an abort signal for you.
 - Use the `error`, `isLoading`, `isValidating` and `mutate` properties of the SWR hook to handle errors, loading states and mutations. Don't recreate these properties manually.
 - Use SWR's [conditional data fetching](https://swr.vercel.app/docs/conditional-fetching) pattern when the request depends on some condition. For example, if the request depends on a prop, only make the request if the prop is true.
 

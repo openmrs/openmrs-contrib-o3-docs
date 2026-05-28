@@ -9,6 +9,7 @@ import { Callout } from "nextra/components";
 - Mémorisez la valeur de retour de votre hook SWR en utilisant `useMemo` pour éviter des rerenders inutiles. Ceci est particulièrement important si le hook est utilisé dans un composant qui est rendu plusieurs fois, comme une ligne de tableau. Lors de la création de hooks personnalisés qui encapsulent SWR, mémorisez toujours l'objet de retour :
 
   ```tsx
+  import { useMemo } from 'react';
   import { restBaseUrl, useOpenmrsSWR } from '@openmrs/esm-framework';
 
   // Bon - valeur de retour mémorisée
@@ -30,7 +31,7 @@ import { Callout } from "nextra/components";
   }
   ```
 - Les hooks de récupération de données doivent suivre la convention de nommage `use<resource>`. Par exemple, `useUser` est le hook pour récupérer les données utilisateur.
-- Utilisez [`openmrsFetch`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/openmrsFetch.md) depuis `@openmrs/esm-framework` pour récupérer les données du backend. `openmrsFetch` est un wrapper autour de l'API `fetch` qui ajoute des en-têtes d'authentification et d'autorisation et gère les erreurs. Si vous le passez directement à `useSWR`, typez les données SWR comme `FetchResponse<T>` et lisez la charge utile depuis `response.data`. Pour la plupart des hooks de ressource, préférez `useOpenmrsSWR`, qui fournit `openmrsFetch` et un signal d'abandon pour vous.
+- Utilisez [`openmrsFetch`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/openmrsFetch.md) depuis `@openmrs/esm-framework` pour récupérer les données du backend. `openmrsFetch` est un wrapper autour de l'API `fetch` qui résout les URLs relatives à OpenMRS, définit des en-têtes adaptés au JSON, gère les en-têtes UI de l'API REST OpenMRS, analyse les corps de réponse et lève une erreur pour les réponses non-2xx. Si vous le passez directement à `useSWR`, typez les données SWR comme `FetchResponse<T>` et lisez la charge utile depuis `response.data`. Pour la plupart des hooks de ressource, préférez `useOpenmrsSWR`, qui fournit `openmrsFetch` et un signal d'abandon pour vous.
 - Utilisez les propriétés `error`, `isLoading`, `isValidating` et `mutate` du hook SWR pour gérer les erreurs, les états de chargement et les mutations. Ne recréez pas ces propriétés manuellement.
 - Utilisez le modèle de [récupération conditionnelle de données de SWR](https://swr.vercel.app/docs/conditional-fetching) lorsque la requête dépend d'une condition. Par exemple, si la requête dépend d'une prop, ne faites la requête que si la prop est vraie.
 

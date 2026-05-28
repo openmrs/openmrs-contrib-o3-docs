@@ -222,7 +222,7 @@ Common blockers to watch for:
 
 Most frontend module work eventually touches backend data. Prefer the O3 framework utilities and the local repo's existing resource hooks:
 
-- Use `openmrsFetch` with SWR hooks instead of calling `fetch` directly. `openmrsFetch` handles OpenMRS authentication, request headers, and error handling.
+- Use `openmrsFetch` with SWR hooks instead of calling `fetch` directly. `openmrsFetch` resolves OpenMRS-relative URLs, sets the usual JSON and OpenMRS REST request headers, parses responses, and handles errors.
 - Use framework base URLs such as `restBaseUrl` and `fhirBaseUrl` rather than hard-coding `/ws/rest/v1` or FHIR paths throughout components.
 - Keep data access in resource files or custom hooks, then return the SWR state (`data`, `error`, `isLoading` or `isValidating`, and `mutate`) to components.
 - After a successful mutation, update the relevant SWR cache with `mutate` so the UI does not need a full reload.

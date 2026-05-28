@@ -221,7 +221,7 @@ Blocages courants à surveiller:
 
 La plupart des travaux sur un module frontend finissent par toucher des données backend. Préférez les utilitaires du framework O3 et les hooks de ressources déjà présents dans le dépôt:
 
-- Utilisez `openmrsFetch` avec des hooks SWR plutôt qu'un appel direct à `fetch`. `openmrsFetch` gère l'authentification OpenMRS, les en-têtes de requête et les erreurs.
+- Utilisez `openmrsFetch` avec des hooks SWR plutôt qu'un appel direct à `fetch`. `openmrsFetch` résout les URLs relatives à OpenMRS, définit les en-têtes habituels pour JSON et l'API REST OpenMRS, analyse les réponses et gère les erreurs.
 - Utilisez les URLs de base du framework, comme `restBaseUrl` et `fhirBaseUrl`, plutôt que de coder `/ws/rest/v1` ou les chemins FHIR partout dans les composants.
 - Gardez l'accès aux données dans des fichiers de ressources ou des hooks personnalisés, puis retournez l'état SWR (`data`, `error`, `isLoading` ou `isValidating`, et `mutate`) aux composants.
 - Après une mutation réussie, mettez à jour le cache SWR concerné avec `mutate` pour éviter un rechargement complet de l'interface.
