@@ -160,6 +160,8 @@ The `Display conditions` object supports the following properties:
 
   The expression context also includes values from the slot's `state` object, so patient-scoped slots can expose values like `patientUuid` to display expressions.
 
+Display conditions can be provided as base extension configuration, or as a slot-specific override under the slot owner's `extensionSlots.<slotName>.configure` object. If the extension has an extension-specific schema, base values belong under the extension name; otherwise they belong under the extension module name. Slot-specific overrides are the right choice when the same extension appears in more than one slot and needs different visibility rules in each place.
+
 Connectivity is controlled by the extension definition's `online` and `offline` fields in `routes.json`, not by `Display conditions` configuration.
 
 **Example configuration:**
@@ -255,7 +257,7 @@ By default, extensions render in the order they are declared or attached. The fi
 2. **Registered order**: Extensions with an `order` property in their `routes.json` definition appear next, sorted by their order value (offset by 1000 to ensure they come after configured extensions).
 3. **Attached order** (lowest priority): Extensions without any order specification appear last, in the order they were attached (offset by 2000 to ensure they come after all ordered extensions).
 
-Extensions added by administrators via the `add` array follow the same ordering rules.
+Extensions added by administrators via the `add` array participate in configured `order` and registered `order`. If an added extension is not listed in `order` and has no registered `order` value, the runtime has no attachment index for it, so do not rely on the `add` array's order for layout-critical placement. Put the extension ID in `order` when the position matters.
 
 Extensions can provide an `order` index in their definition to influence the order in which they are rendered. This works like [z-index](https://developer.mozilla.org/en-US/docs/Web/CSS/z-index) in CSS—similarly, it is a way of setting relative order among elements that don't officially know about each other.
 
@@ -405,7 +407,7 @@ If your extension isn’t showing up:
 - Confirm that the module appears in `/openmrs/spa/routes.registry.json` and that the `extensions` entry is present.
 - Double-check `routes.json` — the `component` name must match the named export from `src/index.ts`.
 - Confirm the target slot exists and is rendered (look for `<ExtensionSlot name="..." />` in the host module).
-- Check `privileges`, `displayExpression`, `featureFlag`, and the extension definition's `online`/`offline` flags.
+- Check route-level `privileges`, `displayExpression`, `featureFlag`, and the extension definition's `online`/`offline` flags. Also check `Display conditions` configuration for privilege or expression overrides.
 - Unless you explicitly need runtime control, bind the slot in `routes.json` rather than using `attach`.
 - Slot configuration can add, remove, configure, or reorder entries through the slot's `add`, `remove`, `configure`, and `order` arrays.
 

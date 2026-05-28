@@ -160,6 +160,8 @@ L'objet `Display conditions` prend en charge les propriétés suivantes :
 
   Le contexte de l'expression inclut aussi les valeurs de l'objet `state` du slot; les slots liés à un patient peuvent donc exposer des valeurs comme `patientUuid` aux expressions d'affichage.
 
+Les conditions d'affichage peuvent être fournies comme configuration de base de l'extension, ou comme remplacement spécifique au slot sous l'objet `extensionSlots.<slotName>.configure` du module propriétaire du slot. Si l'extension a son propre schéma de configuration, les valeurs de base se placent sous le nom de l'extension; sinon elles se placent sous le nom du module qui fournit l'extension. Les remplacements spécifiques au slot sont le bon choix lorsque la même extension apparaît dans plusieurs slots et nécessite des règles de visibilité différentes selon l'emplacement.
+
 La connectivité est contrôlée par les champs `online` et `offline` de la définition de l'extension dans `routes.json`, pas par la configuration `Display conditions`.
 
 **Exemple de configuration :**
@@ -255,11 +257,11 @@ Par défaut, les extensions sont rendues dans l'ordre où elles sont déclarées
 2. **Ordre enregistré** : Les extensions avec une propriété `order` dans leur définition `routes.json` apparaissent ensuite, triées par leur valeur d'ordre (décalées de 1000 pour s'assurer qu'elles viennent après les extensions configurées).
 3. **Ordre attaché** (priorité la plus faible) : Les extensions sans spécification d'ordre apparaissent en dernier, dans l'ordre où elles ont été attachées (décalées de 2000 pour s'assurer qu'elles viennent après toutes les extensions ordonnées).
 
-Les extensions ajoutées par les administrateurs via le tableau `add` suivent les mêmes règles d'ordre.
+Les extensions ajoutées par les administrateurs via le tableau `add` participent à l'ordre configuré par `order` et à l'ordre enregistré par l'extension. Si une extension ajoutée n'est pas listée dans `order` et n'a pas de valeur `order` enregistrée, le runtime n'a pas d'index d'attachement pour elle; ne vous fiez donc pas à l'ordre du tableau `add` pour un placement important. Ajoutez l'ID de l'extension dans `order` lorsque sa position compte.
 
 Les extensions peuvent fournir un index `order` dans leur définition pour influencer l'ordre dans lequel elles sont rendues. Cela fonctionne comme [z-index](https://developer.mozilla.org/en-US/docs/Web/CSS/z-index) en CSS - de la même manière, c'est un moyen de définir un ordre relatif entre des éléments qui ne sont pas officiellement connus les uns des autres.
 
-Les administrateurs peuvent également modifier cet ordre à l'aide des tableaux `order`, `add` et `remove` présents dans la configuration du slot ; ces changements transitent par le store de configuration et sont pris en compte au moment du rendu par les fonctions `calculateAssignedIds` et `getAssignedExtensions` (voir la [doc API Extensions](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#extensions)).
+Les administrateurs peuvent également modifier cet ordre avec le tableau `order` en même temps que les tableaux `add` et `remove` dans la configuration du slot. Le runtime applique automatiquement ces changements de configuration pour déterminer l'ordre final des extensions.
 
 ### Drapeaux de fonctionnalité
 
@@ -405,7 +407,7 @@ Si votre extension n’apparaît pas :
 - Vérifiez que le module apparaît dans `/openmrs/spa/routes.registry.json` et que l'entrée `extensions` est présente.
 - Vérifiez `routes.json` — la propriété `component` doit correspondre à l’export nommé dans `src/index.ts`.
 - Assurez-vous que le slot cible existe et est rendu (recherchez `<ExtensionSlot name="..." />` dans le module hôte).
-- Vérifiez `privileges`, `displayExpression`, `featureFlag` et les champs `online`/`offline` de la définition de l'extension.
+- Vérifiez les champs `privileges`, `displayExpression`, `featureFlag` et `online`/`offline` définis dans `routes.json`. Vérifiez aussi la configuration `Display conditions` pour les remplacements de privilèges ou d'expression.
 - À moins d’avoir besoin d’un contrôle à l’exécution, enregistrez le slot dans `routes.json` plutôt qu’avec `attach`.
 - La configuration du slot peut ajouter, retirer, configurer ou réordonner les entrées avec les tableaux `add`, `remove`, `configure` et `order`.
 
