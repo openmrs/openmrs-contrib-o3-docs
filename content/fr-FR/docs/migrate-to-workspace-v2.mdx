@@ -25,7 +25,7 @@ Workspace v2 résout ces problèmes avec une hiérarchie à trois niveaux :
 
 Avant de migrer, il est utile de comprendre comment les trois niveaux sont liés :
 
-1. Un **groupe de workspaces** est déclaré dans `workspaceGroups2` et initialisé à l'exécution en appelant `launchWorkspaceGroup2`. Si le groupe possède des fenêtres avec icônes, il rend le menu d'actions (siderail). Un seul groupe peut être ouvert à la fois.
+1. Un **groupe de workspaces** est déclaré dans `workspaceGroups2`. Il peut être ouvert explicitement avec `launchWorkspaceGroup2`, ou implicitement lorsque `launchWorkspace2` ouvre un workspace qui appartient au groupe. Si le groupe possède des fenêtres avec icônes, il rend le menu d'actions (siderail) tant que le groupe est ouvert. Un seul groupe peut être ouvert à la fois.
 2. Une **fenêtre de workspace** est déclarée dans `workspaceWindows2` et appartient à un groupe. Une fenêtre avec une `icon` correspond à un bouton du menu d'actions. L'icône est enregistrée comme une extension dont **l'ID d'extension doit correspondre au nom de la fenêtre**. C'est ainsi que `ActionMenuButton2` sait quelle fenêtre il contrôle.
 3. Un **workspace** est déclaré dans `workspaces2` et appartient à une fenêtre. Les workspaces sont les panneaux de contenu réels. Une fenêtre peut contenir une pile de workspaces (parent + enfants).
 
@@ -111,9 +111,11 @@ Les groupes supportent les propriétés optionnelles suivantes :
 | `persistence` | `"app-wide" \| "closable"` | Mode de persistance du cycle de vie. Utilisez `"closable"` pour rendre le menu d'actions du groupe avec un bouton de fermeture. |
 | `scopePattern` | `string` | Modèle d'URL définissant où les workspaces persistent |
 
-### Initialiser le groupe de workspaces (propriétaires de groupe uniquement)
+### Initialiser le groupe de workspaces uniquement si nécessaire
 
-Si votre application possède un groupe de workspaces (c'est-à-dire que le groupe est défini dans votre `routes.json`), vous devez appeler `launchWorkspaceGroup2` pour l'initialiser. Cela se fait typiquement dans le composant racine de votre application. Si le groupe possède des fenêtres avec icônes, son initialisation rend aussi son menu d'actions disponible.
+Déclarer un groupe dans `workspaceGroups2` ne signifie pas automatiquement que vous devez appeler `launchWorkspaceGroup2`. Un appel normal à `launchWorkspace2` ouvre le groupe du workspace, la fenêtre cible et le workspace s'ils ne sont pas déjà ouverts.
+
+Appelez `launchWorkspaceGroup2` depuis l'application propriétaire lorsque le groupe doit être actif avant le premier lancement de workspace, ou lorsque le groupe a besoin de props de contexte partagées avant que les boutons du menu d'actions et les workspaces ne soient rendus. Patient-chart le fait pour que le contexte patient et visite soit disponible à tous les workspaces du groupe `patient-chart`.
 
 ```tsx
 import { launchWorkspaceGroup2 } from "@openmrs/esm-framework";
@@ -131,7 +133,7 @@ useEffect(() => {
 
 Un seul groupe de workspaces peut être ouvert à la fois. Si `launchWorkspaceGroup2` est appelé avec un nom de groupe différent (ou des props incompatibles), l'utilisateur sera invité à fermer les workspaces ouverts avant que le nouveau groupe ne soit ouvert.
 
-La plupart des applications n'ont **pas** besoin de cette étape — elles définissent des workspaces qui appartiennent à un groupe existant (comme `patient-chart`) et ignorent entièrement l'initialisation du groupe.
+La plupart des modules n'ont **pas** besoin de cette étape. Les modules qui ajoutent des workspaces à un groupe existant, comme `patient-chart`, doivent ignorer entièrement l'initialisation du groupe. Les modules qui possèdent un groupe simple peuvent aussi s'appuyer sur `launchWorkspace2`, sauf si le groupe a besoin d'un contexte app-wide ou d'un menu d'actions avant l'ouverture d'un workspace.
 
 ### Mettre à jour les signatures des composants workspace
 

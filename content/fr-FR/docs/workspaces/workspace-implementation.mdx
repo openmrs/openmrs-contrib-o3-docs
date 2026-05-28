@@ -3,7 +3,7 @@
 L'état de Workspace v2 est géré par le store d'espaces de travail du framework. La plupart du code applicatif doit utiliser les APIs publiques au lieu de modifier directement le store :
 
 - `launchWorkspace2` pour ouvrir ou restaurer un espace de travail
-- `launchWorkspaceGroup2` pour initialiser un groupe possédé par votre application
+- `launchWorkspaceGroup2` pour ouvrir un groupe avant le premier lancement de workspace lorsque votre application a besoin d'un contexte de groupe ou d'un menu d'actions app-wide
 - `closeWorkspaceGroup2` pour fermer le groupe actuel
 - `Workspace2DefinitionProps.closeWorkspace` pour fermer un espace de travail depuis son composant
 - `Workspace2DefinitionProps.launchChildWorkspace` pour ouvrir des espaces de travail enfants dans la même fenêtre

@@ -3,7 +3,7 @@
 Workspace v2 state is managed by the framework's workspace store. Most application code should use the public APIs instead of manipulating the store directly:
 
 - `launchWorkspace2` to open or restore a workspace
-- `launchWorkspaceGroup2` to initialize a group that your app owns
+- `launchWorkspaceGroup2` to open a group before the first workspace launch when your app needs group-level context or an app-wide action menu
 - `closeWorkspaceGroup2` to close the current group
 - `Workspace2DefinitionProps.closeWorkspace` to close a workspace from inside its component
 - `Workspace2DefinitionProps.launchChildWorkspace` to open child workspaces in the same window

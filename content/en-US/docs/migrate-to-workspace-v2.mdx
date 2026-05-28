@@ -25,7 +25,7 @@ Workspace v2 addresses these with a three-level hierarchy:
 
 Before migrating, it helps to understand how the three levels relate:
 
-1. A **workspace group** is declared in `workspaceGroups2` and initialized at runtime by calling `launchWorkspaceGroup2`. If the group has windows with icons, it renders the action menu (siderail). Only one group can be open at a time.
+1. A **workspace group** is declared in `workspaceGroups2`. It can be opened explicitly with `launchWorkspaceGroup2`, or implicitly when `launchWorkspace2` opens a workspace that belongs to the group. If the group has windows with icons, it renders the action menu (siderail) while the group is open. Only one group can be open at a time.
 2. A **workspace window** is declared in `workspaceWindows2` and belongs to a group. A window with an `icon` corresponds to an action menu button. The icon is registered as an extension whose **extension ID must match the window name**. This is how `ActionMenuButton2` knows which window it controls.
 3. A **workspace** is declared in `workspaces2` and belongs to a window. Workspaces are the actual content panels. A window can contain a stack of workspaces (parent + children).
 
@@ -111,9 +111,11 @@ Groups support the following optional properties:
 | `persistence` | `"app-wide" \| "closable"` | Lifecycle persistence mode. Use `"closable"` to render the group action menu with a close button. |
 | `scopePattern` | `string` | URL pattern defining where workspaces persist |
 
-### Initialize the workspace group (group owners only)
+### Initialize the workspace group only when needed
 
-If your app owns a workspace group (i.e. the group is declared in your `routes.json`), you need to call `launchWorkspaceGroup2` to initialize it. This is typically done in your app's root component. If the group has windows with icons, initializing the group also makes its action menu available.
+Declaring a group in `workspaceGroups2` does not automatically mean you must call `launchWorkspaceGroup2`. A normal `launchWorkspace2` call opens the workspace's group, target window, and workspace if they are not already open.
+
+Call `launchWorkspaceGroup2` from the owning app when the group needs to be active before the first workspace launch, or when the group needs shared context props before action-menu buttons and workspaces render. Patient-chart does this so patient and visit context are available to all workspaces in the `patient-chart` group.
 
 ```tsx
 import { launchWorkspaceGroup2 } from "@openmrs/esm-framework";
@@ -131,7 +133,7 @@ useEffect(() => {
 
 Only one workspace group can be open at a time. If `launchWorkspaceGroup2` is called with a different group name (or incompatible props), the user will be prompted to close any open workspaces before the new group is opened.
 
-Most apps do **not** need this step — they define workspaces that belong to an existing group (like `patient-chart`) and skip group initialization entirely.
+Most modules do **not** need this step. Modules that add workspaces to an existing group, such as `patient-chart`, should skip group initialization entirely. Modules that own a simple group can also rely on `launchWorkspace2` unless the group needs app-wide context or an action menu before a workspace is opened.
 
 ### Update workspace component signatures
 
