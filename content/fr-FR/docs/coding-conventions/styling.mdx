@@ -77,7 +77,7 @@ import { Callout } from "nextra/components";
   1. Essayez d'abord d'utiliser les props et variantes intégrés de Carbon
   2. Si ce n'est pas possible, limitez la surcharge à la classe de votre composant
   3. Documentez pourquoi la surcharge est nécessaire avec un commentaire
-  4. Si vous devez surcharger les styles sur plusieurs composants, envisagez d'ajouter une surcharge explicite au fichier `overrides.scss`. Cette approche est expliquée dans le conseil suivant.
+  4. Si vous devez surcharger les styles sur plusieurs composants, envisagez d'ajouter une surcharge explicite au fichier `_overrides.scss`. Cette approche est expliquée dans le conseil suivant.
 
   ```scss
   .formField {
@@ -95,7 +95,7 @@ import { Callout } from "nextra/components";
   }
   ```
 
-- Placez les surcharges de style Carbon dans [overrides.scss](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-styleguide/src/_overrides.scss). Cela garantit que les surcharges sont appliquées de manière cohérente dans toute l'application.
+- Placez les surcharges de style Carbon dans [_overrides.scss](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-styleguide/src/_overrides.scss). Cela garantit que les surcharges sont appliquées de manière cohérente dans toute l'application.
 - Préférez utiliser les tokens Carbon de [couleur](https://carbondesignsystem.com/guidelines/color/overview/), [espacement](https://carbondesignsystem.com/guidelines/spacing/overview/) et [type](https://carbondesignsystem.com/guidelines/typography/overview/) plutôt que des valeurs codées en dur. Voici quelques exemples d'utilisation de tokens dans le code :
 
   ```scss

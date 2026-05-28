@@ -77,7 +77,7 @@ import { Callout } from "nextra/components";
   1. First try using Carbon's built-in props and variants
   2. If that's not possible, scope the override to your component's class
   3. Document why the override is necessary with a comment
-  4. If you need to override styles across multiple components, consider adding an explicit override to the `overrides.scss` file. This approach is explained in the next tip.
+  4. If you need to override styles across multiple components, consider adding an explicit override to the `_overrides.scss` file. This approach is explained in the next tip.
 
   ```scss
   .formField {
@@ -95,7 +95,7 @@ import { Callout } from "nextra/components";
   }
   ```
 
-- Put Carbon style overrides in [overrides.scss](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-styleguide/src/_overrides.scss). This ensures that the overrides are applied consistently across the application.
+- Put Carbon style overrides in [_overrides.scss](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-styleguide/src/_overrides.scss). This ensures that the overrides are applied consistently across the application.
 - Prefer using Carbon [color](https://carbondesignsystem.com/guidelines/color/overview/), [spacing](https://carbondesignsystem.com/guidelines/spacing/overview/) and [type](https://carbondesignsystem.com/guidelines/typography/overview/) tokens over hard-coded values. Below are some examples of using tokens in code:
 
   ```scss
