@@ -103,11 +103,11 @@ Cela limite le logo à l'application de connexion uniquement.
     "footer": {
       "additionalLogos": [
         {
-          "src": "${openmrsSpaBase}/partner-logo-1.png",
+          "src": "/openmrs/spa/partner-logo-1.png",
           "alt": "Organisation partenaire"
         },
         {
-          "src": "${openmrsSpaBase}/partner-logo-2.png",
+          "src": "/openmrs/spa/partner-logo-2.png",
           "alt": "Partenaire financier"
         }
       ]
@@ -115,6 +115,10 @@ Cela limite le logo à l'application de connexion uniquement.
   }
 }
 ```
+
+Contrairement au logo principal de la page de connexion, les valeurs `src` des logos de pied de page sont transmises
+directement au navigateur. Utilisez une URL absolue ou le chemin public où votre SPA est servie, comme
+`/openmrs/spa/...` dans la configuration par défaut de l'application de référence.
 
 </Steps>
 
@@ -126,17 +130,16 @@ Le logo par défaut utilisé sur la barre de navigation est configuré [ici](htt
 {
   "@openmrs/esm-primary-navigation-app": {
     "logo": {
-      // Utilisation d'une URL d'image SVG
       "src": "https://data.kenyahmis.org/openmrs/images/logos/kenyaemr-logo-nav.svg",
       "alt": "Logo KenyaEMR",
-      // Optionnel : personnaliser où le logo redirige lorsqu'il est cliqué
-      "link": "${openmrsSpaBase}/home",
-      // Ou, utilisation d'une chaîne de caractères au lieu d'une image (si src et name sont fournis, src a la priorité)
-      // "name": "KenyaEMR"
+      "link": "${openmrsSpaBase}/home"
     }
   }
 }
 ```
+
+Si vous voulez afficher du texte au lieu d'une image, omettez `src` et définissez `"name": "KenyaEMR"`. Si `src` et
+`name` sont tous les deux fournis, `src` a la priorité.
 
 Pour persister vos changements dans votre distribution, suivez les mêmes étapes que dans la [section précédente](#changement-des-logos) (Étapes 1-4) avec le snippet de fichier de configuration suivant dans le fichier `config-core_demo.json`:
 
@@ -146,10 +149,7 @@ Pour persister vos changements dans votre distribution, suivez les mêmes étape
     "logo": {
       "src": "${openmrsSpaBase}/logo.png",
       "alt": "Logo",
-      // Optionnel : personnaliser où le logo redirige lorsqu'il est cliqué
-      "link": "${openmrsSpaBase}/home",
-      // Ou, utilisez name au lieu de src pour afficher du texte au lieu d'une image
-      // "name": "Ma Clinique"
+      "link": "${openmrsSpaBase}/home"
     }
   }
 }

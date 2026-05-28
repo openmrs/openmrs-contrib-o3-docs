@@ -103,11 +103,11 @@ This scopes the logo to the login app only.
     "footer": {
       "additionalLogos": [
         {
-          "src": "${openmrsSpaBase}/partner-logo-1.png",
+          "src": "/openmrs/spa/partner-logo-1.png",
           "alt": "Partner Organization"
         },
         {
-          "src": "${openmrsSpaBase}/partner-logo-2.png",
+          "src": "/openmrs/spa/partner-logo-2.png",
           "alt": "Funding Partner"
         }
       ]
@@ -115,6 +115,9 @@ This scopes the logo to the login app only.
   }
 }
 ```
+
+Unlike the main login logo, footer logo `src` values are passed directly to the browser. Use an absolute URL or the
+public path where your SPA is served, such as `/openmrs/spa/...` in the Reference Application default setup.
 
 </Steps>
 
@@ -127,17 +130,16 @@ The default logo used on the navbar is configured [here](https://github.com/open
 {
   "@openmrs/esm-primary-navigation-app": {
     "logo": {
-      // Using an SVG image URL
       "src": "https://data.kenyahmis.org/openmrs/images/logos/kenyaemr-logo-nav.svg",
       "alt": "KenyaEMR logo",
-      // Optional: customize where the logo links when clicked
-      "link": "${openmrsSpaBase}/home",
-      // Or, using a string instead of an image (if both src and name are provided, src takes precedence)
-      // "name": "KenyaEMR"
+      "link": "${openmrsSpaBase}/home"
     }
   }
 }
 ```
+
+If you want text instead of an image, omit `src` and set `"name": "KenyaEMR"`. If both `src` and `name` are provided,
+`src` takes precedence.
 
 To persist your changes to your distro, follow the same steps in the [section above](#changing-logos) (Steps 1-4) with the following config file snippet in the `config-core_demo.json` file:
 
@@ -147,10 +149,7 @@ To persist your changes to your distro, follow the same steps in the [section ab
     "logo": {
       "src": "${openmrsSpaBase}/logo.png",
       "alt": "Logo",
-      // Optional: customize where the logo links when clicked
-      "link": "${openmrsSpaBase}/home",
-      // Or, use name instead of src to display text instead of an image
-      // "name": "My Clinic"
+      "link": "${openmrsSpaBase}/home"
     }
   }
 }
