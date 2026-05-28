@@ -46,14 +46,14 @@
   - Préchargement de données pour les éléments qui sont susceptibles d'être consultés ensuite :
 
   ```tsx
-  import { useSWRConfig } from 'swr';
+  import { openmrsFetch, restBaseUrl } from '@openmrs/esm-framework';
+  import { preload } from 'swr';
 
   // Précharger la page suivante de résultats
-  const { mutate } = useSWRConfig();
-  const nextPageUrl = `/ws/rest/v1/patient?startIndex=${currentPage + 1}`;
+  const nextPageUrl = `${restBaseUrl}/patient?startIndex=${currentPage * pageSize}&limit=${pageSize}`;
 
   const prefetchNextPage = () => {
-    void mutate(nextPageUrl);
+    void preload(nextPageUrl, openmrsFetch);
   };
   ```
 

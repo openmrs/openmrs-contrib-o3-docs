@@ -46,14 +46,14 @@
   - Prefetching data for items that are likely to be accessed next:
 
   ```tsx
-  import { useSWRConfig } from 'swr';
+  import { openmrsFetch, restBaseUrl } from '@openmrs/esm-framework';
+  import { preload } from 'swr';
 
   // Prefetch the next page of results
-  const { mutate } = useSWRConfig();
-  const nextPageUrl = `/ws/rest/v1/patient?startIndex=${currentPage + 1}`;
+  const nextPageUrl = `${restBaseUrl}/patient?startIndex=${currentPage * pageSize}&limit=${pageSize}`;
 
   const prefetchNextPage = () => {
-    void mutate(nextPageUrl);
+    void preload(nextPageUrl, openmrsFetch);
   };
   ```
 
