@@ -10,8 +10,10 @@ Afin d'internationaliser votre module frontend, ajoutez cette ligne dans le fich
 export const importTranslation = require.context("../translations", false, /.json$/, "lazy");
 ```
 
+Conservez le mode `"lazy"`. Le shell de l'application s'attend à ce que `importTranslation` retourne une promesse lorsqu'il demande un fichier de traduction à un module.
+
 Toutes les traductions sont ajoutées dans le répertoire `translations` qui se trouve au premier niveau du paquet. Le fichier source des traductions est le `en.json` qui contient les traductions en anglais de tous les textes codés en dur.
-Pour ajouter des traductions d'une autre langue, par exemple l'espagnol, créez un nouveau fichier `es.json` dans le répertoire `translations`. Lorsque l'utilisateur change de langue, l'application charge le fichier de ressources approprié et affiche le texte dans la langue préférée de l'utilisateur.
+Pour ajouter des traductions d'une autre langue, par exemple l'espagnol, créez un nouveau fichier `es.json` dans le répertoire `translations`. Utilisez des underscores pour les noms de fichiers des locales régionales, par exemple `es_MX.json` ou `pt_BR.json`. Le shell de l'application convertit les balises de langue détectées comme `pt-BR` en `pt_BR` avant de charger le fichier JSON. Lorsque l'utilisateur change de langue, l'application charge le fichier de ressources approprié et affiche le texte dans la langue préférée de l'utilisateur.
 
 Voici un exemple d'utilisation de la localisation react-i18next dans vos composants React.
 
@@ -25,9 +27,9 @@ const ActiveVisitsTable = () => {
 };
 ```
 
-Le framework fournit un ensemble de *core translations* qui sont utilisées dans de nombreux modules frontaux. Elles peuvent être utilisées avec la fonction [`getCoreTranslation`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/API.md#getcoretranslation). Cette fonction prend une clé de traduction core, une valeur par défaut optionnelle et des options d'interpolation i18next optionnelles. Une erreur de type TypeScript s'affiche si la clé fournie n'est pas valide.
+Le framework fournit un ensemble de *core translations* qui sont utilisées dans de nombreux modules frontaux. Elles peuvent être utilisées avec la fonction [`getCoreTranslation`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/getCoreTranslation.md). Cette fonction prend une clé de traduction core, une valeur par défaut optionnelle et des options d'interpolation i18next optionnelles. Une erreur de type TypeScript s'affiche si la clé fournie n'est pas valide.
 
-Les *core translations* valides sont définies dans le type [CoreTranslationKey](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-translations/src/translations.ts#L15). Il s'agit notamment de chaînes courantes utilisées dans de nombreuses applications, telles que « Annuler », « Confirmer », « Femme » et « Autre ». Les fichiers JSON de traduction correspondants se trouvent eux-mêmes dans l'application [esm-translations](https://github.com/openmrs/openmrs-esm-core/tree/main/packages/framework/esm-translations/translations).
+Les clés de *core translations* valides sont définies par le type [CoreTranslationKey](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-translations/src/index.ts#L53), généré à partir de la map `coreTranslations`. Il s'agit notamment de clés courantes utilisées dans de nombreuses applications, telles que `cancel`, `confirm`, `female` et `other`. Les fichiers JSON de traduction correspondants se trouvent eux-mêmes dans l'application [esm-translations](https://github.com/openmrs/openmrs-esm-core/tree/main/packages/framework/esm-translations/translations).
 
 ```ts
 import { getCoreTranslation } from "@openmrs/esm-framework";
