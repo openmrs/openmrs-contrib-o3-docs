@@ -436,9 +436,9 @@ Le modèle d'URL prend en charge :
 - `${openmrsBase}` - URL de base pour le backend OpenMRS
 - `${patientUuid}` - UUID du patient sélectionné
 
-### Patients récemment consultés
+### Patients récemment recherchés
 
-Activez ou désactivez l'affichage des patients récemment consultés :
+Activez ou désactivez l'affichage des patients récemment recherchés :
 
 ```json
 {
@@ -450,7 +450,7 @@ Activez ou désactivez l'affichage des patients récemment consultés :
 }
 ```
 
-La valeur par défaut est `true`. Lorsqu'il est activé, une liste de patients récemment consultés apparaît dans les résultats de recherche initiaux.
+La valeur par défaut est `true`. Lorsqu'il est activé, une liste de patients récemment recherchés apparaît dans les résultats de recherche initiaux.
 
 ### Comportement de recherche sur tablette
 
@@ -735,7 +735,7 @@ Afficher l'onglet Rendez-vous non planifiés :
 }
 ```
 
-**Note** : Définir ceci à `true` nécessite un point de terminaison `unscheduledAppointment` personnalisé qui n'est pas actuellement disponible par défaut.
+**Note** : Définir ceci à `true` nécessite un point de terminaison `/appointment/unScheduledAppointment` personnalisé qui n'est pas actuellement disponible par défaut.
 
 ### Onglet des rendez-vous anticipés
 
@@ -749,7 +749,7 @@ Afficher l'onglet des rendez-vous anticipés :
 }
 ```
 
-**Note** : Définir ceci à `true` nécessite un point de terminaison `earlyAppointment` personnalisé qui n'est pas actuellement disponible par défaut.
+**Note** : Définir ceci à `true` nécessite un point de terminaison `/appointment/earlyAppointment` personnalisé qui n'est pas actuellement disponible par défaut.
 
 ## Files d'attente de service
 

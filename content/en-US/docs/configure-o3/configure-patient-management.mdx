@@ -436,9 +436,9 @@ The URL template supports:
 - `${openmrsBase}` - Base URL for the OpenMRS backend
 - `${patientUuid}` - UUID of the selected patient
 
-### Recently Viewed Patients
+### Recently Searched Patients
 
-Enable or disable the display of recently viewed patients:
+Enable or disable the display of recently searched patients:
 
 ```json
 {
@@ -450,7 +450,7 @@ Enable or disable the display of recently viewed patients:
 }
 ```
 
-The default is `true`. When enabled, a list of recently viewed patients appears in the initial search results.
+The default is `true`. When enabled, a list of recently searched patients appears in the initial search results.
 
 ### Tablet Search Behavior
 
@@ -735,7 +735,7 @@ Show the Unscheduled Appointments tab:
 }
 ```
 
-**Note**: Setting this to `true` requires a custom `unscheduledAppointment` endpoint that is not currently available by default.
+**Note**: Setting this to `true` requires a custom `/appointment/unScheduledAppointment` endpoint that is not currently available by default.
 
 ### Early Appointments Tab
 
@@ -749,7 +749,7 @@ Show the Early Appointments tab:
 }
 ```
 
-**Note**: Setting this to `true` requires a custom `earlyAppointment` endpoint that is not currently available by default.
+**Note**: Setting this to `true` requires a custom `/appointment/earlyAppointment` endpoint that is not currently available by default.
 
 ## Service Queues
 
