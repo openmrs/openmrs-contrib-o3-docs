@@ -59,6 +59,8 @@ Le processus de conversion comprend deux étapes :
 
 - **Placeholder de version** : Le schéma généré inclut un placeholder de version (`"version": "xxx"`). Vous devez le mettre à jour avec un numéro de version approprié (par exemple, `"1.0"`) avant d'utiliser le formulaire.
 
+- **Groupes répétables** : Certaines versions du convertisseur émettent `questionOptions.rendering: "repeat"` pour les champs `obsgroup` répétables. Les schémas O3 actuels devraient utiliser `"repeating"`. Mettez donc cette valeur à jour avant de valider ou publier le formulaire.
+
 - **Conversion basée sur des fichiers** : Le convertisseur lit les formulaires HTML à partir des fichiers exportés dans le répertoire configuré, et non directement depuis la base de données. Assurez-vous d'avoir exporté les formulaires avant de tenter la conversion.
 
 ### Limitations
@@ -67,6 +69,7 @@ L'outil de conversion a certaines limitations :
 
 - **Balises prises en charge** : Seules les balises `obs` et `obsgroup` sont actuellement prises en charge. Les autres balises HTML Form Entry ne sont pas converties automatiquement.
 - **Pages et sections** : Le convertisseur génère des questions mais ne crée pas automatiquement de pages et de sections. Vous devrez organiser manuellement les questions converties en pages et sections en utilisant le Constructeur de Formulaires O3.
+- **Alias de rendu** : Revoyez les valeurs de rendu générées par rapport aux types de champs actuels du Form Builder. En particulier, remplacez `repeat` par `repeating` pour les groupes répétables.
 - **Règles de validation** : La prise en charge de la validation est limitée. Revoyez les indicateurs `required` générés et ajoutez manuellement les règles de validation manquantes.
 - **Ajustements manuels** : Après la conversion, vous devrez peut-être ajuster manuellement le schéma généré, en particulier pour les formulaires complexes ou les formulaires utilisant des fonctionnalités non prises en charge.
 

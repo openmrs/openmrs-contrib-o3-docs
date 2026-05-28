@@ -59,6 +59,8 @@ The conversion process involves two steps:
 
 - **Version placeholder**: The generated schema includes a placeholder version (`"version": "xxx"`). You must update this to a proper version number (e.g., `"1.0"`) before using the form.
 
+- **Repeating groups**: Some converter versions emit `questionOptions.rendering: "repeat"` for repeating `obsgroup` fields. Current O3 schemas should use `"repeating"`, so update that value before validating or publishing the form.
+
 - **File-based conversion**: The converter reads HTML forms from the exported files in the configured directory, not directly from the database. Make sure you've exported the forms before attempting conversion.
 
 ### Limitations
@@ -67,6 +69,7 @@ The converter tool has some limitations:
 
 - **Supported tags**: Only `obs` and `obsgroup` tags are currently supported. Other HTML Form Entry tags are not converted automatically.
 - **Pages and sections**: The converter generates questions but does not automatically create pages and sections. You'll need to manually organize the converted questions into pages and sections using the O3 Form Builder.
+- **Rendering aliases**: Review generated rendering values against the Form Builder's current field types. In particular, change `repeat` to `repeating` for repeating groups.
 - **Validation rules**: Validation support is limited. Review any generated `required` flags and add missing validation rules manually.
 - **Manual adjustments**: After conversion, you may need to manually adjust the generated schema, especially for complex forms or forms using unsupported features.
 
