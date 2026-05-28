@@ -47,20 +47,20 @@
 
   ```tsx
   // Good
-  const handleSubmit = (event) => { ... }
-  const handleInputChange = (event) => { ... }
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => { ... }
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => { ... }
 
   // Avoid
-  const submit = (event) => { ... }
-  const inputChanged = (event) => { ... }
+  const submit = (event: React.FormEvent<HTMLFormElement>) => { ... }
+  const inputChanged = (event: React.ChangeEvent<HTMLInputElement>) => { ... }
   ```
 
 - Be explicit with event parameters:
 
   ```tsx
   // Good
-  const handleChange = (event: ChangeEvent<HTMLInputElement>) => { ... }
-  const handleClick = (event: MouseEvent<HTMLButtonElement>) => { ... }
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => { ... }
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => { ... }
 
   // Avoid
   const handleChange = (e) => { ... }
@@ -71,8 +71,8 @@
 
   ```tsx
   type ButtonProps = {
-    onClick: (event: MouseEvent<HTMLButtonElement>) => void;
-    children: ReactNode;
+    onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
+    children: React.ReactNode;
   };
 
   const Button = ({ onClick, children }: ButtonProps) => (
