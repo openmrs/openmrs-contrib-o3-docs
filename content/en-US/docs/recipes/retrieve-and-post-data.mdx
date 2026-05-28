@@ -120,7 +120,7 @@ const response = await openmrsFetch(sessionEndpoint, {
 const session = response.data;
 ```
 
-`openmrsFetch` automatically prefixes relative paths with `window.openmrsBase`, requests JSON responses by default, stringifies plain-object request bodies before sending them, and resolves to a `FetchResponse<T>` whose parsed response body is available as `response.data`.
+`openmrsFetch` automatically prefixes relative paths with `window.openmrsBase`, requests JSON responses by default, stringifies plain-object request bodies before sending them, and resolves to a `FetchResponse<T>` whose parsed response body is available as `response.data`. For FHIR URLs under `fhirBaseUrl`, it also adds `_summary=data` unless the URL already includes a `_summary` parameter.
 
 It is best practice for POST requests to have an
 [AbortController](https://developer.mozilla.org/en-US/docs/Web/API/AbortController/abort).

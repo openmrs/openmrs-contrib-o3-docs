@@ -115,7 +115,7 @@ const response = await openmrsFetch(sessionEndpoint, {
 const session = response.data;
 ```
 
-`openmrsFetch` préfixe automatiquement les chemins relatifs avec `window.openmrsBase`, demande des réponses JSON par défaut, sérialise les corps de requête qui sont des objets simples avant de les envoyer et renvoie un `FetchResponse<T>` dont le corps de réponse analysé est disponible dans `response.data`.
+`openmrsFetch` préfixe automatiquement les chemins relatifs avec `window.openmrsBase`, demande des réponses JSON par défaut, sérialise les corps de requête qui sont des objets simples avant de les envoyer et renvoie un `FetchResponse<T>` dont le corps de réponse analysé est disponible dans `response.data`. Pour les URL FHIR sous `fhirBaseUrl`, il ajoute aussi `_summary=data` sauf si l'URL contient déjà un paramètre `_summary`.
 
 La meilleure pratique pour les requêtes POST est de disposer d'une fonction
 [AbortController](https://developer.mozilla.org/en-US/docs/Web/API/AbortController/abort).
