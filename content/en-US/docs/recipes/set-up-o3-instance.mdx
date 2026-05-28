@@ -165,7 +165,7 @@ Once the server is up and running, visit `http://localhost/openmrs/spa` and you'
 
 ### Step 5 (optional)
 
-If you want to run the dockerized build on top of an existing O2 database, you'll need to use Docker volumes. See this [section below](set-up-o3-instance#running-an-o3-docker-image-on-top-of-an-existing-database) for instructions on how to do that.
+If you want to run the dockerized build against an existing O2 database, point the backend container at that database instead of starting the bundled `db` service. See this [section below](/docs/recipes/set-up-o3-instance#running-an-o3-docker-image-on-top-of-an-existing-database) for instructions.
 
 </Steps>
 
@@ -302,7 +302,7 @@ Ensure that the argument passed to `TAG` variable matches the tag you used in th
 
 ### Step 4: Wait for the instance to spin up
 
-Finally, follow [Step 4](https://docs/recipes/set-up-o3-instance#step-4-1) of the setup guide and wait for your instance to fully spin up with the updated metadata.
+Finally, follow [Step 4](/docs/recipes/set-up-o3-instance#step-4-1) of the setup guide and wait for your instance to fully spin up with the updated metadata.
 
 ## Preparing for production
 

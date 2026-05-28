@@ -162,7 +162,7 @@ Une fois le serveur opérationnel, visitez `http://localhost/openmrs/spa` et vou
 
 ### Étape 5 (optionnelle)
 
-Si vous souhaitez exécuter la build dockerisée sur une base de données O2 existante, vous devrez utiliser des volumes Docker. Consultez cette [section ci-dessous](set-up-o3-instance#running-an-o3-docker-image-on-top-of-an-existing-database) pour obtenir des instructions sur la manière de le faire.
+Si vous souhaitez exécuter la build dockerisée avec une base de données O2 existante, pointez le conteneur backend vers cette base au lieu de démarrer le service `db` inclus. Consultez cette [section ci-dessous](/docs/recipes/set-up-o3-instance#running-an-o3-docker-image-on-top-of-an-existing-database) pour obtenir des instructions.
 
 </Steps>
 
@@ -299,9 +299,9 @@ TAG=your-custom-tag docker compose -f docker-compose.yml up -d
 
 Assurez-vous que l'argument passé à la variable `TAG` correspond au tag que vous avez utilisé à l'étape précédente. Cette commande lance l'instance en utilisant votre image locale au lieu d'en tirer une de Docker Hub.
 
-### Étape 4: Attendez que l'instance s lance
+### Étape 4: Attendez que l'instance se lance
 
-Enfin, suivez [l'Étape 4](https://docs/recipes/set-up-o3-instance#step-4-1) du guide de configuration et attendez que votre instance se lance complètement avec les métadonnées mises à jour.
+Enfin, suivez [l'Étape 4](/docs/recipes/set-up-o3-instance#step-4-1) du guide de configuration et attendez que votre instance se lance complètement avec les métadonnées mises à jour.
 
 ## Préparation pour la production
 
