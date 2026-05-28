@@ -142,7 +142,7 @@ import { Callout } from "nextra/components";
     other components.
   </Callout>
 
-- Use the [classnames](https://npm.im/classnames) library to conditionally apply styles to an element. Consider using classnames if you're interpolating multiple class names into a string. For example, the following snippet:
+- Use the [classnames](https://npm.im/classnames) library to conditionally apply styles to an element, adding it to the package's dependencies first if the module does not already declare it. Consider using classnames if you're interpolating multiple class names into a string. For example, the following snippet:
 
   ```tsx
   <NumberInput
@@ -206,16 +206,12 @@ import { Callout } from "nextra/components";
     }
     ```
 
-  - Be especially careful with:
-    - Container queries (limited support)
-    - CSS subgrid (partial support)
-    - `:has()` selector (no support in some browsers)
-    - CSS nesting (emerging support)
+  - Be especially careful with features that are still partial or changing, such as new container query variants, CSS anchor positioning, view transitions, or other features that have not reached broad support in the browsers listed by `browserslist-config-openmrs`.
     
   - Prefer well-supported alternatives when possible:
-    - Use flexbox/grid over newer layout features
-    - Use @media queries instead of container queries
-    - Use BEM naming over CSS nesting
+    - Use flexbox/grid for core layouts unless a newer feature materially simplifies the component
+    - Use @media queries or size container queries where they fit the responsive behavior
+    - Use `@supports` guards and fallbacks for progressive enhancements
     
   - Test your styles across our supported browsers:
     - Chrome/Edge (latest versions)

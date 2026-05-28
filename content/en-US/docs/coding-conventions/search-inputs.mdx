@@ -30,7 +30,7 @@ The following are some general guidelines for search inputs:
   // Do something with the debouncedSearchTerm
   ```
 
-- Use [fuzzy](https://npm.im/fuzzy) to implement fuzzy search. Fuzzy search is a strategy for matching search terms that are similar to, but not exactly the same as, the search term. For example, if the search term is `John`, fuzzy search will match `Jon`, `Jhon`, and `Johhn`. This is useful for matching search terms that are misspelled or contain typos. Here's how we can leverage fuzzy to enhance the search experience from the snippet above:
+- Use [fuzzy](https://npm.im/fuzzy) to implement fuzzy search, adding it to the package's dependencies first if the module does not already declare it. Fuzzy search is a strategy for matching search terms that are similar, but not exactly the same, as the search term. For example, if the search term is `John`, fuzzy search will match `Jon`, `Jhon`, and `Johhn`. This is useful for matching search terms that are misspelled or contain typos. Here's how we can leverage fuzzy to enhance the search experience from the snippet above:
 
   ```tsx
   const [filter, setFilter] = useState("");

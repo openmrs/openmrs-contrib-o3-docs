@@ -141,7 +141,7 @@ import { Callout } from "nextra/components";
     Assurez-vous de limiter vos styles sous un nom de classe (tel que `.form` dans l'exemple ci-dessus) pour éviter qu'ils n'affectent d'autres composants.
   </Callout>
 
-- Utilisez la bibliothèque [classnames](https://npm.im/classnames) pour appliquer conditionnellement des styles à un élément. Envisagez d'utiliser classnames si vous interpolez plusieurs noms de classe dans une chaîne. Par exemple, l'extrait suivant :
+- Utilisez la bibliothèque [classnames](https://npm.im/classnames) pour appliquer conditionnellement des styles à un élément, en l'ajoutant d'abord aux dépendances du package si le module ne la déclare pas déjà. Envisagez d'utiliser classnames si vous interpolez plusieurs noms de classe dans une chaîne. Par exemple, l'extrait suivant :
 
   ```tsx
   <NumberInput
@@ -205,16 +205,12 @@ import { Callout } from "nextra/components";
     }
     ```
 
-  - Soyez particulièrement prudent avec :
-    - Les requêtes de conteneur (support limité)
-    - CSS subgrid (support partiel)
-    - Le sélecteur `:has()` (pas de support dans certains navigateurs)
-    - L'imbrication CSS (support émergent)
+  - Soyez particulièrement prudent avec les fonctionnalités encore partielles ou en évolution, comme les nouvelles variantes de requêtes de conteneur, CSS anchor positioning, les view transitions ou d'autres fonctionnalités qui n'ont pas encore atteint un large support dans les navigateurs listés par `browserslist-config-openmrs`.
     
   - Préférez des alternatives bien supportées lorsque c'est possible :
-    - Utilisez flexbox/grid plutôt que des fonctionnalités de mise en page plus récentes
-    - Utilisez les requêtes @media plutôt que les requêtes de conteneur
-    - Utilisez la nomenclature BEM plutôt que l'imbrication CSS
+    - Utilisez flexbox/grid pour les mises en page de base, sauf si une fonctionnalité plus récente simplifie vraiment le composant
+    - Utilisez les requêtes @media ou les requêtes de conteneur de taille lorsqu'elles correspondent au comportement responsive attendu
+    - Utilisez des gardes `@supports` et des alternatives pour les améliorations progressives
     
   - Testez vos styles sur nos navigateurs supportés :
     - Chrome/Edge (versions les plus récentes)

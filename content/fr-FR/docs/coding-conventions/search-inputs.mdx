@@ -30,7 +30,7 @@ Voici quelques lignes directrices générales pour les champs de recherche :
   // Faire quelque chose avec le debouncedSearchTerm
   ```
 
-- Utilisez [fuzzy](https://npm.im/fuzzy) pour implémenter la recherche floue. La recherche floue est une stratégie pour faire correspondre des termes de recherche qui sont similaires, mais pas exactement les mêmes que le terme de recherche. Par exemple, si le terme de recherche est `John`, la recherche floue correspondra à `Jon`, `Jhon` et `Johhn`. C'est utile pour faire correspondre des termes de recherche qui sont mal orthographiés ou contiennent des fautes de frappe. Voici comment nous pouvons utiliser fuzzy pour améliorer l'expérience de recherche à partir de l'extrait ci-dessus :
+- Utilisez [fuzzy](https://npm.im/fuzzy) pour implémenter la recherche floue, en l'ajoutant d'abord aux dépendances du package si le module ne la déclare pas déjà. La recherche floue est une stratégie pour faire correspondre des termes de recherche qui sont similaires, mais pas exactement les mêmes que le terme de recherche. Par exemple, si le terme de recherche est `John`, la recherche floue correspondra à `Jon`, `Jhon` et `Johhn`. C'est utile pour faire correspondre des termes de recherche qui sont mal orthographiés ou contiennent des fautes de frappe. Voici comment nous pouvons utiliser fuzzy pour améliorer l'expérience de recherche à partir de l'extrait ci-dessus :
 
   ```tsx
   const [filter, setFilter] = useState("");
