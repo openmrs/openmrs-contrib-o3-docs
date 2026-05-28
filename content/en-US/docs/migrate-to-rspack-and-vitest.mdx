@@ -38,19 +38,37 @@ You can land them as one PR or two — `openmrs-esm-laboratory-app` shipped them
 
 ## Part 1: Webpack to Rspack
 
-The OpenMRS CLI ships a default Rspack config (`openmrs/default-rspack-config`) that mirrors the default Webpack config. Most apps only need to rename the config file and update their scripts.
+The default Rspack config lives in `@openmrs/rspack-config` and mirrors the default Webpack config. Most apps only need to update the bundler dependencies, rename the config file, and update their scripts.
 
 <Steps>
+
+### Update the bundler dependencies
+
+Add the Rspack config package and CLI packages. If your module already has `@openmrs/webpack-config` or a direct `webpack` dependency, remove those at the same time:
+
+```diff filename="package.json"
+-   "@openmrs/webpack-config": "next",
++   "@openmrs/rspack-config": "next",
+-   "webpack": "^5.99.9",
++   "@rspack/cli": "^1.7.10",
++   "@rspack/core": "^1.7.10",
+```
+
+Keep the `openmrs` dev dependency. `yarn start` still runs through `openmrs develop`.
 
 ### Rename the config file
 
 Rename `webpack.config.js` to `rspack.config.js` and require the new default:
 
 ```js filename="rspack.config.js"
-module.exports = require("openmrs/default-rspack-config");
+const config = require("@openmrs/rspack-config");
+
+module.exports = config.default ?? config;
 ```
 
 If your app passes overrides to the default config, the override shape is unchanged — Rspack accepts Webpack's configuration format.
+
+Older modules may still use `openmrs/default-rspack-config`, which is a compatibility export from the `openmrs` tooling package. Prefer `@openmrs/rspack-config` for new migrations so the dependency matches the published `@openmrs/create-o3-app` scaffold.
 
 ### Update package.json scripts
 
@@ -61,10 +79,10 @@ Replace `webpack` with `rspack` in `build`, `serve`, and `analyze`:
     "start": "openmrs develop",
 -   "serve": "webpack serve --mode=development",
 -   "build": "webpack --mode production",
--   "analyze": "webpack --mode=production --env analyze=true",
+-   "analyze": "webpack --mode=production --env.analyze=true",
 +   "serve": "rspack serve --mode=development",
 +   "build": "rspack --mode production",
-+   "analyze": "rspack --mode=production --env analyze=true",
++   "analyze": "rspack --mode=production --env.analyze=true",
   }
 ```
 
@@ -170,21 +188,7 @@ export default defineConfig({
         inline: [/@openmrs/],
       },
     },
-    fakeTimers: {
-      toFake: [
-        "setTimeout",
-        "clearTimeout",
-        "setInterval",
-        "clearInterval",
-        "setImmediate",
-        "clearImmediate",
-        "requestAnimationFrame",
-        "cancelAnimationFrame",
-        "Date",
-      ],
-    },
     alias: [
-      { find: /^@openmrs\/esm-framework\/src\/internal$/, replacement: "@openmrs/esm-framework/mock" },
       { find: /^@openmrs\/esm-framework$/, replacement: "@openmrs/esm-framework/mock" },
       { find: "react-i18next", replacement: r("./__mocks__/react-i18next.js") },
     ],
@@ -199,8 +203,8 @@ A few things worth understanding rather than copy-pasting blindly:
 - **CSS aliasing.** The regex `^.*\.s?css$/` anchors both ends so the whole import path is replaced with `identity-obj-proxy`. Without the anchors, only the extension gets matched and Vitest fails to resolve the module.
 - **`fileURLToPath` for filesystem paths.** Use it for `setupFiles` and aliases that resolve to local files. Using `new URL(...).pathname` directly works on macOS and Linux, but on Windows it yields `/C:/...`, which Vite's resolver rejects. `fileURLToPath` normalises this.
 - **`server.deps.inline: [/@openmrs/]`.** Forces Vite to process `@openmrs/*` packages through its transform pipeline instead of treating them as external. Without this, ES module exports from the framework won't resolve correctly in tests.
-- **`fakeTimers.toFake`.** This is a narrower, OpenMRS-tested list, not the Vitest default. Vitest's default fakes every timer-like API sinon detects (typically including `requestIdleCallback`, `cancelIdleCallback`, `performance`, and `process.hrtime`) minus `nextTick` and `queueMicrotask`. The list above sticks to the timers actual OpenMRS tests need, which keeps the surface area smaller. You can omit `fakeTimers` entirely if you're happy with the broader default — neither choice breaks React's scheduler, because both keep `queueMicrotask` and `nextTick` out.
-- **Framework mock alias.** Both the public and the internal entry points map to `@openmrs/esm-framework/mock`. Tests that import from the internal path (e.g. `@openmrs/esm-framework/src/internal`) get the same mock.
+- **Fake timers.** Omit `fakeTimers` by default. Vitest's default fake timers already avoid `nextTick` and `queueMicrotask`, which are the two APIs that would break React's scheduler. If your existing Jest tests depend on a narrower timer list, add `fakeTimers.toFake` explicitly, but do not include `queueMicrotask` or `nextTick`.
+- **Framework mock alias.** The public framework entry point maps to `@openmrs/esm-framework/mock`. If your tests still import from the internal path (`@openmrs/esm-framework/src/internal`), add a second alias for that path during the migration.
 - **`react-i18next` alias.** Jest auto-discovered `__mocks__/react-i18next.js` via convention; Vitest does not, so the alias is what reconnects it. If your module's i18n mock disappears after the migration, this is almost always why.
 - **`exclude` and e2e.** Playwright specs typically live under `e2e/` and are run by a separate `test-e2e` script. The `'**/e2e/**'` entry in `exclude` keeps Vitest from trying to evaluate them.
 
@@ -209,10 +213,7 @@ A few things worth understanding rather than copy-pasting blindly:
 ```diff filename="tools/setup-tests.ts"
 - import "@testing-library/jest-dom";
 + import "@testing-library/jest-dom/vitest";
-+ import { afterEach } from "vitest";
-+ import { cleanup } from "@testing-library/react";
-+
-+ afterEach(cleanup);
++ import { vi } from "vitest";
 
   // Mock ResizeObserver which is not available in jsdom
   global.ResizeObserver = class ResizeObserver {
@@ -220,7 +221,7 @@ A few things worth understanding rather than copy-pasting blindly:
   };
 ```
 
-The `/vitest` subpath import wires the DOM matchers into Vitest's `expect`. The explicit `afterEach(cleanup)` is defensive: `@testing-library/react` auto-registers cleanup whenever a global `afterEach` is available (which is true under Vitest with `globals: true`), so the manual hook is redundant in practice. It's kept because it's the established pattern across the OpenMRS-org repos and protects you if a package later sets `globals: false` or if `RTL_SKIP_AUTO_CLEANUP=true` ever creeps into the environment.
+The `/vitest` subpath import wires the DOM matchers into Vitest's `expect`. React Testing Library auto-registers cleanup whenever a global `afterEach` is available, which is true under Vitest with `globals: true`, so the current scaffold does not add a manual `afterEach(cleanup)` hook. Add one only if a package disables globals or sets `RTL_SKIP_AUTO_CLEANUP=true`.
 
 Setup-file location varies across modules: `tools/setup-tests.ts` is the most common spot, but you'll also see `src/setup-tests.ts` and `test/setup.ts`. Whatever path your module already uses, keep it and just update the import line — only the `setupFiles` entry in `vitest.config.ts` needs to know where it lives.
 
@@ -285,7 +286,7 @@ All four should be green. Run `yarn test:watch` to confirm the watch mode works 
 - **Tests pass locally but fail in CI on Windows.** Almost always a path-alias issue. Use `fileURLToPath` for any alias that resolves to a filesystem path. See the `vitest.config.ts` snippet above.
 - **`expect(...).toBeInTheDocument is not a function`.** You forgot the `/vitest` subpath on the `jest-dom` import in `setup-tests.ts`, or `@testing-library/jest-dom` is still on 5.x.
 - **`Cannot find module '@openmrs/esm-framework/mock'`.** Either your `@openmrs/esm-framework` version predates the dual-mock layout (see [Migrating to Core v6](/docs/migrate-to-core-v6#fix-mock-import-paths)) or your `vitest.config.ts` alias is misspelled.
-- **React tests fail with cryptic scheduler errors after enabling fake timers.** You likely added `queueMicrotask` or `nextTick` to `fakeTimers.toFake` by hand — both break React's scheduler. Vitest's default `toFake` already excludes them, so leaving `fakeTimers` unset is usually the right move; if you do supply an explicit list, mirror the one in the config snippet above (no `queueMicrotask`, no `nextTick`).
+- **React tests fail with cryptic scheduler errors after enabling fake timers.** You likely added `queueMicrotask` or `nextTick` to `fakeTimers.toFake` by hand — both break React's scheduler. Vitest's default fake timers already exclude them, so leaving `fakeTimers` unset is usually the right move. If you do supply an explicit list, keep both APIs out.
 - **`@openmrs/*` imports resolve to the built CJS rather than ESM.** Add `server.deps.inline: [/@openmrs/]` to the Vitest config.
 - **TypeScript complains that `require.context` doesn't exist after dropping `@types/webpack-env`.** Rspack supports `require.context` at runtime exactly the same way Webpack does, so the runtime call site is fine — what disappeared is the *type definition* that used to come from `@types/webpack-env`. Add the `RequireContext` declaration from Part 1 to `src/declarations.d.ts` to restore the types.
 

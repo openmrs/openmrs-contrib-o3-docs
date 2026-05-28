@@ -116,39 +116,42 @@ Chaque module frontend chargé par l'app shell devrait avoir:
 
 ### Fichier manifeste (package.json)
 
-Chaque module frontend a un fichier `package.json` de niveau racine qui définit ses dépendances et ses métadonnées. Voici un extrait raccourci de l'application Template actuelle:
+Chaque module frontend a un fichier `package.json` de niveau racine qui définit ses dépendances et ses métadonnées. Voici un extrait raccourci dans la forme générée par `npm create @openmrs/o3-app@latest`:
 
 ```json
 {
-  "name": "@openmrs/esm-template-app",
-  "version": "4.0.0",
+  "name": "@openmrs/esm-active-prescriptions-app",
+  "version": "1.0.0",
   "license": "MPL-2.0",
-  "description": "An OpenMRS seed application for building microfrontends",
-  "browser": "dist/openmrs-esm-template-app.js",
+  "description": "An OpenMRS frontend module for active prescriptions",
+  "browser": "dist/openmrs-esm-active-prescriptions.js",
   "main": "src/index.ts",
   "source": true,
   "scripts": {
     "start": "openmrs develop",
     "serve": "rspack serve --mode=development",
     "build": "rspack --mode production",
-    "analyze": "rspack --mode=production --env analyze=true",
-    "lint": "eslint src --ext js,jsx,ts,tsx --max-warnings 0",
+    "analyze": "rspack --mode=production --env.analyze=true",
+    "lint": "eslint src --ext ts,tsx",
     "typescript": "tsc",
-    "test": "cross-env TZ=UTC vitest run --passWithNoTests",
-    "test:watch": "cross-env TZ=UTC vitest watch",
-    "test-e2e": "playwright test",
-    "verify": "turbo lint typescript coverage",
-    "coverage": "cross-env TZ=UTC vitest run --coverage --passWithNoTests",
-    "extract-translations": "i18next 'src/**/*.component.tsx' --config ./tools/i18next-parser.config.js"
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest watch",
+    "coverage": "vitest run --coverage --passWithNoTests",
+    "extract-translations": "i18next 'src/**/*.component.tsx' 'src/**/*.extension.tsx' 'src/**/*.modal.tsx' 'src/index.ts' --config ./tools/i18next-parser.config.js"
   },
   "peerDependencies": {
-    "@openmrs/esm-framework": "9.x",
+    "@openmrs/esm-framework": "*",
     "react": "18.x",
     "react-i18next": "16.x"
   },
   "devDependencies": {
+    "openmrs": "next",
     "@openmrs/esm-framework": "next",
-    "openmrs": "next"
+    "@openmrs/rspack-config": "next",
+    "@rspack/cli": "^1.7.10",
+    "@rspack/core": "^1.7.10",
+    "jsdom": "^28.0.0",
+    "vitest": "^4.1.2"
   },
   "packageManager": "yarn@4.10.3"
 }
@@ -160,6 +163,7 @@ Voici quelques éléments clés à retenir de l'examen de ce fichier:
 - La propriété `browser` qui pointe vers le point d'entrée du bundle construit (ce que l'app shell charge au runtime).
 - La propriété `main` qui définit le point d'entrée du code source du module frontend, typiquement `src/index.ts`.
 - Les paquets runtime OpenMRS sont généralement des peer dependencies pour les consommateurs et des dev dependencies en `next` pour le développement local.
+- La configuration Rspack et les paquets CLI sont des dev dependencies, car ce sont des outils de build et non des modules runtime chargés par l'app shell.
 - Les modules frontend React actuels utilisent Rspack et Vitest par défaut. Des modules plus anciens peuvent encore avoir des scripts Webpack ou Jest pendant leur migration.
 
 ### Le point d'entrée de l'application (`index.ts`)

@@ -7,18 +7,22 @@ Les applications frontend OpenMRS sont construites avec [Rspack](https://rspack.
 Vous n'êtes pas obligé d'utiliser la configuration par défaut. Les applications peuvent fournir leur propre `rspack.config.js`. Elle reste toutefois fortement recommandée. Cette page explique comment fonctionne la configuration par défaut et quelles contraintes une configuration personnalisée doit quand même respecter.
 
 <Callout type="info">
-  Rspack accepte le format de configuration de Webpack. Tout ce qui est décrit sur cette page s'applique donc aussi aux applications qui utilisent encore Webpack. Les quelques applications qui n'ont pas encore migré récupèrent les mêmes valeurs par défaut via `openmrs/default-webpack-config`. Voir [Vous utilisez encore Webpack ?](#vous-utilisez-encore-webpack) plus bas.
+  Rspack accepte le format de configuration de Webpack. Tout ce qui est décrit sur cette page s'applique donc aussi aux applications qui utilisent encore Webpack. Les quelques applications qui n'ont pas encore migré récupèrent les mêmes valeurs par défaut via `@openmrs/webpack-config`. Voir [Vous utilisez encore Webpack ?](#vous-utilisez-encore-webpack) plus bas.
 </Callout>
 
 ## Mise en place
 
-La configuration minimale, et celle que la plupart des applications utilisent, tient en une ligne:
+La configuration minimale générée par `npm create @openmrs/o3-app@latest` charge la configuration standard depuis `@openmrs/rspack-config`:
 
 ```js filename="rspack.config.js"
-module.exports = require("openmrs/default-rspack-config");
+const config = require("@openmrs/rspack-config");
+
+module.exports = config.default ?? config;
 ```
 
-Cette ligne délègue tout à la configuration par défaut décrite ci-dessous.
+Cette configuration délègue tout aux valeurs par défaut décrites ci-dessous.
+
+Les modules plus anciens peuvent encore utiliser l'export de compatibilité `openmrs/default-rspack-config`. Il fonctionne toujours quand le module dépend du paquet d'outillage `openmrs`, mais les nouveaux modules devraient dépendre directement de `@openmrs/rspack-config`.
 
 ## Module Federation
 
@@ -74,9 +78,9 @@ Toutes les dépendances partagées sont chargées dans le scope `default`, et le
 La configuration par défaut exporte un ensemble d'objets mutables qui sont fusionnés dans la configuration Rspack finale. Pour surcharger un comportement, importez la configuration, modifiez l'export pertinent, puis réexportez:
 
 ```js filename="rspack.config.js"
-const config = require("openmrs/default-rspack-config");
+const config = require("@openmrs/rspack-config");
 config.cssRuleConfig.rules = [myCustomRule];
-module.exports = config;
+module.exports = config.default ?? config;
 ```
 
 Les points de surcharge disponibles sont:
@@ -116,6 +120,6 @@ C'est acceptable en pratique, car Module Federation est interopérable entre bun
 
 Un petit nombre de modules n'ont pas encore migré vers Rspack. Tant qu'ils restent sur Webpack:
 
-- La configuration par défaut est fournie sous le nom [`openmrs/default-webpack-config`](https://github.com/openmrs/openmrs-esm-core/tree/main/packages/tooling/webpack-config). Utilisez-la dans `webpack.config.js` exactement comme les applications Rspack utilisent `openmrs/default-rspack-config`.
+- Les modules actuels devraient utiliser directement le paquet [`@openmrs/webpack-config`](https://github.com/openmrs/openmrs-esm-core/tree/main/packages/tooling/webpack-config). Les modules plus anciens peuvent encore utiliser l'export de compatibilité `openmrs/default-webpack-config`.
 - Tout ce qui est décrit sur cette page s'applique: Module Federation, le type de bibliothèque `var`, la convention `./start`, la politique de dépendances partagées singletons et les hooks de surcharge sont indépendants du bundler.
 - Lorsque vous êtes prêt à basculer, consultez [Migration vers Rspack et Vitest](/docs/migrate-to-rspack-and-vitest). Le remplacement de configuration est mécanique.
