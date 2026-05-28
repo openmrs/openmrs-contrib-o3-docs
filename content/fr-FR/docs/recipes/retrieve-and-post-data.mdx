@@ -1,6 +1,6 @@
 # Récupération et envoi de données
 
-Les modules frontaux interagissent avec le serveur OpenMRS via les API exposées par ses modules. En général, la plupart des points de terminaison que nous utilisons sont fournis par le [FHIR Module](https://wiki.openmrs.org/display/projects/FHIR+101%3A+OpenMRS+Strategy%2C+Tools%2C+FHIR+API%2C+et+Help). La plupart des autres éléments sont fournis par le [REST Module](https://wiki.openmrs.org/display/docs/REST+Module), qui est documenté [ici](https://rest.openmrs.org/).
+Les modules frontaux interagissent avec le serveur OpenMRS via les API exposées par ses modules. En général, la plupart des points de terminaison que nous utilisons sont fournis par le [FHIR Module](https://wiki.openmrs.org/display/projects/FHIR+101%3A+OpenMRS+Strategy%2C+Tools%2C+FHIR+API%2C+and+Help). La plupart des autres éléments sont fournis par le [REST Module](https://wiki.openmrs.org/display/docs/REST+Module), qui est documenté [ici](https://rest.openmrs.org/).
 
 Les points de terminaison du module FHIR devraient toujours être préférés, lorsqu'ils sont
 disponibles. FHIR est une norme d'interopérabilité qu'OpenMRS prend en charge.
@@ -123,7 +123,7 @@ Vous devez vous assurer que `AbortController.abort()` est appelé lorsque le com
 si la requête n'est pas encore terminée.
 
 Dans un composant React, cela se fait généralement en effectuant la requête
-dans un [hook `useEffect`](https://reactjs.org/docs/hooks-effect.html):
+dans un [hook `useEffect`](https://react.dev/reference/react/useEffect):
 
 ```ts
 useEffect(() => {
