@@ -144,7 +144,8 @@ Pour plus de contrôle sur le rendu et le comportement des formulaires, vous pou
 
 ```tsx
 import React from 'react';
-import { FormEngine, type FormSchema, type OpenmrsEncounter } from '@openmrs/esm-form-engine-lib';
+import { type Encounter } from '@openmrs/esm-framework';
+import { FormEngine, type FormSchema } from '@openmrs/esm-form-engine-lib';
 
 interface MyFormComponentProps {
   patientUuid: string;
@@ -152,7 +153,7 @@ interface MyFormComponentProps {
 }
 
 export function MyFormComponent({ patientUuid, formSchema }: MyFormComponentProps) {
-  const handleSubmit = (encounters: Array<OpenmrsEncounter>) => {
+  const handleSubmit = (encounters: Array<Encounter>) => {
     console.log('Formulaire soumis :', encounters);
     // Gérer la soumission du formulaire
   };
@@ -320,7 +321,7 @@ Le React Form Engine prend en charge quatre modes de rendu, chacun adapté à di
 - Le formulaire est rendu en mode lecture seule
 - Tous les champs sont désactivés
 - Le formulaire ne peut pas être soumis
-- Les boutons d'action affichent "Fermer" au lieu de "Enregistrer"
+- L'enregistrement est désactivé ou masqué, et le contrôle fermer/annuler ferme le formulaire
 
 ```tsx
 <FormEngine
@@ -361,10 +362,10 @@ Lorsqu'un formulaire est soumis, le callback `onSubmit` reçoit un tableau de r�
 ### Gérer la soumission du formulaire
 
 ```tsx
-import { type OpenmrsEncounter } from '@openmrs/esm-form-engine-lib';
+import { type Encounter } from '@openmrs/esm-framework';
 
 function MyFormWorkspace({ patientUuid, formUuid }: Props) {
-  const handleSubmit = (encounters: Array<OpenmrsEncounter>) => {
+  const handleSubmit = (encounters: Array<Encounter>) => {
     const encounter = encounters[0];
 
     // Gérer la soumission réussie
@@ -392,10 +393,10 @@ function MyFormWorkspace({ patientUuid, formUuid }: Props) {
 Le Form Engine gère automatiquement les erreurs de validation et les affiche en ligne. Le callback `onSubmit` est appelé uniquement après une soumission réussie. Si la soumission échoue, le Form Engine gère l'erreur en interne et l'affiche à l'utilisateur. Votre callback `onSubmit` n'est alors pas appelé.
 
 ```tsx
-import { type OpenmrsEncounter } from '@openmrs/esm-form-engine-lib';
+import { type Encounter } from '@openmrs/esm-framework';
 
 function MyFormWorkspace({ patientUuid, formUuid }: Props) {
-  const handleSubmit = (encounters: Array<OpenmrsEncounter>) => {
+  const handleSubmit = (encounters: Array<Encounter>) => {
     // Ce callback est appelé uniquement si la soumission réussit
     // Le Form Engine gère les erreurs en interne
     console.log('Formulaire soumis avec succès :', encounters);

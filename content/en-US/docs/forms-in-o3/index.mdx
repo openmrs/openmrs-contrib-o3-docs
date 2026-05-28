@@ -1,6 +1,6 @@
 # Overview
 
-Forms in O3 are JSON schemas rendered by the React Form Engine. A form can be created directly in the O3 Form Builder, converted from an existing HTML Form Entry form, or rendered by a custom frontend module when an application needs a focused form workflow.
+O3's JSON form workflow uses schemas rendered by the React Form Engine. A form can be created directly in the O3 Form Builder, converted from an existing HTML Form Entry form, or rendered by a custom frontend module when an application needs a focused form workflow. O3 can also surface configured HTML Form Entry forms through the patient chart form entry workspace; convert them only when you want them to become editable O3 JSON forms.
 
 The main pieces are:
 
@@ -11,4 +11,4 @@ The main pieces are:
 
 Start with [building forms with the O3 Form Builder](/docs/forms-in-o3/build-forms-with-o3-form-builder) when you are authoring a new O3 form. Use [converting HTML Form Entry forms](/docs/forms-in-o3/convert-html-form-entry-forms) when you are migrating existing HFE forms. Read [using forms in applications](/docs/forms-in-o3/using-forms-in-applications) when you need to launch the patient chart form workspace or render `FormEngine` directly.
 
-Only published O3 forms are shown in the default forms workspace in the patient chart. Keep important schemas in version control or in a distribution repo, especially when working on demo servers that can be reset.
+Only published O3 JSON forms are shown in the default React Form Engine workflow in the patient chart. Configured HTML Form Entry forms are handled separately by the patient forms app. Keep important schemas in version control or in a distribution repo, especially when working on demo servers that can be reset.
