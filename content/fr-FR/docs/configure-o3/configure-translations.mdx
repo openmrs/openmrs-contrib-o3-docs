@@ -47,19 +47,17 @@ Les remplacements de traduction sont disponibles à deux niveaux de configuratio
 
 ### Remplacements au niveau module
 
-Remplacez les traductions pour un module entier :
+Remplacez les traductions pour un module entier en configurant le module qui possède l'espace de noms de traduction :
 
 ```json
 {
-  "@openmrs/esm-patient-chart-app": {
+  "@openmrs/esm-patient-vitals-app": {
     "Translation overrides": {
       "en": {
-        "startVisit": "Check-in",
-        "startNewVisit": "Begin a visit"
+        "Vitals & Biometrics": "Vitals and measurements"
       },
       "fr": {
-        "startVisit": "Enregistrement",
-        "startNewVisit": "Démarrer une visite"
+        "Vitals & Biometrics": "Signes vitaux et mesures"
       }
     }
   }
@@ -70,7 +68,7 @@ Remplacez les traductions pour un module entier :
 
 Remplacez les traductions pour une extension spécifique dans un emplacement spécifique. Ces remplacements prennent la priorité sur les remplacements au niveau module pour cette extension.
 
-**Important** : La configuration des extensions est spécifiée sous le **module qui possède l'emplacement**, pas le module de l'extension. Les clés de traduction viennent quand même de l'espace de noms de traduction du module de l'extension.
+**Important** : La configuration des extensions est spécifiée sous le **module qui possède l'emplacement**, pas le module de l'extension. Les clés de traduction viennent quand même de l'espace de noms de traduction du module de l'extension. Par exemple, le module patient chart possède `patient-chart-dashboard-slot`, tandis que `results-summary-dashboard` est fourni par le module vitals.
 
 ```json
 {
@@ -137,12 +135,14 @@ Voici un exemple complet montrant les deux niveaux de remplacement :
 
 ```json
 {
-  "@openmrs/esm-patient-chart-app": {
+  "@openmrs/esm-patient-vitals-app": {
     "Translation overrides": {
       "en": {
-        "startVisit": "Check-in"
+        "Vitals & Biometrics": "Vitals and measurements"
       }
-    },
+    }
+  },
+  "@openmrs/esm-patient-chart-app": {
     "extensionSlots": {
       "patient-chart-dashboard-slot": {
         "configure": {
@@ -161,8 +161,8 @@ Voici un exemple complet montrant les deux niveaux de remplacement :
 ```
 
 Cette configuration démontre :
-- **Niveau module** : `startVisit` est remplacé pour le module patient chart entier (affecte toutes les utilisations de cette clé de traduction dans le module)
-- **Niveau extension** : `Vitals & Biometrics` est remplacé uniquement pour l'extension `results-summary-dashboard` lorsqu'elle est rendue dans `patient-chart-dashboard-slot`
+- **Niveau module** : `Vitals & Biometrics` est remplacé pour tout le module vitals.
+- **Niveau extension** : `Vitals & Biometrics` est remplacé uniquement pour l'extension `results-summary-dashboard` lorsqu'elle est rendue dans `patient-chart-dashboard-slot`. Dans cet emplacement, la valeur au niveau extension prend la priorité sur la valeur au niveau module vitals.
 
 **Note** : O3 ne prend actuellement pas en charge un bloc `"Translation overrides"` au niveau d'un emplacement qui s'appliquerait automatiquement à toutes les extensions de cet emplacement. Configurez chaque ID d'extension qui a besoin d'un libellé spécifique à son emplacement.
 

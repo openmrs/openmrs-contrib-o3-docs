@@ -47,19 +47,17 @@ Translation overrides are available at two configuration levels:
 
 ### Module-Level Overrides
 
-Override translations for an entire module:
+Override translations for an entire module by configuring the module that owns the translation namespace:
 
 ```json
 {
-  "@openmrs/esm-patient-chart-app": {
+  "@openmrs/esm-patient-vitals-app": {
     "Translation overrides": {
       "en": {
-        "startVisit": "Check-in",
-        "startNewVisit": "Begin a visit"
+        "Vitals & Biometrics": "Vitals and measurements"
       },
       "fr": {
-        "startVisit": "Enregistrement",
-        "startNewVisit": "Démarrer une visite"
+        "Vitals & Biometrics": "Signes vitaux et mesures"
       }
     }
   }
@@ -70,7 +68,7 @@ Override translations for an entire module:
 
 Override translations for a specific extension in a specific slot. These overrides take precedence over module-level overrides for that extension.
 
-**Important**: Extension configuration is specified under the **module that owns the slot**, not the extension's module. The translation keys still come from the extension module's translation namespace.
+**Important**: Extension configuration is specified under the **module that owns the slot**, not the extension's module. The translation keys still come from the extension module's translation namespace. For example, the patient chart module owns `patient-chart-dashboard-slot`, while `results-summary-dashboard` is provided by the vitals module.
 
 ```json
 {
@@ -137,12 +135,14 @@ Here's a complete example showing both override levels:
 
 ```json
 {
-  "@openmrs/esm-patient-chart-app": {
+  "@openmrs/esm-patient-vitals-app": {
     "Translation overrides": {
       "en": {
-        "startVisit": "Check-in"
+        "Vitals & Biometrics": "Vitals and measurements"
       }
-    },
+    }
+  },
+  "@openmrs/esm-patient-chart-app": {
     "extensionSlots": {
       "patient-chart-dashboard-slot": {
         "configure": {
@@ -161,8 +161,8 @@ Here's a complete example showing both override levels:
 ```
 
 This configuration demonstrates:
-- **Module-level**: `startVisit` is overridden for the entire patient chart module (affects all uses of this translation key in the module)
-- **Extension-level**: `Vitals & Biometrics` is overridden only for the `results-summary-dashboard` extension when it is rendered in `patient-chart-dashboard-slot`
+- **Module-level**: `Vitals & Biometrics` is overridden for the entire vitals module.
+- **Extension-level**: `Vitals & Biometrics` is overridden only for the `results-summary-dashboard` extension when it is rendered in `patient-chart-dashboard-slot`. In that slot, the extension-level value takes precedence over the vitals module-level value.
 
 **Note**: O3 does not currently support one slot-wide `Translation overrides` block that automatically applies to every extension in a slot. Configure each extension ID that needs slot-specific wording.
 
