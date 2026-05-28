@@ -606,7 +606,7 @@ export const root = getSyncLifecycle(rootComponent, options);
 Going back to the Login example, we can tweak the component imports as follows:
 
 ```ts
-import { getAsyncLifecycle, defineConfigSchema } from "@openmrs/esm-framework";
+import { getSyncLifecycle, defineConfigSchema } from "@openmrs/esm-framework";
 import { configSchema } from "./config-schema";
 
 import rootComponent from "./root.component";
@@ -644,7 +644,7 @@ export const changeLocationLink = getSyncLifecycle(
 Bringing all these changes together, we get the following `index.ts` file:
 
 ```ts
-import { getAsyncLifecycle, defineConfigSchema } from "@openmrs/esm-framework";
+import { getSyncLifecycle, defineConfigSchema } from "@openmrs/esm-framework";
 import { configSchema } from "./config-schema";
 
 import rootComponent from "./root.component";

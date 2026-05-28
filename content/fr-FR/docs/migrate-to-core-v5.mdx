@@ -545,7 +545,7 @@ En effet, la fonction `getAsyncLifecycle` n'est nécessaire que lorsque nous dev
 Pour revenir à l'exemple de la connexion, nous pouvons modifier les importations de composants comme suit:
 
 ```ts
-import { getAsyncLifecycle, defineConfigSchema } from "@openmrs/esm-framework";
+import { getSyncLifecycle, defineConfigSchema } from "@openmrs/esm-framework";
 import { configSchema } from "./config-schema";
 
 import rootComponent from "./root.component";
@@ -582,7 +582,7 @@ export const changeLocationLink = getSyncLifecycle(
 En rassemblant tous ces changements, nous obtenons le fichier `index.ts` suivant:
 
 ```ts
-import { getAsyncLifecycle, defineConfigSchema } from "@openmrs/esm-framework";
+import { getSyncLifecycle, defineConfigSchema } from "@openmrs/esm-framework";
 import { configSchema } from "./config-schema";
 
 import rootComponent from "./root.component";

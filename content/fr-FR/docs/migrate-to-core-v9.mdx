@@ -68,7 +68,7 @@ import type { TFunction } from "i18next";
 Pour trouver tous les fichiers affectés dans votre base de code, exécutez :
 
 ```bash
-grep -rn "TFunction.*react-i18next\|react-i18next.*TFunction" --include="*.ts" --include="*.tsx" src/
+rg -n "TFunction.*react-i18next|react-i18next.*TFunction" src --glob "*.{ts,tsx}"
 ```
 
 </Steps>
