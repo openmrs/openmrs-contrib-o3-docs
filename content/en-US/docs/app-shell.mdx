@@ -136,9 +136,9 @@ If initialization fails at any point, the `handleInitFailure` function:
 
 ## Route overrides
 
-For development and debugging purposes, you can override routes by storing them in `localStorage` with keys prefixed with `openmrs-routes:`. The app shell will load these overrides and merge them with the routes from the registry. The value can be either:
-- A JSON string containing the routes object for that module
-- A URL string pointing to a routes.json file to fetch
+For development and debugging purposes, you can override routes by storing them in `localStorage` with keys prefixed with `openmrs-routes:`. Route overrides are only active when `window.spaEnv === "development"`; production builds ignore them. The app shell loads the overrides that were present when the page loaded and merges them with the routes from the registry. The stored value must be JSON, either:
+- A JSON-serialized routes object for that module
+- A JSON-serialized URL string pointing to a `routes.json` file to fetch
 
 This allows developers to test different module versions or configurations without rebuilding the entire application. For example:
 
@@ -148,3 +148,5 @@ localStorage.setItem('openmrs-routes:@openmrs/esm-my-app', JSON.stringify({
   extensions: [/* ... */]
 }));
 ```
+
+For a URL-valued override, store the URL with `JSON.stringify("https://example.org/routes.json")`; a raw URL string will not be parsed as a valid override.

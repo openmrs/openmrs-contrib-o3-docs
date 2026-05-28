@@ -136,9 +136,9 @@ Si l'initialisation échoue à n'importe quelle étape, la fonction `handleInitF
 
 ## Surcharges de routes
 
-Pour le développement et le débogage, vous pouvez surcharger les routes en les stockant dans `localStorage` avec des clés préfixées par `openmrs-routes:`. L'app shell charge ces surcharges et les fusionne avec les routes du registre. La valeur peut être:
-- Une chaîne JSON contenant l'objet de routes pour ce module.
-- Une URL pointant vers un fichier `routes.json` à récupérer.
+Pour le développement et le débogage, vous pouvez surcharger les routes en les stockant dans `localStorage` avec des clés préfixées par `openmrs-routes:`. Les surcharges de routes ne sont actives que lorsque `window.spaEnv === "development"`; les builds de production les ignorent. L'app shell charge les surcharges présentes au moment du chargement de la page et les fusionne avec les routes du registre. La valeur stockée doit être du JSON, soit:
+- Un objet de routes sérialisé en JSON pour ce module.
+- Une URL sérialisée en JSON pointant vers un fichier `routes.json` à récupérer.
 
 Cela permet aux développeurs de tester différentes versions ou configurations de modules sans reconstruire toute l'application. Par exemple:
 
@@ -148,3 +148,5 @@ localStorage.setItem('openmrs-routes:@openmrs/esm-my-app', JSON.stringify({
   extensions: [/* ... */]
 }));
 ```
+
+Pour une surcharge basée sur une URL, stockez l'URL avec `JSON.stringify("https://example.org/routes.json")`; une URL brute ne sera pas analysée comme une surcharge valide.
