@@ -117,8 +117,8 @@ Profitez ! Vous devriez maintenant avoir un module frontal personnalisé que vou
 
 Le processus de création d'un nouveau module frontal dans un monorepo est presque identique à celui de la création dans un polyrepo, avec quelques ajustements :
 
-1. Depuis la racine du monorepo, lancez `npm exec @openmrs/create-o3-app@latest -- referrals-queue --monorepo` et répondez aux prompts. En mode non interactif, le CLI utilise `packages/apps/esm-referrals-queue` par défaut. Pour créer un nouveau monorepo racine à la place, utilisez `--new-monorepo`.
-2. Si vous copiez le Template manuellement, placez son contenu dans un nouveau répertoire sous `packages/`. Pour notre exemple ci-dessus, nous créerions un nouveau répertoire appelé `packages/esm-referrals-queue` et déplacerions le contenu du Template dedans.
+1. Depuis la racine du monorepo, lancez `npm exec @openmrs/create-o3-app@latest -- referrals-queue --monorepo`. Comme `--monorepo` est un flag explicite de type de projet, le CLI utilise les valeurs par défaut non interactives et place le module dans `packages/apps/esm-referrals-queue`. Pour créer un nouveau monorepo racine à la place, utilisez `--new-monorepo`.
+2. Si vous copiez le Template manuellement, placez son contenu dans un nouveau répertoire de package qui suit la convention du monorepo existant. Pour un nouveau monorepo généré, ce serait `packages/apps/esm-referrals-queue`.
 3. Supprimez les fichiers de configuration déjà présents au niveau de l'espace de travail. Il s'agit de fichiers et de dossiers tels que `.github` et `.eslintrc`.
 4. Supprimez les `devDependencies` du nouveau module frontal dans le `package.json`
    qui sont déjà dans les `devDependencies` du `package.json` au niveau de l'espace de travail.

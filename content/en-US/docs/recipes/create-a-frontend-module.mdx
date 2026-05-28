@@ -116,8 +116,8 @@ Profit! You should now have a custom frontend module that you can use in your Op
 
 The process for creating a new frontend module in a monorepo is nearly identical to the one for creating one in a polyrepo with a few tweaks:
 
-1. From the monorepo root, run `npm exec @openmrs/create-o3-app@latest -- referrals-queue --monorepo` and answer the prompts. In non-interactive mode, the CLI defaults to `packages/apps/esm-referrals-queue`. To create a new monorepo root instead, use `--new-monorepo`.
-2. If you copy the Template manually instead, put its contents into a new directory under `packages/`. For our example above, we'd create a new directory called `packages/esm-referrals-queue` and move the contents of Template into it.
+1. From the monorepo root, run `npm exec @openmrs/create-o3-app@latest -- referrals-queue --monorepo`. Because `--monorepo` is an explicit project-type flag, the CLI uses non-interactive defaults and places the module at `packages/apps/esm-referrals-queue`. To create a new monorepo root instead, use `--new-monorepo`.
+2. If you copy the Template manually instead, put its contents into a new package directory that follows the existing monorepo's convention. For a newly generated monorepo, that would be `packages/apps/esm-referrals-queue`.
 3. Remove configuration files that are already present at the workspace level. These include files and folders such as `.github` and `.eslintrc`.
 4. Remove `devDependencies` from the new frontend module's `package.json`
    which are already in the `devDependencies` of the `package.json` at
