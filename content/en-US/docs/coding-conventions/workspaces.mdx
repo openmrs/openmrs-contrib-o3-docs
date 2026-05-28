@@ -112,7 +112,7 @@ Workspaces are side panels that slide in from the right side of the screen, typi
   launchWorkspace2('my-workspace', { itemId });
   ```
 
-- Workspace files should use the `.workspace.tsx` suffix to clearly indicate their purpose and enable proper translation key extraction.
+- Workspace files should use the `.workspace.tsx` suffix to clearly indicate their purpose. If the workspace contains translatable strings, make sure the package's `extract-translations` script includes `src/**/*.workspace.tsx`.
 
 - You can use `ExtensionSlot` components within workspaces to allow other modules to extend the workspace with additional functionality:
 

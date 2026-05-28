@@ -112,7 +112,7 @@ Les espaces de travail sont des panneaux latéraux qui glissent depuis le côté
   launchWorkspace2('my-workspace', { itemId });
   ```
 
-- Les fichiers d'espace de travail doivent utiliser le suffixe `.workspace.tsx` pour indiquer clairement leur objectif et permettre une extraction correcte des clés de traduction.
+- Les fichiers d'espace de travail doivent utiliser le suffixe `.workspace.tsx` pour indiquer clairement leur objectif. Si l'espace de travail contient des chaînes traduisibles, vérifiez que le script `extract-translations` du package inclut `src/**/*.workspace.tsx`.
 
 - Vous pouvez utiliser des composants `ExtensionSlot` dans les espaces de travail pour permettre à d'autres modules d'étendre l'espace de travail avec des fonctionnalités supplémentaires :
 
