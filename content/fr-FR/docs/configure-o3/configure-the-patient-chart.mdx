@@ -411,17 +411,26 @@ Vous pouvez créer des widgets personnalisés qui affichent les observations au 
               {
                 "concept": "1132AAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
                 "label": "Sodium",
-                "color": "green"
+                "color": "green",
+                "graphGroup": "Électrolytes",
+                "decimalPlaces": 2
               },
               {
                 "concept": "856AAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
                 "label": "Charge virale",
-                "color": "red"
+                "color": "red",
+                "graphGroup": "Charge virale"
               }
             ],
             "table": {
               "pageSize": 5
-            }
+            },
+            "encounterTypes": ["67a71486-1a54-468f-ac3e-7091a9a79584"],
+            "dateFormat": "dateTime",
+            "showEncounterType": false,
+            "showGraphByDefault": true,
+            "graphOldestFirst": false,
+            "interpretationSlot": "hiv-interpretation-slot"
           }
         }
       }
