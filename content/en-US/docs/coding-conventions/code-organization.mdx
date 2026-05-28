@@ -44,7 +44,7 @@
 
   The [template app](https://github.com/openmrs/openmrs-esm-template-app) remains useful as a reference for the generated structure.
 
-- Group imports alphabetically based on their type. The recommended order is:
+- Group imports by source category, and keep imports within each group alphabetized. The recommended order is:
   - React and framework imports (e.g., `React`, `useState`, `useEffect`)
   - External modules (e.g., `lodash`, `dayjs`, `react-i18next`)
   - Carbon component imports (e.g., `Button`, `InlineLoading`)
@@ -52,7 +52,7 @@
   - Local imports (components, hooks, utilities, etc.)
   - Asset imports (e.g. `import styles from './user.scss'`)
 
-  In the near future, we'll be able to use ESLint import order sorting to enforce this convention. Following this convention makes it easier to maintain consistency across the codebase.
+  The current ESLint setup catches duplicate imports and type-only imports, but it does not enforce this full ordering automatically. Following this convention makes it easier to maintain consistency across the codebase.
 
 - Consolidate library imports into a single import statement. This makes it easier to see which modules are being used and makes the code more readable. For example, prefer:
 
