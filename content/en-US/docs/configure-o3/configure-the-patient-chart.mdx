@@ -100,7 +100,7 @@ The default value is `true`.
 
 ### Disabling Empty Tabs
 
-You can hide tabs (notes, tests, medications, encounters) when they are empty:
+You can disable visit summary tabs when they are empty:
 
 ```json
 {
@@ -109,6 +109,8 @@ You can hide tabs (notes, tests, medications, encounters) when they are empty:
   }
 }
 ```
+
+This affects the notes, tests, medications, completed forms, and encounters tabs. The tabs remain visible, but users cannot select an empty tab until data exists.
 
 ### Configuring Visit Attribute Types
 
@@ -137,6 +139,7 @@ Each visit attribute type configuration includes:
 - `uuid` - The UUID of the visit attribute type (required)
 - `required` - Whether the field is required in the visit form (default: `false`)
 - `displayInThePatientBanner` - Whether to show this attribute's value in the patient banner (default: `true`)
+- `showWhenExpression` - Optional expression evaluated against the current visit attributes. When it evaluates to `false`, the field is not shown.
 
 ### Adding Extra Visit Attributes
 
@@ -264,6 +267,20 @@ By default, the encounter tile requires an active visit. You can disable this re
 
 The default value is `true`.
 
+### Embedded Form View for Completed Encounters
+
+By default, expanding an encounter row shows the encounter's observations. You can enable embedded form rendering for completed form encounters that have a JSON schema form resource:
+
+```json
+{
+  "@openmrs/esm-app-shell": {
+    "Enabled feature flags": ["enable-embedded-form-view"]
+  }
+}
+```
+
+When this feature flag is enabled, supported encounter rows render through the Form Engine's `form-widget-slot` in embedded view mode. Encounters without a supported form resource still fall back to the observation list.
+
 ## Configuring the Vitals and Biometrics Form
 
 ### Using a Custom Form
@@ -345,7 +362,7 @@ Clinical summary tiles display key clinical data (like weight and height) in a c
   "@openmrs/esm-patient-chart-app": {
     "tileDefinitions": [
       {
-        "title": "Weight and Height",
+        "tileHeader": "Weight and Height",
         "columns": [
           {
             "title": "Weight",
@@ -362,7 +379,7 @@ Clinical summary tiles display key clinical data (like weight and height) in a c
         ]
       },
       {
-        "title": "Blood Pressure",
+        "tileHeader": "Blood Pressure",
         "columns": [
           {
             "title": "Systolic",
@@ -384,7 +401,7 @@ Clinical summary tiles display key clinical data (like weight and height) in a c
 ```
 
 **Configuration properties**:
-- `title` - The tile title displayed in the clinical summary
+- `tileHeader` - The tile title displayed in the clinical summary
 - `columns` - An array of column definitions, each with:
   - `title` - The column header
   - `concept` - The concept UUID to display
@@ -487,10 +504,12 @@ If the default facility is not available in the session, you can specify a custo
 ```json
 {
   "@openmrs/esm-patient-chart-app": {
-    "defaultFacilityUrl": "/openmrs/ws/rest/v1/location?tag=Login%20Location&limit=1"
+    "defaultFacilityUrl": "/ws/rest/v1/location?tag=Login%20Location&limit=1"
   }
 }
 ```
+
+This value is passed to `openmrsFetch`, so the OpenMRS base path is added automatically for relative API paths. Use a full absolute URL only when fetching the facility from another host.
 
 ### Offline Visit Type
 
