@@ -12,7 +12,7 @@ Ward Management handles inpatient wards and beds. You can configure:
 
 ## Patient Card Elements
 
-Configure what information appears on ward patient cards. Each configured element must have a unique `id` that matches the ward React component being used.
+Configure what information appears on ward patient cards. Each configured element must have a unique `id` that matches the `id` prop passed by the ward React component being used.
 
 ### Observations
 
@@ -162,6 +162,7 @@ Display observations as colored tags (e.g., problem lists):
     "patientCardElements": {
       "coloredObsTags": [
         {
+          "id": "pregnancy-complications",
           "conceptUuid": "1284AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
           "summaryLabel": "Other Problems",
           "summaryLabelI18nModule": "",
@@ -184,6 +185,7 @@ Display observations as colored tags (e.g., problem lists):
 ```
 
 **Properties**:
+- `id` - Unique identifier for this element (required). This must match the ward card component's `id`; the built-in maternal ward cards use `pregnancy-complications`.
 - `conceptUuid` - Concept UUID for the observations (required)
 - `summaryLabel` - Label for the summary tag (shows count of unconfigured values) (optional, defaults to concept name)
 - `summaryLabelI18nModule` - Custom module to use for translation of the summary label (optional)
@@ -193,6 +195,8 @@ Display observations as colored tags (e.g., problem lists):
   - `appliedToConceptSets` - Array of concept set UUIDs. Observations with coded values that are members of these sets will display as individual tags with the specified color. If an observation's value belongs to multiple concept sets, the first matching rule takes precedence.
 
 **How it works**: Observations with values in the configured concept sets display as individual colored tags. Any observation values not belonging to any configured concept sets are summarized as a count in the summary tag.
+
+Colored observation tags only consider observations from the patient's current visit.
 
 ## Ward Types
 

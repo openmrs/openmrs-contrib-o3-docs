@@ -12,7 +12,7 @@ La gestion des services gère les services et lits de patients hospitalisés. Vo
 
 ## Éléments de carte patient
 
-Configurez les informations qui apparaissent sur les cartes de patients des services. Chaque élément configuré doit avoir un `id` unique qui correspond au composant React du service utilisé.
+Configurez les informations qui apparaissent sur les cartes de patients des services. Chaque élément configuré doit avoir un `id` unique qui correspond à la prop `id` transmise par le composant React du service utilisé.
 
 ### Observations
 
@@ -162,6 +162,7 @@ Affichez les observations sous forme de tags colorés (par ex. listes de problè
     "patientCardElements": {
       "coloredObsTags": [
         {
+          "id": "pregnancy-complications",
           "conceptUuid": "1284AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
           "summaryLabel": "Other Problems",
           "summaryLabelI18nModule": "",
@@ -184,6 +185,7 @@ Affichez les observations sous forme de tags colorés (par ex. listes de problè
 ```
 
 **Propriétés** :
+- `id` - Identifiant unique pour cet élément (requis). Il doit correspondre à l'`id` du composant de carte du service; les cartes de service maternité intégrées utilisent `pregnancy-complications`.
 - `conceptUuid` - UUID du concept pour les observations (requis)
 - `summaryLabel` - Libellé pour le tag de résumé (affiche le nombre de valeurs non configurées) (optionnel, par défaut le nom du concept)
 - `summaryLabelI18nModule` - Module personnalisé à utiliser pour la traduction du libellé de résumé (optionnel)
@@ -193,6 +195,8 @@ Affichez les observations sous forme de tags colorés (par ex. listes de problè
   - `appliedToConceptSets` - Tableau d'UUID d'ensembles de concepts. Les observations avec des valeurs codées qui sont membres de ces ensembles s'afficheront comme des tags individuels avec la couleur spécifiée. Si la valeur d'une observation appartient à plusieurs ensembles de concepts, la première règle correspondante prend la priorité.
 
 **Fonctionnement** : Les observations avec des valeurs dans les ensembles de concepts configurés s'affichent comme des tags colorés individuels. Toutes les valeurs d'observation n'appartenant à aucun ensemble de concepts configuré sont résumées comme un compte dans le tag de résumé.
+
+Les tags d'observation colorés ne prennent en compte que les observations de la visite actuelle du patient.
 
 ## Types de services
 
