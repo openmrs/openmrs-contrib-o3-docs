@@ -10,7 +10,7 @@ La fonction `registerBreadcrumb` prend un objet avec les propriétés suivantes:
 - `parent` (facultatif): le chemin du fil d'Ariane parent, utilisé pour créer une piste hiérarchique
 - `matcher` (facultatif): une chaîne ou une RegExp qui détermine si le fil d'Ariane doit être affiché. Si omis, la valeur de `path` est utilisée comme matcher. C'est utile pour les routes dynamiques avec paramètres, par exemple `/patient/:patientUuid`.
 
-Quand un utilisateur navigue vers une page enregistrée, le système de fils d'Ariane affiche automatiquement la piste appropriée selon le chemin courant.
+Quand un utilisateur navigue vers une page enregistrée, le registre de fils d'Ariane peut résoudre la piste appropriée selon le chemin courant. L'enregistrement des fils d'Ariane ne stocke que les données; une page ou une mise en page doit quand même rendre l'interface.
 
 Voici un exemple de fil d'Ariane simple pour une page (Core v5+):
 
@@ -101,7 +101,7 @@ export function startupApp() {
 
 ## Rendre les fils d'Ariane
 
-`registerBreadcrumb` et `registerBreadcrumbs` enregistrent uniquement les données des fils d'Ariane. Une page doit quand même rendre une interface de fil d'Ariane. Les apps O3 actuelles le font généralement avec un `breadcrumbs-slot` partagé, mais ce slot doit recevoir une extension de fil d'Ariane depuis la distribution ou depuis le module qui possède la mise en page.
+`registerBreadcrumb` et `registerBreadcrumbs` enregistrent uniquement les données des fils d'Ariane. L'app shell actuel ne monte pas automatiquement les fils d'Ariane et n'enregistre pas d'extension core pour `breadcrumbs-slot` par défaut. Si une page rend un slot de fils d'Ariane partagé, ce slot n'affiche du contenu que si la distribution ou le module propriétaire de la mise en page lui assigne une extension de rendu des fils d'Ariane.
 
 ```tsx
 import { ExtensionSlot } from "@openmrs/esm-framework";
@@ -118,10 +118,12 @@ export default function MyPage() {
 
 Si vous créez une nouvelle mise en page, vérifiez qu'un élément de la distro fournit réellement l'extension de fil d'Ariane pour `breadcrumbs-slot`; sinon le slot ne rendra rien.
 
+Pour les mises en page personnalisées, utilisez `getBreadcrumbsFor(path)` depuis `@openmrs/esm-framework` pour lire la piste enregistrée et la rendre avec la bibliothèque d'interface utilisée par cette mise en page.
+
 ## Comportement des fils d'Ariane
 
-- Les fils d'Ariane sont filtrés automatiquement selon le chemin courant. Seuls ceux qui correspondent à la route courante sont affichés.
+- Les données de fils d'Ariane peuvent être filtrées selon le chemin courant avec `getBreadcrumbsFor(path)` ou `filterBreadcrumbs(list, path)`.
 - La piste suit la hiérarchie des parents et affiche tous les ancêtres jusqu'à la page courante.
-- S'il y a plus de 4 éléments dans la piste, les éléments du milieu sont repliés et remplacés par "..." afin de garder un affichage compact.
-- Les titres de fils d'Ariane qui sont des fonctions affichent un indicateur de chargement pendant la résolution du titre.
-- Les fils d'Ariane sont des liens cliquables qui naviguent vers leurs chemins respectifs.
+- Le renderer de fils d'Ariane de l'app shell replie les pistes de plus de 4 éléments en remplaçant les entrées du milieu par "...".
+- Le renderer de fils d'Ariane de l'app shell affiche un indicateur de chargement pendant la résolution des titres fournis par fonction.
+- Les fils d'Ariane rendus sont des liens cliquables qui naviguent vers leurs chemins respectifs.

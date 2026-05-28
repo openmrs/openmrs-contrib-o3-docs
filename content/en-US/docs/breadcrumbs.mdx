@@ -10,7 +10,7 @@ The `registerBreadcrumb` function takes an object with the following properties:
 - `parent` (optional): The path of the parent breadcrumb to create a hierarchical trail
 - `matcher` (optional): A string or RegExp that determines whether the breadcrumb should be displayed. If omitted, the `path` value is used as the matcher. Useful for dynamic routes with parameters (e.g., `/patient/:patientUuid`)
 
-When a user navigates to a registered page, the breadcrumb system automatically displays the appropriate breadcrumb trail based on the current path.
+When a user navigates to a registered page, the breadcrumb registry can resolve the appropriate trail for the current path. Registering breadcrumbs only stores the data; a page or layout still needs to render a breadcrumb UI.
 
 Here is an example of a simple breadcrumb for a page (Core v5+):
 
@@ -101,7 +101,7 @@ export function startupApp() {
 
 ## Rendering breadcrumbs
 
-`registerBreadcrumb` and `registerBreadcrumbs` only register breadcrumb data. A page still needs to render a breadcrumb UI. Current O3 apps usually do this by rendering a shared `breadcrumbs-slot`, but that slot must have a breadcrumb extension assigned by the distribution or by the module that owns the page layout.
+`registerBreadcrumb` and `registerBreadcrumbs` only register breadcrumb data. The current app shell does not mount breadcrumbs automatically and does not register a core extension for `breadcrumbs-slot` by default. If a page renders a shared breadcrumb slot, that slot only shows content when the distribution or the owning layout module assigns a breadcrumb-rendering extension to it.
 
 ```tsx
 import { ExtensionSlot } from "@openmrs/esm-framework";
@@ -118,10 +118,12 @@ export default function MyPage() {
 
 If you create a new page layout, confirm that something in the distro actually provides the breadcrumb extension for `breadcrumbs-slot`; otherwise the slot will render nothing.
 
+For custom layouts, use `getBreadcrumbsFor(path)` from `@openmrs/esm-framework` to read the registered trail and render it with the UI component library used by that layout.
+
 ## Breadcrumb behavior
 
-- Breadcrumbs are automatically filtered based on the current path - only breadcrumbs matching the current route are displayed
+- Breadcrumb data can be filtered based on the current path with `getBreadcrumbsFor(path)` or `filterBreadcrumbs(list, path)`
 - The breadcrumb trail follows the parent hierarchy, showing all ancestors up to the current page
-- If there are more than 4 breadcrumbs in the trail, the middle ones are collapsed and replaced with "..." to keep the display compact
-- Breadcrumb titles that are functions will show a loading indicator while the title is being resolved
-- Breadcrumbs are clickable links that navigate to their respective paths
+- The app-shell breadcrumb renderer collapses trails with more than 4 breadcrumbs by replacing the middle entries with "..."
+- The app-shell breadcrumb renderer shows a loading indicator while function-based titles resolve
+- Rendered breadcrumbs are clickable links that navigate to their respective paths
