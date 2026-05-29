@@ -64,6 +64,10 @@ export const modalComponentName = getAsyncLifecycle(
 );
 ```
 
+<Callout type="warning">
+  Older code may still register modal components as extensions and launch them by extension name. The framework currently falls back to that registration path and logs a deprecation warning, but new modals should always use the `modals` section in `routes.json`.
+</Callout>
+
 ### Triggering the modal
 
 Finally, you can trigger your modal by calling `showModal` along with all the props you need to pass into the modal. The function returned by `showModal` can be called to "dispose" or force close the modal. The framework also passes that same function to the modal as the `close` prop.

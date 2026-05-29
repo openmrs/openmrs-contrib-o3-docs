@@ -49,7 +49,7 @@ Most of our code is written in TypeScript. We recommend going through the follow
 
 ## JavaScript tooling
 
-- [yarn](https://yarnpkg.com/) - many OpenMRS repos use yarn as the package manager. If a repository has a `yarn.lock`, it uses yarn. We leverage yarn's [workspaces](https://yarnpkg.com/features/workspaces) for versioning and publishing packages within our monorepos.
+- [Yarn](https://yarnpkg.com/) and [Corepack](https://nodejs.org/api/corepack.html) - many OpenMRS repos use Yarn as the package manager and pin the exact Yarn version in the `packageManager` field of `package.json`. Run `corepack enable` once so Node can activate the pinned Yarn version for each repo.
 - [turbo](https://turbo.build/repo) - we use `turbo` to run scripts during local development and our continuous integration processes.
 - [swc](https://swc.rs/) - we use SWC to compile our JavaScript and TypeScript code into a format all major browsers support.
 - [Rspack](https://rspack.dev/) - most current O3 frontend modules use Rspack to bundle code for local development and production.

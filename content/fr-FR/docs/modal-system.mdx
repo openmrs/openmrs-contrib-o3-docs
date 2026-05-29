@@ -64,6 +64,10 @@ export const modalComponentName = getAsyncLifecycle(
 );
 ```
 
+<Callout type="warning">
+  Du code plus ancien peut encore enregistrer des composants de modale comme extensions et les lancer par nom d'extension. Le framework utilise encore ce chemin de repli et affiche un avertissement de dépréciation, mais les nouvelles modales doivent toujours utiliser la section `modals` dans `routes.json`.
+</Callout>
+
 ### Déclenchement de la modale
 
 Enfin, vous pouvez déclencher votre modale en appelant `showModal` avec toutes les props que vous devez transmettre à la modale. La fonction retournée par `showModal` peut être appelée pour "dispose" la modale, c'est-à-dire la fermer de force. Le framework transmet aussi cette même fonction à la modale avec la prop `close`.
