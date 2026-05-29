@@ -52,5 +52,5 @@ export default {
       collapsed: true
     }
   },
-  changelog: "Journal des modifications"
+  changelog: "Dernières releases"
 }

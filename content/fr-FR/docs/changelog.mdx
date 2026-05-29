@@ -1,47 +1,59 @@
 import LatestRelease from "@/components/latest-release";
 
-# Journal des modifications
+# Dernières releases
 
-Nous améliorons constamment O3. Cette page suit les dernières releases du framework core et de quelques dépôts O3 qui couvrent la fiche patient, la gestion des patients, les formulaires, la saisie de données, la dispensation, les cohortes et le scaffolding de modules.
+Nous améliorons constamment O3. Cette page affiche la dernière release GitHub taguée pour une sélection de dépôts O3. C'est un tableau de bord de releases, pas un journal complet de tous les modules frontend.
 
-Chaque titre renvoie à la liste complète des releases GitHub, et le composant `LatestRelease` affiche les notes de la dernière release taguée. Vérifiez le fichier `spa-assemble-config.json` de votre distribution pour confirmer quels modules et quelles versions sont réellement inclus dans votre environnement.
+Utilisez-la pour repérer les mouvements des packages O3 courants, puis vérifiez le fichier `spa-assemble-config.json` de votre distribution pour confirmer quels modules et quelles versions sont réellement inclus dans votre environnement. Chaque titre de dépôt et chaque lien "Voir toutes les releases" ouvre la page des releases GitHub du dépôt.
 
-- #### [Core](https://github.com/openmrs/openmrs-esm-core/releases)
+## Plateforme
 
-  <LatestRelease repo="openmrs-esm-core" />
+### [Core](https://github.com/openmrs/openmrs-esm-core/releases)
 
-- #### [Fiche patient](https://github.com/openmrs/openmrs-esm-patient-chart/releases)
+<LatestRelease repo="openmrs-esm-core" locale="fr-FR" />
 
-  <LatestRelease repo="openmrs-esm-patient-chart" />
+## Workflows patient
 
-- #### [Gestion des patients](https://github.com/openmrs/openmrs-esm-patient-management/releases)
+### [Fiche patient](https://github.com/openmrs/openmrs-esm-patient-chart/releases)
 
-  <LatestRelease repo="openmrs-esm-patient-management" />
+<LatestRelease repo="openmrs-esm-patient-chart" locale="fr-FR" />
 
-- #### [Constructeur de formulaires](https://github.com/openmrs/openmrs-esm-form-builder/releases)
+### [Gestion des patients](https://github.com/openmrs/openmrs-esm-patient-management/releases)
 
-  <LatestRelease repo="openmrs-esm-form-builder" />
+<LatestRelease repo="openmrs-esm-patient-management" locale="fr-FR" />
 
-- #### [Moteur de formulaire Angular](https://github.com/openmrs/openmrs-ngx-formentry)
+## Formulaires et saisie de données
 
-  <LatestRelease repo="openmrs-ngx-formentry" />
+### [Constructeur de formulaires](https://github.com/openmrs/openmrs-esm-form-builder/releases)
 
-- #### [Moteur de formulaire React](https://github.com/openmrs/openmrs-esm-form-engine-lib)
+<LatestRelease repo="openmrs-esm-form-builder" locale="fr-FR" />
 
-  <LatestRelease repo="openmrs-esm-form-engine-lib" />
+### [Moteur de formulaire React](https://github.com/openmrs/openmrs-esm-form-engine-lib/releases)
 
-- #### [Saisie rapide de données](https://github.com/openmrs/openmrs-esm-fast-data-entry-app)
+<LatestRelease repo="openmrs-esm-form-engine-lib" locale="fr-FR" />
 
-  <LatestRelease repo="openmrs-esm-fast-data-entry-app" />
+### [Moteur de formulaire Angular](https://github.com/openmrs/openmrs-ngx-formentry/releases)
 
-- #### [Distribution de médicaments](https://github.com/openmrs/openmrs-esm-dispensing-app)
+<LatestRelease repo="openmrs-ngx-formentry" locale="fr-FR" />
 
-  <LatestRelease repo="openmrs-esm-dispensing-app" />
+### [Saisie rapide de données](https://github.com/openmrs/openmrs-esm-fast-data-entry-app/releases)
 
-- #### [Constructeur de cohorte](https://github.com/openmrs/openmrs-esm-cohortbuilder-app)
+<LatestRelease repo="openmrs-esm-fast-data-entry-app" locale="fr-FR" />
 
-  <LatestRelease repo="openmrs-esm-cohortbuilder-app" />
+## Applications cliniques
 
-- #### [Modèle](https://github.com/openmrs/openmrs-esm-template-app)
+### [Dispensation de médicaments](https://github.com/openmrs/openmrs-esm-dispensing-app/releases)
 
-  <LatestRelease repo="openmrs-esm-template-app" />
+<LatestRelease repo="openmrs-esm-dispensing-app" locale="fr-FR" />
+
+### [Constructeur de cohorte](https://github.com/openmrs/openmrs-esm-cohortbuilder-app/releases)
+
+<LatestRelease repo="openmrs-esm-cohortbuilder-app" locale="fr-FR" />
+
+## Référence de scaffolding
+
+Utilisez [`@openmrs/create-o3-app`](https://www.npmjs.com/package/@openmrs/create-o3-app) pour les nouveaux modules frontend. L'application template est listée ici uniquement comme référence de structure; elle peut donc publier moins souvent que les modules actifs.
+
+### [Application template](https://github.com/openmrs/openmrs-esm-template-app/releases)
+
+<LatestRelease repo="openmrs-esm-template-app" locale="fr-FR" />

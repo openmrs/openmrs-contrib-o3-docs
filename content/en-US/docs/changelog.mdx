@@ -1,47 +1,59 @@
 import LatestRelease from "@/components/latest-release";
 
-# Changelog
+# Latest releases
 
-We're constantly improving O3. This page tracks the latest releases for the core platform and selected O3 repositories that implement patient chart workflows, patient management workflows, forms, data entry, medication dispensing, cohort building, and module scaffolding.
+We're constantly improving O3. This page shows the newest tagged GitHub release for selected O3 repositories. It is a release dashboard, not a full changelog for every frontend module.
 
-Each heading links to the full GitHub release list, and the embedded `LatestRelease` component surfaces the notes for the newest tagged release. Check your distribution's `spa-assemble-config.json` to confirm which modules and versions are actually included in your environment.
+Use it to spot when common O3 packages have moved, then check your distribution's `spa-assemble-config.json` to confirm which modules and versions are actually included in your environment. Each repository heading and "View all releases" link opens the repository's GitHub releases page.
 
-- #### [Core](https://github.com/openmrs/openmrs-esm-core/releases)
+## Platform
 
-  <LatestRelease repo="openmrs-esm-core" />
+### [Core](https://github.com/openmrs/openmrs-esm-core/releases)
 
-- #### [Patient chart](https://github.com/openmrs/openmrs-esm-patient-chart/releases)
+<LatestRelease repo="openmrs-esm-core" />
 
-  <LatestRelease repo="openmrs-esm-patient-chart" />
+## Patient workflows
 
-- #### [Patient management](https://github.com/openmrs/openmrs-esm-patient-management/releases)
+### [Patient chart](https://github.com/openmrs/openmrs-esm-patient-chart/releases)
 
-  <LatestRelease repo="openmrs-esm-patient-management" />
+<LatestRelease repo="openmrs-esm-patient-chart" />
 
-- #### [Form builder](https://github.com/openmrs/openmrs-esm-form-builder/releases)
+### [Patient management](https://github.com/openmrs/openmrs-esm-patient-management/releases)
 
-  <LatestRelease repo="openmrs-esm-form-builder" />
+<LatestRelease repo="openmrs-esm-patient-management" />
 
-- #### [Angular form engine](https://github.com/openmrs/openmrs-ngx-formentry)
+## Forms and data entry
 
-  <LatestRelease repo="openmrs-ngx-formentry" />
+### [Form builder](https://github.com/openmrs/openmrs-esm-form-builder/releases)
 
-- #### [React form engine](https://github.com/openmrs/openmrs-esm-form-engine-lib)
+<LatestRelease repo="openmrs-esm-form-builder" />
 
-  <LatestRelease repo="openmrs-esm-form-engine-lib" />
+### [React form engine](https://github.com/openmrs/openmrs-esm-form-engine-lib/releases)
 
-- #### [Fast data entry](https://github.com/openmrs/openmrs-esm-fast-data-entry-app)
+<LatestRelease repo="openmrs-esm-form-engine-lib" />
 
-  <LatestRelease repo="openmrs-esm-fast-data-entry-app" />
+### [Angular form engine](https://github.com/openmrs/openmrs-ngx-formentry/releases)
 
-- #### [Medication dispensing](https://github.com/openmrs/openmrs-esm-dispensing-app)
+<LatestRelease repo="openmrs-ngx-formentry" />
 
-  <LatestRelease repo="openmrs-esm-dispensing-app" />
+### [Fast data entry](https://github.com/openmrs/openmrs-esm-fast-data-entry-app/releases)
 
-- #### [Cohort builder](https://github.com/openmrs/openmrs-esm-cohortbuilder-app)
+<LatestRelease repo="openmrs-esm-fast-data-entry-app" />
 
-  <LatestRelease repo="openmrs-esm-cohortbuilder-app" />
+## Clinical apps
 
-- #### [Template](https://github.com/openmrs/openmrs-esm-template-app)
+### [Medication dispensing](https://github.com/openmrs/openmrs-esm-dispensing-app/releases)
 
-  <LatestRelease repo="openmrs-esm-template-app" />
+<LatestRelease repo="openmrs-esm-dispensing-app" />
+
+### [Cohort builder](https://github.com/openmrs/openmrs-esm-cohortbuilder-app/releases)
+
+<LatestRelease repo="openmrs-esm-cohortbuilder-app" />
+
+## Scaffolding reference
+
+Use [`@openmrs/create-o3-app`](https://www.npmjs.com/package/@openmrs/create-o3-app) for new frontend modules. The template app is listed here only as a structural reference, so it may not release as often as active modules.
+
+### [Template app](https://github.com/openmrs/openmrs-esm-template-app/releases)
+
+<LatestRelease repo="openmrs-esm-template-app" />
