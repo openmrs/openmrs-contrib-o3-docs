@@ -4,6 +4,7 @@ description: Créez et étendez des interfaces O3 plus vite avec un framework fr
 ---
 
 import AdaptiveLogo from "@/components/adaptive-logo";
+import DeprecationWarning from "@/components/deprecation-warning";
 
 <div className="relative pt-20 pb-12 m-auto flex flex-col justify-center text-center max-w-4xl overflow-hidden">
   <div
@@ -23,6 +24,8 @@ import AdaptiveLogo from "@/components/adaptive-logo";
 </div>
 
 <div className="mx-auto flex flex-col items-center w-full max-w-2xl gap-4 px-6">
+  <DeprecationWarning href="https://openmrs.atlassian.net/wiki/x/94ABCQ" locale="fr-FR" />
+
   <div className="flex flex-col w-full gap-3 md:flex-row">
     <a
       className="w-full min-w-[180px] text-lg font-semibold no-underline text-white bg-black dark:bg-white dark:text-black rounded-none md:leading-6 transition-all duration-300 inline-flex items-center justify-center gap-2 py-3.5 shadow-lg shadow-black/20 hover:-translate-y-0.5 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/30 dark:focus-visible:ring-white/30"
@@ -45,9 +48,9 @@ import AdaptiveLogo from "@/components/adaptive-logo";
     </a>
     <a
       className="w-full min-w-[160px] text-base font-medium no-underline text-black dark:text-white border border-black/30 dark:border-white/30 rounded-none md:leading-6 transition-all duration-300 inline-flex items-center justify-center py-3"
-      href="/docs/framework-api-reference"
+      href="/docs/recipes/create-a-frontend-module"
     >
-      Référence API
+      Créer un module
     </a>
   </div>
 </div>
@@ -70,17 +73,17 @@ import AdaptiveLogo from "@/components/adaptive-logo";
     <span className="absolute left-0 top-0 h-2 w-2 border-l border-t border-black/40 dark:border-white/40" />
     <h3 className="font-semibold text-lg">Concepts clés</h3>
     <div className="text-sm opacity-80">
-      Les briques du framework : routage, extensions, workspaces et configuration.
+      App shell, import map, registre des routes, extensions, workspaces et configuration.
     </div>
   </a>
   <a
     className="rounded-none border border-black/15 dark:border-white/15 p-5 hover:shadow-md transition relative"
-    href="/docs/recipes"
+    href="/docs/frontend-modules/overview"
   >
     <span className="absolute left-0 top-0 h-2 w-2 border-l border-t border-black/40 dark:border-white/40" />
-    <h3 className="font-semibold text-lg">Recettes</h3>
+    <h3 className="font-semibold text-lg">Modules frontend</h3>
     <div className="text-sm opacity-80">
-      Des guides pratiques pour créer, étendre et livrer des fonctionnalités O3.
+      Structure, chargement, développement, tests et publication des modules.
     </div>
   </a>
 </div>
