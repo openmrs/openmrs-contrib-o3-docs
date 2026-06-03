@@ -1,0 +1,51 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  # Rebuild daily so the build-time release data (data/releases.json) stays fresh
+  # without needing a content change. See scripts/fetch-releases.mjs.
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+# Required for JamesIves/github-pages-deploy-action to push to the gh-pages branch.
+permissions:
+  contents: write
+
+# Never run two production deploys at once, but don't cancel an in-flight deploy
+# (cancelling mid-push could leave gh-pages in a partial state).
+concurrency:
+  group: pages-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      # Subpath the project site is served from (openmrs.github.io/<repo>).
+      # Set to '' once the site moves to a custom domain at the root.
+      BASE_PATH: /openmrs-contrib-o3-docs
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm build
+        env:
+          # Raises the GitHub API rate limit for the build-time release fetch.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: out
+          branch: gh-pages
+          # Preserve PR preview subfolders managed by the preview workflow.
+          clean-exclude: pr-preview/

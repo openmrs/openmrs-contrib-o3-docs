@@ -44,8 +44,10 @@ export default function ApiDocs() {
     // Base URL for GitHub docs
     const docsBaseUrl = "https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs";
 
-    // Transform anchor links within API.md to local anchors
-    let transformed = transformedMarkdown.replace(/\(API\.md#(\w+)\)/g, "(/docs/framework-api-reference#$1)");
+    // Transform anchor links within API.md to same-page anchors. These are
+    // rendered client-side, so they bypass the build-time link localization; a
+    // hash-only link stays on the current page regardless of locale or basePath.
+    let transformed = transformedMarkdown.replace(/\(API\.md#(\w+)\)/g, "(#$1)");
 
     // Transform relative markdown file links to GitHub URLs
     // Matches patterns like: [text](functions/file.md) or [text](interfaces/file.md) etc.

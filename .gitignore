@@ -39,3 +39,6 @@ next-env.d.ts
 
 # pagefind (generated at build time)
 /public/_pagefind
+
+# release data (fetched at build time by scripts/fetch-releases.mjs)
+/data/releases.json

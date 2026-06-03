@@ -1,0 +1,51 @@
+name: PR Preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+
+# One preview deploy per PR; cancel superseded builds.
+concurrency:
+  group: preview-${{ github.event.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    env:
+      # Preview lives in a subfolder of the project site.
+      BASE_PATH: /openmrs-contrib-o3-docs/pr-preview/pr-${{ github.event.number }}
+    steps:
+      - uses: actions/checkout@v6
+
+      # Build runs for every PR (including forks) as a build-check. For forks
+      # this validates the build only — GitHub forces a read-only token and
+      # withholds secrets, and the deploy step below is gated to same-repo PRs.
+      - uses: pnpm/action-setup@v6
+        if: github.event.action != 'closed'
+      - uses: actions/setup-node@v6
+        if: github.event.action != 'closed'
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+        if: github.event.action != 'closed'
+      - run: pnpm build
+        if: github.event.action != 'closed'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Deploy/update on open & sync, remove on close — only for branches pushed
+      # to this repo. We deliberately do NOT preview fork PRs: publishing
+      # PR-authored code to our Pages origin (shared with production) is a
+      # trust/phishing risk that secret isolation alone does not address.
+      - uses: rossjrw/pr-preview-action@v1
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        with:
+          source-dir: out
+          preview-branch: gh-pages
+          umbrella-dir: pr-preview

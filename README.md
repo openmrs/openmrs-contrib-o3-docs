@@ -20,9 +20,12 @@ Documentation site for O3, the frontend framework for OpenMRS. This documentatio
 
 ## Deployment
 
-Each merged commit gets automatically deployed on [o3-docs.openmrs.org](https://o3-docs.openmrs.org).
+The site is a static export deployed to GitHub Pages by GitHub Actions. Each push
+to `main` is built and published to the `gh-pages` branch, and pull requests opened
+from this repository get a preview deploy under `/pr-preview/pr-<n>/`.
 
 ## Stack
 
-- [Nextra](https://n.extra.site/)
-- [Vercel](https://vercel.com)
+- [Nextra](https://nextra.site/)
+- [GitHub Pages](https://pages.github.com/)
+- [Pagefind](https://pagefind.app/) (static search)

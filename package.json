@@ -4,10 +4,11 @@
   "packageManager": "pnpm@9.15.9",
   "description": "OpenMRS 3.0 documentation",
   "scripts": {
+    "predev": "node scripts/fetch-releases.mjs",
     "dev": "next dev",
+    "prebuild": "node scripts/fetch-releases.mjs",
     "build": "next build",
-    "postbuild": "pagefind --site .next/server/app --output-path public/_pagefind",
-    "start": "next start",
+    "postbuild": "pagefind --site out --output-path out/_pagefind && node scripts/post-export.mjs",
     "lint": "next lint"
   },
   "repository": {
