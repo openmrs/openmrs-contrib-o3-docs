@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex" />
+    <title>OpenMRS O3 Docs</title>
+    <script>(function () {
+  const base = "/openmrs-contrib-o3-docs";
+  const locales = ["en-US","fr-FR"];
+  const defaultLocale = "en-US";
+  const baseOf = (l) => l.toLowerCase().split('-')[0];
+  function detect() {
+    try {
+      const stored = localStorage.getItem('locale');
+      if (stored && locales.includes(stored)) return stored;
+    } catch (e) {}
+    const prefs = navigator.languages || (navigator.language ? [navigator.language] : []);
+    for (const pref of prefs) {
+      if (locales.includes(pref)) return pref;
+      const match = locales.find((l) => baseOf(l) === baseOf(pref));
+      if (match) return match;
+    }
+    return defaultLocale;
+  }
+  location.replace(base + '/' + detect() + "/docs/introduction/");
+})();</script>
+  </head>
+  <body>
+    <noscript>Choose a language: <a href="/openmrs-contrib-o3-docs/en-US/docs/introduction/">en-US</a> · <a href="/openmrs-contrib-o3-docs/fr-FR/docs/introduction/">fr-FR</a></noscript>
+  </body>
+</html>
