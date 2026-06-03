@@ -22,7 +22,9 @@ const outDir = join(__dirname, '..', 'out')
 const basePath = process.env.BASE_PATH || ''
 const locales = ['en-US', 'fr-FR']
 const defaultLocale = 'en-US'
-const landing = '/docs/introduction/'
+// Where "/" sends visitors: the locale home page (content/<locale>/index.mdx),
+// served at the locale root.
+const landing = '/'
 
 // Shared detector, emitted verbatim into both the root page and 404.html. base,
 // locales and defaultLocale are injected as literals so the script is fully
