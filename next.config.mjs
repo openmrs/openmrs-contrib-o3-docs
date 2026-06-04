@@ -43,6 +43,10 @@ export default withNextra({
   // resolves cleanly without server-side rewrites.
   trailingSlash: true,
   basePath,
+  // Exposed to the client so components can prefix the basePath onto asset URLs
+  // that Next does not rewrite itself — notably next/image with `unoptimized`,
+  // which emits the bare `src`. See components/adaptive-logo.jsx.
+  env: { NEXT_PUBLIC_BASE_PATH: basePath },
   reactStrictMode: true,
   poweredByHeader: false,
 })
