@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       # Preview lives in a subfolder of the project site.
-      BASE_PATH: /openmrs-contrib-o3-docs/pr-preview/pr-${{ github.event.number }}
+      BASE_PATH: /pr-preview/pr-${{ github.event.number }}
     steps:
       - uses: actions/checkout@v6
 

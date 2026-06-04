@@ -25,7 +25,7 @@ jobs:
     env:
       # Subpath the project site is served from (openmrs.github.io/<repo>).
       # Set to '' once the site moves to a custom domain at the root.
-      BASE_PATH: /openmrs-contrib-o3-docs
+      BASE_PATH: ''
     steps:
       - uses: actions/checkout@v6
 
