@@ -1,11 +1,8 @@
 import { Callout, Steps } from "nextra/components";
-import DeprecationWarning from "@/components/deprecation-warning";
 
 # End-to-end testing with Playwright
 
 [Playwright](https://playwright.dev) is a testing framework for writing reliable end-to-end tests in JavaScript. The OpenMRS QA team has helped standardize Playwright across many of our key repositories.
-
-<DeprecationWarning href="https://openmrs.atlassian.net/wiki/x/K4L-C" />
 
 This means we can write E2E tests for key user journeys in the OpenMRS frontend. These tests are set up to run on commits and merges. Keep them passing and, when you add new behavior, extend the tests to cover it. Ideally, each pull request should include the tests that prove the change works.
 
