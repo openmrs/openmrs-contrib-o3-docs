@@ -1,11 +1,8 @@
 import { Callout, Steps } from "nextra/components";
-import DeprecationWarning from "@/components/deprecation-warning";
 
 # Tests de bout en bout avec Playwright
 
 [Playwright](https://playwright.dev) est un framework de test pour écrire des tests fiables de bout en bout en JavaScript. L'équipe QA d'OpenMRS a contribué à standardiser Playwright sur plusieurs de nos dépôts clés.
-
-<DeprecationWarning href="https://openmrs.atlassian.net/wiki/x/K4L-C" locale="fr-FR" />
 
 Cela signifie que nous pouvons écrire des tests E2E pour les principaux parcours utilisateurs dans le frontend OpenMRS. Ces tests sont configurés pour s'exécuter sur les commits et les merges. Gardez-les au vert et, lorsque vous ajoutez un nouveau comportement, étendez les tests pour le couvrir. Idéalement, chaque pull request devrait inclure les tests qui prouvent que le changement fonctionne.
 
