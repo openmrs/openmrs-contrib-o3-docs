@@ -102,7 +102,7 @@ export const createDashboardLink = (config: Omit<DashboardExtensionProps, 'icon'
 ```
 
 <Callout emoji="ℹ️" type="info">
-  **Note**: The `icon` property is optional. If provided, it should be a valid Carbon icon name (e.g., `"Calendar"`, `"User"`, `"List"`). The icon will be displayed next to the link text in the left panel.
+  **Note**: The `icon` property is optional. If provided, it should be a valid `IconId` from `@openmrs/esm-framework` (e.g., `"omrs-icon-calendar"`, `"omrs-icon-user"`, `"omrs-icon-list-checked"`). The icon will be displayed next to the link text in the left panel.
 </Callout>
 
 `DashboardExtension` translates the `title` value with `useTranslation()`. Keep a matching `t()` comment near the lifecycle export so translation extraction can find the display text.
