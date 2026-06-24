@@ -302,7 +302,7 @@ The Reference Application certbot image supports Let's Encrypt certificate profi
 - `shortlived` - 6-day certificates, required for public IP address certificates
 
 If any value in `CERT_WEB_DOMAINS` is a public IP address, the certbot entrypoint automatically selects
-`CERT_PROFILE=shortlived` when no profile is set. If you set a different profile while using an IP address, certificate
+`CERT_PROFILE=shortlived` in production mode (`SSL_MODE=prod`) when no profile is set. If you set a different profile while using an IP address, certificate
 generation fails because Let's Encrypt requires the `shortlived` profile for IP address certificates.
 
 ## Health checks and monitoring

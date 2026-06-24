@@ -137,7 +137,7 @@ This command does the following:
 
 ### Step 4
 
-At this point, the backend setup script should be running. During first boot, `http://localhost/openmrs` may redirect you to the initial setup page at `http://localhost/openmrs/initialsetup`. This setup will take a few minutes to complete. The O3 frontend is served at `http://localhost/openmrs/spa`; `http://localhost/openmrs` is the backend and legacy UI path.
+At this point, the backend setup script should be running. The reference application installs automatically (the interactive setup wizard is disabled), so during first boot `http://localhost/openmrs` may briefly show a progress page at `http://localhost/openmrs/initialsetup` while the database is initialized. This takes a few minutes and requires no manual steps. The O3 frontend is served at `http://localhost/openmrs/spa`; `http://localhost/openmrs` is the backend and legacy UI path.
 
 Use the OpenMRS health endpoint to check whether the backend is ready:
 

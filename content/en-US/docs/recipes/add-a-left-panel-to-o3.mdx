@@ -86,7 +86,7 @@ Some key things to note:
 - `name` is the extension slot that will receive the left-panel links. This same slot name is used in `routes.json`.
 - `basePath` is the SPA base path, `/openmrs/spa` by default.
 - The app renders its own `LeftPanel` component instead of rendering `LeftNavMenu` directly. Direct use of `LeftNavMenu` outside the shell header is deprecated in the framework.
-- `WorkspaceContainer` keeps Bed Management workspaces scoped to this page.
+- `WorkspaceContainer` keeps Bed Management workspaces scoped to this page. It is marked deprecated (no longer needed with workspace v2) but remains supported and widely used.
 
 ### Step 2: Render a Carbon side nav with an extension slot
 

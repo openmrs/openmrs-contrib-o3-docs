@@ -72,7 +72,7 @@ function RootComponent() {
 export default RootComponent;
 ```
 
-This `BrowserRouter` configuration lets O3 render the Patient Lists app landing screen at `home/patient-lists` and the list details screen at `home/patient-lists/:patientListUuid`. The workspace container keeps Patient Lists workspaces scoped to this page. The optional `AutoLaunchPatientListWorkspace` helper preserves compatibility with links that open the create-list workspace through query parameters.
+This `BrowserRouter` configuration lets O3 render the Patient Lists app landing screen at `home/patient-lists` and the list details screen at `home/patient-lists/:patientListUuid`. The workspace container keeps Patient Lists workspaces scoped to this page (`WorkspaceContainer` is marked deprecated for workspace v2, but remains supported and widely used). The optional `AutoLaunchPatientListWorkspace` helper preserves compatibility with links that open the create-list workspace through query parameters.
 
 ### Step 2: Add a `Patient lists` link to the left panel
 
