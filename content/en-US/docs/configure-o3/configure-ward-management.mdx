@@ -267,16 +267,10 @@ The discharge action menu button can be limited to specific session locations:
 ```json
 {
   "@openmrs/esm-ward-app": {
-    "extensionSlots": {
-      "ward-patient": {
-        "configure": {
-          "ward-patient-discharge": {
-            "allowedSessionLocationUuids": [
-              "some-session-location-uuid"
-            ]
-          }
-        }
-      }
+    "ward-patient-discharge": {
+      "allowedSessionLocationUuids": [
+        "some-session-location-uuid"
+      ]
     }
   }
 }
