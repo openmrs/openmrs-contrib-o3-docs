@@ -181,6 +181,7 @@ An out-of-support Angular line means security advisories against it have no fixe
 3. **Do not chase the newest major.** A major in its first months has the most churn and the least third-party support. Being on the newest line buys nothing security-wise over any other in-support line.
 4. **Do not sit past an LTS cliff.** Deferral is what makes migrations painful: one-major hops are small, multi-major hops are rewrites.
 5. **Patch bumps are routine maintenance.** Security patches within the current line (for example 20.3.21 to 20.3.25) should land as soon as they exist and must never wait for a major migration.
+6. **Library versions track the Angular major.** @openmrs/ngx-formentry and @openmrs/ngx-file-uploader publish versions whose major matches the Angular major they support: 20.x of each library supports Angular 20, and an Angular migration lands as a major release of both. A consumer can read compatibility straight off the version number, and the major bump the migration forces is exactly the one semver requires. esm-form-entry-app is versioned with the patient-chart monorepo and is exempt. If a library ever needs a breaking change of its own between Angular migrations, its major moves ahead of Angular and re-syncs at the next migration.
 
 ### Before each migration
 
