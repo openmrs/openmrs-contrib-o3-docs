@@ -1,0 +1,100 @@
+# Advanced React form capabilities
+
+These capabilities extend the default React workflow. They do not imply support in the Angular Form Engine or another
+renderer.
+
+## Data sources
+
+The React registry includes these data-source names:
+
+| Name | Used by |
+| --- | --- |
+| `location_datasource` | Encounter location template |
+| `drug_datasource` | Drug template |
+| `problem_datasource` | Problem template |
+| `select_concept_answers_datasource` | Concept-answer selection |
+| `provider_datasource` | Encounter provider template |
+| `encounter_role_datasource` | Encounter role template |
+
+`ui-select-extended` can use `questionOptions.datasource.name` and an optional `config` object. A named template can
+supply its default data source. If neither a built-in, template, nor custom registration matches, loading the source throws
+`Datasource not found`.
+
+## Registering extensions
+
+The package exports registry functions for controls, field-value adapters, validators, data sources, expression helpers,
+post-submission actions, and schema transformers. Component-like registrations use an object with `name` and a lazy
+`load` function. Controls additionally require `type`; field-value adapters use `type` as their lookup key.
+
+```tsx
+import {
+  registerCustomDataSource,
+  registerExpressionHelper,
+} from '@openmrs/esm-form-engine-lib';
+
+registerExpressionHelper('formatClinicCode', (value: string) => value.trim().toUpperCase());
+
+registerCustomDataSource({
+  name: 'clinic_directory',
+  load: () => import('./clinic-directory.datasource'),
+});
+```
+
+This is a React package API, not JSON. Register extensions during frontend startup before a form asks for them. A schema
+that merely names an extension does not install its implementation. Keep package-level API details beside the package and
+verify them when upgrading.
+
+## Schema transformers
+
+`registerFormSchemaTransformers` adds a lazy transformer by name. The default transformer always runs after custom
+transformers have loaded. A registration with the same name replaces the previous registration in the store. Transformers
+can rewrite the entire form, so treat them as application code and cover their output with tests against the current
+normative schema and React types.
+
+## Translations
+
+`translations` is a map of keys to strings. When the form loads, the engine adds it to the current language's React Form
+Engine i18next namespace. Labels and Markdown can then use the form's translation keys. The Form Builder also has a
+Translation Builder and language selector for previewing schema translations.
+
+Translation keys and JSON property names are identifiers; do not translate them. Test each locale in the builder preview
+and runtime because a valid map does not prove that every referenced key exists.
+
+## Reusable sections and subforms
+
+`referencedForms` plus a section `reference` imports a named section from another server form. Subform pages can resolve a
+named server form or a versioned form package. Both mechanisms are resolved before rendering and can fail when a form,
+package, page label, or section label is missing. See [Form schema reference](/docs/forms-in-o3/form-schema-reference) for
+the document shape.
+
+## Form intents and behaviours
+
+Passing `formSessionIntent` causes the React loader to apply matching `behaviours` and the `*` fallback. Intent behavior
+can change defaults, readonly or hidden state, the initial page, and the intent passed into a subform. Direct `FormEngine`
+usage does not select an intent unless the caller supplies one.
+
+Intent handling mutates a refined copy of the form before rendering. Test every supported intent and its fallback; the
+normative schema does not guarantee equivalent behavior in another renderer.
+
+## Post-submission actions
+
+The current React library includes `ProgramEnrollmentSubmissionAction` and `MarkPatientAsDeceasedAction`. A
+`postSubmissionActions` entry names `actionId`, optional `enabled`, and a `config` object. Actions run only after all forms
+validate and their processors submit successfully. An unknown action logs an error and resolves to no action.
+
+Distribution code can register additional lazy actions. An unknown action logs an error; if submission processing reaches
+it, the runtime cannot apply it and reports an action error. Review action configuration carefully because it can change
+patient data after encounter submission.
+
+## Security and trust
+
+Custom controls, adapters, data sources, helpers, transformers, and actions execute as frontend application code with the
+current user's browser session. Remote or custom data sources can disclose patient context if implemented carelessly.
+
+- Install extension modules only from trusted, reviewed packages.
+- Allow only trusted users to author and publish schemas that invoke extensions or expressions.
+- Keep authentication, authorization, and clinical validation in backend services.
+- Restrict remote endpoints and do not place credentials or secrets in form JSON.
+- Review upgrades to registered code and the schemas that reference it together.
+
+Client-side hiding, readonly state, and validation improve the workflow but are not security controls.

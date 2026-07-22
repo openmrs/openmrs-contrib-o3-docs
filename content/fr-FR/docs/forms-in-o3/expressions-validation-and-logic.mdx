@@ -1,0 +1,107 @@
+# Expressions, validation et logique React
+
+Les expressions du React Form Engine sont évaluées par l'évaluateur d'expressions du framework O3 dans un contexte contrôlé. Elles ne constituent pas un contrat de portabilité vers un autre moteur. Les ID de champs sont exposés comme variables; les dépendances détectées provoquent la réévaluation des champs, sections ou pages concernés lorsque la valeur référencée change.
+
+## Contexte d'expression
+
+Le contexte contient les valeurs des champs et les noms courants suivants :
+
+| Nom | Valeur |
+| --- | --- |
+| `myValue` | Valeur actuelle du champ lors de l'évaluation de sa logique |
+| `patient` | Objet patient FHIR actuel |
+| `sex`, `age` | Valeurs patient dérivées par l'environnement |
+| `mode` | `enter`, `edit`, `view` ou `embedded-view` |
+| `visit`, `visitType`, `visitTypeUuid` | Données de visite actuelles, lorsqu'elles sont fournies |
+| `HD` | Helper de données historiques exposant la rencontre précédente sous `prevEnc` |
+| `_` | Petit objet utilitaire contenant actuellement `isEmpty` de Lodash |
+| `api` | Fonctions de l'API du React Form Engine |
+| `dayjs` | Instance configurée de Day.js |
+
+Une expression vide renvoie `null`. Une expression en échec est journalisée et renvoie aussi `null`; ne supposez pas qu'une erreur vaut `true` ou entraîne un échec de validation.
+
+## Helpers d'expression intégrés
+
+Les noms suivants sont des membres d'instance de `CommonExpressionHelpers` présents dans la portée d'expression.
+
+| Helper | Contrat de résultat exact |
+| --- | --- |
+| `today()` | Nouveau `Date` représentant l'instant actuel. |
+| `includes(collection, value)` | Résultat de `includes` d'un tableau JavaScript, ou `undefined` si la collection est nulle. |
+| `isDateBefore(left, right, format?)` | `true` si `left` précède strictement la date droite analysée. |
+| `isDateAfter(selectedDate, baseDate, duration, unit)` | `true` si la date sélectionnée est égale ou postérieure à la date de base augmentée de jours, semaines, mois ou années. |
+| `isDateAfterSimple(left, right, format?)` | `true` si `left` est strictement postérieure à la date droite analysée. |
+| `addWeeksToDate(date, weeks)` / `addDaysToDate(date, days)` | Nouveau `Date` décalé; l'entrée n'est pas modifiée. |
+| `useFieldValue(questionId)` | Valeur actuelle du champ, ou `null`; enregistre aussi une dépendance. |
+| `doesNotMatchExpression(pattern, value)` | `true` pour une valeur vide ou lorsque l'expression régulière ne correspond pas. |
+| `arrayContains(array, members)` | Indique si tous les membres figurent dans le tableau; faux pour une entrée qui n'est pas un tableau et vrai si la liste demandée est vide. |
+| `arrayContainsAny(array, members)` | Indique si au moins un membre figure dans le tableau; faux pour une entrée qui n'est pas un tableau et vrai si la liste demandée est vide. |
+| `parseDate(value)` | Un `Date` produit par l'analyseur du framework O3. |
+| `formatDate(value, format?)` | Chaîne formatée; lève une erreur pour une date invalide. |
+| `extractRepeatingGroupValues(key, array)` | Tableau contenant `item[key]` pour chaque élément du groupe répétable. |
+| `resolve(promise)` | Promise résolue avec la valeur de la promise fournie. |
+| `calcBMI(height, weight)` | IMC arrondi à une décimale, ou `null` si une entrée manque. |
+| `calcEDD(lmp)` | DDR plus 280 jours, ou `null`. |
+| `calcMonthsOnART(start)` | Mois complets jusqu'à aujourd'hui, `0` avant 30 jours, `null` si absent, ou erreur pour une valeur autre que Date. |
+| `calcNextVisitDate(date, days)` | Date augmentée du nombre de jours, ou `null` si une entrée manque. |
+| `calcAgeBasedOnDate(date?)` | Année de naissance du patient soustraite de l'année cible; mois et jour volontairement ignorés. |
+| `calcBSA(height, weight)` | Surface corporelle de Mosteller arrondie à deux décimales, ou `null`. |
+| `calcGravida(term, abortion)` | Somme entière; lève une erreur si une entrée n'est ni un entier ni une chaîne représentant un entier. |
+| `calcWeightForHeightZscore(height, weight)` | Chaîne de score dérivée de l'OMS, `-4` hors de 45–110 cm, ou `null` si les données d'entrée/de référence manquent. |
+| `calcBMIForAgeZscore(height, weight)` / `calcHeightForAgeZscore(height)` | Chaîne de score dérivée de l'OMS ou `null`. |
+| `calcTimeDifference(date, unit)` | Différence absolue arrondie jusqu'à aujourd'hui en `d`, `w`, `m` ou `y`; `0` sans date. |
+
+`calcViralLoadStatus` et `calcTreatmentEndDate` existent encore, mais sont obsolètes parce qu'ils incorporent des UUID de concepts propres à une implémentation. Ne les introduisez pas dans de nouveaux formulaires partagés. Préférez des expressions ou helpers enregistrés dont les concepts sont configurés pour la distribution cible.
+
+## Champs calculés, masqués, désactivés, en lecture seule et obligatoires
+
+Utilisez `questionOptions.calculate.calculateExpression` pour une valeur calculée. Elle peut être résolue de façon asynchrone. Après la modification d'une dépendance, le moteur met à jour et valide le champ calculé avant de l'adapter pour la soumission.
+
+`hide.hideWhenExpression` s'applique aux pages, sections, questions et réponses. Un résultat truthy masque la cible. `disabled.disableWhenExpression` désactive une question ou une réponse codée lorsque son résultat est truthy. Une chaîne non booléenne dans `readonly` est évaluée comme une expression.
+
+Un champ obligatoire conditionnel utilise un objet avec `type: "conditionalRequired"`, `referenceQuestionId` et `referenceQuestionAnswers`. Il devient obligatoire lorsque le champ référencé possède l'une de ces réponses.
+
+```json
+{
+  "id": "referralReason",
+  "label": "Referral reason",
+  "type": "obs",
+  "required": {
+    "type": "conditionalRequired",
+    "message": "Enter a reason when the patient was referred",
+    "referenceQuestionId": "visitOutcome",
+    "referenceQuestionAnswers": [
+      "55555555-5555-5555-5555-555555555555"
+    ]
+  },
+  "hide": {
+    "hideWhenExpression": "visitOutcome != '55555555-5555-5555-5555-555555555555'"
+  },
+  "questionOptions": {
+    "rendering": "textarea",
+    "concept": "88888888-8888-8888-8888-888888888888"
+  }
+}
+```
+
+## Validateurs à l'exécution
+
+Le transformateur par défaut ajoute `form_field` et `default_value` aux champs qui ne sont pas des groupes. Les autres validateurs doivent figurer dans le schéma de la question ou être enregistrés par le code de la distribution.
+
+| Nom du validateur | Comportement intégré |
+| --- | --- |
+| `form_field` | Valeurs obligatoires, longueur minimale/maximale du texte, minimum/maximum numérique et décimales. |
+| `default_value` | Vérifie que les valeurs codées par défaut figurent dans `answers`, que les dates sont analysables et que les nombres par défaut sont numériques. |
+| `date` | Applique la validation obligatoire et refuse les dates futures sauf si `allowFutureDates` vaut true. |
+| `js_expression` | Produit une erreur si `failsWhenExpression` est truthy, et un avertissement si `warnsWhenExpression` est truthy. |
+| `conditionalAnswered` | Refuse une valeur non vide sauf si la question référencée possède une réponse autorisée. |
+
+La validation du constructeur est distincte. Lorsqu'elle est activée, elle vérifie les concepts, leurs réponses, les types de métadonnées et les associations configurées entre types de données de concepts et rendus. Elle n'exécute pas tous les chemins d'exécution et ne prouve pas la prise en charge par un autre moteur.
+
+## Valeurs historiques
+
+`historicalExpression` demande une valeur précédente au processeur actif en mode `enter`. Lorsqu'une valeur est renvoyée, l'environnement affiche une revue de la valeur précédente; l'accepter ou la modifier suit toujours l'adaptateur et les validateurs du champ. Le contexte expose aussi la rencontre précédente par le comportement `HD.getObject` utilisé par le service de données historiques. Testez avec de vraies données de rencontre, car la disponibilité dépend du contexte du processeur et de l'historique.
+
+## Limite de sécurité
+
+Les expressions proviennent du JSON du formulaire et accèdent au contexte patient, aux helpers enregistrés et aux fonctions API du React Form Engine. Seuls des auteurs de confiance devraient pouvoir créer ou publier des schémas. Examinez les modifications d'expressions comme du code applicatif, n'y incorporez aucun secret et conservez l'autorisation dans les API backend; masquer ou désactiver un champ ne constitue pas un contrôle d'accès.

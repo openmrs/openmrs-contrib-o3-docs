@@ -1,0 +1,128 @@
+# Types de champs et rendus React
+
+Dans le React Form Engine, `type` et `questionOptions.rendering` sont des contrats indépendants :
+
+- `type` sélectionne un adaptateur de valeur, qui lit les données existantes et crée les données de soumission.
+- `rendering` sélectionne le contrôle de saisie ou d'affichage.
+
+Le constructeur propose des choix de création, mais sa liste ne garantit pas qu'une combinaison type/rendu possède les métadonnées ou la prise en charge serveur nécessaires. Son aperçu utilise le React Form Engine.
+
+## Types d'adaptateurs de champs
+
+| `type` | Adaptateur React intégré | Proposé par le constructeur interactif |
+| --- | --- | --- |
+| `obs` | Observation | Oui |
+| `obsGroup` | Observations groupées | Oui |
+| `control` | Contrôle d'affichage sans soumission | Oui |
+| `testOrder` | Ordonnances | Oui |
+| `programState` | État de programme | Oui |
+| `encounterLocation` | Lieu de rencontre | Oui |
+| `encounterProvider` | Prestataire de rencontre | Oui |
+| `encounterRole` | Rôle de rencontre | Oui |
+| `encounterDatetime` | Date et heure de rencontre | Oui |
+| `patientIdentifier` | Identifiant patient | Oui |
+| `personAttribute` | Attribut de personne | Oui |
+| `diagnosis` | Diagnostic de rencontre | Non; utilisez l'Éditeur de schéma |
+| `obsComment` | Commentaire d'observation | Non; généré par `showComment` |
+| `inlineDate` | Remplacement de la date d'observation | Non; généré par `showDate` |
+
+Un type sans adaptateur intégré ou enregistré ne peut pas charger ni soumettre une valeur de façon fiable. Il n'existe aucun mécanisme générique de soumission pour les types inconnus.
+
+## Inventaire des rendus
+
+« Constructeur » indique que le rendu figure dans la liste `renderingTypes` par défaut. Seuls certains rendus disposent d'un panneau d'options dédié; l'Éditeur de schéma reste nécessaire pour les propriétés que l'interface interactive n'expose pas.
+
+| `rendering` | Comportement de l'environnement React | Constructeur |
+| --- | --- | --- |
+| `text` | Champ texte sur une ligne | Oui |
+| `textarea` | Champ texte multiligne | Oui |
+| `number` | Champ numérique avec min/max, pas et décimales | Oui |
+| `date` | Champ date; mode calendrier par défaut | Oui |
+| `datetime` | Champ date; mode date/heure par défaut | Oui |
+| `select` | Liste déroulante à sélection unique | Oui |
+| `radio` | Sélection unique par boutons radio | Oui |
+| `checkbox` | Sélection multiple | Oui |
+| `checkbox-searchable` | Normalisé vers des cases à cocher avec recherche | Oui |
+| `content-switcher` | Sélection unique par sélecteur de contenu | Oui |
+| `toggle` | Interrupteur booléen | Oui |
+| `ui-select-extended` | Sélection avec recherche alimentée par des données | Oui |
+| `select-concept-answers` | Recherche alimentée par les réponses d'un concept | Oui |
+| `drug` | Modèle `ui-select-extended` alimenté par la source de médicaments | Oui |
+| `problem` | Modèle `ui-select-extended` alimenté par la source de problèmes | Oui |
+| `encounter-location` | Modèle de lieu alimenté par des données | Oui |
+| `encounter-provider` | Modèle de prestataire alimenté par des données | Oui |
+| `encounter-role` | Modèle de rôle alimenté par des données | Oui |
+| `file` | Téléversement de fichier | Oui |
+| `fixed-value` | Valeur fixe en lecture seule | Oui |
+| `group` | Champs groupés imbriqués | Oui |
+| `repeating` | Champs imbriqués répétables | Oui |
+| `markdown` | Contenu Markdown rendu; normalisé vers `control` | Oui |
+| `workspace-launcher` | Bouton ouvrant un espace de travail O3 nommé; normalisé vers `control` | Oui |
+| `extension-widget` | Déclaré par le type et le schéma et proposé par le constructeur, mais sans contrôle intégré enregistré dans la bibliothèque actuelle | Oui |
+
+Le schéma normatif accepte encore l'ancien nom `multiCheckbox`, que le transformateur React normalise. Utilisez `checkbox-searchable` dans les nouveaux schémas.
+
+## Exemples courants de champs
+
+Une observation codée fournit ses propres concepts de réponse :
+
+```json
+{
+  "id": "visitOutcome",
+  "label": "Visit outcome",
+  "type": "obs",
+  "questionOptions": {
+    "rendering": "radio",
+    "concept": "33333333-3333-3333-3333-333333333333",
+    "answers": [
+      {
+        "label": "Completed",
+        "concept": "44444444-4444-4444-4444-444444444444"
+      },
+      {
+        "label": "Referred",
+        "concept": "55555555-5555-5555-5555-555555555555"
+      }
+    ]
+  }
+}
+```
+
+Un groupe d'observations répétable contient des questions imbriquées :
+
+```json
+{
+  "id": "symptoms",
+  "label": "Symptoms",
+  "type": "obsGroup",
+  "questionOptions": {
+    "rendering": "repeating",
+    "concept": "66666666-6666-6666-6666-666666666666",
+    "repeatOptions": {
+      "addText": "Add symptom",
+      "limit": "5"
+    }
+  },
+  "questions": [
+    {
+      "id": "symptomName",
+      "label": "Symptom",
+      "type": "obs",
+      "questionOptions": {
+        "rendering": "text",
+        "concept": "77777777-7777-7777-7777-777777777777"
+      }
+    }
+  ]
+}
+```
+
+## Comportements de repli et non pris en charge
+
+- Une question `obs` sans concept utilise un champ texte désactivé, sauf pour le rendu `file`. Cela rend le problème de métadonnées visible, mais ne permet pas une soumission correcte.
+- Un rendu inconnu ou non enregistré ne correspond à aucun contrôle; le champ n'est donc pas rendu.
+- `extension-widget` exige que le code de la distribution enregistre un contrôle compatible. La présence de `extensionId` et `extensionSlotName` dans le JSON ne l'installe pas.
+- `checkbox-searchable` est transformé en contrôle `checkbox` avec `isCheckboxSearchable: true`.
+- `drug`, `problem`, les métadonnées de rencontre et les modèles de réponses de concepts dépendent de leurs sources de données enregistrées et des API OpenMRS correspondantes.
+
+Consultez le [dépannage des formulaires](/docs/forms-in-o3/forms-troubleshooting) lorsque le constructeur accepte un schéma mais que son aperçu ou son comportement à l'exécution est incomplet.

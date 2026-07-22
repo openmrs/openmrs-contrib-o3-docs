@@ -1,0 +1,57 @@
+# Dépannage des formulaires JSON O3
+
+Commencez par identifier la couche qui a refusé ou mal rendu le formulaire. L'analyse JSON, la validation par le schéma normatif, la validation des métadonnées du constructeur, l'aperçu React et la soumission serveur sont des contrôles distincts.
+
+## L'Éditeur de schéma refuse le JSON
+
+- Vérifiez que le document est un JSON valide : clés et chaînes entre guillemets doubles, aucun commentaire ni virgule finale.
+- Comparez sa structure au [schéma normatif](https://github.com/openmrs/openmrs-contrib-json-schemas/blob/main/form.schema.json).
+- Vérifiez que `pages`, `sections` et `questions` sont des tableaux et que chaque question possède `id` et `questionOptions`.
+- Réservez `jsonc` aux fragments explicatifs de la documentation. Les schémas enregistrés doivent être du JSON.
+
+## La validation et l'aperçu ne concordent pas
+
+Le validateur facultatif du constructeur vérifie les concepts du dictionnaire, leurs réponses, les types d'identifiants patient, les types d'attributs de personne et les associations configurées entre types de données de concepts et rendus. L'aperçu utilise l'environnement React et peut rencontrer d'autres exigences, notamment les contrôles, adaptateurs, sources de données, processeurs et contextes d'expression enregistrés.
+
+Inversement, un aperçu réussi ne prouve pas que toutes les métadonnées existent sur le serveur de production ni que la soumission réussira. Validez et prévisualisez dans la distribution cible, puis testez une soumission hors production.
+
+## Un champ n'est pas rendu
+
+1. Comparez `questionOptions.rendering` aux [types de champs et rendus React](/docs/forms-in-o3/field-types-and-renderings).
+2. Vérifiez si le rendu exige un contrôle ou une source de données enregistrés.
+3. Vérifiez `hide`, `readonly`, `disabled`, la visibilité du parent, le mode du formulaire et le comportement de l'intention.
+4. Pour `obs`, vérifiez `questionOptions.concept`. Un concept absent produit normalement un champ texte désactivé, sauf pour les fichiers.
+5. Inspectez la console du navigateur. Les rendus inconnus ne produisent aucun contrôle; les expressions en échec sont journalisées et renvoient `null`.
+
+## Un champ est rendu mais mal soumis
+
+- Vérifiez `type` séparément de `rendering`. `type` sélectionne l'adaptateur de soumission.
+- Vérifiez les métadonnées obligatoires, notamment `concept`, `identifierType`, `attributeType`, `programUuid` ou la configuration d'ordonnance.
+- Vérifiez le `processor`. `EncounterFormProcessor` est utilisé par défaut; un nom inconnu entraîne un repli vers celui-ci après journalisation d'une erreur.
+- Examinez les erreurs et avertissements de validation. Une valeur calculée invalide n'est pas adaptée pour la soumission.
+- Reproduisez avec le même mode de rencontre (`enter` ou `edit`) et les mêmes contextes de visite, lieu et prestataire qu'en production.
+
+## Les expressions ne se mettent pas à jour comme prévu
+
+- Utilisez des ID de questions stables et référencez-les exactement.
+- Utilisez `useFieldValue('questionId')` lorsqu'une recherche indirecte doit explicitement enregistrer une dépendance.
+- Vérifiez le résultat exact dans [Expressions, validation et logique](/docs/forms-in-o3/expressions-validation-and-logic).
+- Une expression vide ou en échec produit `null`.
+- N'utilisez pas les helpers de calcul obsolètes propres à une implémentation dans de nouveaux formulaires partagés.
+
+## Les formulaires référencés ou sous-formulaires manquent
+
+Les sections référencées utilisent les noms ou alias exacts de formulaires et les libellés exacts de pages et sections. Les sous-formulaires dépendent d'un formulaire serveur ou d'une entrée de registre de packages. Vérifiez que la dépendance existe dans l'environnement cible et que sa version et son type de rencontre conviennent. Le JSON parent ne fournit pas les dépendances absentes.
+
+## Le formulaire est enregistré mais absent du dossier patient
+
+Le flux du dossier patient par défaut répertorie les formulaires JSON O3 publiés. Vérifiez que le formulaire est publié, non retiré et configuré pour le flux pertinent. Enregistrer un brouillon ne le publie pas. Si la distribution utilise un autre renderer, vérifiez les [implémentations du moteur de formulaires](/docs/forms-in-o3/form-engine-implementations) et la configuration de la distribution.
+
+## L'aperçu et la production diffèrent
+
+- Vérifiez que les deux environnements utilisent des versions compatibles du constructeur, du React Form Engine et du schéma.
+- Comparez la configuration frontend, les extensions et sources de données enregistrées et les métadonnées.
+- Vérifiez que les traductions et `formSessionIntent` sont identiques.
+- L'aperçu du constructeur est exclusivement React. Il ne teste pas la compatibilité avec le moteur de formulaires Angular.
+
+Pour signaler un problème, joignez un schéma minimal sans données patient réelles ni secrets, les versions des packages, le mode, l'intention, les erreurs de console et la réponse serveur. Précisez si l'échec survient pendant l'analyse, la validation, l'aperçu, la publication, le chargement des valeurs initiales ou la soumission.

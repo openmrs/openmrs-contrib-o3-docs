@@ -1,0 +1,132 @@
+# O3 form schema reference
+
+An O3 JSON form has two related contracts:
+
+- The [normative O3 JSON Schema](https://github.com/openmrs/openmrs-contrib-json-schemas/blob/main/form.schema.json) defines the engine-neutral document shape.
+- The React Form Engine's `FormSchema`, `FormPage`, `FormSection`, and `FormField` types define what the default O3 runtime consumes.
+
+Passing JSON Schema validation does not prove that every form engine implements the same behavior. Use this page for the
+default React workflow and read [Form engine implementations](/docs/forms-in-o3/form-engine-implementations) before using
+another renderer.
+
+## A complete starter form
+
+The normative schema requires `name` and `pages`. A form intended for the default React encounter workflow should also
+identify its encounter type and processor and include the commonly needed operational fields shown here:
+
+```json
+{
+  "$schema": "http://json.openmrs.org/form.schema.json",
+  "name": "Visit notes",
+  "uuid": "00000000-0000-0000-0000-000000000000",
+  "version": "1.0",
+  "encounterType": "11111111-1111-1111-1111-111111111111",
+  "processor": "EncounterFormProcessor",
+  "referencedForms": [],
+  "pages": [
+    {
+      "label": "Visit",
+      "sections": [
+        {
+          "label": "Notes",
+          "isExpanded": true,
+          "questions": [
+            {
+              "id": "visitNotes",
+              "label": "Visit notes",
+              "type": "obs",
+              "questionOptions": {
+                "rendering": "textarea",
+                "concept": "22222222-2222-2222-2222-222222222222",
+                "rows": 4
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+The placeholder UUIDs must be replaced with metadata from the target OpenMRS installation. The Form Builder assigns or
+preserves the form UUID when the form is saved; do not reuse one form's UUID for another form.
+
+## Form hierarchy
+
+`pages` contains ordered page objects. Each page contains ordered `sections`, and each section contains ordered
+`questions`. A question's stable `id` is used by expressions, prefilling, dependencies, and form-field paths. Changing an
+ID in a published form can therefore change more than its visual label.
+
+- Pages require `label` and `sections`.
+- Sections require `label` and `questions`; `isExpanded` accepts a boolean or the equivalent string and is normalized by
+  the React runtime.
+- Questions require `id` and `questionOptions`. In practice, a submitting React field also needs a supported `type`, and
+  `questionOptions.rendering` must resolve to a registered control.
+- Nested `questions` represent grouped or repeating fields.
+
+See [Field types and renderings](/docs/forms-in-o3/field-types-and-renderings) for the separate `type` and `rendering`
+contracts.
+
+## Top-level properties
+
+| Property | Purpose in the React workflow |
+| --- | --- |
+| `name`, `uuid`, `version` | Identify the form and its saved version. The server normally owns `uuid`. |
+| `encounterType` | Selects the OpenMRS encounter type for an encounter form. A string-valued legacy `encounter` is normalized to this property when `encounterType` is absent. |
+| `processor` | Selects the form processor. `EncounterFormProcessor` is the built-in processor. An unknown name logs an error and falls back to it. |
+| `referencedForms` | Names reusable forms whose sections can be resolved through section `reference` objects. |
+| `pages` | Contains the form hierarchy. |
+| `defaultPage` | Selects the initial page; an intent can override it. |
+| `readonly`, `inlineRendering`, `markdown` | Set form-wide display behavior. Page, section, and question values may override applicable settings. |
+| `translations` | Maps translation keys to translated strings loaded into the Form Engine namespace. |
+| `postSubmissionActions` | Requests registered actions after successful submission. Treat action configuration as privileged. |
+| `formOptions.usePreviousValueDisabled` | Disables the previous-value workflow for the form. |
+| `meta.programs` | Supplies React-specific program workflow metadata and may be transformed into a post-submission action. |
+
+The normative schema also declares `availableIntents`, while the React engine applies matching `behaviours` through its
+form-loading utilities. These are React-specific runtime capabilities, described under
+[Advanced form capabilities](/docs/forms-in-o3/advanced-form-capabilities).
+
+## Pages, sections, and questions
+
+Pages and sections support `hide.hideWhenExpression`, `readonly`, and `inlineRendering`. Pages can additionally describe
+a `subform`. A section can use `reference` to import a section from a form listed in `referencedForms`.
+
+A question controls four different concerns:
+
+1. `id` gives the field a stable local identity.
+2. `type` chooses the field-value adapter used for initial values and submission.
+3. `questionOptions.rendering` chooses the visual control.
+4. Properties such as `required`, `disabled`, `hide`, `readonly`, `validators`, and `historicalExpression` control logic.
+
+`questionOptions` contains rendering-specific configuration such as `answers`, `min`, `max`, `minLength`, `maxLength`,
+`calculate`, `datasource`, `repeatOptions`, and metadata identifiers. A property being accepted by the schema does not
+mean it is meaningful for every type/rendering pair.
+
+## Referenced sections and subforms
+
+For a referenced section, list the source form in `referencedForms`, then set a section `reference` with `form`, `page`,
+and `section`. `excludeQuestions` can remove fields by ID. Resolution uses form names or aliases and exact page and section
+labels, so renaming source content can break consumers.
+
+Subforms use a page with `isSubform: true` and a `subform` object. The React loader can resolve a named form or a packaged
+form. If its encounter type matches its parent, the runtime replaces the subform page with the subform's non-subform
+pages. Test the resolved form in the target distribution because availability depends on the server or package registry.
+
+## Processor behavior
+
+The default runtime currently registers `EncounterFormProcessor`. It loads encounter-related initial values and maps
+supported field adapter types into OpenMRS REST payloads. Setting another processor name in JSON alone does not install a
+processor. Because the current processor registry is internal to the Form Engine provider, distributions should not
+document a custom processor as supported unless their code and tests register it for that runtime version.
+
+## React normalization and legacy aliases
+
+Before rendering, the default transformer normalizes boolean-like strings, adds default validators, supplies page IDs,
+and adjusts several legacy or shorthand renderings. Notable examples are `numeric` to `number`, `multiCheckbox` to the
+searchable checkbox behavior, and encounter metadata types to their matching controls. New forms should use current
+names from the normative schema instead of relying on legacy aliases.
+
+Normalization does not repair unknown field types, missing required metadata, or an unregistered rendering. Validate and
+preview a form in the same distribution that will run it.

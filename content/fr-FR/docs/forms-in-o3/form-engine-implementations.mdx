@@ -1,0 +1,36 @@
+# Implémentations du moteur de formulaires
+
+L'application de référence OpenMRS utilise le constructeur de formulaires O3 avec le React Form Engine. Une intégration du moteur de formulaires Angular est également disponible pour les distributions qui la choisissent, mais elle ne fait pas partie du flux de travail des formulaires fourni par défaut dans l'application de référence.
+
+## Packages et rôles
+
+| Rôle | Flux React par défaut | Flux Angular optionnel |
+| --- | --- | --- |
+| Constructeur de formulaires | [`@openmrs/esm-form-builder-app`](https://github.com/openmrs/openmrs-esm-form-builder), qui prévisualise les formulaires avec le React Form Engine | Aucun aperçu Angular pris en charge dans le constructeur de formulaires O3 |
+| Bibliothèque de rendu | [`@openmrs/esm-form-engine-lib`](https://github.com/openmrs/openmrs-esm-form-engine-lib) | [`@openmrs/ngx-formentry`](https://github.com/openmrs/openmrs-ngx-formentry) |
+| Module d'intégration O3 | [`@openmrs/esm-form-engine-app`](https://github.com/openmrs/openmrs-esm-patient-chart/tree/main/packages/esm-form-engine-app) | [`@openmrs/esm-form-entry-app`](https://github.com/openmrs/openmrs-esm-patient-chart/tree/main/packages/esm-form-entry-app) |
+| Statut dans l'application de référence | Inclus par défaut | Optionnel et non inclus par défaut |
+
+Les deux modules d'intégration enregistrent un renderer dans `form-widget-slot`. Une distribution devrait activer l'intégration qui correspond à son flux de travail des formulaires, et non les deux intégrations comme renderers concurrents pour le même slot.
+
+## Flux de travail par défaut de l'application de référence
+
+Le parcours pris en charge par défaut est le suivant :
+
+1. Créez ou modifiez un formulaire avec le [constructeur de formulaires O3](/docs/forms-in-o3/build-forms-with-o3-form-builder).
+2. Prévisualisez le formulaire avec le React Form Engine intégré au constructeur.
+3. Publiez le formulaire et rendez-le avec le React Form Engine lors de l'exécution.
+
+Consultez [Utiliser les formulaires dans les applications](/docs/forms-in-o3/using-forms-in-applications) pour en savoir plus sur l'espace de travail du dossier patient et les options de rendu React personnalisé.
+
+## Flux de travail Angular optionnel
+
+Les distributions qui utilisent le moteur de formulaires Angular devraient créer les schémas manuellement ou les gérer au moyen d'un processus distinct propre à leur implémentation, puis les tester avec `@openmrs/esm-form-entry-app` dans la distribution cible.
+
+Le constructeur de formulaires O3 ne fournit ni aperçu Angular pris en charge ni contrat de compatibilité de bout en bout avec le moteur de formulaires Angular. Un aperçu réussi dans le constructeur ne garantit donc pas qu'un formulaire se comportera de la même manière dans l'environnement d'exécution Angular.
+
+## Validité du schéma et compatibilité à l'exécution
+
+Le [schéma de formulaire O3](https://github.com/openmrs/openmrs-contrib-json-schemas/blob/main/form.schema.json) définit une structure et un vocabulaire communs pour les formulaires JSON O3. La conformité à ce schéma ne garantit pas que chaque rendu, helper d'expression, extension personnalisée ou comportement à l'exécution soit implémenté de manière identique par les deux moteurs de formulaires.
+
+Validez un formulaire avec le schéma commun, puis testez-le avec le renderer et le module d'intégration utilisés par la distribution cible.
