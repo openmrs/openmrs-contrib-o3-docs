@@ -119,7 +119,7 @@ Un groupe d'observations répétable contient des questions imbriquées :
 
 ## Comportements de repli et non pris en charge
 
-- Une question `obs` sans concept utilise un champ texte désactivé, sauf pour le rendu `file`. Cela rend le problème de métadonnées visible, mais ne permet pas une soumission correcte.
+- Une question `obs` sans concept utilise un champ texte désactivé, sauf pour les rendus `file` et `fixed-value`. Cela rend le problème de métadonnées visible, mais ne permet pas une soumission correcte.
 - Un rendu inconnu ou non enregistré ne correspond à aucun contrôle; le champ n'est donc pas rendu.
 - `extension-widget` exige que le code de la distribution enregistre un contrôle compatible. La présence de `extensionId` et `extensionSlotName` dans le JSON ne l'installe pas.
 - `checkbox-searchable` est transformé en contrôle `checkbox` avec `isCheckboxSearchable: true`.

@@ -81,7 +81,7 @@ contracts.
 | `readonly`, `inlineRendering`, `markdown` | Set form-wide display behavior. Page, section, and question values may override applicable settings. |
 | `translations` | Maps translation keys to translated strings loaded into the Form Engine namespace. |
 | `postSubmissionActions` | Requests registered actions after successful submission. Treat action configuration as privileged. |
-| `formOptions.usePreviousValueDisabled` | Disables the previous-value workflow for the form. |
+| `formOptions.usePreviousValueDisabled` | Declared in the normative schema but not currently honored by the React runtime. The React workflow controls the previous-value review per question with `questionOptions.enablePreviousValue`. |
 | `meta.programs` | Supplies React-specific program workflow metadata and may be transformed into a post-submission action. |
 
 The normative schema also declares `availableIntents`, while the React engine applies matching `behaviours` through its

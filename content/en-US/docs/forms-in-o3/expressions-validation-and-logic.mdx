@@ -17,6 +17,7 @@ The context includes form field values and these common names:
 | `visit`, `visitType`, `visitTypeUuid` | Current visit data when supplied |
 | `HD` | Historical-data helper with the previous encounter exposed as `prevEnc` |
 | `_` | A small utility object currently containing Lodash `isEmpty` |
+| `isEmpty` | The Form Engine's own empty-value check, available directly in scope (distinct from Lodash's `_.isEmpty` above) |
 | `api` | React Form Engine API functions |
 | `dayjs` | The configured Day.js instance |
 
@@ -40,7 +41,7 @@ The following names are instance members of `CommonExpressionHelpers` and are pr
 | `arrayContains(array, members)` | Whether all members occur; false for non-arrays and true for an empty requested-members array. |
 | `arrayContainsAny(array, members)` | Whether any member occurs; false for non-arrays and true for an empty requested-members array. |
 | `parseDate(value)` | A `Date` using the O3 framework parser. |
-| `formatDate(value, format?)` | A formatted string; throws for an invalid date. |
+| `formatDate(value, format?)` | A formatted string; throws when a non-`Date` value cannot be parsed. |
 | `extractRepeatingGroupValues(key, array)` | An array containing `item[key]` for every repeating-group item. |
 | `resolve(promise)` | A promise resolving to the supplied promise's value. |
 | `calcBMI(height, weight)` | BMI rounded to one decimal, or `null` when either input is missing. |
@@ -49,7 +50,7 @@ The following names are instance members of `CommonExpressionHelpers` and are pr
 | `calcNextVisitDate(date, days)` | Date plus days, or `null` when either input is missing. |
 | `calcAgeBasedOnDate(date?)` | Patient birth year subtracted from the target year; month and day are intentionally ignored. |
 | `calcBSA(height, weight)` | Mosteller BSA rounded to two decimals, or `null`. |
-| `calcGravida(term, abortion)` | Integer sum; throws when either input is not an integer or numeric integer string. |
+| `calcGravida(term, abortion)` | Integer sum; throws for a non-integer number or a non-numeric string. A numeric string is truncated to an integer. |
 | `calcWeightForHeightZscore(height, weight)` | WHO-derived score string, `-4` outside 45–110 cm, or `null` when input/reference data is missing. |
 | `calcBMIForAgeZscore(height, weight)` / `calcHeightForAgeZscore(height)` | WHO-derived score string or `null`. |
 | `calcTimeDifference(date, unit)` | Rounded absolute difference to today in `d`, `w`, `m`, or `y`; `0` when no date is supplied. |

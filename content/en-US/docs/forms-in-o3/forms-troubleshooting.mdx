@@ -25,7 +25,7 @@ succeed. Validate and preview against the target distribution and test a non-pro
 2. Check whether the rendering needs a registered control or data source.
 3. Check `hide`, `readonly`, `disabled`, parent visibility, form mode, and intent behavior.
 4. For `obs`, confirm `questionOptions.concept`. A missing concept normally produces a disabled text fallback, except for
-   file fields.
+   `file` and `fixed-value` fields.
 5. Inspect the browser console. Unknown renderings resolve to no control, while failed expressions are logged and return
    `null`.
 

@@ -123,7 +123,7 @@ A repeating observation group carries nested questions:
 
 ## Fallback and unsupported behavior
 
-- An `obs` question without a concept falls back to a disabled text control, except for `file` rendering. This makes the
+- An `obs` question without a concept falls back to a disabled text control, except for `file` and `fixed-value` renderings. This makes the
   metadata problem visible; it does not make the question submit correctly.
 - An unknown or unregistered rendering resolves to no control, so the field does not render.
 - `extension-widget` requires distribution code to register a compatible control. The presence of `extensionId` and

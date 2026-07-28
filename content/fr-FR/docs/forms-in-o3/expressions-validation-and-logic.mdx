@@ -15,6 +15,7 @@ Le contexte contient les valeurs des champs et les noms courants suivants :
 | `visit`, `visitType`, `visitTypeUuid` | Données de visite actuelles, lorsqu'elles sont fournies |
 | `HD` | Helper de données historiques exposant la rencontre précédente sous `prevEnc` |
 | `_` | Petit objet utilitaire contenant actuellement `isEmpty` de Lodash |
+| `isEmpty` | Vérification de valeur vide propre au Form Engine, disponible directement dans la portée (distincte du `_.isEmpty` de Lodash ci-dessus) |
 | `api` | Fonctions de l'API du React Form Engine |
 | `dayjs` | Instance configurée de Day.js |
 
@@ -37,7 +38,7 @@ Les noms suivants sont des membres d'instance de `CommonExpressionHelpers` prés
 | `arrayContains(array, members)` | Indique si tous les membres figurent dans le tableau; faux pour une entrée qui n'est pas un tableau et vrai si la liste demandée est vide. |
 | `arrayContainsAny(array, members)` | Indique si au moins un membre figure dans le tableau; faux pour une entrée qui n'est pas un tableau et vrai si la liste demandée est vide. |
 | `parseDate(value)` | Un `Date` produit par l'analyseur du framework O3. |
-| `formatDate(value, format?)` | Chaîne formatée; lève une erreur pour une date invalide. |
+| `formatDate(value, format?)` | Chaîne formatée; lève une erreur lorsqu'une valeur non-`Date` ne peut pas être analysée. |
 | `extractRepeatingGroupValues(key, array)` | Tableau contenant `item[key]` pour chaque élément du groupe répétable. |
 | `resolve(promise)` | Promise résolue avec la valeur de la promise fournie. |
 | `calcBMI(height, weight)` | IMC arrondi à une décimale, ou `null` si une entrée manque. |
@@ -46,7 +47,7 @@ Les noms suivants sont des membres d'instance de `CommonExpressionHelpers` prés
 | `calcNextVisitDate(date, days)` | Date augmentée du nombre de jours, ou `null` si une entrée manque. |
 | `calcAgeBasedOnDate(date?)` | Année de naissance du patient soustraite de l'année cible; mois et jour volontairement ignorés. |
 | `calcBSA(height, weight)` | Surface corporelle de Mosteller arrondie à deux décimales, ou `null`. |
-| `calcGravida(term, abortion)` | Somme entière; lève une erreur si une entrée n'est ni un entier ni une chaîne représentant un entier. |
+| `calcGravida(term, abortion)` | Somme entière; lève une erreur pour un nombre non entier ou une chaîne non numérique. Une chaîne numérique est tronquée en entier. |
 | `calcWeightForHeightZscore(height, weight)` | Chaîne de score dérivée de l'OMS, `-4` hors de 45–110 cm, ou `null` si les données d'entrée/de référence manquent. |
 | `calcBMIForAgeZscore(height, weight)` / `calcHeightForAgeZscore(height)` | Chaîne de score dérivée de l'OMS ou `null`. |
 | `calcTimeDifference(date, unit)` | Différence absolue arrondie jusqu'à aujourd'hui en `d`, `w`, `m` ou `y`; `0` sans date. |

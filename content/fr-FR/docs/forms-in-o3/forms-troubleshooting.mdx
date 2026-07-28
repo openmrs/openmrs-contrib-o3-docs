@@ -20,7 +20,7 @@ Inversement, un aperçu réussi ne prouve pas que toutes les métadonnées exist
 1. Comparez `questionOptions.rendering` aux [types de champs et rendus React](/docs/forms-in-o3/field-types-and-renderings).
 2. Vérifiez si le rendu exige un contrôle ou une source de données enregistrés.
 3. Vérifiez `hide`, `readonly`, `disabled`, la visibilité du parent, le mode du formulaire et le comportement de l'intention.
-4. Pour `obs`, vérifiez `questionOptions.concept`. Un concept absent produit normalement un champ texte désactivé, sauf pour les fichiers.
+4. Pour `obs`, vérifiez `questionOptions.concept`. Un concept absent produit normalement un champ texte désactivé, sauf pour les rendus `file` et `fixed-value`.
 5. Inspectez la console du navigateur. Les rendus inconnus ne produisent aucun contrôle; les expressions en échec sont journalisées et renvoient `null`.
 
 ## Un champ est rendu mais mal soumis

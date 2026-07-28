@@ -72,7 +72,7 @@ Consultez les [types de champs et rendus](/docs/forms-in-o3/field-types-and-rend
 | `readonly`, `inlineRendering`, `markdown` | Définissent le comportement d'affichage global. Les valeurs de page, section ou question peuvent remplacer les réglages applicables. |
 | `translations` | Associe des clés de traduction aux chaînes chargées dans l'espace de noms du Form Engine. |
 | `postSubmissionActions` | Demande des actions enregistrées après une soumission réussie. Traitez cette configuration comme privilégiée. |
-| `formOptions.usePreviousValueDisabled` | Désactive le flux de valeur précédente. |
+| `formOptions.usePreviousValueDisabled` | Déclaré dans le schéma normatif mais actuellement ignoré par l'environnement d'exécution React. Le flux React contrôle la revue de la valeur précédente par question via `questionOptions.enablePreviousValue`. |
 | `meta.programs` | Fournit des métadonnées React pour les programmes et peut être transformé en action post-soumission. |
 
 Le schéma normatif déclare aussi `availableIntents`, tandis que le moteur React applique les `behaviours` correspondants avec ses utilitaires de chargement. Ces capacités propres à React sont décrites dans les [capacités avancées](/docs/forms-in-o3/advanced-form-capabilities).
