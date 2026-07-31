@@ -118,6 +118,27 @@ The following are some guidelines to follow when handling i18n in O3:
   "welcome": "Welcome, {{name}}!"
   ```
 
+- Strings that live in a metadata object rather than in JSX need a key of their own and an extraction comment. A dashboard link is the common case. `DashboardExtension` renders its title with `{t(title)}`, so whatever string sits in `title` is used as the **translation key**, and i18next-parser cannot see it because a plain object property is not a `t()` call. Put a key in `title`, and declare it in a comment next to the export so it gets extracted:
+
+  ```ts filename="src/index.ts"
+  // t('patientLists', 'Patient lists')
+  export const patientListDashboardLink = getSyncLifecycle(createDashboardLink(dashboardMeta), options);
+  ```
+
+  ```ts filename="src/dashboard.meta.ts"
+  export const dashboardMeta = {
+    path: 'patient-lists',
+    slot: 'patient-lists-dashboard-slot',
+    title: 'patientLists', // the key, not the text
+  } as const;
+  ```
+
+  The key has to live in the `en.json` of the module that registers the link, because that is the namespace the extension renders in.
+
+  Putting the English text in `title` also works, since `t()` falls back to the key when it finds no entry, and some modules do it. It costs you something though: the text becomes the key, so changing the wording changes the key and orphans every translation of the old one. Prefer a stable key.
+
+  Two ways to get this wrong, both of which fail quietly. If the comment declares a different key from the one in `title`, the extracted key is never looked up and the title renders as its own raw text. And if the component renders `{title}` instead of `{t(title)}`, no lookup happens at all, so the comment implies a translation that never occurs.
+
 - Use sentence case for UI text, and keep one key per stable meaning and grammatical context. Reuse a key only when both match. English spelling is not a safe identity rule: the same word can need different target text as a noun, a verb, a heading, or a full sentence, which is why i18next supports [context variants](https://www.i18next.com/translation-function/context). Transifex's translation memory already offers exact matches for repeated source text, so a second key for a genuinely different context costs a translator little, whereas collapsing two contexts onto one key cannot be undone in translation.
 
   What to avoid is the accidental duplicate: two keys holding the same text for the same meaning in the same context, such as `errorStartingVisit` and `startVisitError`, which both read `Error starting visit` and both title the snackbar shown when starting a visit fails. Those fragment translation memory and drift apart over time. Pairs that look similar are often not duplicates at all: `visitType` labels a table column while `visitType_title` heads a section of the visit form, and `medications` and `medications__lower` differ because one stands alone and the other sits inside a sentence. Check the call sites before merging two keys.
