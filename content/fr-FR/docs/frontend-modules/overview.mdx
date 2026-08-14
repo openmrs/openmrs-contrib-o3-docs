@@ -133,7 +133,7 @@ Chaque module frontend a un fichier `package.json` de niveau racine qui définit
     "build:development": "rspack --mode development",
     "analyze": "rspack --mode=production --env.analyze=true",
     "serve": "rspack serve --mode=development",
-    "lint": "eslint src --ext ts,tsx",
+    "lint": "eslint src",
     "typescript": "tsc",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest watch",
@@ -158,12 +158,14 @@ Chaque module frontend a un fichier `package.json` de niveau racine qui définit
   },
   "devDependencies": {
     "openmrs": "next",
+    "@openmrs/eslint-config": "^2.0.0",
     "@openmrs/esm-framework": "next",
     "@openmrs/rspack-config": "next",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.5.2",
     "@rspack/cli": "^1.7.10",
     "@rspack/core": "^1.7.10",
+    "eslint": "^9.39.0",
     "jsdom": "^28.0.0",
     "typescript": "^5.9.3",
     "vitest": "^4.1.2"
@@ -179,6 +181,7 @@ Voici quelques éléments clés à retenir de l'examen de ce fichier:
 - La propriété `main` qui définit le point d'entrée du code source du module frontend, typiquement `src/index.ts`.
 - Les paquets runtime OpenMRS sont généralement des peer dependencies pour les consommateurs et des dev dependencies en `next` pour le développement local.
 - La configuration Rspack et les paquets CLI sont des dev dependencies, car ce sont des outils de build et non des modules runtime chargés par l'app shell.
+- ESLint 9 et `@openmrs/eslint-config` sont des dev dependencies. Les règles partagées et les exclusions propres au dépôt se trouvent dans le fichier racine `eslint.config.mjs`; consultez la section [Linting](/docs/frontend-modules/development#linting).
 - Les modules frontend React actuels utilisent Rspack et Vitest par défaut. Des modules plus anciens peuvent encore avoir des scripts Webpack ou Jest pendant leur migration.
 
 ### Le point d'entrée de l'application (`index.ts`)

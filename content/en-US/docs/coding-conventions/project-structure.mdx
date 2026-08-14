@@ -4,8 +4,7 @@ O3 consists of both monorepos and standalone repositories. Monorepos are used to
 
 - Monorepos should contain domain-specific packages that are related to each other. For example, patient management concerns such as registration and search live in the `openmrs-esm-patient-management` monorepo.
 - Shared configuration files should generally exist at the root of the monorepo directory. These include:
-  - `.eslintignore` - ESLint ignore file
-  - `.eslintrc` - ESLint configuration file
+  - `eslint.config.mjs` - ESLint 9 flat config. It normally composes `@openmrs/eslint-config` and contains repository-specific ignores and rule overrides.
   - `prettier.config.js` - Prettier configuration file
   - `.prettierignore` - Prettier ignore file
   - `.yarnrc.yml` - Yarn configuration file

@@ -4,8 +4,7 @@ O3 comprend à la fois des monorepos et des dépôts autonomes. Les monorepos so
 
 - Les monorepos doivent contenir des packages spécifiques à un domaine qui sont liés les uns aux autres. Par exemple, les préoccupations de gestion des patients telles que l'enregistrement et la recherche vivent dans le monorepo `openmrs-esm-patient-management`.
 - Les fichiers de configuration partagés doivent généralement exister à la racine du répertoire monorepo. Ceux-ci incluent :
-  - `.eslintignore` - Fichier d'ignore ESLint
-  - `.eslintrc` - Fichier de configuration ESLint
+  - `eslint.config.mjs` - Configuration à plat ESLint 9. Elle compose généralement `@openmrs/eslint-config` et contient les exclusions et les dérogations de règles propres au dépôt.
   - `prettier.config.js` - Fichier de configuration Prettier
   - `.prettierignore` - Fichier d'ignore Prettier
   - `.yarnrc.yml` - Fichier de configuration Yarn
