@@ -142,7 +142,7 @@ Each frontend module has a root-level `package.json` file that defines its depen
     "build:development": "rspack --mode development",
     "analyze": "rspack --mode=production --env.analyze=true",
     "serve": "rspack serve --mode=development",
-    "lint": "eslint src --ext ts,tsx",
+    "lint": "eslint src",
     "typescript": "tsc",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest watch",
@@ -167,12 +167,14 @@ Each frontend module has a root-level `package.json` file that defines its depen
   },
   "devDependencies": {
     "openmrs": "next",
+    "@openmrs/eslint-config": "^2.0.0",
     "@openmrs/esm-framework": "next",
     "@openmrs/rspack-config": "next",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.5.2",
     "@rspack/cli": "^1.7.10",
     "@rspack/core": "^1.7.10",
+    "eslint": "^9.39.0",
     "jsdom": "^28.0.0",
     "typescript": "^5.9.3",
     "vitest": "^4.1.2"
@@ -188,6 +190,7 @@ Some key things to note from looking at this file include:
 - The `main` property which defines the [entry point](#the-application-entry-point-indexts) of the frontend module’s source code, which is typically `src/index.ts`.
 - The OpenMRS runtime packages are usually peer dependencies for consumers and `next` dev dependencies for local development.
 - The Rspack config and CLI packages are dev dependencies because they are build-time tooling, not runtime modules loaded by the app shell.
+- ESLint 9 and `@openmrs/eslint-config` are dev dependencies. Shared rules and repository-specific ignores live in the root `eslint.config.mjs`; see [Linting](/docs/frontend-modules/development#linting).
 - Current React frontend modules use Rspack and Vitest by default. Older modules may still have Webpack or Jest scripts while they are being migrated.
 
 ### The application entry point (`index.ts`)
