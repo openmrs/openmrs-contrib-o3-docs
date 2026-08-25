@@ -5,7 +5,7 @@ An O3 JSON form has two related contracts:
 - The [normative O3 JSON Schema](https://github.com/openmrs/openmrs-contrib-json-schemas/blob/main/form.schema.json) defines the engine-neutral document shape.
 - The React Form Engine's `FormSchema`, `FormPage`, `FormSection`, and `FormField` types define what the default O3 runtime consumes.
 
-Passing JSON Schema validation does not prove that every form engine implements the same behavior. Use this page for the
+A form can pass JSON Schema validation and still behave differently across engines. Use this page for the
 default React workflow and read [Form engine implementations](/docs/forms-in-o3/form-engine-implementations) before using
 another renderer.
 
@@ -56,7 +56,7 @@ preserves the form UUID when the form is saved; do not reuse one form's UUID for
 
 `pages` contains ordered page objects. Each page contains ordered `sections`, and each section contains ordered
 `questions`. A question's stable `id` is used by expressions, prefilling, dependencies, and form-field paths. Changing an
-ID in a published form can therefore change more than its visual label.
+ID in a published form can change more than its visual label.
 
 - Pages require `label` and `sections`.
 - Sections require `label` and `questions`; `isExpanded` accepts a boolean or the equivalent string and is normalized by

@@ -27,10 +27,10 @@ See [Using forms in applications](/docs/forms-in-o3/using-forms-in-applications)
 
 Distributions that use the Angular Form Engine should author schemas manually or manage them through a separate implementation-specific process, then test them against `@openmrs/esm-form-entry-app` in the target distribution.
 
-The O3 Form Builder does not provide a supported Angular preview or an end-to-end compatibility contract with the Angular Form Engine. A successful preview in the builder therefore does not establish that a form will behave the same way in the Angular runtime.
+The O3 Form Builder has no supported Angular preview and makes no compatibility promises for the Angular Form Engine. A form that previews correctly in the builder can still behave differently in the Angular runtime.
 
 ## Schema validity and runtime compatibility
 
-The [O3 form schema](https://github.com/openmrs/openmrs-contrib-json-schemas/blob/main/form.schema.json) defines shared structure and vocabulary for O3 JSON forms. Conformance to that schema does not guarantee that every rendering, expression helper, custom extension, or runtime behavior is implemented identically by both form engines.
+The [O3 form schema](https://github.com/openmrs/openmrs-contrib-json-schemas/blob/main/form.schema.json) defines shared structure and vocabulary for O3 JSON forms. A form that validates against the schema can still behave differently in the two engines: renderings, expression helpers, custom extensions, and runtime behavior are not guaranteed to match.
 
 Validate a form against the shared schema, then test it with the renderer and integration module used by the target distribution.

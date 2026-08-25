@@ -45,7 +45,7 @@ Il s'agit d'une API de package React, pas de JSON. Enregistrez les extensions au
 
 `translations` associe des clés à des chaînes. Au chargement, le moteur l'ajoute à l'espace de noms i18next du React Form Engine pour la langue actuelle. Les libellés et le Markdown peuvent alors employer les clés du formulaire. Le constructeur fournit aussi un Translation Builder et un sélecteur de langue pour prévisualiser ces traductions.
 
-Les clés de traduction et les propriétés JSON sont des identifiants; ne les traduisez pas. Testez chaque locale dans l'aperçu du constructeur et à l'exécution, car une map valide ne prouve pas que chaque clé référencée existe.
+Les clés de traduction et les propriétés JSON sont des identifiants; ne les traduisez pas. Testez chaque locale dans l'aperçu du constructeur et à l'exécution ; une map peut être valide alors qu'une clé référencée manque.
 
 ## Sections réutilisables et sous-formulaires
 
@@ -55,7 +55,7 @@ Les clés de traduction et les propriétés JSON sont des identifiants; ne les t
 
 Fournir `formSessionIntent` conduit le chargeur React à appliquer les `behaviours` correspondants et le repli `*`. Une intention peut modifier les valeurs par défaut, l'état en lecture seule ou masqué, la page initiale et l'intention transmise à un sous-formulaire. Une utilisation directe de `FormEngine` ne sélectionne aucune intention si l'appelant n'en fournit pas.
 
-Le traitement de l'intention modifie une copie affinée du formulaire avant le rendu. Testez chaque intention et son repli; le schéma normatif ne garantit aucun comportement équivalent dans un autre renderer.
+Le traitement de l'intention modifie une copie affinée du formulaire avant le rendu. Testez chaque intention et son repli ; un autre renderer peut traiter la même intention différemment.
 
 ## Actions post-soumission
 

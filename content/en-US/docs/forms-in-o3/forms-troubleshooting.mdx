@@ -16,7 +16,7 @@ The optional builder validator checks dictionary concepts, answer concepts, pati
 types, and configured concept datatype/rendering mappings. Preview uses the React runtime and can encounter additional
 requirements such as registered controls, adapters, data sources, processors, and expression context.
 
-Conversely, successful preview does not prove that all metadata exists on the production server or that submission will
+A successful preview also does not prove that all metadata exists on the production server or that submission will
 succeed. Validate and preview against the target distribution and test a non-production submission.
 
 ## A field does not render
@@ -50,7 +50,7 @@ succeed. Validate and preview against the target distribution and test a non-pro
 
 Referenced sections use exact form names or aliases and exact page and section labels. Subforms depend on a server form or
 package registry entry. Confirm that the dependency exists in the target environment and that its version and encounter
-type are appropriate. Missing dependencies are not supplied by the parent JSON.
+type are appropriate. The parent JSON does not supply missing dependencies.
 
 ## The form is saved but absent from the patient chart
 

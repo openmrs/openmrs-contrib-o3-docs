@@ -27,10 +27,10 @@ Consultez [Utiliser les formulaires dans les applications](/docs/forms-in-o3/usi
 
 Les distributions qui utilisent le moteur de formulaires Angular devraient créer les schémas manuellement ou les gérer au moyen d'un processus distinct propre à leur implémentation, puis les tester avec `@openmrs/esm-form-entry-app` dans la distribution cible.
 
-Le constructeur de formulaires O3 ne fournit ni aperçu Angular pris en charge ni contrat de compatibilité de bout en bout avec le moteur de formulaires Angular. Un aperçu réussi dans le constructeur ne garantit donc pas qu'un formulaire se comportera de la même manière dans l'environnement d'exécution Angular.
+Le constructeur de formulaires O3 n'a pas d'aperçu Angular pris en charge et ne fait aucune promesse de compatibilité avec le moteur de formulaires Angular. Un formulaire dont l'aperçu est correct dans le constructeur peut néanmoins se comporter différemment dans l'environnement d'exécution Angular.
 
 ## Validité du schéma et compatibilité à l'exécution
 
-Le [schéma de formulaire O3](https://github.com/openmrs/openmrs-contrib-json-schemas/blob/main/form.schema.json) définit une structure et un vocabulaire communs pour les formulaires JSON O3. La conformité à ce schéma ne garantit pas que chaque rendu, helper d'expression, extension personnalisée ou comportement à l'exécution soit implémenté de manière identique par les deux moteurs de formulaires.
+Le [schéma de formulaire O3](https://github.com/openmrs/openmrs-contrib-json-schemas/blob/main/form.schema.json) définit une structure et un vocabulaire communs pour les formulaires JSON O3. Un formulaire conforme au schéma peut néanmoins se comporter différemment dans les deux moteurs : les rendus, les helpers d'expression, les extensions personnalisées et le comportement à l'exécution ne sont pas garantis identiques.
 
 Validez un formulaire avec le schéma commun, puis testez-le avec le renderer et le module d'intégration utilisés par la distribution cible.

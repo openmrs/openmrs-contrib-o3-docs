@@ -58,7 +58,7 @@ Engine i18next namespace. Labels and Markdown can then use the form's translatio
 Translation Builder and language selector for previewing schema translations.
 
 Translation keys and JSON property names are identifiers; do not translate them. Test each locale in the builder preview
-and runtime because a valid map does not prove that every referenced key exists.
+and runtime; a map can be valid while a referenced key is missing.
 
 ## Reusable sections and subforms
 
@@ -73,8 +73,8 @@ Passing `formSessionIntent` causes the React loader to apply matching `behaviour
 can change defaults, readonly or hidden state, the initial page, and the intent passed into a subform. Direct `FormEngine`
 usage does not select an intent unless the caller supplies one.
 
-Intent handling mutates a refined copy of the form before rendering. Test every supported intent and its fallback; the
-normative schema does not guarantee equivalent behavior in another renderer.
+Intent handling mutates a refined copy of the form before rendering. Test every supported intent and its fallback; another
+renderer can handle the same intent differently.
 
 ## Post-submission actions
 
