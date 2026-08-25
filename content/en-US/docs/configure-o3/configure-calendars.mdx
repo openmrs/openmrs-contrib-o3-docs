@@ -4,7 +4,7 @@ With the O3 frontend, we aim to support a wide range of requirements around disp
 
 ## Locale-preferred calendars
 
-While the OpenMRS backend tends to represent dates using the Gregorian calendar, the O3 frontend supports displaying and capturing dates in many different calendar systems, specifically those supported by the [@internationlized/date](https://react-aria.adobe.com/internationalized/date/) library.
+While the OpenMRS backend tends to represent dates using the Gregorian calendar, the O3 frontend supports displaying and capturing dates in many different calendar systems, specifically those supported by the [@internationalized/date](https://react-aria.adobe.com/internationalized/date/) library.
 
 Currently the way OpenMRS supports this is by associating a default calendar to a locale. For example, I might want my system to display in mostly English text, but use the Ethiopic calendar system. This is configurable using the `preferredCalendar` option of the `@openmrs/esm-styleguide` namespace. To configure displaying English text with the Ethiopic calendar, you would need the following configuration snippet added to your frontend configuration:
 
