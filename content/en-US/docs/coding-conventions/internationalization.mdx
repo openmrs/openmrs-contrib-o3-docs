@@ -137,7 +137,7 @@ The following are some guidelines to follow when handling i18n in O3:
 
   Putting the English text in `title` also works, since `t()` falls back to the key when it finds no entry, and some modules do it. It costs you something though: the text becomes the key, so changing the wording changes the key and orphans every translation of the old one. Prefer a stable key.
 
-  Two ways to get this wrong, both of which fail quietly. If the comment declares a different key from the one in `title`, the extracted key is never looked up and the title renders as its own raw text. And if the component renders `{title}` instead of `{t(title)}`, no lookup happens at all, so the comment implies a translation that never occurs.
+  There are two ways to get this wrong, and both fail quietly. If the comment declares a different key from the one in `title`, the extracted key is never looked up and the title renders as its own raw text. And if the component renders `{title}` instead of `{t(title)}`, no lookup happens at all, so the comment implies a translation that never occurs.
 
 - Use sentence case for UI text, and keep one key per stable meaning and grammatical context. Reuse a key only when both match. English spelling is not a safe identity rule: the same word can need different target text as a noun, a verb, a heading, or a full sentence, which is why i18next supports [context variants](https://www.i18next.com/translation-function/context). Transifex's translation memory already offers exact matches for repeated source text, so a second key for a genuinely different context costs a translator little, whereas collapsing two contexts onto one key cannot be undone in translation.
 
