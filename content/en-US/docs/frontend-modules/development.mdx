@@ -243,6 +243,23 @@ The cookie must be obtained by you and strongly depends on the backend used. Use
 
 Yes, absolutely. Current React modules generally use [Vitest](https://vitest.dev/) and [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) for component tests, though some older repos may still use [Jest](https://jestjs.io/). Check the module’s `package.json` to see which test runner is configured. See the [unit and integration testing guide](/docs/frontend-modules/unit-and-integration-testing) and the [end-to-end testing guide](/docs/frontend-modules/end-to-end-testing) for more on how to write tests. Consider adding E2E tests for high-value workflows. Reading nearby tests in the codebase is usually the fastest way to match the repo’s conventions.
 
+## Linting
+
+Current React frontend modules use ESLint 9 with the shared [`@openmrs/eslint-config`](https://github.com/openmrs/openmrs-contrib-eslint-config) flat config. A typical root `eslint.config.mjs` looks like this:
+
+```js filename="eslint.config.mjs"
+import openmrs from "@openmrs/eslint-config";
+
+export default [
+  { ignores: ["dist/**", "coverage/**", "**/*.d.ts"] },
+  ...openmrs,
+];
+```
+
+Keep repository-specific ignores and rule overrides in this file. Flat config does not read `.eslintignore`, and O3 repositories should not copy the shared rules into a local `.eslintrc`.
+
+When migrating an older repository, follow the shared config's [migration steps](https://github.com/openmrs/openmrs-contrib-eslint-config#migrating-from-a-legacy-eslintrc): add `@openmrs/eslint-config` and ESLint 9, remove the plugin dependencies provided by the package, delete `.eslintrc` and `.eslintignore`, and remove legacy `--ext` flags from lint scripts. Run the repository's existing source-scoped lint command first. Use `--fix` only with the same scope and review the resulting diff.
+
 ## Pushing your changes to GitHub
 
 Once you’re done working on a feature or fix, you’ll want to push your changes to GitHub and file a PR. To do this, commit your changes. We have guidelines for writing commit messages in our [contributing guide](/docs/frontend-modules/contributing).

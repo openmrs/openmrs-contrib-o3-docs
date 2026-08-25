@@ -5,5 +5,6 @@ export default {
   "configure-patient-management": "Configure Patient Management",
   "configure-service-queues": "Configure Service Queues",
   "configure-ward-management": "Configure Ward Management",
-  "configure-translations": "Configure translations"
-}
+  "configure-translations": "Configure translations",
+  "configure-calendars": "Configure calendars",
+};

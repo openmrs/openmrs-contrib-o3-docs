@@ -242,6 +242,23 @@ Le cookie doit être obtenu par vous et dépend fortement du backend utilisé. U
 
 Oui, absolument. Les modules React actuels utilisent généralement [Vitest](https://vitest.dev/) et [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) pour les tests de composants, même si certains dépôts plus anciens utilisent encore [Jest](https://jestjs.io/). Consultez le `package.json` du module pour voir quel runner est configuré. Voir le guide de [tests unitaires et d'intégration](/docs/frontend-modules/unit-and-integration-testing) et le guide de [tests de bout en bout](/docs/frontend-modules/end-to-end-testing) pour plus d'informations. Envisagez aussi d'ajouter des tests E2E pour les workflows importants. Lire les tests voisins dans la base de code est souvent le moyen le plus rapide d'aligner vos tests sur les conventions du dépôt.
 
+## Linting
+
+Les modules frontend React actuels utilisent ESLint 9 avec la configuration à plat partagée [`@openmrs/eslint-config`](https://github.com/openmrs/openmrs-contrib-eslint-config). Un fichier racine `eslint.config.mjs` typique ressemble à ceci:
+
+```js filename="eslint.config.mjs"
+import openmrs from "@openmrs/eslint-config";
+
+export default [
+  { ignores: ["dist/**", "coverage/**", "**/*.d.ts"] },
+  ...openmrs,
+];
+```
+
+Conservez les exclusions et les dérogations de règles propres au dépôt dans ce fichier. La configuration à plat ne lit pas `.eslintignore`, et les dépôts O3 ne doivent pas recopier les règles partagées dans un fichier `.eslintrc` local.
+
+Lors de la migration d'un ancien dépôt, suivez les [étapes de migration](https://github.com/openmrs/openmrs-contrib-eslint-config#migrating-from-a-legacy-eslintrc) de la configuration partagée: ajoutez `@openmrs/eslint-config` et ESLint 9, supprimez les dépendances de plugins fournies par le package, supprimez `.eslintrc` et `.eslintignore`, puis retirez les anciens indicateurs `--ext` des scripts de lint. Exécutez d'abord la commande de lint existante du dépôt, limitée aux fichiers source. N'utilisez `--fix` qu'avec le même périmètre et vérifiez le diff obtenu.
+
 ## Pousser vos changements vers GitHub
 
 Une fois votre fonctionnalité ou correction terminée, vous voudrez pousser vos changements vers GitHub et ouvrir une PR. Pour cela, regroupez vos changements dans un commit. Nous avons des recommandations pour les messages de commit dans le [guide de contribution](/docs/frontend-modules/contributing).
