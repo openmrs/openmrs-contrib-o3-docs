@@ -1,0 +1,34 @@
+# Configuration des calendriers
+
+Avec l'interface frontale O3, nous visons à répondre à un large éventail de besoins concernant l'affichage des dates et des heures, afin de garantir que les utilisateurs puissent consulter ces informations dans un format facile à comprendre.
+
+## Calendriers privilégiés selon la locale
+
+Alors que le backend d'OpenMRS a tendance à représenter les dates selon le calendrier grégorien, l'interface frontale O3 prend en charge l'affichage et la saisie des dates dans de nombreux systèmes de calendrier différents, notamment ceux supportés par la bibliothèque [@internationalized/date](https://react-aria.adobe.com/internationalized/date/).
+
+Actuellement, OpenMRS gère cette fonctionnalité en associant un calendrier par défaut à une locale. Par exemple, je pourrais souhaiter que mon système affiche principalement du texte en anglais, tout en utilisant le calendrier éthiopien. Cette configuration est possible grâce à l'option `preferredCalendar` de l'espace de noms `@openmrs/esm-styleguide`. Pour configurer l'affichage de texte en anglais avec le calendrier éthiopien, vous devez ajouter l'extrait de configuration suivant à la configuration de votre interface frontale :
+
+```json
+{
+  "@openmrs/esm-styleguide": {
+    "preferredCalendar": {
+      "en": "ethiopic",
+      "en-GB": "ethiopic"
+    }
+  }
+}
+```
+
+## Formatage alternatif des dates
+
+Il est parfois nécessaire de remplacer le formatage par défaut des dates et heures. Par exemple, par défaut, OpenMRS affiche les dates et heures en anglais selon le format britannique, mais ce comportement peut être configuré de la même manière que le calendrier privilégié. Ainsi, si je souhaite que les dates et heures soient affichées selon les normes du français canadien tout en conservant l'anglais comme langue principale, je peux le faire grâce à cet extrait de configuration :
+
+```json
+{
+  "@openmrs/esm-styleguide": {
+    "preferredDateLocale": {
+      "en": "fr-CA"
+    }
+  }
+}
+```
