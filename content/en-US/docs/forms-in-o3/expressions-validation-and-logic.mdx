@@ -1,0 +1,125 @@
+# React expressions, validation, and logic
+
+React Form Engine expressions are evaluated by the O3 framework expression evaluator with a controlled context. They are
+not a portability contract for another form engine. Field IDs are exposed as variables, and dependencies found in an
+expression cause affected fields, sections, or pages to be reevaluated when a referenced value changes.
+
+## Expression context
+
+The context includes form field values and these common names:
+
+| Name | Value |
+| --- | --- |
+| `myValue` | Current field value when evaluating field-level logic |
+| `patient` | Current FHIR patient object |
+| `sex`, `age` | Patient values derived by the runtime |
+| `mode` | `enter`, `edit`, `view`, or `embedded-view` |
+| `visit`, `visitType`, `visitTypeUuid` | Current visit data when supplied |
+| `HD` | Historical-data helper with the previous encounter exposed as `prevEnc` |
+| `_` | A small utility object currently containing Lodash `isEmpty` |
+| `isEmpty` | The Form Engine's own empty-value check, available directly in scope (distinct from Lodash's `_.isEmpty` above) |
+| `api` | React Form Engine API functions |
+| `dayjs` | The configured Day.js instance |
+
+An empty expression returns `null`. Evaluation errors are logged and also resolve to `null`; syntax errors raised while
+compiling the expression are not caught. Do not depend on errors being treated as `true` or as a validation failure.
+
+## Built-in expression helpers
+
+The following names are instance members of `CommonExpressionHelpers` and are present in the expression scope.
+
+| Helper | Exact result contract |
+| --- | --- |
+| `today()` | A new `Date` for the current moment. |
+| `includes(collection, value)` | JavaScript array `includes` result, or `undefined` for a nullish collection. |
+| `isDateBefore(left, right, format?)` | `true` when `left` is strictly before the parsed right date. |
+| `isDateAfter(selectedDate, baseDate, duration, unit)` | `true` when selected date is on or after base date plus days, weeks, months, or years. |
+| `isDateAfterSimple(left, right, format?)` | `true` when `left` is strictly after the parsed right date. |
+| `addWeeksToDate(date, weeks)` / `addDaysToDate(date, days)` | A new offset `Date`; the input is not mutated. |
+| `useFieldValue(questionId)` | Current field value, or `null`; also registers a dependency. |
+| `doesNotMatchExpression(pattern, value)` | `true` for an empty value or when the regular expression does not match. |
+| `arrayContains(array, members)` | Whether all members occur; false for non-arrays and true for an empty requested-members array. |
+| `arrayContainsAny(array, members)` | Whether any member occurs; false for non-arrays and true for an empty requested-members array. |
+| `parseDate(value)` | A `Date` using the O3 framework parser. |
+| `formatDate(value, format?)` | A formatted string; throws when a non-`Date` value cannot be parsed. |
+| `extractRepeatingGroupValues(key, array)` | An array containing `item[key]` for every repeating-group item. |
+| `resolve(promise)` | A promise resolving to the supplied promise's value. |
+| `calcBMI(height, weight)` | BMI rounded to one decimal, or `null` when either input is missing. |
+| `calcEDD(lmp)` | LMP plus 280 days, or `null`. |
+| `calcMonthsOnART(start)` | Complete months to today, `0` before 30 days, `null` when absent, or an error for a non-Date. |
+| `calcNextVisitDate(date, days)` | Date plus days, or `null` when either input is missing. |
+| `calcAgeBasedOnDate(date?)` | Patient birth year subtracted from the target year; month and day are intentionally ignored. |
+| `calcBSA(height, weight)` | Mosteller BSA rounded to two decimals, or `null`. |
+| `calcGravida(term, abortion)` | Integer sum; throws for a non-integer number or a non-numeric string. A numeric string is truncated to an integer. |
+| `calcWeightForHeightZscore(height, weight)` | WHO-derived score string, `-4` outside 45–110 cm, or `null` when input/reference data is missing. |
+| `calcBMIForAgeZscore(height, weight)` / `calcHeightForAgeZscore(height)` | WHO-derived score string or `null`. |
+| `calcTimeDifference(date, unit)` | Rounded absolute difference to today in `d`, `w`, `m`, or `y`; `0` when no date is supplied. |
+
+`calcViralLoadStatus` and `calcTreatmentEndDate` are still present but deprecated because they embed implementation-specific
+concept UUIDs. Do not introduce them into new shared forms. Prefer expressions or registered helpers whose concept
+references are configured for the target distribution.
+
+## Calculated, hidden, disabled, readonly, and required fields
+
+Use `questionOptions.calculate.calculateExpression` for a calculated value. It may resolve asynchronously. After a
+dependency changes, the engine updates and validates the calculated field before adapting it for submission.
+
+`hide.hideWhenExpression` applies to pages, sections, questions, and answer options. A truthy result hides the target.
+`disabled.disableWhenExpression` disables a question or coded answer when it evaluates truthy. A non-boolean string in a
+question's `readonly` property is evaluated as an expression.
+
+Conditional required fields use an object with `type: "conditionalRequired"`, `referenceQuestionId`, and
+`referenceQuestionAnswers`. The target becomes required when the referenced field has one of those answers.
+
+```json
+{
+  "id": "referralReason",
+  "label": "Referral reason",
+  "type": "obs",
+  "required": {
+    "type": "conditionalRequired",
+    "message": "Enter a reason when the patient was referred",
+    "referenceQuestionId": "visitOutcome",
+    "referenceQuestionAnswers": [
+      "55555555-5555-5555-5555-555555555555"
+    ]
+  },
+  "hide": {
+    "hideWhenExpression": "visitOutcome != '55555555-5555-5555-5555-555555555555'"
+  },
+  "questionOptions": {
+    "rendering": "textarea",
+    "concept": "88888888-8888-8888-8888-888888888888"
+  }
+}
+```
+
+## Runtime validators
+
+The default transformer adds `form_field` and `default_value` to non-group fields. Other validators must be listed in the
+question schema or registered by distribution code.
+
+| Validator name | Built-in behavior |
+| --- | --- |
+| `form_field` | Required values, text min/max length, numeric min/max, and decimal checks. |
+| `default_value` | Verifies coded defaults occur in `answers`, dates parse, and number defaults are numeric. |
+| `date` | Applies required validation and rejects future dates unless `allowFutureDates` is true. |
+| `js_expression` | Produces an error for truthy `failsWhenExpression` and a warning for truthy `warnsWhenExpression`. |
+| `conditionalAnswered` | Rejects a non-empty value unless the referenced question has an allowed answer. |
+
+Builder validation is separate. When enabled, it checks concepts, answer concepts, metadata types, and configured concept
+datatype-to-rendering mappings. It does not execute every runtime path, and it says nothing about other engines.
+
+## Historical values
+
+`historicalExpression` asks the active processor for a previous value in `enter` mode. The runtime displays a previous-
+value review when a value is returned; accepting or changing that value still follows the field adapter and validators.
+The expression context also exposes the previous encounter through `HD.getObject` behavior used internally by the
+historical data service. Test historical expressions with real encounter data because availability depends on processor
+context and encounter history.
+
+## Security boundary
+
+Expressions come from form JSON and can reach patient context, registered helpers, and React Form Engine API functions.
+Only trusted form authors should be allowed to create or publish schemas. Review expression changes like application code,
+avoid embedding secrets, and keep authorization in backend APIs; hiding or disabling a field is not access control.

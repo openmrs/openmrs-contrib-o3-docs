@@ -1,0 +1,36 @@
+# Form engine implementations
+
+The OpenMRS Reference Application uses the O3 Form Builder with the React Form Engine. An Angular Form Engine integration is also available for distributions that choose it, but it is not part of the Reference Application's default Forms workflow.
+
+## Packages and roles
+
+| Role | Default React workflow | Optional Angular workflow |
+| --- | --- | --- |
+| Form builder | [`@openmrs/esm-form-builder-app`](https://github.com/openmrs/openmrs-esm-form-builder), which previews forms with the React Form Engine | No supported Angular preview in the O3 Form Builder |
+| Renderer library | [`@openmrs/esm-form-engine-lib`](https://github.com/openmrs/openmrs-esm-form-engine-lib) | [`@openmrs/ngx-formentry`](https://github.com/openmrs/openmrs-ngx-formentry) |
+| O3 integration module | [`@openmrs/esm-form-engine-app`](https://github.com/openmrs/openmrs-esm-patient-chart/tree/main/packages/esm-form-engine-app) | [`@openmrs/esm-form-entry-app`](https://github.com/openmrs/openmrs-esm-patient-chart/tree/main/packages/esm-form-entry-app) |
+| Reference Application status | Included by default | Optional and not included by default |
+
+Both integration modules register a renderer in `form-widget-slot`. A distribution should enable the integration that matches its Forms workflow, not both integrations as competing renderers for the same slot.
+
+## Default Reference Application workflow
+
+The supported default path is:
+
+1. Create or edit a form with the [O3 Form Builder](/docs/forms-in-o3/build-forms-with-o3-form-builder).
+2. Preview the form with the React Form Engine embedded in the builder.
+3. Publish the form and render it with the React Form Engine at runtime.
+
+See [Using forms in applications](/docs/forms-in-o3/using-forms-in-applications) for the patient chart workspace and custom React rendering options.
+
+## Optional Angular workflow
+
+Distributions that use the Angular Form Engine should author schemas manually or manage them through a separate implementation-specific process, then test them against `@openmrs/esm-form-entry-app` in the target distribution.
+
+The O3 Form Builder has no supported Angular preview and makes no compatibility promises for the Angular Form Engine. A form that previews correctly in the builder can still behave differently in the Angular runtime.
+
+## Schema validity and runtime compatibility
+
+The [O3 form schema](https://github.com/openmrs/openmrs-contrib-json-schemas/blob/main/form.schema.json) defines shared structure and vocabulary for O3 JSON forms. A form that validates against the schema can still behave differently in the two engines: renderings, expression helpers, custom extensions, and runtime behavior are not guaranteed to match.
+
+Validate a form against the shared schema, then test it with the renderer and integration module used by the target distribution.

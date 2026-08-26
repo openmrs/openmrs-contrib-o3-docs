@@ -1,0 +1,76 @@
+# Capacités avancées des formulaires React
+
+Ces capacités étendent le flux React par défaut. Elles n'impliquent pas leur prise en charge par le moteur de formulaires Angular ou un autre renderer.
+
+## Sources de données
+
+Le registre React contient les sources de données suivantes :
+
+| Nom | Utilisée par |
+| --- | --- |
+| `location_datasource` | Modèle de lieu de rencontre |
+| `drug_datasource` | Modèle de médicament |
+| `problem_datasource` | Modèle de problème |
+| `select_concept_answers_datasource` | Sélection des réponses d'un concept |
+| `provider_datasource` | Modèle de prestataire de rencontre |
+| `encounter_role_datasource` | Modèle de rôle de rencontre |
+
+`ui-select-extended` peut utiliser `questionOptions.datasource.name` et un objet `config` facultatif. Un modèle nommé peut fournir sa source par défaut. Si aucune source intégrée, aucun modèle ni aucun enregistrement personnalisé ne correspond, le chargement lève `Datasource not found`.
+
+## Enregistrer des extensions
+
+Le package exporte des fonctions de registre pour les contrôles, adaptateurs de valeurs, validateurs, sources de données, helpers d'expression, actions post-soumission et transformateurs de schéma. Les enregistrements apparentés à des composants utilisent un objet avec `name` et une fonction différée `load`. Les contrôles exigent aussi `type`; les adaptateurs utilisent `type` comme clé de recherche.
+
+```tsx
+import {
+  registerCustomDataSource,
+  registerExpressionHelper,
+} from '@openmrs/esm-form-engine-lib';
+
+registerExpressionHelper('formatClinicCode', (value: string) => value.trim().toUpperCase());
+
+registerCustomDataSource({
+  name: 'clinic_directory',
+  load: () => import('./clinic-directory.datasource'),
+});
+```
+
+Il s'agit d'une API de package React, pas de JSON. Enregistrez les extensions au démarrage du frontend, avant qu'un formulaire les demande. Nommer une extension dans un schéma n'installe pas son implémentation. Conservez les détails de l'API avec le package et vérifiez-les lors des mises à niveau.
+
+## Transformateurs de schéma
+
+Le package exporte `registerFormSchemaTransformers`, mais les transformateurs de schéma personnalisés ne se chargent actuellement pas correctement dans l'environnement React. Conservez les détails des transformateurs avec le package jusqu'à ce que ce chemin soit corrigé et couvert par des tests.
+
+## Traductions
+
+`translations` associe des clés à des chaînes. Au chargement, le moteur l'ajoute à l'espace de noms i18next du React Form Engine pour la langue actuelle. Les libellés et le Markdown peuvent alors employer les clés du formulaire. Le constructeur fournit aussi un Translation Builder et un sélecteur de langue pour prévisualiser ces traductions.
+
+Les clés de traduction et les propriétés JSON sont des identifiants; ne les traduisez pas. Testez chaque locale dans l'aperçu du constructeur et à l'exécution ; une map peut être valide alors qu'une clé référencée manque.
+
+## Sections réutilisables et sous-formulaires
+
+`referencedForms` avec une `reference` de section importe une section nommée d'un autre formulaire serveur. Les pages de sous-formulaire peuvent résoudre un formulaire serveur nommé ou un package versionné. Les deux mécanismes sont résolus avant le rendu et échouent si un formulaire, package, libellé de page ou libellé de section manque. Consultez la [référence du schéma](/docs/forms-in-o3/form-schema-reference) pour la structure du document.
+
+## Intentions et comportements de formulaire
+
+Fournir `formSessionIntent` conduit le chargeur React à appliquer les `behaviours` de pages et de questions correspondants ainsi que le repli `*`. Une intention peut modifier les valeurs par défaut des champs, l'état en lecture seule ou masqué d'une page ou d'un champ, et la page initiale. Une utilisation directe de `FormEngine` ne sélectionne aucune intention si l'appelant n'en fournit pas.
+
+Le traitement de l'intention modifie une copie affinée du formulaire avant le rendu. Testez chaque intention et son repli ; un autre renderer peut traiter la même intention différemment.
+
+## Actions post-soumission
+
+La bibliothèque React actuelle inclut `ProgramEnrollmentSubmissionAction` et `MarkPatientAsDeceasedAction`. Une entrée de `postSubmissionActions` nomme `actionId`, un `enabled` facultatif et un objet `config`. Les actions ne s'exécutent qu'après la validation de tous les formulaires et la réussite de la soumission de leurs processeurs. Une action inconnue journalise une erreur et ne se résout vers aucune action.
+
+Le code d'une distribution peut enregistrer d'autres actions différées. Si le traitement de la soumission atteint une action inconnue, l'environnement ne peut pas l'appliquer et signale une erreur d'action. Examinez soigneusement cette configuration, car elle peut modifier les données du patient après la soumission de la rencontre.
+
+## Sécurité et confiance
+
+Les contrôles, adaptateurs, sources, helpers, transformateurs et actions personnalisés s'exécutent comme du code frontend avec la session du navigateur de l'utilisateur. Une source distante ou personnalisée peut divulguer le contexte patient si elle est mal conçue.
+
+- Installez uniquement des modules d'extension fiables et relus.
+- Autorisez uniquement des utilisateurs de confiance à créer et publier des schémas qui invoquent des extensions ou expressions.
+- Conservez l'authentification, l'autorisation et la validation clinique dans les services backend.
+- Limitez les endpoints distants et ne placez aucun identifiant ni secret dans le JSON.
+- Examinez ensemble les mises à niveau du code enregistré et les schémas qui le référencent.
+
+Le masquage, l'état en lecture seule et la validation côté client améliorent le flux, mais ne sont pas des contrôles de sécurité.
