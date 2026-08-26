@@ -19,7 +19,7 @@ Le contexte contient les valeurs des champs et les noms courants suivants :
 | `api` | Fonctions de l'API du React Form Engine |
 | `dayjs` | Instance configurée de Day.js |
 
-Une expression vide renvoie `null`. Une expression en échec est journalisée et renvoie aussi `null`; ne supposez pas qu'une erreur vaut `true` ou entraîne un échec de validation.
+Une expression vide renvoie `null`. Les erreurs d'évaluation sont journalisées et renvoient aussi `null`; les erreurs de syntaxe levées lors de la compilation ne sont pas interceptées. Ne supposez pas qu'une erreur vaut `true` ou entraîne un échec de validation.
 
 ## Helpers d'expression intégrés
 

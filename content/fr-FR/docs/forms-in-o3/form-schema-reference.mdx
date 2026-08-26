@@ -75,7 +75,7 @@ Consultez les [types de champs et rendus](/docs/forms-in-o3/field-types-and-rend
 | `formOptions.usePreviousValueDisabled` | Déclaré dans le schéma normatif mais actuellement ignoré par l'environnement d'exécution React. Le flux React contrôle la revue de la valeur précédente par question via `questionOptions.enablePreviousValue`. |
 | `meta.programs` | Fournit des métadonnées React pour les programmes et peut être transformé en action post-soumission. |
 
-Le schéma normatif déclare aussi `availableIntents`, tandis que le moteur React applique les `behaviours` correspondants avec ses utilitaires de chargement. Ces capacités propres à React sont décrites dans les [capacités avancées](/docs/forms-in-o3/advanced-form-capabilities).
+Le schéma normatif déclare aussi `availableIntents`, tandis que le moteur React applique les `behaviours` correspondants aux pages et aux questions avec ses utilitaires de chargement. Ces capacités propres à React sont décrites dans les [capacités avancées](/docs/forms-in-o3/advanced-form-capabilities).
 
 ## Pages, sections et questions
 
@@ -94,7 +94,7 @@ Une question contrôle quatre aspects distincts :
 
 Pour référencer une section, inscrivez le formulaire source dans `referencedForms`, puis définissez une `reference` de section avec `form`, `page` et `section`. `excludeQuestions` peut retirer des champs par ID. La résolution utilise les noms ou alias de formulaires et les libellés exacts de pages et sections. Renommer le contenu source peut donc rompre ses consommateurs.
 
-Les sous-formulaires utilisent une page avec `isSubform: true` et un objet `subform`. Le chargeur React peut résoudre un formulaire nommé ou empaqueté. Si son type de rencontre correspond à celui du parent, l'environnement remplace la page du sous-formulaire par ses pages qui ne sont pas elles-mêmes des sous-formulaires. Testez le résultat dans la distribution cible, car la disponibilité dépend du serveur ou du registre de packages.
+Les sous-formulaires utilisent une page avec `isSubform: true` et un objet `subform`. Le chargeur React peut résoudre un formulaire nommé ou empaqueté. Si son type de rencontre correspond à celui du parent, l'environnement remplace la page du sous-formulaire par les pages du formulaire résolu. Testez le résultat dans la distribution cible, car la disponibilité dépend du serveur ou du registre de packages.
 
 ## Comportement du processeur
 

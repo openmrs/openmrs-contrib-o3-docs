@@ -46,10 +46,8 @@ verify them when upgrading.
 
 ## Schema transformers
 
-`registerFormSchemaTransformers` adds a lazy transformer by name. The default transformer always runs after custom
-transformers have loaded. A registration with the same name replaces the previous registration in the store. Transformers
-can rewrite the entire form, so treat them as application code and cover their output with tests against the current
-normative schema and React types.
+The package exports `registerFormSchemaTransformers`, but custom schema transformers do not currently load successfully in
+the React runtime. Keep transformer details with the package until this path is fixed and covered by tests.
 
 ## Translations
 
@@ -69,9 +67,9 @@ the document shape.
 
 ## Form intents and behaviours
 
-Passing `formSessionIntent` causes the React loader to apply matching `behaviours` and the `*` fallback. Intent behavior
-can change defaults, readonly or hidden state, the initial page, and the intent passed into a subform. Direct `FormEngine`
-usage does not select an intent unless the caller supplies one.
+Passing `formSessionIntent` causes the React loader to apply matching page and question `behaviours` and the `*` fallback.
+An intent can change field defaults, page or field readonly or hidden state, and the initial page. Direct `FormEngine` usage
+does not select an intent unless the caller supplies one.
 
 Intent handling mutates a refined copy of the form before rendering. Test every supported intent and its fallback; another
 renderer can handle the same intent differently.

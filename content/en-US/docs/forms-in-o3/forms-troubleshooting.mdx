@@ -26,8 +26,8 @@ succeed. Validate and preview against the target distribution and test a non-pro
 3. Check `hide`, `readonly`, `disabled`, parent visibility, form mode, and intent behavior.
 4. For `obs`, confirm `questionOptions.concept`. A missing concept normally produces a disabled text fallback, except for
    `file` and `fixed-value` fields.
-5. Inspect the browser console. Unknown renderings resolve to no control, while failed expressions are logged and return
-   `null`.
+5. Inspect the browser console. Unknown renderings resolve to no control, while expression evaluation errors are logged and
+   return `null`. Syntax errors can throw during expression compilation.
 
 ## A field renders but does not submit correctly
 
@@ -43,7 +43,7 @@ succeed. Validate and preview against the target distribution and test a non-pro
 - Use stable question IDs and reference them exactly.
 - Use `useFieldValue('questionId')` when an indirect lookup must explicitly register a dependency.
 - Check exact return semantics in [Expressions, validation, and logic](/docs/forms-in-o3/expressions-validation-and-logic).
-- Remember that an empty or failed expression produces `null`.
+- Remember that an empty expression or an evaluation error produces `null`; a syntax error can throw during compilation.
 - Do not use deprecated implementation-specific calculation helpers in new shared forms.
 
 ## Referenced forms or subforms are missing

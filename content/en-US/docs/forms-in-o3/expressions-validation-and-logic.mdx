@@ -21,8 +21,8 @@ The context includes form field values and these common names:
 | `api` | React Form Engine API functions |
 | `dayjs` | The configured Day.js instance |
 
-An empty expression returns `null`. A failed expression is logged and also resolves to `null`; do not depend on errors
-being treated as `true` or as a validation failure.
+An empty expression returns `null`. Evaluation errors are logged and also resolve to `null`; syntax errors raised while
+compiling the expression are not caught. Do not depend on errors being treated as `true` or as a validation failure.
 
 ## Built-in expression helpers
 

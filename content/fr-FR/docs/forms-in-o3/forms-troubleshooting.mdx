@@ -21,7 +21,7 @@ Un aperçu réussi ne prouve pas non plus que toutes les métadonnées existent 
 2. Vérifiez si le rendu exige un contrôle ou une source de données enregistrés.
 3. Vérifiez `hide`, `readonly`, `disabled`, la visibilité du parent, le mode du formulaire et le comportement de l'intention.
 4. Pour `obs`, vérifiez `questionOptions.concept`. Un concept absent produit normalement un champ texte désactivé, sauf pour les rendus `file` et `fixed-value`.
-5. Inspectez la console du navigateur. Les rendus inconnus ne produisent aucun contrôle; les expressions en échec sont journalisées et renvoient `null`.
+5. Inspectez la console du navigateur. Les rendus inconnus ne produisent aucun contrôle; les erreurs d'évaluation des expressions sont journalisées et renvoient `null`. Les erreurs de syntaxe peuvent être levées lors de la compilation de l'expression.
 
 ## Un champ est rendu mais mal soumis
 
@@ -36,7 +36,7 @@ Un aperçu réussi ne prouve pas non plus que toutes les métadonnées existent 
 - Utilisez des ID de questions stables et référencez-les exactement.
 - Utilisez `useFieldValue('questionId')` lorsqu'une recherche indirecte doit explicitement enregistrer une dépendance.
 - Vérifiez le résultat exact dans [Expressions, validation et logique](/docs/forms-in-o3/expressions-validation-and-logic).
-- Une expression vide ou en échec produit `null`.
+- Une expression vide ou une erreur d'évaluation produit `null`; une erreur de syntaxe peut être levée lors de la compilation.
 - N'utilisez pas les helpers de calcul obsolètes propres à une implémentation dans de nouveaux formulaires partagés.
 
 ## Les formulaires référencés ou sous-formulaires manquent

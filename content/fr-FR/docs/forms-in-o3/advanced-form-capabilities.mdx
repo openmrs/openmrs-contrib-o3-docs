@@ -39,7 +39,7 @@ Il s'agit d'une API de package React, pas de JSON. Enregistrez les extensions au
 
 ## Transformateurs de schéma
 
-`registerFormSchemaTransformers` ajoute un transformateur différé par nom. Le transformateur par défaut s'exécute toujours après le chargement des transformateurs personnalisés. Un enregistrement portant le même nom remplace le précédent dans le store. Ces fonctions peuvent réécrire le formulaire entier; traitez-les comme du code applicatif et testez leur résultat par rapport au schéma normatif et aux types React actuels.
+Le package exporte `registerFormSchemaTransformers`, mais les transformateurs de schéma personnalisés ne se chargent actuellement pas correctement dans l'environnement React. Conservez les détails des transformateurs avec le package jusqu'à ce que ce chemin soit corrigé et couvert par des tests.
 
 ## Traductions
 
@@ -53,7 +53,7 @@ Les clés de traduction et les propriétés JSON sont des identifiants; ne les t
 
 ## Intentions et comportements de formulaire
 
-Fournir `formSessionIntent` conduit le chargeur React à appliquer les `behaviours` correspondants et le repli `*`. Une intention peut modifier les valeurs par défaut, l'état en lecture seule ou masqué, la page initiale et l'intention transmise à un sous-formulaire. Une utilisation directe de `FormEngine` ne sélectionne aucune intention si l'appelant n'en fournit pas.
+Fournir `formSessionIntent` conduit le chargeur React à appliquer les `behaviours` de pages et de questions correspondants ainsi que le repli `*`. Une intention peut modifier les valeurs par défaut des champs, l'état en lecture seule ou masqué d'une page ou d'un champ, et la page initiale. Une utilisation directe de `FormEngine` ne sélectionne aucune intention si l'appelant n'en fournit pas.
 
 Le traitement de l'intention modifie une copie affinée du formulaire avant le rendu. Testez chaque intention et son repli ; un autre renderer peut traiter la même intention différemment.
 

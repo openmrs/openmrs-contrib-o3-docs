@@ -84,8 +84,8 @@ contracts.
 | `formOptions.usePreviousValueDisabled` | Declared in the normative schema but not currently honored by the React runtime. The React workflow controls the previous-value review per question with `questionOptions.enablePreviousValue`. |
 | `meta.programs` | Supplies React-specific program workflow metadata and may be transformed into a post-submission action. |
 
-The normative schema also declares `availableIntents`, while the React engine applies matching `behaviours` through its
-form-loading utilities. These are React-specific runtime capabilities, described under
+The normative schema also declares `availableIntents`, while the React engine applies matching page and question
+`behaviours` through its form-loading utilities. These are React-specific runtime capabilities, described under
 [Advanced form capabilities](/docs/forms-in-o3/advanced-form-capabilities).
 
 ## Pages, sections, and questions
@@ -111,8 +111,8 @@ and `section`. `excludeQuestions` can remove fields by ID. Resolution uses form 
 labels, so renaming source content can break consumers.
 
 Subforms use a page with `isSubform: true` and a `subform` object. The React loader can resolve a named form or a packaged
-form. If its encounter type matches its parent, the runtime replaces the subform page with the subform's non-subform
-pages. Test the resolved form in the target distribution because availability depends on the server or package registry.
+form. If its encounter type matches its parent, the runtime replaces the subform page with the resolved form's pages. Test
+the resolved form in the target distribution because availability depends on the server or package registry.
 
 ## Processor behavior
 
