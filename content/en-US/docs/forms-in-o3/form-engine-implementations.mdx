@@ -2,14 +2,16 @@
 
 The OpenMRS Reference Application uses the O3 Form Builder with the React Form Engine. An Angular Form Engine integration is also available for distributions that choose it, but it is not part of the Reference Application's default Forms workflow.
 
+For new implementations, we recommend the React Form Engine. It is included in the Reference Application and powers the O3 Form Builder preview, so forms use the same engine during authoring and at runtime. Existing implementations that depend on Angular forms or custom extensions can continue using the Angular integration while assessing migration. Test those forms and extensions against React before switching engines.
+
 ## Packages and roles
 
-| Role | Default React workflow | Optional Angular workflow |
+| Role | Default React workflow | Angular workflow |
 | --- | --- | --- |
 | Form builder | [`@openmrs/esm-form-builder-app`](https://github.com/openmrs/openmrs-esm-form-builder), which previews forms with the React Form Engine | No supported Angular preview in the O3 Form Builder |
 | Renderer library | [`@openmrs/esm-form-engine-lib`](https://github.com/openmrs/openmrs-esm-form-engine-lib) | [`@openmrs/ngx-formentry`](https://github.com/openmrs/openmrs-ngx-formentry) |
 | O3 integration module | [`@openmrs/esm-form-engine-app`](https://github.com/openmrs/openmrs-esm-patient-chart/tree/main/packages/esm-form-engine-app) | [`@openmrs/esm-form-entry-app`](https://github.com/openmrs/openmrs-esm-patient-chart/tree/main/packages/esm-form-entry-app) |
-| Reference Application status | Included by default | Optional and not included by default |
+| Reference Application status | Included by default | Not included by default |
 
 Both integration modules register a renderer in `form-widget-slot`. A distribution should enable the integration that matches its Forms workflow, not both integrations as competing renderers for the same slot.
 
@@ -23,7 +25,7 @@ The supported default path is:
 
 See [Using forms in applications](/docs/forms-in-o3/using-forms-in-applications) for the patient chart workspace and custom React rendering options.
 
-## Optional Angular workflow
+## Angular workflow
 
 Distributions that use the Angular Form Engine should author schemas manually or manage them through a separate implementation-specific process, then test them against `@openmrs/esm-form-entry-app` in the target distribution.
 

@@ -2,14 +2,16 @@
 
 L'application de référence OpenMRS utilise le constructeur de formulaires O3 avec le React Form Engine. Une intégration du moteur de formulaires Angular est également disponible pour les distributions qui la choisissent, mais elle ne fait pas partie du flux de travail des formulaires fourni par défaut dans l'application de référence.
 
+Pour les nouvelles implémentations, nous recommandons le React Form Engine. Il est inclus dans l'application de référence et assure l'aperçu dans le constructeur de formulaires O3, ce qui permet d'utiliser le même moteur pendant la création et à l'exécution. Les implémentations existantes qui dépendent de formulaires Angular ou d'extensions personnalisées peuvent continuer à utiliser l'intégration Angular pendant qu'elles évaluent la migration. Testez ces formulaires et extensions avec React avant de changer de moteur.
+
 ## Packages et rôles
 
-| Rôle | Flux React par défaut | Flux Angular optionnel |
+| Rôle | Flux React par défaut | Flux Angular |
 | --- | --- | --- |
 | Constructeur de formulaires | [`@openmrs/esm-form-builder-app`](https://github.com/openmrs/openmrs-esm-form-builder), qui prévisualise les formulaires avec le React Form Engine | Aucun aperçu Angular pris en charge dans le constructeur de formulaires O3 |
 | Bibliothèque de rendu | [`@openmrs/esm-form-engine-lib`](https://github.com/openmrs/openmrs-esm-form-engine-lib) | [`@openmrs/ngx-formentry`](https://github.com/openmrs/openmrs-ngx-formentry) |
 | Module d'intégration O3 | [`@openmrs/esm-form-engine-app`](https://github.com/openmrs/openmrs-esm-patient-chart/tree/main/packages/esm-form-engine-app) | [`@openmrs/esm-form-entry-app`](https://github.com/openmrs/openmrs-esm-patient-chart/tree/main/packages/esm-form-entry-app) |
-| Statut dans l'application de référence | Inclus par défaut | Optionnel et non inclus par défaut |
+| Statut dans l'application de référence | Inclus par défaut | Non inclus par défaut |
 
 Les deux modules d'intégration enregistrent un renderer dans `form-widget-slot`. Une distribution devrait activer l'intégration qui correspond à son flux de travail des formulaires, et non les deux intégrations comme renderers concurrents pour le même slot.
 
@@ -23,7 +25,7 @@ Le parcours pris en charge par défaut est le suivant :
 
 Consultez [Utiliser les formulaires dans les applications](/docs/forms-in-o3/using-forms-in-applications) pour en savoir plus sur l'espace de travail du dossier patient et les options de rendu React personnalisé.
 
-## Flux de travail Angular optionnel
+## Flux de travail Angular
 
 Les distributions qui utilisent le moteur de formulaires Angular devraient créer les schémas manuellement ou les gérer au moyen d'un processus distinct propre à leur implémentation, puis les tester avec `@openmrs/esm-form-entry-app` dans la distribution cible.
 
