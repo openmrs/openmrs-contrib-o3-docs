@@ -34,6 +34,8 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
         if: github.event.action != 'closed'
+      - run: pnpm check:forms-doc-ownership
+        if: github.event.action != 'closed'
       - run: pnpm build
         if: github.event.action != 'closed'
         env:

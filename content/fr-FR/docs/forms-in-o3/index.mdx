@@ -1,6 +1,6 @@
 # Vue d'ensemble
 
-Le flux de formulaires JSON d'O3 utilise des schémas rendus par le React Form Engine. Un formulaire peut être créé directement dans le constructeur de formulaires O3, converti depuis un formulaire HTML Form Entry existant, ou rendu par un module frontend personnalisé lorsqu'une application a besoin d'un flux de formulaire dédié. O3 peut aussi afficher des formulaires HTML Form Entry configurés via l'espace de travail de saisie de formulaire du dossier patient; ne les convertissez que lorsque vous voulez en faire des formulaires JSON O3 modifiables.
+Cette section est le guide canonique du flux de travail des formulaires O3 fourni avec l'application de référence OpenMRS. Dans ce flux de travail, le constructeur de formulaires O3 crée et prévisualise les schémas avec le React Form Engine, et le React Form Engine rend les formulaires JSON O3 publiés lors de l'exécution. Un formulaire peut aussi être converti depuis un formulaire HTML Form Entry existant ou rendu par un module frontend personnalisé lorsqu'une application a besoin d'un flux de formulaire dédié. O3 peut afficher des formulaires HTML Form Entry configurés via l'espace de travail de saisie de formulaire du dossier patient; ne les convertissez que lorsque vous voulez en faire des formulaires JSON O3 modifiables.
 
 Les principaux éléments sont:
 
@@ -10,5 +10,7 @@ Les principaux éléments sont:
 - `@openmrs/esm-form-engine-lib` fournit le composant `FormEngine` pour le rendu personnalisé, la gestion de soumission et les vues de formulaires intégrées.
 
 Commencez par [construire des formulaires avec le constructeur de formulaires O3](/docs/forms-in-o3/build-forms-with-o3-form-builder) lorsque vous créez un nouveau formulaire O3. Utilisez [la conversion des formulaires HTML Form Entry](/docs/forms-in-o3/convert-html-form-entry-forms) lorsque vous migrez des formulaires HFE existants. Lisez [utiliser les formulaires dans les applications](/docs/forms-in-o3/using-forms-in-applications) lorsque vous devez lancer l'espace de travail de formulaire du dossier patient ou rendre `FormEngine` directement.
+
+Si votre distribution utilise un renderer de formulaires autre que celui fourni par défaut dans l'application de référence, lisez [Implémentations du moteur de formulaires](/docs/forms-in-o3/form-engine-implementations) avant de choisir un flux de travail de création ou de test.
 
 Seuls les formulaires JSON O3 publiés sont affichés dans le flux React Form Engine par défaut du dossier patient. Les formulaires HTML Form Entry configurés sont gérés séparément par l'application patient forms. Conservez les schémas importants dans le contrôle de version ou dans un dépôt de distribution, surtout lorsque vous travaillez sur des serveurs de démonstration qui peuvent être réinitialisés.
