@@ -1,0 +1,125 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800" role="img" aria-labelledby="title desc">
+  <title id="title">O3 frontend architecture</title>
+  <desc id="desc">A diagram showing how O3 distro assembly creates import map and routes registry artifacts, then how the browser runtime uses those artifacts to register metadata and load module code on demand.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth">
+      <path d="M0 0 L8 4 L0 8 Z" fill="#293845" />
+    </marker>
+    <marker id="arrow-dashed" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth">
+      <path d="M0 0 L8 4 L0 8 Z" fill="#546576" />
+    </marker>
+    <style>
+      .page { fill: #f6f8fb; }
+      .panel { fill: #ffffff; stroke: #c8d1dc; stroke-width: 2; rx: 8; }
+      .box { fill: #ffffff; stroke: #293845; stroke-width: 2; rx: 8; }
+      .artifact { fill: #ecf6ff; stroke: #1d6fa5; }
+      .runtime { fill: #eefaf4; stroke: #25845d; }
+      .dev { fill: #fff8e6; stroke: #9d6a00; }
+      .heading { fill: #1f2933; font: 700 22px Arial, sans-serif; }
+      .title { fill: #1f2933; font: 700 28px Arial, sans-serif; }
+      .label { fill: #1f2933; font: 700 17px Arial, sans-serif; }
+      .body { fill: #344454; font: 14px Arial, sans-serif; }
+      .tiny { fill: #546576; font: 12px Arial, sans-serif; }
+      .arrow { fill: none; stroke: #293845; stroke-width: 2.5; marker-end: url(#arrow); }
+      .dash { fill: none; stroke: #546576; stroke-width: 2.5; stroke-dasharray: 6 6; marker-end: url(#arrow-dashed); }
+    </style>
+  </defs>
+
+  <rect class="page" x="0" y="0" width="1200" height="800" />
+  <text class="title" x="600" y="42" text-anchor="middle">O3 frontend architecture</text>
+
+  <rect class="panel" x="40" y="76" width="520" height="600" />
+  <text class="heading" x="300" y="112" text-anchor="middle">Distro assembly</text>
+
+  <rect class="box artifact" x="70" y="140" width="220" height="82" />
+  <text class="label" x="180" y="168" text-anchor="middle">spa-assemble-config.json</text>
+  <text class="body" x="180" y="193" text-anchor="middle">module names</text>
+  <text class="body" x="180" y="212" text-anchor="middle">and versions</text>
+
+  <rect class="box" x="70" y="262" width="220" height="82" />
+  <text class="label" x="180" y="291" text-anchor="middle">NPM registry</text>
+  <text class="body" x="180" y="316" text-anchor="middle">published frontend</text>
+  <text class="body" x="180" y="335" text-anchor="middle">module packages</text>
+
+  <rect class="box" x="340" y="199" width="180" height="96" />
+  <text class="label" x="430" y="232" text-anchor="middle">openmrs assemble</text>
+  <text class="body" x="430" y="257" text-anchor="middle">downloads packages</text>
+  <text class="body" x="430" y="276" text-anchor="middle">and reads routes.json</text>
+
+  <rect class="box artifact" x="70" y="404" width="210" height="92" />
+  <text class="label" x="175" y="435" text-anchor="middle">importmap.json</text>
+  <text class="body" x="175" y="461" text-anchor="middle">module name</text>
+  <text class="body" x="175" y="480" text-anchor="middle">to bundle URL</text>
+
+  <rect class="box artifact" x="310" y="404" width="210" height="92" />
+  <text class="label" x="415" y="435" text-anchor="middle">routes.registry.json</text>
+  <text class="body" x="415" y="461" text-anchor="middle">module name</text>
+  <text class="body" x="415" y="480" text-anchor="middle">to route metadata</text>
+
+  <rect class="box artifact" x="178" y="548" width="254" height="88" />
+  <text class="label" x="305" y="578" text-anchor="middle">SPA static resources</text>
+  <text class="body" x="305" y="604" text-anchor="middle">index.html, module bundles,</text>
+  <text class="body" x="305" y="623" text-anchor="middle">assets, maps, and routes</text>
+
+  <path class="arrow" d="M290 181 H315 V226 H340" />
+  <path class="arrow" d="M290 303 H315 V257 H340" />
+  <path class="arrow" d="M430 295 V360 Q430 377 415 404" />
+  <path class="arrow" d="M395 295 V360 Q395 377 210 404" />
+  <path class="arrow" d="M430 295 V528 Q430 548 395 548" />
+  <path class="arrow" d="M175 496 V526 Q175 548 214 548" />
+  <path class="arrow" d="M415 496 V526 Q415 548 396 548" />
+
+  <rect class="panel" x="640" y="76" width="520" height="600" />
+  <text class="heading" x="900" y="112" text-anchor="middle">Browser runtime</text>
+
+  <rect class="box artifact" x="670" y="140" width="230" height="106" />
+  <text class="label" x="785" y="170" text-anchor="middle">index.html</text>
+  <text class="body" x="785" y="196" text-anchor="middle">systemjs-importmap</text>
+  <text class="body" x="785" y="215" text-anchor="middle">openmrs-routes</text>
+  <text class="tiny" x="785" y="234" text-anchor="middle">script tags</text>
+
+  <rect class="box runtime" x="930" y="140" width="200" height="106" />
+  <text class="label" x="1030" y="169" text-anchor="middle">Core framework</text>
+  <text class="body" x="1030" y="195" text-anchor="middle">config, extensions,</text>
+  <text class="body" x="1030" y="214" text-anchor="middle">workspaces, offline,</text>
+  <text class="body" x="1030" y="233" text-anchor="middle">i18n, styleguide</text>
+
+  <rect class="box runtime" x="772" y="299" width="232" height="88" />
+  <text class="label" x="888" y="331" text-anchor="middle">App shell</text>
+  <text class="body" x="888" y="356" text-anchor="middle">reads maps and starts</text>
+  <text class="body" x="888" y="375" text-anchor="middle">single-spa</text>
+
+  <rect class="box runtime" x="670" y="442" width="225" height="108" />
+  <text class="label" x="782" y="473" text-anchor="middle">Register metadata</text>
+  <text class="body" x="782" y="499" text-anchor="middle">pages, extensions,</text>
+  <text class="body" x="782" y="518" text-anchor="middle">modals, workspaces,</text>
+  <text class="body" x="782" y="537" text-anchor="middle">feature flags</text>
+
+  <rect class="box runtime" x="930" y="442" width="200" height="108" />
+  <text class="label" x="1030" y="473" text-anchor="middle">Load code on demand</text>
+  <text class="body" x="1030" y="499" text-anchor="middle">resolve URL, append</text>
+  <text class="body" x="1030" y="518" text-anchor="middle">script tag, call</text>
+  <text class="body" x="1030" y="537" text-anchor="middle">Module Federation init/get</text>
+
+  <rect class="box runtime" x="772" y="594" width="232" height="62" />
+  <text class="label" x="888" y="620" text-anchor="middle">Render O3 UI</text>
+  <text class="body" x="888" y="643" text-anchor="middle">route pages and slot extensions</text>
+
+  <path class="arrow" d="M900 193 H930" />
+  <path class="arrow" d="M785 246 V282 Q785 299 805 299" />
+  <path class="arrow" d="M888 387 V420 Q888 442 842 442" />
+  <path class="arrow" d="M945 387 V420 Q945 442 982 442" />
+  <path class="arrow" d="M782 550 V572 Q782 594 829 594" />
+  <path class="arrow" d="M1030 550 V572 Q1030 594 947 594" />
+
+  <path class="dash" d="M432 592 H604 Q626 592 626 237 H670" />
+  <text class="tiny" x="602" y="604" text-anchor="end">served SPA files</text>
+
+  <rect class="panel" x="210" y="704" width="780" height="70" />
+  <text class="heading" x="248" y="747">Local development</text>
+  <rect class="box dev" x="458" y="718" width="190" height="42" />
+  <text class="body" x="553" y="744" text-anchor="middle">openmrs develop</text>
+  <rect class="box dev" x="678" y="718" width="250" height="42" />
+  <text class="body" x="803" y="744" text-anchor="middle">import map and route overrides</text>
+  <path class="arrow" d="M648 739 H678" />
+</svg>
