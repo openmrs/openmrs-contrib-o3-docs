@@ -1,0 +1,140 @@
+import { Steps } from "nextra/components";
+
+# Migrating to Core v11
+
+This guide is for migrating frontend modules to Core v11 and above. v11 has several breaking changes including:
+
+- A [major re-write of the extension system internals](https://github.com/openmrs/openmrs-esm-core/pull/1856)
+- [Using browserlists](https://github.com/openmrs/openmrs-esm-core/pull/1868) when compiling to JS
+- [Not using CSS-in-JS](https://github.com/openmrs/openmrs-esm-core/pull/1869) in production builds (RFC-0033)
+
+## Background
+
+Core v11 includes these breaking changes as they will improve the overall performance, stability, and correctness of the frontend overall. Even with these changes, we expect most applications to continue working with no modification or very small modifications. This document exists to call out specific uses that are no longer supported.
+
+## Migration steps
+
+<Steps>
+
+### Bump core dependencies
+
+Bump core dependencies to their newest `next` tagged versions:
+
+```bash
+yarn up openmrs@next @openmrs/esm-framework@next
+```
+
+### Perform necessary migrations
+
+The necessary migrations are detailed below, depending on use-case
+
+</Steps>
+
+After completing the steps above, verify everything works:
+
+- Run tests: `yarn test`
+- Run a development build: `yarn start`
+- Run a production build: `yarn build`
+
+## Migration Patterns
+
+### Extension system
+
+#### Assigned Extensions vs Candidate Extensions
+
+The biggest change to the extension system is to the concept of `assignedExtensions`. Previously, `assignedExtensions` listed every extension that should be rendered into a slot and was stored as part of the extension store. Unfortunately, since each instance of a slot can have a different state and whether or not an extension should be displayed can depend on that state, it is not tenable to retain that in the store. There are two replacements:
+
+##### Metadata about extensions
+
+In some cases, the extension store may have been used to get access to extensions simply to get each extension's associated `meta` information, for things like dashboard renders. In this case, the correct migration is simply to use the existing `useExtensionSlotMeta()` hook.
+
+##### Do something with extensions
+
+The other common use case is to use the `assignedExtensions` to influence how extensions are displayed. In this case, the `useAssignedExtensions()` hook or `getAssignedExtensions()` framework function should be the preferred way of finding `assignedExtensions`
+
+##### What is in the store
+
+Instead of tracking all `assignedExtensions` the store now tracks `candidateExtensions`; `candidateExtensions` are extensions that are configured to be displayed in a slot before their display conditions have been evaluated against the current state. In some circumstances, e.g., to build up metadata maps or the like, it may be useful to use this since it will generally be faster than the `getAssignedExtensions()` or `useAssignedExtensions()` calls—which need to load the slot state and evaluate the conditions. However, if you use these, you should be aware that not all `candidateExtensions` will actually render.
+
+#### Parcel must mount within 15 seconds
+
+Previously, parcels that did not mount would simply be awaited indefinitely. There is now a hard time-out of 15 seconds after which any parcel that does not mount will be rejected and removed from the application. There is currently no way to configure this feature on a per-extension basis. If your extension takes longer than 15 seconds to mount, re-write it to mount a "Loading" style skeleton faster and defer any loading work.
+
+#### Extensions added through configuration now retain the order they are defined in configuration
+
+If you've configured a slot to add extensions, e.g.,
+
+```json
+{
+  "@openmrs/esm-patient-chart-app": {
+    "extensionSlots": {
+      "main-slot": {
+        "add": [
+          "custom-extension#1",
+          "custom-extension#2"
+        ]
+      }
+    }
+  }
+}
+```
+
+These will now, by default, render in that order but after most extensions bound to that slot. To fix the extension order, update your configuration to define the order:
+
+```json
+{
+  "@openmrs/esm-patient-chart-app": {
+    "extensionSlots": {
+      "main-slot": {
+        "add": [
+          "custom-extension#1",
+          "custom-extension#2"
+        ],
+        "order": [
+          "custom-extension#2",
+          "default-extensions",
+          "custom-extension#1"
+        ]
+      }
+    }
+  }
+}
+```
+
+For more, see [the O3 Configuration overview](/docs/configure-o3/overview) for details on these mechanisms.
+
+### .swcrc with Webpack
+
+Prior to v11, Webpack builds would honor `.swcrc` if included along-side an app's `webpack.config.js`. With v11, that feature has been removed to retain parity with the Rspack configuration, which does not check this file. If you need to add additional configuration, do so using the `scriptRuleConfig` export, e.g.,
+
+```js
+const configuration = require('openmrs/default-webpack-config');
+
+configuration.scriptRuleConfig.options = {
+  // Your configuration goes here
+}
+
+export configuration;
+```
+
+The same syntax can be used to provide SWC options for rspack.
+
+### CSS migration
+
+As part of migrating away from CSS-in-JS, we are also removing the ability for apps to change global styles. This was always the intention as having different apps apply different global styles quickly makes it hard to track down styling infelicities. For truly global styles that an implementation needs to provide, the `openmrs build` command has an `--assets` argument that can be used to provide asset paths that are copied into the final build and rendered as part of the application. For other CSS, the goal should be to ensure that they are always properly scoped. "Properly scoped" means that any rule published by an app is scoped in a way that it doesn't effect modules outside it's tree. For example:
+
+```scss
+:global(.cds-button) {
+  color: blue;
+}
+```
+
+Affects the color of every Carbon button, but:
+
+```scss
+.myComponent :global(.cds-button) {
+  color: blue;
+}
+```
+
+Scopes the changes strictly to the class `.myComponent`, which, with our default setup, will be correctly mangled at run time.
