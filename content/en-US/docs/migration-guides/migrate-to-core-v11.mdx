@@ -138,3 +138,17 @@ Affects the color of every Carbon button, but:
 ```
 
 Scopes the changes strictly to the class `.myComponent`, which, with our default setup, will be correctly mangled at run time.
+
+One pattern we've sometimes seen is using react-to-print and rendering a rule like:
+
+```scss
+@media print {
+  html,
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}
+```
+
+To try to remove the default padding when printing. For these cases, `react-to-print` accepts a `pageStyle` parameter that allows you to define these kinds of global rules and that should be preferred because it is restricted to `react-to-print`'s `iframe` and does not affect other rendering.
