@@ -511,20 +511,6 @@ Si l'établissement par défaut n'est pas disponible dans la session, vous pouve
 
 Cette valeur est transmise à `openmrsFetch`, qui ajoute automatiquement le chemin de base OpenMRS pour les chemins d'API relatifs. Utilisez une URL absolue complète uniquement lorsque l'établissement est récupéré depuis un autre hôte.
 
-### Type de visite hors ligne
-
-Vous pouvez configurer quel type de visite est utilisé pour les visites hors ligne créées automatiquement :
-
-```json
-{
-  "@openmrs/esm-patient-chart-app": {
-    "offlineVisitTypeUuid": "a22733fa-3501-4020-a520-da024eeff088"
-  }
-}
-```
-
-La valeur par défaut est `a22733fa-3501-4020-a520-da024eeff088`.
-
 ### UUID du type de commande de médicament
 
 Vous pouvez configurer l'UUID du type de commande "Drug" utilisé pour récupérer les médicaments :
