@@ -511,20 +511,6 @@ If the default facility is not available in the session, you can specify a custo
 
 This value is passed to `openmrsFetch`, so the OpenMRS base path is added automatically for relative API paths. Use a full absolute URL only when fetching the facility from another host.
 
-### Offline Visit Type
-
-You can configure which visit type is used for automatically created offline visits:
-
-```json
-{
-  "@openmrs/esm-patient-chart-app": {
-    "offlineVisitTypeUuid": "a22733fa-3501-4020-a520-da024eeff088"
-  }
-}
-```
-
-The default is `a22733fa-3501-4020-a520-da024eeff088`.
-
 ### Drug Order Type UUID
 
 You can configure the UUID for the "Drug" order type used to fetch medications:
