@@ -51,7 +51,7 @@ The `run` function orchestrates the complete initialization sequence. It is resp
 
 The `setupApps` function loads all of the routes from the routes registry. It reads routes from:
 - `<script type="openmrs-routes">` tags in the HTML (either inline JSON or from a URL)
-- Route overrides stored in `localStorage` (useful for development and debugging)
+- Route overrides stored in `localStorage` (useful for development and debugging). These are only read when the app shell runs in development mode.
 
 After loading all routes, it invokes `registerApp()` on each module and its route definition. The route definitions stay available on `window.installedModules`, which lets tools inspect module versions and backend dependency metadata. `registerApp()` itself then:
 
