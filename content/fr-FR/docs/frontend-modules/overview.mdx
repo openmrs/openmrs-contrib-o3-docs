@@ -41,7 +41,7 @@ Si vous débutez avec O3, voici le modèle mental à garder en tête:
 6. **L'import map est la source de vérité pour les URLs du code.** Elle associe les noms de modules aux URLs de bundles et contrôle les versions. Le registre de routes est la source de vérité pour ce que le module contribue à l'UI.
 7. **En dev local, on peut surcharger les deux artefacts.** `openmrs develop` et Devtools peuvent pointer un module vers votre serveur local et utiliser son `routes.json` local sans changer le `spa-assemble-config.json` de la distro.
 
-Les modules frontend dans O3 sont généralement construits avec React. Comme nous utilisons [single-spa](https://single-spa.js.org/) sous le capot, d'autres frameworks sont possibles, mais ils sont moins courants. Par exemple, le module frontend [Form entry](/docs/key-repositories#angular-form-engine) est écrit en Angular et encapsule l'[Angular form engine](https://github.com/openmrs/openmrs-ngx-formentry). En ce sens, l'app shell est agnostique du framework. En pratique, les fonctionnements de bas niveau de l'app shell ont été abstraits pour que les ingénieurs frontend puissent se concentrer sur le comportement des modules plutôt que sur le framework.
+Les modules frontend dans O3 sont généralement construits avec React. Comme nous utilisons [single-spa](https://single-spa.js.org/) sous le capot, d'autres frameworks sont possibles, mais ils sont moins courants. Par exemple, le module frontend [Form entry](/docs/key-repositories#moteur-de-formulaires-angular) est écrit en Angular et encapsule l'[Angular form engine](https://github.com/openmrs/openmrs-ngx-formentry). En ce sens, l'app shell est agnostique du framework. En pratique, les fonctionnements de bas niveau de l'app shell ont été abstraits pour que les ingénieurs frontend puissent se concentrer sur le comportement des modules plutôt que sur le framework.
 
 Les modules frontend sont généralement organisés en dépôts spécifiques à un domaine. Par exemple, les modules frontend concernant la gestion des patients existent dans le monorepo [Patient Management](https://github.com/openmrs/openmrs-esm-patient-management). Certains modules vivent dans des monorepos, d'autres dans des dépôts autonomes, selon la portée. Quelle que soit l'organisation, chaque module est construit et publié comme un paquet npm indépendant afin d'être référencé dans l'import map de votre distribution.
 
@@ -102,7 +102,7 @@ Ces tags sont choisis dans votre `spa-assemble-config.json`, qui alimente l'impo
 
 En d’autres termes: **le tag de version choisi dans `spa-assemble-config.json` devient la version chargée par l’app shell**.
 
-Ces tags affectent l'[import map](/docs/core-concepts#import-map), qui indique à l'app shell quelle URL utiliser pour charger le bundle de chaque module. Le registre de routes généré à côté de l'import map indique quelles pages, extensions et autres contributions UI existent. Pour plus de détails, consultez les guides [App shell](/docs/app-shell) et [Chargement des modules](/docs/frontend-modules/loading-modules).
+Ces tags affectent l'[import map](/docs/core-concepts#carte-dimportation), qui indique à l'app shell quelle URL utiliser pour charger le bundle de chaque module. Le registre de routes généré à côté de l'import map indique quelles pages, extensions et autres contributions UI existent. Pour plus de détails, consultez les guides [App shell](/docs/app-shell) et [Chargement des modules](/docs/frontend-modules/loading-modules).
 
 ## Anatomie d'un module frontend
 
@@ -176,7 +176,7 @@ Chaque module frontend a un fichier `package.json` de niveau racine qui définit
 
 Voici quelques éléments clés à retenir de l'examen de ce fichier:
 
-- La propriété `name` qui définit le nom du module. Cette propriété est utilisée comme identifiant unique du module dans la [import map](/docs/core-concepts#import-map).
+- La propriété `name` qui définit le nom du module. Cette propriété est utilisée comme identifiant unique du module dans la [import map](/docs/core-concepts#carte-dimportation).
 - La propriété `browser` qui pointe vers le point d'entrée du bundle construit (ce que l'app shell charge au runtime).
 - La propriété `main` qui définit le point d'entrée du code source du module frontend, typiquement `src/index.ts`.
 - Les paquets runtime OpenMRS sont généralement des peer dependencies pour les consommateurs et des dev dependencies en `next` pour le développement local.

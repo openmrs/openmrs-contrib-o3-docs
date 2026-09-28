@@ -51,7 +51,7 @@ Les métadonnées peuvent être fournies de trois façons :
 
 **Note spécifique à Docker** : Dans les déploiements Docker, les fichiers de configuration empaquetés avec le backend sont intégrés dans l'image Docker backend pendant la construction. Pour mettre à jour les métadonnées sans reconstruire, vous pouvez :
 - Monter le répertoire de données d'application comme volume et y placer les fichiers de configuration
-- Ou reconstruire l'image backend (voir le guide [Configuration d'une instance O3](/docs/recipes/set-up-o3-instance#updating-metadata))
+- Ou reconstruire l'image backend (voir le guide [Configuration d'une instance O3](/docs/recipes/set-up-o3-instance#mise-à-jour-des-métadonnées))
 
 Les déploiements SDK peuvent mettre à jour soit la configuration empaquetée avec le backend (nécessite une reconstruction WAR), soit le répertoire de données d'application (nécessite uniquement un redémarrage).
 
