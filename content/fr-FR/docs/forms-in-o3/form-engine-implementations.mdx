@@ -35,4 +35,6 @@ Le constructeur de formulaires O3 n'a pas d'aperçu Angular pris en charge et ne
 
 Le [schéma de formulaire O3](https://github.com/openmrs/openmrs-contrib-json-schemas/blob/main/form.schema.json) définit une structure et un vocabulaire communs pour les formulaires JSON O3. Un formulaire conforme au schéma peut néanmoins se comporter différemment dans les deux moteurs : les rendus, les helpers d'expression, les extensions personnalisées et le comportement à l'exécution ne sont pas garantis identiques.
 
+Les bornes numériques constituent une différence à surveiller. Le moteur de formulaires Angular récupère les plages de référence de concepts propres au patient introduites par OpenMRS Platform 2.7, et restreint chaque question numérique aux bornes absolues de la plage qui s'applique au patient. Il n'élargit jamais un `min` ou un `max` défini par le schéma : la plus stricte des deux limites l'emporte. Le React Form Engine utilise uniquement `questionOptions.min` et `questionOptions.max` du schéma, si bien que le backend peut encore rejeter une valeur acceptée par le formulaire.
+
 Validez un formulaire avec le schéma commun, puis testez-le avec le renderer et le module d'intégration utilisés par la distribution cible.

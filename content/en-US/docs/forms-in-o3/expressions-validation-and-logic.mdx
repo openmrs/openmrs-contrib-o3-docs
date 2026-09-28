@@ -1,3 +1,5 @@
+import { Callout } from "nextra/components";
+
 # React expressions, validation, and logic
 
 React Form Engine expressions are evaluated by the O3 framework expression evaluator with a controlled context. They are
@@ -117,6 +119,24 @@ value review when a value is returned; accepting or changing that value still fo
 The expression context also exposes the previous encounter through `HD.getObject` behavior used internally by the
 historical data service. Test historical expressions with real encounter data because availability depends on processor
 context and encounter history.
+
+## Null-safe expressions
+
+Reading a property of `null` or `undefined` is an error, as it is in JavaScript, so an expression that runs before its data has loaded needs a guard. Optional chaining is supported. In Core v11 and later, `&&`, `||` and `??` also short-circuit, so the right-hand side isn't evaluated when the left-hand side decides the result. Any of these work:
+
+```js
+patient?.birthDate ? age < 5 : false
+visit && visit.visitType.uuid === 'some-visit-type-uuid'
+myValue ?? 0
+```
+
+Optional chaining stops the whole chain, so `a?.b.c` is `undefined` when `a` is nullish. It doesn't cover a property that's genuinely missing: `a?.b.c` still throws when `a` is `{}`.
+
+<Callout type="warning">
+  Before Core v11, a missing property could resolve to a variable with the same name. For example, `obs.value` would
+  return the `value` field's current value if `obs` had no `value` property. From Core v11, it returns `undefined`. If
+  a form relied on this, refer to the field ID directly.
+</Callout>
 
 ## Security boundary
 

@@ -162,6 +162,14 @@ openmrs build --build-config spa-build-config.json --target ./spa
 </Callout>
 
 <Callout emoji="⚠️" type="warning">
+  **Keep the app shell at least as new as your frontend modules.** From Core v11, frontend modules built with the v11
+  tooling load the Module Federation runtime from the app shell, and refuse to start under an older app shell. Modules
+  built with older tooling keep working under a newer app shell. So when you upgrade, bump the `openmrs` version you
+  build with first, or at the same time as your frontend modules. This was introduced in [this pull
+  request](https://github.com/openmrs/openmrs-esm-core/pull/1853).
+</Callout>
+
+<Callout emoji="⚠️" type="warning">
   **Important**: The `assemble` step must run before `build`, and both commands should use the same `--target` directory. The build step reads the `importmap.json` and `routes.registry.json` files created by the assemble step.
 </Callout>
 
@@ -186,6 +194,8 @@ You can also specify additional options:
 - `--fresh`: Clean the output directory before the run
 - `--manifest`: Output a manifest file with version information
 - `--mode config`: Use config file mode. Without this option, the CLI starts the interactive survey flow.
+- `--ensure-entrypoints`: Fail the run if a frontend module is missing its `routes.json` or the JavaScript entrypoint its import map entry points at. This is on by default from Core v11. Pass `--no-ensure-entrypoints` to report these problems as warnings instead.
+- `--application-version <version>`: Record your distribution's version in the routes registry (Core v11 and later). The app shell exposes it as `window.applicationVersion`, and the navigation bar and login page display it. The special value `prerelease` shows a translated "Prerelease" label instead, or "Local Build" when the app shell runs from a local development build.
 
 The file may look as follows:
 
@@ -292,12 +302,30 @@ Additional build options:
 - `--target <directory>`: The target directory (should match the assemble target)
 - `--fresh`: Clean the output directory before building
 - `--support-offline`: Enable offline support (can override config file)
+- `--no-compress`: Skip writing precompressed files (Core v11 and later, see below)
+- `--no-compress-gzip` and `--no-compress-brotli`: Skip only the gzip (`.gz`) or brotli (`.br`) files
 
 After a successful build, your `./spa` directory will contain:
 - `index.html` - The main HTML file for the SPA
 - `importmap.json` - The import map created by the assemble step
 - `routes.registry.json` - The routes registry created by the assemble step
 - JavaScript bundles and other assets needed to run the application
+- From Core v11, `.gz` and `.br` copies of each JavaScript, CSS, JSON, SVG, HTML and source map file
+
+### Precompressed assets
+
+From Core v11, `openmrs build` writes a gzip and a brotli copy next to every compressible file in the target directory, including the frontend modules gathered by `assemble`. For example, `openmrs.js` gets `openmrs.js.gz` and `openmrs.js.br`. Your web server can then send these files directly instead of compressing on every request. The build also removes precompressed files whose original no longer exists.
+
+You can turn this off, or limit it to one format, with the flags above or with the `compress`, `compressGzip` and `compressBrotli` properties in `spa-build-config.json`. Values in the build config take precedence over the command line flags:
+
+```json filename="spa-build-config.json"
+{
+  "compress": true,
+  "compressBrotli": false
+}
+```
+
+The precompressed files only help if your web server knows to serve them. See [Serving precompressed assets](#serving-precompressed-assets).
 
 <Callout emoji="✅" type="success">
   **Build verification**: After running the build command, check that `./spa/index.html` exists. If it doesn't, the build failed. Check the build logs for errors.
@@ -344,6 +372,12 @@ server {
     }
 }
 ```
+
+### Serving precompressed assets
+
+The basic nginx example above serves every file uncompressed. To serve the `.br` and `.gz` files that `openmrs build` writes, nginx needs to pick the right file for each request based on the browser's `Accept-Encoding` header and set the matching `Content-Encoding` and `Vary` headers.
+
+The Reference Application's [frontend nginx.conf](https://github.com/openmrs/openmrs-distro-referenceapplication/blob/main/frontend/nginx.conf) does this using only core nginx directives, so it works with the stock `nginx:alpine` image. It prefers brotli, falls back to gzip, and then to the uncompressed file. It also caches JavaScript files and the main styleguide stylesheet for a year, and asks browsers to revalidate other CSS, JSON and SVG files. We recommend starting from that file rather than writing your own.
 
 ### Testing Locally
 
