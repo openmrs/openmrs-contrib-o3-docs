@@ -56,7 +56,7 @@ jobs:
           umbrella-dir: pr-preview
 
       - name: Link changed pages in the preview comment
-        if: github.event.action != 'closed' && github.event.pull_request.head.repo.full_name == github.repository && steps.preview.outputs.deployment-action == 'deploy'
+        if: steps.preview.outputs.deployment-action == 'deploy'
         uses: actions/github-script@v8
         env:
           PREVIEW_URL: ${{ steps.preview.outputs.preview-url }}
