@@ -1,3 +1,5 @@
+import { Callout } from "nextra/components";
+
 # Expressions, validation et logique React
 
 Les expressions du React Form Engine sont évaluées par l'évaluateur d'expressions du framework O3 dans un contexte contrôlé. Elles ne constituent pas un contrat de portabilité vers un autre moteur. Les ID de champs sont exposés comme variables; les dépendances détectées provoquent la réévaluation des champs, sections ou pages concernés lorsque la valeur référencée change.
@@ -102,6 +104,22 @@ La validation du constructeur est distincte. Lorsqu'elle est activée, elle vér
 ## Valeurs historiques
 
 `historicalExpression` demande une valeur précédente au processeur actif en mode `enter`. Lorsqu'une valeur est renvoyée, l'environnement affiche une revue de la valeur précédente; l'accepter ou la modifier suit toujours l'adaptateur et les validateurs du champ. Le contexte expose aussi la rencontre précédente par le comportement `HD.getObject` utilisé par le service de données historiques. Testez avec de vraies données de rencontre, car la disponibilité dépend du contexte du processeur et de l'historique.
+
+## Expressions sûres face aux valeurs nulles
+
+Lire une propriété de `null` ou de `undefined` provoque une erreur, comme en JavaScript : une expression exécutée avant le chargement de ses données a donc besoin d'une condition de garde. Le chaînage optionnel est pris en charge. À partir de Core v11, `&&`, `||` et `??` court-circuitent aussi l'évaluation : le membre de droite n'est pas évalué lorsque le membre de gauche suffit à déterminer le résultat. Chacune de ces formes fonctionne :
+
+```js
+patient?.birthDate ? age < 5 : false
+visit && visit.visitType.uuid === 'some-visit-type-uuid'
+myValue ?? 0
+```
+
+Le chaînage optionnel interrompt toute la chaîne : `a?.b.c` vaut donc `undefined` lorsque `a` vaut `null` ou `undefined`. Il ne couvre pas une propriété réellement absente : `a?.b.c` lève toujours une erreur lorsque `a` vaut `{}`.
+
+<Callout type="warning">
+  Avant Core v11, une propriété absente pouvait être résolue en une variable portant le même nom. Par exemple, `obs.value` renvoyait la valeur actuelle du champ `value` si `obs` n'avait pas de propriété `value`. À partir de Core v11, cette expression renvoie `undefined`. Si un formulaire s'appuyait sur ce comportement, référencez directement l'ID du champ.
+</Callout>
 
 ## Limite de sécurité
 

@@ -110,7 +110,21 @@ You can disable visit summary tabs when they are empty:
 }
 ```
 
-This affects the notes, tests, medications, completed forms, and encounters tabs. The tabs remain visible, but users cannot select an empty tab until data exists.
+This affects the notes, tests, medications, and completed forms tabs. The tabs remain visible, but users cannot select an empty tab until data exists.
+
+### Visit Summary Timeline Page Size
+
+The **Timeline** tab in the visit summary lists the visit's encounters, a page at a time. You can change how many encounters appear on each page:
+
+```json
+{
+  "@openmrs/esm-patient-chart-app": {
+    "visitTimelinePageSize": 20
+  }
+}
+```
+
+The value must be a positive whole number. The default is `10`.
 
 ### Configuring Visit Attribute Types
 
@@ -337,6 +351,22 @@ You can enable a print button in the vitals datatable header:
 }
 ```
 
+### Printing Visit Summaries
+
+You can add a **Print visit summary** action to each row in the patient's visit history. It generates a PDF summary of the visit that users can preview and print:
+
+```json
+{
+  "@openmrs/esm-patient-label-printing-app": {
+    "showPrintVisitSummaryButton": true
+  }
+}
+```
+
+The default is `false`. The PDF comes from the [patientdocuments](https://github.com/openmrs/openmrs-module-patientdocuments) backend module, version 1.2.0 or later. Users need the `App: Can generate a Visit Summary` privilege to generate it.
+
+Administrators can choose which sections appear in the PDF, and in what order, from the **Manage Visit Summary** card on the System Administration page. The page saves the choices as `report.visitSummary.section.<key>.enabled` and `report.visitSummary.section.<key>.order` global properties, so changing them needs the Manage Global Properties privilege. Users without it can see the current sections but can't change them. The page can also preview the PDF with the saved settings.
+
 ### MUAC Color Codes
 
 For Mid-Upper Arm Circumference (MUAC) measurements, you can enable color coding to show nutritional status:
@@ -474,8 +504,27 @@ You can create custom widgets that display observations over time using the `obs
 - `graphOldestFirst` - (optional) Whether to sort graph values from oldest to most recent (default: `false`, shows newest first)
 - `tableSortOldestFirst` - (optional) Whether the table initially sorts from oldest to most recent (default: `false`)
 - `interpretationSlot` - (optional) Extension slot name to display interpretations below the graph. If specified, extensions in this slot will be rendered below the graph visualization.
+- `fullWidth` - (optional) Whether the widget spans the full width of the dashboard instead of half of it (default: `false`)
 
 **Note**: The `color` property determines the color of the data line in the chart visualization. Choose colors that provide good contrast and are accessible. When using `graphGroup`, multiple concepts can be displayed on the same graph, which is useful for related measurements (e.g., grouping systolic and diastolic blood pressure together).
+
+## Configuring the Growth Chart
+
+The growth chart app adds a **Growth chart** dashboard to the patient chart. It plots a child's recorded weight against the World Health Organization weight-for-age standard, from birth to five years. For older patients, it shows a message instead of a chart. If the patient's gender is recorded as something other than male or female, users can choose which reference chart to show.
+
+The only setting is the concept used to record weight:
+
+```json
+{
+  "@openmrs/esm-patient-growth-chart-app": {
+    "concepts": {
+      "weightUuid": "5089AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    }
+  }
+}
+```
+
+The default is `5089AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA`, the CIEL concept for weight in kilograms.
 
 ## Advanced Configuration Options
 
