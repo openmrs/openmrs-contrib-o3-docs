@@ -43,7 +43,7 @@ The `run` function orchestrates the complete initialization sequence. It is resp
 - After modules are registered, it calls `finishRegisteringAllApps` to finalize the registration process.
 - If offline mode is enabled, it sets up offline CSS classes and connectivity handlers before configuration is provided. After `runShell()` starts single-spa and the loading spinner closes, it registers the service worker and activates offline support.
 - Loading configuration from the provided `configUrls`.
-- Calling `runShell` which starts single-spa and initializes internationalization.
+- Calling `runShell` which starts single-spa and initializes internationalization. In Core v11 and later, it also sets `window.applicationVersion` from the routes registry's top-level `version`, which a distribution records with `openmrs assemble --application-version`. The navigation bar and login page display it when it's set.
 - Handling initialization failures with `handleInitFailure` if anything goes wrong.
 - Cleaning up obsolete feature flags.
 

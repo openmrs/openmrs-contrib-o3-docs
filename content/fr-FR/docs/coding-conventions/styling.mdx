@@ -65,6 +65,8 @@ import { Callout } from "nextra/components";
   }
   ```
 
+  À partir de Core v11, les builds de production imposent cette règle. Un build échoue si le module émet des règles CSS ancrées uniquement sur une classe Carbon, comme le premier exemple ci-dessus, ou des règles sans aucune classe ni id, comme `p` ou `html, body`. Pour corriger une telle règle, placez-la sous l'une des classes propres au module, comme le fait le second exemple.
+
   Avantages des styles limités :
   - Empêche les fuites de style non intentionnées
   - Rend clair quel composant possède les styles

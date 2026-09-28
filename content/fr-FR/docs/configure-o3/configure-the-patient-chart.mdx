@@ -110,7 +110,21 @@ Vous pouvez désactiver les onglets du résumé de visite lorsqu'ils sont vides 
 }
 ```
 
-Cela concerne les onglets notes, tests, médicaments, formulaires complétés et rencontres. Les onglets restent visibles, mais les utilisateurs ne peuvent pas sélectionner un onglet vide tant que des données n'existent pas.
+Cela concerne les onglets notes, tests, médicaments et formulaires complétés. Les onglets restent visibles, mais les utilisateurs ne peuvent pas sélectionner un onglet vide tant que des données n'existent pas.
+
+### Taille de page de la chronologie du résumé de visite
+
+L'onglet **Timeline** du résumé de visite liste les rencontres de la visite, une page à la fois. Vous pouvez modifier le nombre de rencontres affichées sur chaque page :
+
+```json
+{
+  "@openmrs/esm-patient-chart-app": {
+    "visitTimelinePageSize": 20
+  }
+}
+```
+
+La valeur doit être un nombre entier positif. La valeur par défaut est `10`.
 
 ### Configuration des types d'attributs de visite
 
@@ -337,6 +351,22 @@ Vous pouvez activer un bouton d'impression dans l'en-tête du tableau de donnée
 }
 ```
 
+### Impression des résumés de visite
+
+Vous pouvez ajouter une action **Print visit summary** à chaque ligne de l'historique des visites du patient. Elle génère un résumé PDF de la visite que les utilisateurs peuvent prévisualiser et imprimer :
+
+```json
+{
+  "@openmrs/esm-patient-label-printing-app": {
+    "showPrintVisitSummaryButton": true
+  }
+}
+```
+
+La valeur par défaut est `false`. Le PDF est produit par le module backend [patientdocuments](https://github.com/openmrs/openmrs-module-patientdocuments), version 1.2.0 ou ultérieure. Les utilisateurs ont besoin du privilège `App: Can generate a Visit Summary` pour le générer.
+
+Les administrateurs peuvent choisir les sections qui apparaissent dans le PDF, et leur ordre, depuis la carte **Manage Visit Summary** de la page d'administration système. La page enregistre ces choix dans les propriétés globales `report.visitSummary.section.<key>.enabled` et `report.visitSummary.section.<key>.order`, leur modification nécessite donc le privilège Manage Global Properties. Les utilisateurs qui ne l'ont pas peuvent voir les sections actuelles, mais ne peuvent pas les modifier. La page permet également de prévisualiser le PDF avec les paramètres enregistrés.
+
 ### Codes de couleur MUAC
 
 Pour les mesures de circonférence médiane du bras (MUAC), vous pouvez activer le codage couleur pour afficher le statut nutritionnel :
@@ -474,8 +504,27 @@ Vous pouvez créer des widgets personnalisés qui affichent les observations au 
 - `graphOldestFirst` - (optionnel) S'il faut trier les valeurs du graphique du plus ancien au plus récent (par défaut : `false`, affiche le plus récent en premier)
 - `tableSortOldestFirst` - (optionnel) S'il faut trier initialement le tableau du plus ancien au plus récent (par défaut : `false`)
 - `interpretationSlot` - (optionnel) Nom de l'emplacement d'extension pour afficher les interprétations sous le graphique. Si spécifié, les extensions dans cet emplacement seront rendues sous la visualisation du graphique.
+- `fullWidth` - (optionnel) S'il faut que le widget occupe toute la largeur du tableau de bord au lieu de la moitié (par défaut : `false`)
 
 **Note** : La propriété `color` détermine la couleur de la ligne de données dans la visualisation du graphique. Choisissez des couleurs qui offrent un bon contraste et sont accessibles. Lors de l'utilisation de `graphGroup`, plusieurs concepts peuvent être affichés sur le même graphique, ce qui est utile pour les mesures connexes (par exemple, regrouper la tension artérielle systolique et diastolique ensemble).
+
+## Configuration de la courbe de croissance
+
+L'application de la courbe de croissance ajoute un tableau de bord **Growth chart** au dossier du patient. Elle trace le poids enregistré d'un enfant par rapport à la norme poids pour l'âge de l'Organisation mondiale de la Santé, de la naissance à cinq ans. Pour les patients plus âgés, elle affiche un message au lieu d'une courbe. Si le sexe du patient est enregistré avec une valeur autre que masculin ou féminin, les utilisateurs peuvent choisir la courbe de référence à afficher.
+
+Le seul paramètre est le concept utilisé pour enregistrer le poids :
+
+```json
+{
+  "@openmrs/esm-patient-growth-chart-app": {
+    "concepts": {
+      "weightUuid": "5089AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    }
+  }
+}
+```
+
+La valeur par défaut est `5089AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA`, le concept CIEL du poids en kilogrammes.
 
 ## Options de configuration avancées
 

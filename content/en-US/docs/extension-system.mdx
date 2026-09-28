@@ -160,6 +160,8 @@ The `Display conditions` object supports the following properties:
 
   The expression context also includes values from the slot's `state` object, so patient-scoped slots can expose values like `patientUuid` to display expressions.
 
+  Expressions are interpreted by the framework's expression evaluator rather than run as JavaScript, so only expression syntax is available: no assignments, statements or object literals. In Core v11 and later, `&&`, `||` and `??` short-circuit, so a guard like `(session?.user?.privileges?.length ?? 0) > 0` is safe while the session is still loading.
+
 Display conditions can be provided as base extension configuration, or as a slot-specific override under the slot owner's `extensionSlots.<slotName>.configure` object. If the extension has an extension-specific schema, base values belong under the extension name; otherwise they belong under the extension module name. Slot-specific overrides are the right choice when the same extension appears in more than one slot and needs different visibility rules in each place.
 
 Connectivity is controlled by the extension definition's `online` and `offline` fields in `routes.json`, not by `Display conditions` configuration.
@@ -247,17 +249,24 @@ Sometimes, extensions might want to pass information to the slot that receives t
 
 Meta is provided by extensions in their definition in `routes.json`. (In Core v4 and earlier, this was done in the `setupOpenMRS` function, but that approach is no longer supported in Core v5+.)
 
-Slots can access meta through the extension system API, such as by using [`useExtensionSlotMeta`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useExtensionSlotMeta.md). `meta` comes from the extension definition; use slot `configure` settings when administrators need to override extension-specific configuration.
+Slots can access meta through the extension system API, such as by using [`useExtensionSlotMeta`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useExtensionSlotMeta.md). In Core v11 and later, an extension can also read its own meta with [`useExtensionContext`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useExtensionContext.md), which returns the slot it's rendered in, its extension ID and its `extensionMeta`. It returns `undefined` when the component isn't being rendered as an extension. `meta` comes from the extension definition; use slot `configure` settings when administrators need to override extension-specific configuration.
 
 ### Order
 
-By default, extensions render in the order they are declared or attached. The final order is determined by a priority system with three tiers:
+By default, extensions render in the order they are declared or attached. The final order is determined by a priority system with four tiers:
 
 1. **Configured order** (highest priority): Extensions listed in the slot's `order` configuration array appear first, in the order specified in that array.
 2. **Registered order**: Extensions with an `order` property in their `routes.json` definition appear next, sorted by their order value (offset by 1000 to ensure they come after configured extensions).
-3. **Attached order** (lowest priority): Extensions without any order specification appear last, in the order they were attached (offset by 2000 to ensure they come after all ordered extensions).
+3. **Attached order**: Extensions without any order specification appear next, in the order they were attached (offset by 2000 to ensure they come after all ordered extensions).
+4. **Added order** (lowest priority): Extensions added only through the slot's `add` array, with no configured or registered order, appear last, in the order the `add` array lists them.
 
-Extensions added by administrators via the `add` array participate in configured `order` and registered `order`. If an added extension is not listed in `order` and has no registered `order` value, the runtime has no attachment index for it, so do not rely on the `add` array's order for layout-critical placement. Put the extension ID in `order` when the position matters.
+Extensions added by administrators via the `add` array also take part in configured `order` and registered `order`, so list an added extension in `order` whenever you want it somewhere other than the end of the slot.
+
+<Callout type="info">
+  The fourth tier is new in Core v11. In Core v10 and earlier, extensions added through `add` with no other ordering
+  information were sorted ahead of everything else in the slot, so list them in `order` if your distribution still runs
+  an older core.
+</Callout>
 
 Extensions can provide an `order` index in their definition to influence the order in which they are rendered. This works like [z-index](https://developer.mozilla.org/en-US/docs/Web/CSS/z-index) in CSS—similarly, it is a way of setting relative order among elements that don't officially know about each other.
 

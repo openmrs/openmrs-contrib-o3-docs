@@ -59,6 +59,8 @@ Nous utilisons diverses approches pour gérer l'état dans O3, des hooks intégr
   );
   ```
 
+- Considérez tout ce que renvoie `useStore` comme étant en lecture seule. Dans Core v11 et les versions ultérieures, il renvoie l'état du store lui-même plutôt qu'une copie : le modifier sur place, par exemple en ajoutant un élément à un tableau, modifie donc le store sans notifier personne. Renvoyez plutôt de nouveaux objets depuis les actions, comme le fait l'exemple ci-dessus.
+
 - Utilisez `createGlobalStore(name, initialState, 'sessionStorage')` uniquement pour les valeurs qui doivent survivre à un rafraîchissement de page dans l'onglet courant du navigateur. Les données cliniques persistantes doivent vivre dans le backend, et les secrets ou données identifiant un patient ne doivent pas être placés dans le stockage du navigateur sauf si la fonctionnalité l'exige explicitement et que le compromis de confidentialité a été examiné.
 
 - Utilisez App Context pour l'état qui ne doit exister que pendant qu'une fonctionnalité ou une zone de l'application est active. Définissez le namespace avec `useDefineAppContext`, lisez-le avec `useAppContext`, et gérez `undefined` explicitement, car cela signifie que le namespace n'est pas enregistré actuellement :

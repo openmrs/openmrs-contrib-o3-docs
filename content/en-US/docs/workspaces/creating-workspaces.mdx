@@ -6,7 +6,7 @@ To create a workspace, implement a React component and register it with the work
 
 Workspace v2 components receive `Workspace2DefinitionProps` from `@openmrs/esm-framework`. Custom launch props are available on `workspaceProps`; shared window and group context is available on `windowProps` and `groupProps`; and the component can close itself with `closeWorkspace`.
 
-The same props object also includes `launchChildWorkspace`, `workspaceName`, `windowName`, `isRootWorkspace`, and `showActionMenu`. Use `launchChildWorkspace` only from inside an open workspace when you want to push another workspace onto the same window's stack. Use `launchWorkspace2` for top-level launches from buttons, pages, or other app code.
+The same props object also includes `launchChildWorkspace`, `workspaceName`, `windowName`, `isRootWorkspace`, and `showActionMenu`. In Core v11 and later, it also includes `workspaceMeta`, the `meta` object from the workspace's `workspaces2` entry in `routes.json`. Use `launchChildWorkspace` only from inside an open workspace when you want to push another workspace onto the same window's stack. Use `launchWorkspace2` for top-level launches from buttons, pages, or other app code.
 
 Wrap the workspace content in `<Workspace2>`. The wrapper owns the workspace header, title, maximize and close controls, and unsaved changes state.
 
@@ -111,7 +111,7 @@ Window `width` can be `narrow`, `wider`, or `extra-wide`. Adding `icon` to a win
 
 Group `persistence` controls how long the group stays open and how the action menu behaves. The default behavior is app-wide: the group can keep multiple windows open and closes on an app change or scope change. Set `persistence` to `closable` for focused workflows that should show a group close button; when a different window in a closable group is launched, O3 checks for unsaved changes and then closes the other windows in that group.
 
-`scopePattern` is a regular expression matched against the old and new URL pathnames when navigation happens within the same app. If it is omitted, the group closes only when navigating to a different app. If it is defined, O3 closes the group when either URL no longer matches the pattern; if the pattern has capture groups, O3 also closes the group when the captured values change. Anchor the pattern with `^` when the pattern should only match a route prefix.
+`scopePattern` is a regular expression matched against the old and new URL pathnames when navigation happens within the same app. In Core v11 and later, the pattern is matched against the pathname relative to the SPA base, such as `/home/gastrodynamics` rather than `/openmrs/spa/home/gastrodynamics`, and patterns written against the full pathname still work. Core v10 and earlier match the full pathname only. If `scopePattern` is omitted, the group closes only when navigating to a different app. If it is defined, O3 closes the group when either URL no longer matches the pattern; if the pattern has capture groups, O3 also closes the group when the captured values change. Anchor the pattern with `^` when the pattern should only match a route prefix.
 
 Then export the workspace component from `index.ts`:
 
