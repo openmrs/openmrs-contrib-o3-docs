@@ -4,10 +4,11 @@ Utilisez ces guides lorsque vous mettez à jour un module frontend ou une distri
 
 ## Quel guide utiliser?
 
+- **Core v10**: utilisez ce guide pour passer les modules à Core v10, livré avec la Reference Application 3.7.0. Il couvre les surcharges d'import map réservées au développement et les redirections de connexion plus strictes.
 - **Core v9**: utilisez ce guide pour passer les modules à la base framework Core v9.
 - **Rspack et Vitest**: utilisez ce guide lorsqu'un module a déjà terminé la migration Core v6 et doit passer de Webpack/Jest à Rspack/Vitest.
 - **Workspace v2**: utilisez ce guide pour remplacer les APIs workspace v1 dépréciées, comme `launchWorkspace`, `ActionMenuButton`, le `type` de workspace, `canHide` ou `promptBeforeClosing`.
 - **Core v6**: utilisez ce guide pour les modules plus anciens qui doivent encore recevoir les mises à jour framework Core v6 avant de passer au nouvel outillage de build et de test.
 - **Core v5**: utilisez ce guide pour les modules legacy qui enregistrent encore des pages, extensions ou métadonnées dynamiques avec les anciens modèles pré-Core v5.
 
-Pour les modules activement maintenus, le chemin habituel est Core v6, puis Rspack et Vitest, puis toute migration plus récente propre au framework, comme Core v9. Workspace v2 peut être fait séparément lorsqu'un module utilise les workspaces.
+Pour les modules activement maintenus, le chemin habituel est Core v6, puis Rspack et Vitest, puis chaque migration plus récente du framework, dans l'ordre : Core v9 et Core v10. Workspace v2 peut être fait séparément lorsqu'un module utilise les workspaces.

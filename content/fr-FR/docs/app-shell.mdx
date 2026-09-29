@@ -51,7 +51,7 @@ La fonction `run` orchestre toute la séquence d'initialisation. Elle est respon
 
 La fonction `setupApps` charge toutes les routes depuis le registre de routes. Elle lit les routes depuis:
 - Les balises `<script type="openmrs-routes">` dans le HTML, sous forme de JSON inline ou depuis une URL.
-- Les surcharges de routes stockées dans `localStorage`, utiles pour le développement et le débogage.
+- Les surcharges de routes stockées dans `localStorage`, utiles pour le développement et le débogage. Elles ne sont lues que lorsque l'app shell s'exécute en mode développement.
 
 Après avoir chargé toutes les routes, elle invoque `registerApp()` sur chaque module et sa définition de routes. Les définitions de routes restent disponibles sur `window.installedModules`, ce qui permet aux outils d'inspecter les versions des modules et les métadonnées de dépendances backend. `registerApp()`:
 
