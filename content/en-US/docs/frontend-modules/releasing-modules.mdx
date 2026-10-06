@@ -93,19 +93,6 @@ Open the failed run and read its summary. It tells you whether the tag was pushe
 - **Tag pushed, nothing on npm.** This usually means an expired npm token or a registry outage. Fix the cause, then run the workflow again with **Publish only** checked and **Custom version** set to the version that was tagged (for example `12.4.0`). It builds and publishes the existing tag without bumping or tagging again.
 - **Some packages published, others not.** npm versions can't be republished or reused, so don't delete the tag and don't release the same version again. Follow the recovery steps in the run summary.
 
-## Before a major release
-
-Some repos pin internal peer dependencies to a major version range, and the workflow's version bump doesn't update peer ranges. Update them in a PR before running a `major` release:
-
-- **Patient Chart:** apps declare `"@openmrs/esm-patient-common-lib": "12.x"` (or the current major) as a peer dependency.
-- **esm-core:** apps declare `"@openmrs/esm-framework": "10.x"` (or the current major) as a peer dependency.
-
-To update them:
-
-1. Change the range in every affected `package.json` to the new major, for example `12.x` → `13.x`.
-2. Run `yarn install` and commit the updated `yarn.lock` together with the `package.json` changes. The release workflow installs with `--immutable` and fails if the lockfile is out of date.
-3. Merge the PR, then run the Release workflow straight away. Pre-releases published in between would declare a peer on a major that doesn't exist yet.
-
 ## Repo-specific notes
 
 - Most repos need no configuration: the workflow infers the build and publish commands from `package.json`. If a repo defines `ci:publish`, that script is used to publish.
