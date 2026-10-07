@@ -97,4 +97,3 @@ Open the failed run and read its summary. It tells you whether the tag was pushe
 
 - Most repos need no configuration: the workflow infers the build and publish commands from `package.json`. If a repo defines `ci:publish`, that script is used to publish.
 - For the Angular form engine repos (openmrs-ngx-formentry, openmrs-ngx-file-uploader, and esm-form-entry-app in openmrs-esm-patient-chart), confirm before releasing that the Angular line they ship is still in support per the [Angular version support policy](/docs/frontend-modules/angular-version-policy).
-- [openmrs-ngx-formentry](https://github.com/openmrs/openmrs-ngx-formentry) uses yarn v1 and is released by hand. Follow the [release instructions in its README](https://github.com/openmrs/openmrs-ngx-formentry#cutting-a-new-release), and bump both the root `package.json` and `projects/openmrs-esm-formentry/package.json`, since the library is published from that directory.
