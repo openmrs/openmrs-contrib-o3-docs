@@ -353,19 +353,9 @@ You can enable a print button in the vitals datatable header:
 
 ### Printing Visit Summaries
 
-You can add a **Print visit summary** action to each row in the patient's visit history. It generates a PDF summary of the visit that users can preview and print:
+Users with the `App: Can generate a Visit Summary` privilege see a **Print visit summary** action on each row in the patient's visit history. It opens a preview of a PDF summary of the visit, which users can download. The PDF comes from the [patientdocuments](https://github.com/openmrs/openmrs-module-patientdocuments) backend module, version 1.2.0 or later. It has no configuration property of its own. Use the privilege to control who sees it, or remove the `print-visit-summary-button` extension from the `visit-detail-overview-actions` slot to hide it for everyone.
 
-```json
-{
-  "@openmrs/esm-patient-label-printing-app": {
-    "showPrintVisitSummaryButton": true
-  }
-}
-```
-
-The default is `false`. The PDF comes from the [patientdocuments](https://github.com/openmrs/openmrs-module-patientdocuments) backend module, version 1.2.0 or later. Users need the `App: Can generate a Visit Summary` privilege to generate it.
-
-Administrators can choose which sections appear in the PDF, and in what order, from the **Manage Visit Summary** card on the System Administration page. The page saves the choices as `report.visitSummary.section.<key>.enabled` and `report.visitSummary.section.<key>.order` global properties, so changing them needs the Manage Global Properties privilege. Users without it can see the current sections but can't change them. The page can also preview the PDF with the saved settings.
+Administrators can choose which sections appear in the PDF, and in what order, from the **Manage Visit Summary** card on the System Administration page. The page saves the choices as `report.visitSummary.section.<key>.enabled` and `report.visitSummary.section.<key>.order` global properties, so the card only shows for users with the Manage Global Properties privilege. Users without it who open the page directly can see the current sections but can't change them. **Save & preview** saves the changes and shows a sample PDF with the new settings.
 
 ### MUAC Color Codes
 

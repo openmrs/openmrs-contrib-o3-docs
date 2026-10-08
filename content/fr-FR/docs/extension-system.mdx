@@ -51,7 +51,7 @@ Au runtime, le flux est le suivant:
 2. L'app shell lit le registre de routes et enregistre chaque définition d'extension.
 3. Un module hôte rend `<ExtensionSlot name="..." />`.
 4. O3 calcule les IDs d'extensions assignés à partir des attaches `slot`/`slots` par défaut et des réglages administrateur `add`, `remove`, `order` et `configure`.
-5. O3 filtre les extensions assignées selon les privilèges, les expressions d'affichage, les feature flags et les champs `online`/`offline` de la définition de l'extension.
+5. O3 filtre les extensions assignées selon les privilèges, les expressions d'affichage et les feature flags. Dans Core v10 et antérieur, il les filtre aussi selon les champs `online`/`offline` de la définition de l'extension.
 6. Le slot rend chaque extension comme un parcel single-spa et lui transmet `_meta`, `_extensionContext` et les props de `state` du slot.
 
 ## Principes
@@ -160,11 +160,11 @@ L'objet `Display conditions` prend en charge les propriétés suivantes :
 
   Le contexte de l'expression inclut aussi les valeurs de l'objet `state` du slot; les slots liés à un patient peuvent donc exposer des valeurs comme `patientUuid` aux expressions d'affichage.
 
-  Les expressions sont interprétées par l'évaluateur d'expressions du framework plutôt qu'exécutées comme du JavaScript : seule la syntaxe d'expression est donc disponible, sans affectations, instructions ni littéraux d'objet. À partir de Core v11, `&&`, `||` et `??` court-circuitent l'évaluation, si bien qu'une garde comme `(session?.user?.privileges?.length ?? 0) > 0` est sûre tant que la session est encore en cours de chargement.
+  Les expressions sont interprétées par l'évaluateur d'expressions du framework plutôt qu'exécutées comme du JavaScript : seule la syntaxe d'expression est donc disponible, sans affectations, instructions ni littéraux d'objet. À partir de Core v11, `&&`, `||` et `??` court-circuitent l'évaluation et le chaînage optionnel arrête toute la chaîne sur une valeur `null` ou `undefined`, si bien qu'une garde comme `(session?.user?.privileges?.length ?? 0) > 0` est sûre tant que la session est encore en cours de chargement.
 
 Les conditions d'affichage peuvent être fournies comme configuration de base de l'extension, ou comme remplacement spécifique au slot sous l'objet `extensionSlots.<slotName>.configure` du module propriétaire du slot. Si l'extension a son propre schéma de configuration, les valeurs de base se placent sous le nom de l'extension; sinon elles se placent sous le nom du module qui fournit l'extension. Les remplacements spécifiques au slot sont le bon choix lorsque la même extension apparaît dans plusieurs slots et nécessite des règles de visibilité différentes selon l'emplacement.
 
-La connectivité est contrôlée par les champs `online` et `offline` de la définition de l'extension dans `routes.json`, pas par la configuration `Display conditions`.
+Dans Core v10 et antérieur, la connectivité est contrôlée par les champs `online` et `offline` de la définition de l'extension dans `routes.json`, pas par la configuration `Display conditions`. Core v11 a supprimé ces champs avec le support hors ligne.
 
 **Exemple de configuration :**
 
@@ -263,7 +263,7 @@ Par défaut, les extensions sont rendues dans l'ordre où elles sont déclarées
 Les extensions ajoutées par les administrateurs via le tableau `add` participent aussi à l'ordre configuré par `order` et à l'ordre enregistré par l'extension. Listez donc une extension ajoutée dans `order` chaque fois que vous voulez la placer ailleurs qu'à la fin du slot.
 
 <Callout type="info">
-  Le quatrième niveau est une nouveauté de Core v11. Dans Core v10 et antérieur, les extensions ajoutées via `add` sans autre information d'ordre étaient placées avant tout le reste du slot. Listez-les donc dans `order` si votre distribution utilise encore une version plus ancienne de Core.
+  Le quatrième niveau est une nouveauté de Core v11. Dans Core v10 et antérieur, les extensions ajoutées via `add` sans autre information d'ordre venaient aussi après tout le reste du slot, mais leur ordre les unes par rapport aux autres n'était pas fiable. Listez-les donc dans `order` si votre distribution utilise encore une version plus ancienne de Core.
 </Callout>
 
 Les extensions peuvent fournir un index `order` dans leur définition pour influencer l'ordre dans lequel elles sont rendues. Cela fonctionne comme [z-index](https://developer.mozilla.org/en-US/docs/Web/CSS/z-index) en CSS - de la même manière, c'est un moyen de définir un ordre relatif entre des éléments qui ne sont pas officiellement connus les uns des autres.
@@ -322,7 +322,7 @@ const slotState = { patientUuid };
 </ExtensionSlot>
 ```
 
-L'objet extension (de type `AssignedExtension`) inclut des propriétés comme `name`, `id`, `meta`, `moduleName`, `config`, `online`, `offline`, et `featureFlag`, vous permettant de créer des mises en page sophistiquées basées sur les métadonnées de l'extension.
+L'objet extension (de type `AssignedExtension`) inclut des propriétés comme `name`, `id`, `meta`, `moduleName`, `config`, et `featureFlag`, vous permettant de créer des mises en page sophistiquées basées sur les métadonnées de l'extension.
 
 **Accéder au contexte d'extension :**
 
@@ -389,7 +389,6 @@ const extensions = getAssignedExtensions("patient-header-slot");
 // - moduleName : le module qui fournit l'extension
 // - meta : objet de métadonnées de l'extension
 // - config : configuration de l'extension (null jusqu'à ce que le slot soit monté)
-// - online, offline : drapeaux de connectivité
 // - featureFlag : nom du drapeau de fonctionnalité optionnel
 ```
 
@@ -414,7 +413,7 @@ Si votre extension n’apparaît pas :
 - Vérifiez que le module apparaît dans `/openmrs/spa/routes.registry.json` et que l'entrée `extensions` est présente.
 - Vérifiez `routes.json` — la propriété `component` doit correspondre à l’export nommé dans `src/index.ts`.
 - Assurez-vous que le slot cible existe et est rendu (recherchez `<ExtensionSlot name="..." />` dans le module hôte).
-- Vérifiez les champs `privileges`, `displayExpression`, `featureFlag` et `online`/`offline` définis dans `routes.json`. Vérifiez aussi la configuration `Display conditions` pour les remplacements de privilèges ou d'expression.
+- Vérifiez les champs `privileges`, `displayExpression` et `featureFlag` définis dans `routes.json`, ainsi que `online`/`offline` dans Core v10 et antérieur. Vérifiez aussi la configuration `Display conditions` pour les remplacements de privilèges ou d'expression.
 - À moins d’avoir besoin d’un contrôle à l’exécution, enregistrez le slot dans `routes.json` plutôt qu’avec `attach`.
 - La configuration du slot peut ajouter, retirer, configurer ou réordonner les entrées avec les tableaux `add`, `remove`, `configure` et `order`.
 
@@ -527,10 +526,10 @@ Une extension peut se trouver dans l'un des quatre états suivants par rapport �
 
 - **attached** : Défini par le code en utilisant `attach()` (ou de manière déclarative via la propriété `slot`/`slots` dans `routes.json`). Note : `detach()` est déprécié.
 - **configured** : Défini via la configuration de l'administrateur en utilisant les tableaux `add` et `remove`
-- **assigned** : Calculé en fusionnant les extensions attachées et configurées, puis filtré en fonction des privilèges, des feature flags et de la connectivité (drapeaux `online`/`offline`)
+- **assigned** : Calculé en fusionnant les extensions attachées et configurées, puis filtré en fonction des privilèges, des feature flags et, dans Core v10 et antérieur, de la connectivité (drapeaux `online`/`offline`)
 - **connected** : (Terme déprécié) C'est la même chose que "assigned" après filtrage — les extensions qui sont réellement rendues
 
-Le runtime utilise l'état "assigned" pour déterminer quelles extensions rendre. Le filtrage se fait automatiquement en fonction des privilèges de l'utilisateur, des feature flags activés et de l'état de connectivité.
+Le runtime utilise l'état "assigned" pour déterminer quelles extensions rendre. Le filtrage se fait automatiquement en fonction des privilèges de l'utilisateur, des feature flags activés et, dans Core v10 et antérieur, de l'état de connectivité.
 
 ### Rendu
 
@@ -544,12 +543,11 @@ En bref:
 
 Ces fonctions de cycle de vie ne sont pas magiques - théoriquement, vous pourriez les écrire vous-même, cependant, puisque l'écosystème single-spa fournit déjà des wrappers de commodité tels que `single-spa-react` pour de nombreux frameworks, nous ne le recommandons pas.
 
-Avant le rendu, deux facteurs supplémentaires sont évalués :
+Avant le rendu, O3 détermine les **props du composant** : quelles données et services doivent être passés au composant rendu.
 
-1. **Mode de connectivité** : Si l'extension doit être rendue en fonction de l'état en ligne/hors ligne actuel
-2. **Props du composant** : Quelles données et services doivent être passés au composant rendu
+Dans Core v10 et antérieur, il vérifie aussi le **mode de connectivité** : si l'extension doit être rendue en fonction de l'état en ligne/hors ligne actuel. Core v11 a supprimé le support hors ligne, donc il ne le fait plus.
 
-Le **mode de connectivité** est déterminé en vérifiant l'état de connectivité du navigateur via `isOnline()` de `@openmrs/esm-utils`. Cette fonction vérifie d'abord si `window.offlineEnabled` est vrai ; sinon, elle suppose que l'application est toujours en ligne. Si le mode hors ligne est activé, elle vérifie ensuite `navigator.onLine` pour déterminer l'état de connectivité réel.
+Sur les versions plus anciennes de Core, le **mode de connectivité** est déterminé en vérifiant l'état de connectivité du navigateur via `isOnline()` de `@openmrs/esm-utils`. Cette fonction vérifie d'abord si `window.offlineEnabled` est vrai ; sinon, elle suppose que l'application est toujours en ligne. Si le mode hors ligne est activé, elle vérifie ensuite `navigator.onLine` pour déterminer l'état de connectivité réel.
 
 Les drapeaux `online` et `offline` de l'extension contrôlent si elle se rend dans chaque mode :
 - Si `online: false`, l'extension ne se rendra pas lorsque le navigateur est en ligne

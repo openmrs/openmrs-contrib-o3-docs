@@ -353,19 +353,9 @@ Vous pouvez activer un bouton d'impression dans l'en-tête du tableau de donnée
 
 ### Impression des résumés de visite
 
-Vous pouvez ajouter une action **Print visit summary** à chaque ligne de l'historique des visites du patient. Elle génère un résumé PDF de la visite que les utilisateurs peuvent prévisualiser et imprimer :
+Les utilisateurs disposant du privilège `App: Can generate a Visit Summary` voient une action **Print visit summary** sur chaque ligne de l'historique des visites du patient. Elle ouvre un aperçu d'un résumé PDF de la visite, que les utilisateurs peuvent télécharger. Le PDF est produit par le module backend [patientdocuments](https://github.com/openmrs/openmrs-module-patientdocuments), version 1.2.0 ou ultérieure. Elle n'a pas de propriété de configuration propre. Utilisez le privilège pour déterminer qui la voit, ou retirez l'extension `print-visit-summary-button` de l'emplacement `visit-detail-overview-actions` pour la masquer pour tout le monde.
 
-```json
-{
-  "@openmrs/esm-patient-label-printing-app": {
-    "showPrintVisitSummaryButton": true
-  }
-}
-```
-
-La valeur par défaut est `false`. Le PDF est produit par le module backend [patientdocuments](https://github.com/openmrs/openmrs-module-patientdocuments), version 1.2.0 ou ultérieure. Les utilisateurs ont besoin du privilège `App: Can generate a Visit Summary` pour le générer.
-
-Les administrateurs peuvent choisir les sections qui apparaissent dans le PDF, et leur ordre, depuis la carte **Manage Visit Summary** de la page d'administration système. La page enregistre ces choix dans les propriétés globales `report.visitSummary.section.<key>.enabled` et `report.visitSummary.section.<key>.order`, leur modification nécessite donc le privilège Manage Global Properties. Les utilisateurs qui ne l'ont pas peuvent voir les sections actuelles, mais ne peuvent pas les modifier. La page permet également de prévisualiser le PDF avec les paramètres enregistrés.
+Les administrateurs peuvent choisir les sections qui apparaissent dans le PDF, et leur ordre, depuis la carte **Manage Visit Summary** de la page d'administration système. La page enregistre ces choix dans les propriétés globales `report.visitSummary.section.<key>.enabled` et `report.visitSummary.section.<key>.order`, si bien que la carte n'apparaît qu'aux utilisateurs disposant du privilège Manage Global Properties. Les utilisateurs qui ne l'ont pas et qui ouvrent la page directement peuvent voir les sections actuelles, mais ne peuvent pas les modifier. **Save & preview** enregistre les modifications et affiche un exemple de PDF avec les nouveaux paramètres.
 
 ### Codes de couleur MUAC
 

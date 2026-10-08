@@ -41,7 +41,7 @@ La fonction `run` orchestre toute la séquence d'initialisation. Elle est respon
 - Appeler `setupCoreConfig` pour initialiser la configuration core.
 - Appeler `setupApps`, qui lit les route maps et enregistre les métadonnées des modules sans encore importer leur code.
 - Une fois les modules enregistrés, appeler `finishRegisteringAllApps` pour finaliser le processus d'enregistrement.
-- Si le mode hors ligne est activé, mettre en place les classes CSS hors ligne et les handlers de connectivité avant de fournir la configuration. Après que `runShell()` a démarré single-spa et que l'indicateur de chargement est fermé, enregistrer le service worker et activer le support hors ligne.
+- Dans Core v10 et antérieur, si le mode hors ligne est activé, mettre en place les classes CSS hors ligne et les handlers de connectivité avant de fournir la configuration. Après que `runShell()` a démarré single-spa et que l'indicateur de chargement est fermé, enregistrer le service worker et activer le support hors ligne. Core v11 a supprimé le support hors ligne.
 - Charger la configuration depuis les `configUrls` fournis.
 - Appeler `runShell`, qui démarre single-spa et initialise l'internationalisation. Dans Core v11 et les versions ultérieures, `runShell` définit aussi `window.applicationVersion` à partir du champ `version` de premier niveau du registre de routes, qu'une distribution enregistre avec `openmrs assemble --application-version`. La barre de navigation et la page de connexion l'affichent lorsque cette valeur est définie.
 - Gérer les échecs d'initialisation avec `handleInitFailure` si quelque chose se passe mal.
@@ -103,12 +103,12 @@ La séquence complète d'initialisation suit cet ordre:
    - Exécute le hook historique d'enregistrement des extensions core.
    - Charge les route maps et enregistre les métadonnées des modules via `setupApps()`.
    - Finalise l'enregistrement des modules.
-   - Met en place les classes CSS hors ligne et les handlers de connectivité si le mode hors ligne est activé.
+   - Met en place les classes CSS hors ligne et les handlers de connectivité si le mode hors ligne est activé (Core v10 et antérieur).
    - Charge les fichiers de configuration.
    - Démarre le routage single-spa via `runShell()`.
    - Gère toute erreur d'initialisation.
    - Ferme l'indicateur de chargement initial.
-   - Enregistre le service worker et active le support hors ligne si le mode hors ligne est activé.
+   - Enregistre le service worker et active le support hors ligne si le mode hors ligne est activé (Core v10 et antérieur).
    - Déclenche l'événement `started`, qui lance des tâches de suivi comme le nettoyage des feature flags obsolètes.
 4. **runShell()**: finalise le démarrage:
    - Met en place l'internationalisation (i18n).
@@ -117,7 +117,11 @@ La séquence complète d'initialisation suit cet ordre:
 
 ## Support hors ligne
 
-Quand le mode hors ligne est activé via l'option de configuration `offline`, l'app shell:
+Core v11 a supprimé le support hors ligne du framework, y compris le service worker. Le framework exporte encore des
+versions sans effet des fonctions hors ligne les plus courantes, comme `setupOfflineSync` et `useConnectivity`, pour que
+les modules qui les appellent continuent de se charger, mais elles seront supprimées dans une version future.
+
+Dans Core v10 et antérieur, quand le mode hors ligne est activé via l'option de configuration `offline`, l'app shell:
 
 - Enregistre un service worker (`service-worker.js`) pour le cache et les fonctionnalités hors ligne.
 - Active ou désactive la classe `omrs-offline` sur l'élément body selon la connectivité.

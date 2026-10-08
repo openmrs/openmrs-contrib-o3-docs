@@ -80,8 +80,7 @@ Créez un fichier `spa-build-config.json` qui configure les propriétés d'exéc
   "configUrls": [],
   "defaultLocale": "en",
   "importmap": "./spa/importmap.json",
-  "routes": "./spa/routes.registry.json",
-  "supportOffline": false
+  "routes": "./spa/routes.registry.json"
 }
 ```
 
@@ -198,7 +197,7 @@ Vous pouvez également spécifier des options supplémentaires:
 - `--manifest`: Générer un fichier manifeste avec les informations de version
 - `--mode config`: Utiliser le mode fichier de configuration. Sans cette option, le CLI démarre le questionnaire interactif.
 - `--ensure-entrypoints`: Faire échouer l'exécution si un module frontal n'a pas son `routes.json` ou le point d'entrée JavaScript vers lequel pointe son entrée dans la carte d'importation. Cette option est activée par défaut à partir de Core v11. Passez `--no-ensure-entrypoints` pour signaler ces problèmes sous forme d'avertissements à la place.
-- `--application-version <version>`: Enregistrer la version de votre distribution dans le registre des routes (Core v11 et ultérieur). Le shell de l'application l'expose sous `window.applicationVersion`, et la barre de navigation ainsi que la page de connexion l'affichent. La valeur spéciale `prerelease` affiche à la place un libellé traduit « Prerelease », ou « Local Build » lorsque le shell de l'application s'exécute depuis une construction de développement locale.
+- `--application-version <version>`: Enregistrer la version de votre distribution dans le registre des routes (Core v11 et ultérieur). Le shell de l'application l'expose sous `window.applicationVersion`, et la barre de navigation ainsi que la page de connexion l'affichent. La valeur spéciale `prerelease` affiche à la place un libellé traduit « Prerelease ».
 
 Le fichier peut ressembler à ce qui suit:
 
@@ -262,8 +261,7 @@ Le fichier `spa-build-config.json` doit inclure:
   "configUrls": ["/openmrs/spa/config.json"],
   "defaultLocale": "en",
   "importmap": "./spa/importmap.json",
-  "routes": "./spa/routes.registry.json",
-  "supportOffline": false
+  "routes": "./spa/routes.registry.json"
 }
 ```
 
@@ -274,7 +272,7 @@ Le fichier `spa-build-config.json` doit inclure:
 - `defaultLocale`: Code de langue par défaut (par exemple, `en`, `fr`)
 - `importmap`: Chemin, URL ou JSON inline pour la carte d'importation créée par `assemble`. Les chemins relatifs sont résolus depuis le répertoire où vous exécutez la commande.
 - `routes`: Chemin, URL ou JSON inline pour le registre des routes créé par `assemble`. Les chemins relatifs sont résolus depuis le répertoire où vous exécutez la commande.
-- `supportOffline`: S'il faut activer le support hors ligne via un service worker
+- `supportOffline`: S'il faut activer le support hors ligne via un service worker (Core v10 et antérieur). Core v11 a supprimé le support hors ligne et ignore cette propriété.
 
 La CLI OpenMRS lit `spa-build-config.json` comme du JSON littéral. Elle ne développe pas les variables d'environnement
 shell dans ce fichier pendant `openmrs build`. Si vous construisez directement des fichiers statiques, placez les URLs
@@ -304,7 +302,7 @@ openmrs build --build-config spa-build-config.json --target ./spa
 Options de construction supplémentaires:
 - `--target <répertoire>`: Le répertoire cible (doit correspondre au répertoire cible d'assemblage)
 - `--fresh`: Nettoyer le répertoire de sortie avant la construction
-- `--support-offline`: Activer le support hors ligne (peut remplacer le fichier de configuration)
+- `--support-offline`: Activer le support hors ligne (peut remplacer le fichier de configuration). Core v10 et antérieur uniquement.
 - `--no-compress`: Ne pas écrire de fichiers précompressés (Core v11 et ultérieur, voir ci-dessous)
 - `--no-compress-gzip` et `--no-compress-brotli`: Ignorer uniquement les fichiers gzip (`.gz`) ou brotli (`.br`)
 
@@ -313,11 +311,11 @@ Après une construction réussie, votre répertoire `./spa` contiendra:
 - `importmap.json` - La carte d'importation créée par l'étape d'assemblage
 - `routes.registry.json` - Le registre des routes créé par l'étape d'assemblage
 - Les bundles JavaScript et autres actifs nécessaires pour exécuter l'application
-- À partir de Core v11, des copies `.gz` et `.br` de chaque fichier JavaScript, CSS, JSON, SVG, HTML et source map
+- À partir de Core v11, des copies `.gz` et `.br` de chaque fichier JavaScript, CSS, JSON, SVG et HTML d'au moins 1 Ko
 
 ### Fichiers précompressés
 
-À partir de Core v11, `openmrs build` écrit une copie gzip et une copie brotli à côté de chaque fichier compressible du répertoire cible, y compris les modules frontaux rassemblés par `assemble`. Par exemple, `openmrs.js` obtient `openmrs.js.gz` et `openmrs.js.br`. Votre serveur web peut alors envoyer ces fichiers directement au lieu de les compresser à chaque requête. La construction supprime également les fichiers précompressés dont l'original n'existe plus.
+À partir de Core v11, `openmrs build` écrit une copie gzip et une copie brotli à côté de chaque fichier compressible du répertoire cible, y compris les modules frontaux rassemblés par `assemble`. Les fichiers compressibles sont les fichiers JavaScript, CSS, JSON, SVG et HTML d'au moins 1 Ko. Les source maps ne sont pas précompressées. Par exemple, `openmrs.js` obtient `openmrs.js.gz` et `openmrs.js.br`. Votre serveur web peut alors envoyer ces fichiers directement au lieu de les compresser à chaque requête. La construction supprime également les fichiers précompressés dont l'original n'existe plus.
 
 Vous pouvez désactiver ce comportement, ou le limiter à un seul format, avec les drapeaux ci-dessus ou avec les propriétés `compress`, `compressGzip` et `compressBrotli` de `spa-build-config.json`. Les valeurs de la configuration de construction ont priorité sur les drapeaux de la ligne de commande:
 

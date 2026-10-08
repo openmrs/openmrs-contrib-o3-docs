@@ -106,7 +106,7 @@ Configurez les tags de priorité avec des couleurs et des styles :
 
 ## Mise en évidence du temps d'attente
 
-Vous pouvez colorer le temps d'attente affiché dans les tableaux de files d'attente lorsqu'un patient attend depuis plus d'un certain nombre de minutes. Cela attire l'attention sur les patients qui sont dans la file depuis longtemps. Cette option est désactivée par défaut.
+Vous pouvez colorer le temps d'attente affiché dans les tableaux de files d'attente lorsqu'un patient a attendu au moins un certain nombre de minutes. Cela attire l'attention sur les patients qui sont dans la file depuis longtemps. Cette option est désactivée par défaut.
 
 ```json
 {
@@ -147,7 +147,7 @@ Configurez les UUID de concepts utilisés dans tout le module des files d'attent
 - `defaultStatusConceptUuid` - Statut par défaut (par ex. "En attente")
 - `defaultTransitionStatus` - Statut lors de la prise en charge du service (par ex. "En service")
 - `emergencyPriorityConceptUuid` - Priorité la plus élevée (par ex. "Urgence")
-- `waitingStatusConceptUuid` - Statut des patients qui attendent d'être pris en charge (par ex. "En attente"). L'action **Call** n'apparaît que pour les entrées de file ayant ce statut, et le tableau de bord l'utilise pour calculer le nombre de patients en attente et les temps d'attente moyens.
+- `waitingStatusConceptUuid` - Statut des patients qui attendent d'être pris en charge (par ex. "En attente"). Sur le tableau de bord, le tableau de file ne liste que les entrées ayant ce statut, l'action **Call** n'apparaît que pour les entrées ayant ce statut, et le tableau de bord ainsi que la vue d'ensemble de la clinique l'utilisent pour calculer le nombre de patients en attente et les temps d'attente.
 
 ## Tableaux de files d'attente
 
@@ -206,7 +206,7 @@ Définissez des colonnes personnalisées ou remplacez les colonnes intégrées :
           "id": "queue-number",
           "columnType": "queue-number",
           "config": {
-            "visitQueueNumberAttributeUuid": "c61ce16f-272a-41e7-9924-4c555d3f18b5"
+            "visitQueueNumberAttributeUuid": "c0c579b0-8e59-401d-8a4a-976a0b183519"
           }
         },
         {
@@ -240,7 +240,7 @@ Définissez des colonnes personnalisées ou remplacez les colonnes intégrées :
 
 `move` couvre le déplacement d'un patient vers une autre file ainsi que le changement de son statut ou de sa priorité. L'ancienne action `transition` y a été fusionnée. `transition` est toujours acceptée dans la configuration mais se comporte comme `move`, vous pouvez donc la retirer de votre configuration.
 
-Par défaut, la colonne d'actions affiche un bouton **Call** et un menu de débordement contenant `move`, `edit`, `remove` et `undo`.
+Par défaut, la colonne d'actions affiche un bouton **Call** et un menu de débordement contenant `move`, `edit`, `remove` et `undo`. **Call** n'apparaît que pour les entrées ayant le statut d'attente. Pour les autres entrées, la première action disponible du menu de débordement (`move` par défaut) devient le bouton. `undo` n'apparaît que lorsque l'entrée a une entrée de file précédente vers laquelle revenir.
 
 **Options de configuration des colonnes** :
 - `id` - Identifiant unique de la colonne
@@ -265,6 +265,21 @@ Définissez quelles colonnes apparaissent dans quels tableaux :
         {
           "columns": [
             "patient-name",
+            "custom-identifier",
+            "priority",
+            "status",
+            "actions"
+          ],
+          "appliedTo": [
+            {
+              "queue": "some-queue-uuid",
+              "status": "some-status-uuid"
+            }
+          ]
+        },
+        {
+          "columns": [
+            "patient-name",
             "coming-from",
             "priority",
             "queue-number",
@@ -276,21 +291,6 @@ Définissez quelles colonnes apparaissent dans quels tableaux :
             {
               "queue": "",
               "status": ""
-            }
-          ]
-        },
-        {
-          "columns": [
-            "patient-name",
-            "custom-identifier",
-            "priority",
-            "status",
-            "actions"
-          ],
-          "appliedTo": [
-            {
-              "queue": "some-queue-uuid",
-              "status": "some-status-uuid"
             }
           ]
         }
@@ -306,7 +306,7 @@ Définissez quelles colonnes apparaissent dans quels tableaux :
   - Une chaîne `queue` ou `status` vide signifie "toutes les files" ou "tous les statuts"
   - Si plusieurs définitions de tableau correspondent, la première est utilisée
 
-**Exemple** : La première définition de tableau s'applique à toutes les files et statuts, et correspond à la configuration intégrée par défaut. La seconde s'applique uniquement à une combinaison file/statut spécifique.
+**Exemple** : La première définition de tableau s'applique uniquement à une combinaison file/statut spécifique. La seconde s'applique à toutes les autres files et statuts, et correspond à la configuration intégrée par défaut. Placez les définitions spécifiques avant la définition générale, car la première définition correspondante est utilisée.
 
 ## Attribut de numéro de file d'attente de visite
 
@@ -315,16 +315,16 @@ Configurez l'attribut de visite qui contient le numéro de file :
 ```json
 {
   "@openmrs/esm-service-queues-app": {
-    "visitQueueNumberAttributeUuid": "c61ce16f-272a-41e7-9924-4c555d3f18b5"
+    "visitQueueNumberAttributeUuid": "c0c579b0-8e59-401d-8a4a-976a0b183519"
   }
 }
 ```
 
-**Note** : Ceci doit être défini si vous utilisez une colonne `queue-number` dans une définition de tableau (sauf si défini par colonne dans `columnDefinitions`).
+La valeur par défaut est `c0c579b0-8e59-401d-8a4a-976a0b183519`, le type d'attribut Visit Queue Number du contenu de démonstration de l'application de référence. Le tableau intégré par défaut affiche une colonne `queue-number` : si votre distribution enregistre les numéros de file dans un autre type d'attribut de visite, définissez ici son UUID (ou définissez-le par colonne dans `columnDefinitions`).
 
 ## Types d'identifiants par défaut
 
-Configurez les types d'identifiants affichés dans les tableaux de files :
+Configurez les types d'identifiants affichés dans la modale d'appel du patient :
 
 ```json
 {
@@ -337,19 +337,11 @@ Configurez les types d'identifiants affichés dans les tableaux de files :
 }
 ```
 
-Ces types d'identifiants sont utilisés lorsque les détails d'une entrée de file doivent afficher des identifiants préférés, par exemple dans la modale d'appel du patient.
+La modale d'appel du patient affiche les identifiants du patient appartenant à ces types.
 
 ## Type d'attribut de contact
 
-Configurez le type d'attribut de personne pour les informations de contact (par ex. "Détails de contact du proche") :
-
-```json
-{
-  "@openmrs/esm-service-queues-app": {
-    "contactAttributeType": "some-attribute-type-uuid"
-  }
-}
-```
+`contactAttributeType` figure toujours dans le schéma de configuration, mais rien dans les files d'attente de service ne le lit : le définir n'a donc aucun effet.
 
 ## URL du dossier patient
 
@@ -386,7 +378,7 @@ La chaîne de statut par défaut est `calling`. Si votre système d'affichage dy
 
 ## Écran d'administrateur de clinique
 
-Les utilisateurs qui disposent du privilège d'administrateur de clinique voient deux onglets sur le tableau de bord des files d'attente de service. Le premier, **Clinic overview**, affiche des chiffres à l'échelle de la clinique pour chaque file, notamment le nombre de patients en attente et en service, ainsi que l'attente moyenne et l'attente la plus longue. Le second, **Waiting list**, est le tableau de bord standard. Les utilisateurs qui n'ont pas ce privilège ne voient aucun onglet, et leur tableau de bord reste inchangé.
+Les utilisateurs qui disposent du privilège d'administrateur de clinique voient deux onglets sur le tableau de bord des files d'attente de service. Le premier, **Clinic overview**, affiche des chiffres pour chaque file du lieu sélectionné, notamment le nombre de patients en attente et en service, ainsi que l'attente moyenne et l'attente la plus longue. Le second, **Waiting list**, est le tableau de bord standard. Les utilisateurs qui n'ont pas ce privilège ne voient aucun onglet, et leur tableau de bord reste inchangé.
 
 ```json
 {
@@ -400,7 +392,7 @@ Les utilisateurs qui disposent du privilège d'administrateur de clinique voient
 
 - `privilege` - Le privilège qui donne accès à la vue d'ensemble de la clinique (par défaut : `App: Service Queues Clinic Administrator`)
 
-Le privilège doit exister dans la configuration backend de votre distribution et être attribué à un rôle. Le contenu de démonstration de l'application de référence le définit et l'attribue au rôle `Organizational: System Administrator`. Tant qu'il n'est attribué à aucun rôle, seuls les utilisateurs ayant le rôle System Developer voient l'onglet. Définir `privilege` sur une chaîne vide masque les onglets pour tout le monde.
+Le privilège doit exister dans la configuration backend de votre distribution et être attribué à un rôle. Le contenu de démonstration de l'application de référence le définit et l'attribue au rôle `Organizational: System Administrator`. Tant qu'il n'est attribué à aucun rôle, seuls les utilisateurs ayant le rôle System Developer voient les onglets. Définir `privilege` sur une chaîne vide masque les onglets pour tout le monde.
 
 ## Intervalles d'actualisation
 
@@ -429,7 +421,7 @@ Un utilisateur est considéré comme inactif lorsqu'il n'a pas bougé la souris,
 
 ## Ajout d'un patient à la file d'attente
 
-Par défaut, avant que l'utilisateur ne saisisse un terme de recherche, l'espace de travail **Add patient to queue** liste les patients enregistrés au lieu sélectionné (c'est-à-dire ceux qui ont une visite active) mais qui ne sont pas encore dans une file. Pour passer directement à la recherche, désactivez cette option :
+Par défaut, avant que l'utilisateur ne saisisse un terme de recherche, l'espace de travail **Add patient to queue** liste les patients dont la visite a commencé aujourd'hui au lieu sélectionné et est toujours ouverte, et qui ne sont pas encore dans une file de ce lieu. Pour passer directement à la recherche, désactivez cette option :
 
 ```json
 {

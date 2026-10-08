@@ -80,8 +80,7 @@ Create a `spa-build-config.json` file that configures runtime properties:
   "configUrls": [],
   "defaultLocale": "en",
   "importmap": "./spa/importmap.json",
-  "routes": "./spa/routes.registry.json",
-  "supportOffline": false
+  "routes": "./spa/routes.registry.json"
 }
 ```
 
@@ -195,7 +194,7 @@ You can also specify additional options:
 - `--manifest`: Output a manifest file with version information
 - `--mode config`: Use config file mode. Without this option, the CLI starts the interactive survey flow.
 - `--ensure-entrypoints`: Fail the run if a frontend module is missing its `routes.json` or the JavaScript entrypoint its import map entry points at. This is on by default from Core v11. Pass `--no-ensure-entrypoints` to report these problems as warnings instead.
-- `--application-version <version>`: Record your distribution's version in the routes registry (Core v11 and later). The app shell exposes it as `window.applicationVersion`, and the navigation bar and login page display it. The special value `prerelease` shows a translated "Prerelease" label instead, or "Local Build" when the app shell runs from a local development build.
+- `--application-version <version>`: Record your distribution's version in the routes registry (Core v11 and later). The app shell exposes it as `window.applicationVersion`, and the navigation bar and login page display it. The special value `prerelease` shows a translated "Prerelease" label instead.
 
 The file may look as follows:
 
@@ -259,8 +258,7 @@ The `spa-build-config.json` file should include:
   "configUrls": ["/openmrs/spa/config.json"],
   "defaultLocale": "en",
   "importmap": "./spa/importmap.json",
-  "routes": "./spa/routes.registry.json",
-  "supportOffline": false
+  "routes": "./spa/routes.registry.json"
 }
 ```
 
@@ -271,7 +269,7 @@ The `spa-build-config.json` file should include:
 - `defaultLocale`: Default language code (e.g., `en`, `fr`)
 - `importmap`: Path, URL, or inline JSON for the import map created by `assemble`. Relative file paths are resolved from the directory where you run the command.
 - `routes`: Path, URL, or inline JSON for the routes registry created by `assemble`. Relative file paths are resolved from the directory where you run the command.
-- `supportOffline`: Whether to enable offline support via service worker
+- `supportOffline`: Whether to enable offline support via service worker (Core v10 and earlier). Core v11 removed offline support and ignores this property.
 
 The OpenMRS CLI reads `spa-build-config.json` as literal JSON. It does not expand shell environment variables inside
 this file during `openmrs build`. If you are building static files directly, put the final URLs in the JSON file or pass
@@ -301,7 +299,7 @@ openmrs build --build-config spa-build-config.json --target ./spa
 Additional build options:
 - `--target <directory>`: The target directory (should match the assemble target)
 - `--fresh`: Clean the output directory before building
-- `--support-offline`: Enable offline support (can override config file)
+- `--support-offline`: Enable offline support (can override config file). Core v10 and earlier only.
 - `--no-compress`: Skip writing precompressed files (Core v11 and later, see below)
 - `--no-compress-gzip` and `--no-compress-brotli`: Skip only the gzip (`.gz`) or brotli (`.br`) files
 
@@ -310,11 +308,11 @@ After a successful build, your `./spa` directory will contain:
 - `importmap.json` - The import map created by the assemble step
 - `routes.registry.json` - The routes registry created by the assemble step
 - JavaScript bundles and other assets needed to run the application
-- From Core v11, `.gz` and `.br` copies of each JavaScript, CSS, JSON, SVG, HTML and source map file
+- From Core v11, `.gz` and `.br` copies of each JavaScript, CSS, JSON, SVG and HTML file of 1 KB or more
 
 ### Precompressed assets
 
-From Core v11, `openmrs build` writes a gzip and a brotli copy next to every compressible file in the target directory, including the frontend modules gathered by `assemble`. For example, `openmrs.js` gets `openmrs.js.gz` and `openmrs.js.br`. Your web server can then send these files directly instead of compressing on every request. The build also removes precompressed files whose original no longer exists.
+From Core v11, `openmrs build` writes a gzip and a brotli copy next to every compressible file in the target directory, including the frontend modules gathered by `assemble`. Compressible files are JavaScript, CSS, JSON, SVG and HTML files of 1 KB or more. Source maps aren't precompressed. For example, `openmrs.js` gets `openmrs.js.gz` and `openmrs.js.br`. Your web server can then send these files directly instead of compressing on every request. The build also removes precompressed files whose original no longer exists.
 
 You can turn this off, or limit it to one format, with the flags above or with the `compress`, `compressGzip` and `compressBrotli` properties in `spa-build-config.json`. Values in the build config take precedence over the command line flags:
 

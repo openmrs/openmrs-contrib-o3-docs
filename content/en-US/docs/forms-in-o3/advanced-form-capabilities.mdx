@@ -47,8 +47,13 @@ A `diagnosis` question can show each diagnosis's code from a terminology such as
 ```
 
 The code comes from the concept's mapping to that source, preferring a `SAME-AS` mapping and otherwise using the first
-mapping to the source. Concepts with no mapping to the source show their name alone, as before. The Angular Form Engine
-reads the same `conceptSourceUuid` setting.
+mapping to the source. Concepts with no mapping to the source show their name alone, as before.
+
+For `diagnosis` questions, the React Form Engine always uses `problem_datasource` and keeps your `config`, so the
+`name` only matters to the Angular Form Engine, which looks up `diagnoses` by default. The Angular Form Engine reads the
+same `conceptSourceUuid` setting, but it reads the rank from `questionOptions.rank` rather than
+`questionOptions.diagnosis.rank`, and it always searches the Diagnosis concept class. Adjust the question if you share
+it between engines.
 
 ## Registering extensions
 

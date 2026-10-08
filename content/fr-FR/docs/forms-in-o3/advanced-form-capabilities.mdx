@@ -42,7 +42,9 @@ Une question `diagnosis` peut afficher, à côté du nom de chaque diagnostic, s
 }
 ```
 
-Le code provient du mappage du concept vers cette source : un mappage `SAME-AS` est privilégié, et à défaut le premier mappage vers la source est utilisé. Les concepts sans mappage vers la source affichent uniquement leur nom, comme auparavant. Le moteur de formulaires Angular lit le même paramètre `conceptSourceUuid`.
+Le code provient du mappage du concept vers cette source : un mappage `SAME-AS` est privilégié, et à défaut le premier mappage vers la source est utilisé. Les concepts sans mappage vers la source affichent uniquement leur nom, comme auparavant.
+
+Pour les questions `diagnosis`, le React Form Engine utilise toujours `problem_datasource` et conserve votre `config` : le `name` ne compte donc que pour le moteur de formulaires Angular, qui cherche `diagnoses` par défaut. Le moteur de formulaires Angular lit le même paramètre `conceptSourceUuid`, mais il lit le rang dans `questionOptions.rank` plutôt que dans `questionOptions.diagnosis.rank`, et il recherche toujours dans la classe de concept Diagnosis. Adaptez la question si vous la partagez entre les deux moteurs.
 
 ## Enregistrer des extensions
 

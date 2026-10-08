@@ -50,7 +50,7 @@ Les noms suivants sont des membres d'instance de `CommonExpressionHelpers` prés
 | `calcAgeBasedOnDate(date?)` | Année de naissance du patient soustraite de l'année cible; mois et jour volontairement ignorés. |
 | `calcBSA(height, weight)` | Surface corporelle de Mosteller arrondie à deux décimales, ou `null`. |
 | `calcGravida(term, abortion)` | Somme entière; lève une erreur pour un nombre non entier ou une chaîne non numérique. Une chaîne numérique est tronquée en entier. |
-| `calcWeightForHeightZscore(height, weight)` | Chaîne de score dérivée de l'OMS, `-4` hors de 45–110 cm, ou `null` si les données d'entrée/de référence manquent. |
+| `calcWeightForHeightZscore(height, weight)` | Chaîne de score dérivée de l'OMS, ou `null` si la taille est hors de 45–110 cm ou si les données d'entrée/de référence manquent. Les versions du moteur de formulaires antérieures à 4.3.0 renvoient `-4` hors de 45–110 cm. |
 | `calcBMIForAgeZscore(height, weight)` / `calcHeightForAgeZscore(height)` | Chaîne de score dérivée de l'OMS ou `null`. |
 | `calcTimeDifference(date, unit)` | Différence absolue arrondie jusqu'à aujourd'hui en `d`, `w`, `m` ou `y`; `0` sans date. |
 
@@ -107,7 +107,7 @@ La validation du constructeur est distincte. Lorsqu'elle est activée, elle vér
 
 ## Expressions sûres face aux valeurs nulles
 
-Lire une propriété de `null` ou de `undefined` provoque une erreur, comme en JavaScript : une expression exécutée avant le chargement de ses données a donc besoin d'une condition de garde. Le chaînage optionnel est pris en charge. À partir de Core v11, `&&`, `||` et `??` court-circuitent aussi l'évaluation : le membre de droite n'est pas évalué lorsque le membre de gauche suffit à déterminer le résultat. Chacune de ces formes fonctionne :
+Lire une propriété de `null` ou de `undefined` provoque une erreur, comme en JavaScript : une expression exécutée avant le chargement de ses données a donc besoin d'une condition de garde. À partir de Core v11, le chaînage optionnel fonctionne comme en JavaScript, et `&&`, `||` et `??` court-circuitent l'évaluation : le membre de droite n'est pas évalué lorsque le membre de gauche suffit à déterminer le résultat. Chacune de ces formes fonctionne :
 
 ```js
 patient?.birthDate ? age < 5 : false
@@ -116,6 +116,8 @@ myValue ?? 0
 ```
 
 Le chaînage optionnel interrompt toute la chaîne : `a?.b.c` vaut donc `undefined` lorsque `a` vaut `null` ou `undefined`. Il ne couvre pas une propriété réellement absente : `a?.b.c` lève toujours une erreur lorsque `a` vaut `{}`.
+
+Avant Core v11, `a?.b` levait encore une erreur lorsque `a` valait `undefined`, et `&&` évaluait ses deux membres : utilisez donc un ternaire comme `a ? a.b : undefined` sur les versions plus anciennes de Core.
 
 <Callout type="warning">
   Avant Core v11, une propriété absente pouvait être résolue en une variable portant le même nom. Par exemple, `obs.value` renvoyait la valeur actuelle du champ `value` si `obs` n'avait pas de propriété `value`. À partir de Core v11, cette expression renvoie `undefined`. Si un formulaire s'appuyait sur ce comportement, référencez directement l'ID du champ.

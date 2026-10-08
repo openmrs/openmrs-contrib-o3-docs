@@ -8,7 +8,7 @@ Workspace v2 components receive `Workspace2DefinitionProps` from `@openmrs/esm-f
 
 The same props object also includes `launchChildWorkspace`, `workspaceName`, `windowName`, `isRootWorkspace`, and `showActionMenu`. In Core v11 and later, it also includes `workspaceMeta`, the `meta` object from the workspace's `workspaces2` entry in `routes.json`. Use `launchChildWorkspace` only from inside an open workspace when you want to push another workspace onto the same window's stack. Use `launchWorkspace2` for top-level launches from buttons, pages, or other app code.
 
-Wrap the workspace content in `<Workspace2>`. The wrapper owns the workspace header, title, maximize and close controls, and unsaved changes state.
+Wrap the workspace content in `<Workspace2>` and pass it the workspace's `title` and `hasUnsavedChanges`. O3 uses them to render the workspace header, with its maximize and close controls, and to warn users about unsaved changes before the workspace closes.
 
 ```tsx copy
 // gastrodynamics.workspace.tsx
@@ -107,7 +107,7 @@ If your app owns the group, declare it in `workspaceGroups2`:
 }
 ```
 
-Window `width` can be `narrow`, `wider`, or `extra-wide`. Adding `icon` to a window turns on the workspace group's action menu and registers the icon component as an extension in the slot named after the group.
+Window `width` can be `narrow`, `wider`, or `extra-wide`. In Core v11 and later, a `workspaces2` entry can also set `width`, which overrides its window's width while that workspace is the top-most one in the window. Adding `icon` to a window turns on the workspace group's action menu and registers the icon component as an extension in the slot named after the group.
 
 Group `persistence` controls how long the group stays open and how the action menu behaves. The default behavior is app-wide: the group can keep multiple windows open and closes on an app change or scope change. Set `persistence` to `closable` for focused workflows that should show a group close button; when a different window in a closable group is launched, O3 checks for unsaved changes and then closes the other windows in that group.
 
