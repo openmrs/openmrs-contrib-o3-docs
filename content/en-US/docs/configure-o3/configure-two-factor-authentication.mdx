@@ -1,0 +1,107 @@
+import { Callout, Steps } from "nextra/components";
+
+# Configuring Two-Factor Authentication
+
+O3 supports two-factor authentication with time-based one-time passwords (TOTP). Users who enroll scan a QR code into an authenticator app, such as Google Authenticator, Microsoft Authenticator or Authy. After that, each time they sign in, they enter the 6-digit code the app shows after their password. Users who haven't enrolled keep signing in with just their password.
+
+Two-factor authentication is off by default. Turning it on needs both backend and frontend configuration.
+
+## Requirements
+
+- The [authentication](https://github.com/openmrs/openmrs-module-authentication) backend module, version 2.4.0 or later. Earlier versions don't have the enrollment endpoints the O3 login app uses.
+- `@openmrs/esm-login-app` 11.0.0 or later, from Core v11.
+
+The Reference Application includes both from version 3.8.0, but doesn't configure two-factor authentication.
+
+## Configure the backend
+
+The authentication module reads its settings from the OpenMRS runtime properties file, not from global properties. Add these lines to it:
+
+```properties filename="openmrs-runtime.properties"
+authentication.scheme=2fa
+authentication.scheme.2fa.type=org.openmrs.module.authentication.web.TwoFactorAuthenticationScheme
+authentication.scheme.2fa.config.primaryOptions=basic
+authentication.scheme.2fa.config.secondaryOptions=totp
+authentication.scheme.basic.type=org.openmrs.module.authentication.web.BasicWebAuthenticationScheme
+authentication.scheme.basic.config.loginPage=/spa/login
+authentication.scheme.totp.type=org.openmrs.module.authentication.web.TotpAuthenticationScheme
+authentication.scheme.totp.config.loginPage=/spa/login/totp-challenge
+```
+
+- `2fa` and `basic` are scheme IDs you can rename, as long as you rename every line that uses them. The TOTP scheme must keep the ID `totp`, because the O3 login app uses it.
+- The two `loginPage` settings send users to the O3 login pages. Without them, the module uses its defaults, which point at legacy UI pages.
+
+Restart OpenMRS after changing these settings.
+
+<Callout type="info">
+  In the Reference Application's Docker image, the runtime properties file is
+  `/openmrs/data/openmrs-runtime.properties`, on the backend's data volume, and it's kept between restarts. Edit
+  that file. Don't use `OMRS_EXTRA_*` environment variables for these settings: the image lowercases their names,
+  and the module looks up mixed-case keys such as `primaryOptions` and `loginPage`.
+</Callout>
+
+## Configure the frontend
+
+Turn on the enrollment page in your frontend configuration:
+
+```json
+{
+  "@openmrs/esm-login-app": {
+    "twoFactorAuth": {
+      "enabled": true
+    }
+  }
+}
+```
+
+This adds a **Two-Factor Authentication** link to the user menu, which opens the enrollment page. You can change the page's title with `twoFactorAuth.dashboardTitle`. The page where users enter their code at sign-in doesn't depend on this setting.
+
+## Enroll
+
+<Steps>
+
+### Open the enrollment page
+
+From the user menu (**My Account**), choose **Two-Factor Authentication**.
+
+### Set up the authenticator app
+
+Under **Authenticator App**, click **Set up**. Scan the QR code with an authenticator app, or enter the setup key shown under it.
+
+### Confirm
+
+Enter the 6-digit code from the app and click **Confirm and enable authenticator app**. The page then shows the authenticator app as **Enabled**.
+
+</Steps>
+
+## Sign in
+
+After an enrolled user enters their password, O3 shows the **Two-Factor Verification** page. They enter the current 6-digit code from their app and click **Verify**, then carry on to choose a location as usual. If the code is wrong, they stay on the page and can try again.
+
+### Remember this device
+
+The verification page has a **Remember this device** checkbox, ticked by default. It only has an effect if you turn it on in the backend:
+
+```properties filename="openmrs-runtime.properties"
+authentication.scheme.2fa.config.rememberMeEnabled=true
+```
+
+With this setting, a user who ticks the box gets a cookie that skips the code step on that browser for 30 days. The cookie is marked `Secure`, so it's only sent over HTTPS. The [authentication module's README](https://github.com/openmrs/openmrs-module-authentication#readme) lists the other remember-me settings, such as the duration.
+
+## Reset a user's enrollment
+
+Users can't remove their own enrollment yet: the **Remove** button on the enrollment page is disabled. If a user loses access to their authenticator app, an administrator can clear two user properties, `authentication.secondaryType` and `authentication.totp.secret`. The user can then sign in with just their password and enroll again.
+
+To do this over the REST API, read the user's current properties, blank those two, and send the full set back. Updating `userProperties` replaces all of the user's properties, so sending only the two keys would delete the others, such as `defaultLocale`.
+
+```bash
+# Read the user's properties
+curl -u admin:password "https://your-server/openmrs/ws/rest/v1/user/<user-uuid>?v=custom:(userProperties)"
+
+# Send them back with the two TOTP properties blanked
+curl -u admin:password -H "Content-Type: application/json" \
+  -d '{"userProperties": {"defaultLocale": "en", "authentication.secondaryType": "", "authentication.totp.secret": ""}}' \
+  "https://your-server/openmrs/ws/rest/v1/user/<user-uuid>"
+```
+
+Include every property the first request returned, not just `defaultLocale`.

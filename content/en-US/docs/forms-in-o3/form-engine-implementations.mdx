@@ -35,4 +35,11 @@ The O3 Form Builder has no supported Angular preview and makes no compatibility 
 
 The [O3 form schema](https://github.com/openmrs/openmrs-contrib-json-schemas/blob/main/form.schema.json) defines shared structure and vocabulary for O3 JSON forms. A form that validates against the schema can still behave differently in the two engines: renderings, expression helpers, custom extensions, and runtime behavior are not guaranteed to match.
 
+One difference to watch for is numeric bounds. The Angular integration (`@openmrs/esm-form-entry-app`) fetches the
+patient's concept reference ranges from the `conceptreferencerange` REST resource, which OpenMRS Platform 2.7 added. For
+each `number` or `decimal` question, it narrows the schema's `min` and `max` to the range's absolute bounds (`lowAbsolute`
+and `hiAbsolute`). It never widens a bound that the schema sets, so the stricter of the two wins, and it only applies
+bounds when both a minimum and a maximum are known. The React Form Engine uses only `questionOptions.min` and
+`questionOptions.max` from the schema, so the backend can still reject a value the form accepted.
+
 Validate a form against the shared schema, then test it with the renderer and integration module used by the target distribution.

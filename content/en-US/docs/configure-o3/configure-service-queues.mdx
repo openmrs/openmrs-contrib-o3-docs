@@ -1,6 +1,6 @@
 # Configuring Service Queues
 
-Service Queues is one of the most configurable modules in O3, allowing you to customize queue tables, priorities, statuses, vitals, biometrics, and more. This guide covers all configuration options for the Service Queues module.
+Service Queues is one of the most configurable modules in O3, allowing you to customize queue tables, priorities, statuses, wait-time highlighting, polling, and more. This guide covers all configuration options for the Service Queues module.
 
 ## Overview
 
@@ -8,9 +8,13 @@ The Service Queues module manages patient queues in outpatient settings. You can
 
 - Dashboard title and default service queue
 - Priority tags with colors and styles
+- Wait-time highlighting
 - Queue table columns and layouts (per queue/status)
-- Concept UUIDs for vitals, diagnoses, and other clinical data
-- Vitals and biometrics configuration
+- Concept UUIDs for priorities and statuses
+- Calling patients and the queue screen
+- The clinic administrator screen
+- How often queue data refreshes
+- The Add patient to queue workspace
 - Visit queue numbers
 - Patient chart URLs
 - Start Visit form integration
@@ -100,6 +104,26 @@ Configure priority tags with colors and styles:
 - `color` - Color of the priority tag
 - `style` - Style to apply (currently only `bold` or `null`)
 
+## Wait Time Highlighting
+
+You can color the wait time shown in queue tables once a patient has waited at least a given number of minutes. This draws attention to patients who have been in the queue a long time. It's off by default.
+
+```json
+{
+  "@openmrs/esm-service-queues-app": {
+    "waitTimeThresholds": [
+      { "waitTimeInMinutes": 60, "color": "orange" },
+      { "waitTimeInMinutes": 120, "color": "red" }
+    ]
+  }
+}
+```
+
+- `waitTimeInMinutes` - The minimum wait, in minutes, before the color applies. Must be a positive number.
+- `color` - Either `orange` or `red` (default: `red`)
+
+When more than one threshold matches, the one with the highest `waitTimeInMinutes` wins. In the example above, the wait time turns orange after one hour and red after two. The same thresholds apply to the longest wait shown on the clinic administrator screen.
+
 ## Concept UUIDs
 
 Configure concept UUIDs used throughout the service queues module:
@@ -112,18 +136,7 @@ Configure concept UUIDs used throughout the service queues module:
       "defaultStatusConceptUuid": "51ae5e4d-b72b-4912-bf31-a17efb690aeb",
       "defaultTransitionStatus": "ca7494ae-437f-4fd0-8aae-b88b9a2ba47d",
       "emergencyPriorityConceptUuid": "04f6f7e0-e3cb-4e13-a133-4479f759574e",
-      "systolicBloodPressureUuid": "5085AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-      "diastolicBloodPressureUuid": "5086AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-      "pulseUuid": "5087AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-      "temperatureUuid": "5088AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-      "oxygenSaturationUuid": "5092AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-      "heightUuid": "5090AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-      "weightUuid": "5089AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-      "respiratoryRateUuid": "5242AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-      "generalPatientNoteConceptUuid": "162169AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-      "problemListConceptUuid": "1284AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-      "visitDiagnosesConceptUuid": "159947AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-      "historicalObsConceptUuid": ["161643AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"]
+      "waitingStatusConceptUuid": "51ae5e4d-b72b-4912-bf31-a17efb690aeb"
     }
   }
 }
@@ -134,11 +147,7 @@ Configure concept UUIDs used throughout the service queues module:
 - `defaultStatusConceptUuid` - Default status (e.g., "Waiting")
 - `defaultTransitionStatus` - Status when attending service (e.g., "In Service")
 - `emergencyPriorityConceptUuid` - Highest priority (e.g., "Emergency")
-- Vitals concepts (systolic/diastolic BP, pulse, temperature, oxygen saturation, height, weight, respiratory rate)
-- `generalPatientNoteConceptUuid` - Free text note field
-- `problemListConceptUuid` - Problem list concept
-- `visitDiagnosesConceptUuid` - Visit diagnoses concept
-- `historicalObsConceptUuid` - Observations displayed in previous visit modal (array)
+- `waitingStatusConceptUuid` - Status for patients waiting to be attended to (e.g., "Waiting"). The dashboard's queue table only lists queue entries in this status, the **Call** action only appears for entries in this status, and the waiting counts and wait times on the dashboard and the clinic overview use it.
 
 ## Queue Tables
 
@@ -189,7 +198,7 @@ Define custom columns or override built-in columns:
           "config": {
             "actions": {
               "buttons": ["call"],
-              "overflowMenu": ["move", "transition", "edit", "remove", "undo"]
+              "overflowMenu": ["move", "edit", "remove", "undo"]
             }
           }
         },
@@ -197,7 +206,7 @@ Define custom columns or override built-in columns:
           "id": "queue-number",
           "columnType": "queue-number",
           "config": {
-            "visitQueueNumberAttributeUuid": "c61ce16f-272a-41e7-9924-4c555d3f18b5"
+            "visitQueueNumberAttributeUuid": "c0c579b0-8e59-401d-8a4a-976a0b183519"
           }
         },
         {
@@ -227,11 +236,17 @@ Define custom columns or override built-in columns:
 
 **Status icons**: `Group`, `InProgress`
 
-**Action types**: `move`, `call`, `edit`, `transition`, `remove`, `delete`, `undo`
+**Action types**: `move`, `call`, `edit`, `remove`, `delete`, `undo`
+
+`move` covers moving a patient to another queue and changing their status or priority. The old `transition` action has been merged into it. `transition` is still accepted in configuration but behaves like `move`, so you can drop it from your config.
+
+By default, the actions column shows a **Call** button and an overflow menu with `move`, `edit`, `remove` and `undo`. **Call** only appears for entries in the waiting status. For other entries, the first available overflow action (`move` by default) becomes the button instead. `undo` only appears when the entry has a previous queue entry to return to.
+
+If you override the `actions` column in `columnDefinitions`, list `overflowMenu` explicitly, as the example above does. Otherwise it defaults to `edit`, `remove` and `undo`, without `move`.
 
 **Column configuration options**:
 - `id` - Unique identifier for the column
-- `columnType` - Type of column (if different from ID)
+- `columnType` - Type of column. Set it on every column you define, even when it's the same as `id`. A column without `columnType` throws an "Unknown column type from configuration" error.
 - `header` - Header text (will be translated if it's a valid translation key)
 - `config` - Column-specific configuration:
   - For `patient-identifier`: `identifierTypeUuid` - UUID of identifier type
@@ -252,23 +267,6 @@ Define which columns appear in which tables:
         {
           "columns": [
             "patient-name",
-            "coming-from",
-            "priority",
-            "status",
-            "queue",
-            "wait-time",
-            "actions"
-          ],
-          "appliedTo": [
-            {
-              "queue": "",
-              "status": ""
-            }
-          ]
-        },
-        {
-          "columns": [
-            "patient-name",
             "custom-identifier",
             "priority",
             "status",
@@ -278,6 +276,23 @@ Define which columns appear in which tables:
             {
               "queue": "some-queue-uuid",
               "status": "some-status-uuid"
+            }
+          ]
+        },
+        {
+          "columns": [
+            "patient-name",
+            "coming-from",
+            "priority",
+            "queue-number",
+            "queue",
+            "wait-time",
+            "actions"
+          ],
+          "appliedTo": [
+            {
+              "queue": "",
+              "status": ""
             }
           ]
         }
@@ -293,7 +308,7 @@ Define which columns appear in which tables:
   - Empty `queue` or `status` string means "all queues" or "all statuses"
   - If multiple table definitions match, the first one is used
 
-**Example**: The first table definition applies to all queues and statuses (default). The second applies only to a specific queue and status combination.
+**Example**: The first table definition applies only to a specific queue and status combination. The second applies to all other queues and statuses, and matches the built-in default. Put specific definitions before the catch-all, because the first matching definition is used.
 
 ## Visit Queue Number Attribute
 
@@ -302,16 +317,16 @@ Configure the visit attribute that contains the queue number:
 ```json
 {
   "@openmrs/esm-service-queues-app": {
-    "visitQueueNumberAttributeUuid": "c61ce16f-272a-41e7-9924-4c555d3f18b5"
+    "visitQueueNumberAttributeUuid": "c0c579b0-8e59-401d-8a4a-976a0b183519"
   }
 }
 ```
 
-**Note**: This must be set if you use a `queue-number` column in any table definition (unless set per-column in `columnDefinitions`).
+The default is `c0c579b0-8e59-401d-8a4a-976a0b183519`, the Visit Queue Number attribute type from the Reference Application's demo content. The built-in default table shows a `queue-number` column, so if your distribution records queue numbers in a different visit attribute type, set this to its UUID (or set it per column in `columnDefinitions`).
 
 ## Default Identifier Types
 
-Configure identifier types displayed in queue tables:
+Configure the identifier types shown in the call patient modal:
 
 ```json
 {
@@ -324,19 +339,11 @@ Configure identifier types displayed in queue tables:
 }
 ```
 
-These identifier types are used when queue entry details need preferred identifiers, such as in the call patient modal.
+The call patient modal shows the patient's identifiers of these types.
 
 ## Contact Attribute Type
 
-Configure the person attribute type for contact information (e.g., "Next of kin contact details"):
-
-```json
-{
-  "@openmrs/esm-service-queues-app": {
-    "contactAttributeType": "some-attribute-type-uuid"
-  }
-}
-```
+`contactAttributeType` is still in the config schema, but nothing in Service Queues reads it, so setting it has no effect.
 
 ## Patient Chart URL
 
@@ -355,36 +362,73 @@ The URL template supports:
 - `${openmrsBase}` - Base URL for the OpenMRS backend
 - `${patientUuid}` - UUID of the patient
 
-## Vitals Configuration
+## Calling Patients and the Queue Screen
 
-Configure vitals form settings:
+When a user clicks **Call** on a queue entry, Service Queues sends the patient's ticket number and a status string to the queue module's `queueutil/assignticket` endpoint. The queue screen, at `${openmrsSpaBase}home/service-queues/screen`, makes a ticket blink while it has that status.
+
+The default status string is `calling`. If your digital signage expects something else, such as `Now serving`, change it:
 
 ```json
 {
   "@openmrs/esm-service-queues-app": {
-    "vitals": {
-      "formUuid": "a000cb34-9ec1-4344-a1c8-f692232f6edd",
-      "encounterTypeUuid": "67a71486-1a54-468f-ac3e-7091a9a79584"
+    "callingStatus": "Now serving"
+  }
+}
+```
+
+Avoid `completed`, because the queue backend treats it as a signal to remove the ticket.
+
+## Clinic Administrator Screen
+
+Users with the clinic administrator privilege see two tabs on the Service Queues dashboard. The first, **Clinic overview**, shows numbers for each queue at the selected location, including how many patients are waiting and in service, and the average and longest waits. The second, **Waiting list**, is the standard dashboard. Users without the privilege don't see any tabs, and their dashboard is unchanged.
+
+```json
+{
+  "@openmrs/esm-service-queues-app": {
+    "clinicAdministratorScreen": {
+      "privilege": "App: Service Queues Clinic Administrator"
     }
   }
 }
 ```
 
-- `formUuid` - UUID of the vitals form
-- `encounterTypeUuid` - UUID of the encounter type for vitals encounters
+- `privilege` - The privilege that grants access to the clinic overview (default: `App: Service Queues Clinic Administrator`)
 
-## Biometrics Configuration
+The privilege must exist in your distribution's backend configuration and be attached to a role. The Reference Application's demo content defines it and grants it to the `Organizational: System Administrator` role. Until it's attached to a role, only System Developers see the tabs. Setting `privilege` to an empty string hides the tabs for everyone.
 
-Configure biometrics display:
+## Refresh Intervals
+
+The Service Queues dashboard and the queue screen poll for updates. Each has one interval for when the user is active and a slower one for when they've gone idle:
 
 ```json
 {
   "@openmrs/esm-service-queues-app": {
-    "biometrics": {
-      "bmiUnit": "kg / m²"
+    "refreshIntervals": {
+      "dashboard": {
+        "active": 60000,
+        "idle": 120000
+      },
+      "queueScreen": {
+        "active": 5000,
+        "idle": 10000
+      }
     }
   }
 }
 ```
 
-- `bmiUnit` - Unit for BMI display (default: `"kg / m²"`)
+All values are in milliseconds and must be between `1000` and `3600000`. The values above are the defaults.
+
+A user counts as idle once they haven't moved the mouse, clicked, typed, touched the screen or scrolled for a minute, or once the browser tab is hidden. Polling stops altogether while the tab is hidden, and the dashboard refreshes as soon as the user comes back to it. The queue screen's idle interval is deliberately short so that an unattended, wall-mounted display stays reasonably current.
+
+## Add Patient to Queue
+
+By default, the **Add patient to queue** workspace lists patients whose visit started today at the selected location and is still open, and who aren't in a queue at that location yet, before the user types a search term. To go straight to search instead, turn this off:
+
+```json
+{
+  "@openmrs/esm-service-queues-app": {
+    "showCheckedInPatientsBeforeSearch": false
+  }
+}
+```

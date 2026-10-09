@@ -1,0 +1,121 @@
+import { Callout, Steps } from "nextra/components";
+
+# Export metadata packages
+
+The [metadataexport](https://github.com/openmrs/openmrs-module-metadataexport) module reads metadata out of a running OpenMRS server and writes it in the format the [Initializer](https://github.com/mekomsolutions/openmrs-module-initializer) module loads. You can use it to capture a server's configuration, such as its concepts, locations, encounter types and roles, and load it on another server.
+
+You define a **package** that lists the metadata domains to export, then **build** it. Each build produces a zip you can download.
+
+## Requirements
+
+- The metadataexport backend module, version 1.0.0 or later. It needs OpenMRS Platform 2.8.3 or later, Initializer 2.12.1 or later, and REST Web Services 3.1.0 or later.
+- The `@openmrs/esm-metadataexport-app` frontend module from [Admin Tools](https://github.com/openmrs/openmrs-esm-admin-tools), which adds the O3 page for managing packages.
+
+The Reference Application includes both from version 3.8.0.
+
+## Privileges
+
+| Privilege | Allows |
+| --- | --- |
+| `Get Metadata Export Packages` | Viewing packages and builds, and the **Metadata Export** card on the System Administration page |
+| `Manage Metadata Export Packages` | Creating, editing and deleting packages, and starting builds |
+| `Download Metadata Export Packages` | Downloading completed builds |
+
+Grant `Manage Metadata Export Packages` and `Download Metadata Export Packages` together with `Get Metadata Export Packages`. Both rely on being able to read the package.
+
+The Reference Application doesn't grant these privileges to any role, so out of the box only super users have them. Add them to a role before giving other administrators access.
+
+## Create a package
+
+<Steps>
+
+### Open Metadata Export
+
+Go to the System Administration page and choose the **Metadata Export** card.
+
+### Add a package
+
+Click **New package**. Enter a **Package name** and, optionally, a **Description**.
+
+### Choose domains
+
+Tick the domains to export, or **Select all** to export everything the server can export. Core domains, such as concepts, locations, encounter types, roles and privileges, and global properties, are always listed. Others, such as queues, billing, ID generation and the address hierarchy, only appear when their module is running.
+
+### Save
+
+Click **Create package**.
+
+</Steps>
+
+A build exports every item in each chosen domain, plus anything those items depend on. To edit or delete a package, click **View** on its row and use **Edit** or **Delete**. Deleting retires the package, so it no longer appears in the list.
+
+<Callout type="info">
+  The O3 page exports whole domains. To export specific items, such as a single site's locations, create the
+  package over the [REST API](#use-the-rest-api) and list the items' UUIDs. The O3 page saves whole domains, so
+  keep editing that package over REST.
+</Callout>
+
+## Build and download a package
+
+Click **View** on the package, then **Trigger new build**. Builds are numbered from 1 for each package, and each one moves from **Queued** to **Running** to **Completed** or **Failed**. The list refreshes every two seconds until the build finishes, and a failed build shows its error.
+
+Only one build of a package can run at a time. If the server restarts during a build, that build is marked as failed.
+
+When a build completes, users with `Download Metadata Export Packages` see a **Download** link next to it.
+
+## What's in a build
+
+Each build is a zip named `metadataexport-<package-name>-v<build>.zip`, laid out as an OpenMRS content package:
+
+- `configuration/backend_configuration/` holds a folder of Initializer files for each exported domain, such as `encountertypes` or `locations`.
+- `content.properties` records the package name, and the build number as its `version`.
+- `metadataexport-manifest.json` records everything the build exported, including the dependencies it pulled in. For each domain exported in full, it also lists the rows it left out and why.
+
+Retired items are exported with their retired flag set. Some rows are always left out because Initializer couldn't load them on another server, such as retired queues and superseded form versions. If a package names one of those rows by UUID, the build fails and says why.
+
+## Load a package on another server
+
+Initializer loads the domain folders it finds in the `configuration` directory of the OpenMRS application data directory when the server starts. To load a build, copy the folders from the zip's `configuration/backend_configuration/` into that directory on the target server, then restart it.
+
+Before you do, check two cases that need extra setup on the target server:
+
+- ID generation remote sources are exported with a `property:idgen.remote.password.<uuid>` placeholder instead of the password. Define that property on the target server.
+- Cashier item prices that refer to stock items only load on a server that already has those stock items.
+
+## Use the REST API
+
+The module's REST resources live under `/ws/rest/v1/metadataexport` and use the same privileges as the O3 page.
+
+| Method and path | Purpose |
+| --- | --- |
+| `GET /domains` | List the domains this server can export |
+| `GET /packages`, `GET /packages/{uuid}` | List or read packages (add `includeAll=true` to include retired ones) |
+| `POST /packages` | Create a package |
+| `POST /packages/{uuid}` | Update a package. `entries` replaces the existing list |
+| `DELETE /packages/{uuid}?reason=` | Retire a package |
+| `POST /builds` | Start a build with `{"package": "<package-uuid>"}` |
+| `GET /builds?package=<package-uuid>` | List a package's builds, newest first |
+| `GET /builds/{uuid}/download` | Download a completed build |
+
+A package's `entries` each name a domain and, optionally, the UUIDs of the items to export. An empty `itemUuids` list exports the whole domain, and an empty `entries` list exports every domain:
+
+```json
+{
+  "name": "Site A locations",
+  "description": "Locations for Site A",
+  "entries": [
+    { "domain": "LOCATIONS", "itemUuids": ["<location-uuid>"] }
+  ]
+}
+```
+
+These endpoints aren't protected against cross-site request forgery, so only give the privileges to trusted administrators.
+
+## Limitations
+
+- Build zips stay on the server under `<app data dir>/metadataexport/packages/` until you delete them. Remove old builds if disk space matters.
+- Some domains Initializer can load can't be exported, including Bahmni forms, HTML forms, data filter mappings, Liquibase, JSON key-value files, OCL imports and dispositions.
+- Concept description UUIDs and index term names aren't preserved.
+- A build only pulls in dependencies from domains the module can export.
+
+The module can also export every domain each time it starts. Set the `metadataexport.exportOnStartup` global property to `true` to write the files to `<app data dir>/metadata_export/configuration/`. This is separate from packages and doesn't produce a zip.

@@ -20,6 +20,41 @@ The React registry includes these data-source names:
 supply its default data source. If neither a built-in, template, nor custom registration matches, loading the source throws
 `Datasource not found`.
 
+### Showing concept codes next to diagnoses
+
+A `diagnosis` question can show each diagnosis's code from a terminology such as ICD-11 next to its name. Set
+`conceptSourceUuid` in the question's data source config to the UUID of that concept source:
+
+```json
+{
+  "id": "primaryDiagnosis",
+  "label": "Primary diagnosis",
+  "type": "diagnosis",
+  "questionOptions": {
+    "rendering": "repeating",
+    "datasource": {
+      "name": "diagnoses",
+      "config": {
+        "conceptSourceUuid": "your-icd-11-concept-source-uuid"
+      }
+    },
+    "diagnosis": {
+      "rank": 1,
+      "conceptClasses": ["8d4918b0-c2cc-11de-8d13-0010c6dffd0f"]
+    }
+  }
+}
+```
+
+The code comes from the concept's mapping to that source, preferring a `SAME-AS` mapping and otherwise using the first
+mapping to the source. Concepts with no mapping to the source show their name alone, as before.
+
+For `diagnosis` questions, the React Form Engine always uses `problem_datasource` and keeps your `config`, so the
+`name` only matters to the Angular Form Engine, which looks up `diagnoses` by default. The Angular Form Engine reads the
+same `conceptSourceUuid` setting, but it reads the rank from `questionOptions.rank` rather than
+`questionOptions.diagnosis.rank`, and it always searches the Diagnosis concept class. Adjust the question if you share
+it between engines.
+
 ## Registering extensions
 
 The package exports registry functions for controls, field-value adapters, validators, data sources, expression helpers,

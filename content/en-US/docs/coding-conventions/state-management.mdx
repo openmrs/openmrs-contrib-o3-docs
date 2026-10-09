@@ -59,6 +59,8 @@ We use various approaches to manage state in O3, from React's built-in hooks to 
   );
   ```
 
+- Treat whatever `useStore` returns as read-only. In Core v11 and later, unless you pass actions, it returns the store's state (or your selector's result) itself rather than a shallow copy, so assigning to one of its properties changes the store without notifying anyone. Nested objects and arrays were never copied, so changing them in place, such as pushing to an array, had the same problem in earlier versions too. Return new objects from actions instead, as the example above does.
+
 - Use `createGlobalStore(name, initialState, 'sessionStorage')` only for values that should survive a page refresh in the current browser tab. Persistent clinical data should live in the backend, and secrets or patient-identifying data should not be placed in browser storage unless the feature explicitly requires it and the privacy tradeoff has been reviewed.
 
 - Use App Context for state that should exist only while a feature or app area is active. Define the namespace with `useDefineAppContext`, read it with `useAppContext`, and handle `undefined` explicitly because it means the namespace is not currently registered:

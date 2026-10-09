@@ -53,7 +53,7 @@ The app shell is the host application that boots O3 and coordinates loading and 
 it handles:
 
 - **Startup:** renders `index.html`, loads the import map and routes registry, and wires module loading/routing.
-- **Runtime services:** defines breakpoints, subscriptions (modals, toasts, inline notifications), and offline support.
+- **Runtime services:** defines breakpoints, subscriptions (modals, toasts, inline notifications), and, in Core v10 and earlier, offline support.
 - **Platform wiring:** initializes global state and sets up the configuration and extension systems.
 
 At startup, the app shell does not eagerly execute every frontend module. It sets up core UI services, reads
@@ -193,7 +193,7 @@ The most important pieces are:
 - **Rendering and lifecycle helpers:** React hooks, `Extension` and `ExtensionSlot` components, lifecycle helpers such as
   `getSyncLifecycle` and `getAsyncLifecycle`, and utilities that bridge React components into single-spa lifecycles.
 - **Shared UX services:** styleguide components, navigation and breadcrumbs, modals, workspaces, toasts, snackbars,
-  notifications, translations, and offline support.
+  notifications, translations, and, in Core v10 and earlier, offline support.
 
 For module authors, the rule of thumb is: use the framework for cross-cutting O3 behavior instead of inventing local
 versions of fetch wrappers, global state, extension wiring, config loading, or notification UI. If you need to change how
