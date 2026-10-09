@@ -1,0 +1,107 @@
+# Référence du schéma de formulaire O3
+
+Un formulaire JSON O3 repose sur deux contrats liés :
+
+- Le [schéma JSON O3 normatif](https://github.com/openmrs/openmrs-contrib-json-schemas/blob/main/form.schema.json) définit la structure du document indépendamment du moteur.
+- Les types `FormSchema`, `FormPage`, `FormSection` et `FormField` du React Form Engine définissent ce que consomme l'environnement d'exécution O3 par défaut.
+
+Un formulaire peut passer la validation du schéma JSON et se comporter différemment selon les moteurs. Utilisez cette page pour le flux React par défaut et consultez les [implémentations du moteur de formulaires](/docs/forms-in-o3/form-engine-implementations) avant d'utiliser un autre renderer.
+
+## Un formulaire de départ complet
+
+Le schéma normatif exige `name` et `pages`. Un formulaire destiné au flux de rencontre React par défaut devrait aussi indiquer son type de rencontre et son processeur, et inclure les champs opérationnels courants présentés ici :
+
+```json
+{
+  "$schema": "http://json.openmrs.org/form.schema.json",
+  "name": "Visit notes",
+  "uuid": "00000000-0000-0000-0000-000000000000",
+  "version": "1.0",
+  "encounterType": "11111111-1111-1111-1111-111111111111",
+  "processor": "EncounterFormProcessor",
+  "referencedForms": [],
+  "pages": [
+    {
+      "label": "Visit",
+      "sections": [
+        {
+          "label": "Notes",
+          "isExpanded": true,
+          "questions": [
+            {
+              "id": "visitNotes",
+              "label": "Visit notes",
+              "type": "obs",
+              "questionOptions": {
+                "rendering": "textarea",
+                "concept": "22222222-2222-2222-2222-222222222222",
+                "rows": 4
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+Remplacez les UUID d'exemple par les métadonnées de l'installation OpenMRS cible. Le constructeur de formulaires attribue ou conserve l'UUID à l'enregistrement. Ne réutilisez pas l'UUID d'un formulaire pour un autre.
+
+## Hiérarchie du formulaire
+
+`pages` contient des objets page ordonnés. Chaque page contient des `sections` ordonnées et chaque section des `questions` ordonnées. L'`id` stable d'une question est utilisé par les expressions, le préremplissage, les dépendances et les chemins de champs. Modifier l'ID d'un formulaire publié peut donc avoir d'autres effets que le changement de son libellé.
+
+- Une page exige `label` et `sections`.
+- Une section exige `label` et `questions`. `isExpanded` accepte un booléen ou la chaîne équivalente, normalisée par l'environnement React.
+- Une question exige `id` et `questionOptions`. En pratique, un champ React soumis a aussi besoin d'un `type` pris en charge, et `questionOptions.rendering` doit correspondre à un contrôle enregistré.
+- Les `questions` imbriquées représentent des champs groupés ou répétables.
+
+Consultez les [types de champs et rendus](/docs/forms-in-o3/field-types-and-renderings) pour les contrats distincts de `type` et `rendering`.
+
+## Propriétés de premier niveau
+
+| Propriété | Rôle dans le flux React |
+| --- | --- |
+| `name`, `uuid`, `version` | Identifient le formulaire et sa version enregistrée. Le serveur gère normalement `uuid`. |
+| `encounterType` | Sélectionne le type de rencontre. Une chaîne `encounter` héritée est normalisée vers cette propriété si `encounterType` est absent. |
+| `processor` | Sélectionne le processeur. `EncounterFormProcessor` est intégré. Un nom inconnu journalise une erreur puis utilise ce processeur. |
+| `referencedForms` | Nomme les formulaires réutilisables dont les sections peuvent être résolues par les objets `reference`. |
+| `pages` | Contient la hiérarchie du formulaire. |
+| `defaultPage` | Sélectionne la page initiale; une intention peut la remplacer. |
+| `readonly`, `inlineRendering`, `markdown` | Définissent le comportement d'affichage global. Les valeurs de page, section ou question peuvent remplacer les réglages applicables. |
+| `translations` | Associe des clés de traduction aux chaînes chargées dans l'espace de noms du Form Engine. |
+| `postSubmissionActions` | Demande des actions enregistrées après une soumission réussie. Traitez cette configuration comme privilégiée. |
+| `formOptions.usePreviousValueDisabled` | Déclaré dans le schéma normatif mais actuellement ignoré par l'environnement d'exécution React. Le flux React contrôle la revue de la valeur précédente par question via `questionOptions.enablePreviousValue`. |
+| `meta.programs` | Fournit des métadonnées React pour les programmes et peut être transformé en action post-soumission. |
+
+Le schéma normatif déclare aussi `availableIntents`, tandis que le moteur React applique les `behaviours` correspondants aux pages et aux questions avec ses utilitaires de chargement. Ces capacités propres à React sont décrites dans les [capacités avancées](/docs/forms-in-o3/advanced-form-capabilities).
+
+## Pages, sections et questions
+
+Les pages et sections prennent en charge `hide.hideWhenExpression`, `readonly` et `inlineRendering`. Une page peut aussi décrire un `subform`. Une section peut utiliser `reference` pour importer une section d'un formulaire de `referencedForms`.
+
+Une question contrôle quatre aspects distincts :
+
+1. `id` donne au champ une identité locale stable.
+2. `type` choisit l'adaptateur de valeur utilisé pour les valeurs initiales et la soumission.
+3. `questionOptions.rendering` choisit le contrôle visuel.
+4. `required`, `disabled`, `hide`, `readonly`, `validators` et `historicalExpression` contrôlent la logique.
+
+`questionOptions` contient les réglages propres au rendu, notamment `answers`, `min`, `max`, `minLength`, `maxLength`, `calculate`, `datasource`, `repeatOptions` et les identifiants de métadonnées. Une propriété acceptée par le schéma n'est pas nécessairement pertinente pour chaque combinaison de type et de rendu.
+
+## Sections référencées et sous-formulaires
+
+Pour référencer une section, inscrivez le formulaire source dans `referencedForms`, puis définissez une `reference` de section avec `form`, `page` et `section`. `excludeQuestions` peut retirer des champs par ID. La résolution utilise les noms ou alias de formulaires et les libellés exacts de pages et sections. Renommer le contenu source peut donc rompre ses consommateurs.
+
+Les sous-formulaires utilisent une page avec `isSubform: true` et un objet `subform`. Le chargeur React peut résoudre un formulaire nommé ou empaqueté. Si son type de rencontre correspond à celui du parent, l'environnement remplace la page du sous-formulaire par les pages du formulaire résolu. Testez le résultat dans la distribution cible, car la disponibilité dépend du serveur ou du registre de packages.
+
+## Comportement du processeur
+
+L'environnement par défaut enregistre actuellement `EncounterFormProcessor`. Il charge les valeurs initiales liées à la rencontre et transforme les types d'adaptateurs pris en charge en charges utiles REST OpenMRS. Indiquer un autre processeur dans le JSON ne l'installe pas. Le registre étant interne au fournisseur du Form Engine, ne documentez pas un processeur personnalisé comme pris en charge sans code et tests qui l'enregistrent pour cette version.
+
+## Normalisation React et alias hérités
+
+Avant le rendu, le transformateur par défaut normalise les chaînes représentant des booléens, ajoute les validateurs par défaut, attribue des ID aux pages et adapte plusieurs rendus hérités ou abrégés. Par exemple, `numeric` devient `number`, `multiCheckbox` adopte le comportement de case à cocher avec recherche et les types de métadonnées de rencontre sont associés aux contrôles correspondants. Les nouveaux formulaires devraient employer les noms actuels du schéma normatif.
+
+La normalisation ne corrige ni un type inconnu, ni des métadonnées obligatoires absentes, ni un rendu non enregistré. Validez et prévisualisez le formulaire dans la distribution qui l'exécutera.

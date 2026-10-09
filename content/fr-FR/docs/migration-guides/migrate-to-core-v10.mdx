@@ -1,0 +1,90 @@
+import { Steps } from "nextra/components";
+
+# Migrer vers Core v10
+
+Ce guide concerne la migration des modules frontend vers Core v10 et supérieur. Core v10 est la version du framework livrée avec la Reference Application 3.7.0.
+
+Pour la plupart des modules frontend, la modification du code est minime : mettez à jour le framework et passez la dépendance peer `@openmrs/esm-framework` à `10.x`. Les changements incompatibles de cette version concernent surtout la façon dont vous travaillez avec des instances O3 en cours d'exécution. Il vaut donc la peine de lire le contexte, même si votre module se compile sans erreur.
+
+## Contexte
+
+Core v10 comporte deux changements incompatibles.
+
+### Les surcharges d'import map et de routes ne fonctionnent qu'en mode développement
+
+Core v10 abandonne la bibliothèque single-spa [import-map-overrides](https://github.com/single-spa/import-map-overrides), un changement introduit dans [cette pull request](https://github.com/openmrs/openmrs-esm-core/pull/1743). Le framework lit et écrit désormais lui-même les surcharges, et l'app shell ne les prend en compte que lorsque `window.spaEnv` vaut `development`.
+
+En pratique, cela signifie que :
+
+- `openmrs develop` (et `yarn start` dans un dépôt de module frontend) exécute toujours l'app shell en mode développement. Les surcharges locales continuent donc de fonctionner comme avant.
+- Les builds de production, y compris l'image Docker de la Reference Application et les serveurs communautaires dev3, test3 et o3, ignorent les surcharges d'import map et de routes stockées dans `localStorage`. Un app shell de production ne charge plus de code depuis des URLs arbitraires.
+
+Si vous surchargiez auparavant un module sur un serveur déployé pour tester une modification, exécutez plutôt le module localement contre le backend de ce serveur :
+
+```sh
+yarn start --sources 'packages/esm-my-app' --backend "https://test3.openmrs.org"
+```
+
+Consultez [Développement](/docs/frontend-modules/development#utiliser-les-surcharges-dimport-map) pour savoir comment surcharger plusieurs modules à la fois contre un app shell exécuté localement.
+
+### La connexion ne redirige que vers des URLs de même origine
+
+L'app de connexion valide désormais le paramètre de requête `returnToUrl`, ainsi que l'état de redirection qu'elle reçoit d'autres pages, avant de naviguer après la connexion. Ce changement a été introduit dans [cette pull request](https://github.com/openmrs/openmrs-esm-core/pull/1763) pour corriger une vulnérabilité de redirection ouverte.
+
+Seules les URLs de même origine que l'instance O3 sont suivies. Pour toute autre URL, l'app se rabat sur l'URL définie dans la propriété de configuration `links.loginSuccess` de l'app de connexion, dont la valeur par défaut est `${openmrsSpaBase}/home`.
+
+Si votre distribution renvoie vers la page de connexion O3 avec un `returnToUrl` qui pointe vers un autre hôte, ce lien mènera désormais à la page d'accueil. Servez la cible depuis la même origine, ou dirigez les utilisateurs vers elle après la connexion avec `links.loginSuccess`.
+
+## Étapes de migration
+
+<Steps>
+
+### Mettre à jour les dépendances Core
+
+Mettez à jour les dépendances Core vers Core v10 :
+
+```bash
+yarn up openmrs@^10.0.0 @openmrs/esm-framework@^10.0.0
+```
+
+### Mettre à jour la dépendance peer du framework
+
+Mettez à jour la dépendance peer `@openmrs/esm-framework` dans le `package.json` de chaque module frontend :
+
+```json
+{
+  "peerDependencies": {
+    "@openmrs/esm-framework": "10.x"
+  }
+}
+```
+
+### Vérifier votre flux de développement
+
+Si vous ou votre équipe utilisez les surcharges Devtools sur un serveur partagé, passez à `openmrs develop` avec l'option `--backend`, comme décrit plus haut.
+
+### Vérifier les liens de connexion
+
+Recherchez, dans la configuration de votre distribution et dans tous les liens vers O3, les valeurs de `returnToUrl` qui pointent vers une autre origine :
+
+```bash
+rg -n "returnToUrl" .
+```
+
+</Steps>
+
+Après avoir complété les étapes ci-dessus, vérifiez que tout fonctionne :
+
+- Exécuter les tests : `yarn test`
+- Exécuter un build de développement : `yarn start`
+- Exécuter un build de production : `yarn build`
+
+## Autres changements à connaître
+
+- `useAppContext` renvoie désormais la valeur actuelle dès le premier rendu, et renvoie `undefined` lorsque l'espace de noms n'a pas encore été enregistré. Si un composant supposait que le premier rendu était toujours vide, vérifiez qu'il gère les deux cas.
+- `openmrs develop` dispose d'une nouvelle option `--packages` qui exécute les modules par nom de package, résolu à partir des workspaces Yarn du dépôt, plutôt que par répertoire source. Par exemple, `yarn start --packages @openmrs/esm-patient-vitals-app`.
+
+## Exemples de migration
+
+- [Patient chart](https://github.com/openmrs/openmrs-esm-patient-chart/pull/3367)
+- [Patient management](https://github.com/openmrs/openmrs-esm-patient-management/pull/2569)

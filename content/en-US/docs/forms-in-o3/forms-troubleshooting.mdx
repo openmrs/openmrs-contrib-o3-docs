@@ -1,0 +1,71 @@
+# Troubleshooting O3 JSON forms
+
+Start by identifying which layer rejected or misrendered the form. JSON parsing, normative schema validation, Form Builder
+metadata validation, React preview behavior, and server submission are different checks.
+
+## The Schema Editor rejects the JSON
+
+- Confirm the document is valid JSON: double-quoted keys and strings, no comments, and no trailing commas.
+- Compare the structure with the [normative schema](https://github.com/openmrs/openmrs-contrib-json-schemas/blob/main/form.schema.json).
+- Ensure `pages`, `sections`, and `questions` are arrays and that every question has `id` and `questionOptions`.
+- Use `jsonc` only for explanatory documentation fragments. Saved form schemas must be JSON.
+
+## Validation and preview disagree
+
+The optional builder validator checks dictionary concepts, answer concepts, patient identifier types, person attribute
+types, and configured concept datatype/rendering mappings. Preview uses the React runtime and can encounter additional
+requirements such as registered controls, adapters, data sources, processors, and expression context.
+
+A successful preview also does not prove that all metadata exists on the production server or that submission will
+succeed. Validate and preview against the target distribution and test a non-production submission.
+
+## A field does not render
+
+1. Check `questionOptions.rendering` against [React field types and renderings](/docs/forms-in-o3/field-types-and-renderings).
+2. Check whether the rendering needs a registered control or data source.
+3. Check `hide`, `readonly`, `disabled`, parent visibility, form mode, and intent behavior.
+4. For `obs`, confirm `questionOptions.concept`. A missing concept normally produces a disabled text fallback, except for
+   `file` and `fixed-value` fields.
+5. Inspect the browser console. Unknown renderings resolve to no control, while expression evaluation errors are logged and
+   return `null`. Syntax errors can throw during expression compilation.
+
+## A field renders but does not submit correctly
+
+- Verify `type` separately from `rendering`. `type` selects the submission adapter.
+- Confirm required metadata such as `concept`, `identifierType`, `attributeType`, `programUuid`, or order configuration.
+- Confirm the selected `processor`. The default is `EncounterFormProcessor`; an unknown name falls back to it after
+  logging an error.
+- Check runtime validation errors and warnings. Invalid calculated values are not adapted for submission.
+- Reproduce with the same encounter mode (`enter` or `edit`), visit, location, and provider context as production.
+
+## Expressions do not update as expected
+
+- Use stable question IDs and reference them exactly.
+- Use `useFieldValue('questionId')` when an indirect lookup must explicitly register a dependency.
+- Check exact return semantics in [Expressions, validation, and logic](/docs/forms-in-o3/expressions-validation-and-logic).
+- Remember that an empty expression or an evaluation error produces `null`; a syntax error can throw during compilation.
+- Do not use deprecated implementation-specific calculation helpers in new shared forms.
+
+## Referenced forms or subforms are missing
+
+Referenced sections use exact form names or aliases and exact page and section labels. Subforms depend on a server form or
+package registry entry. Confirm that the dependency exists in the target environment and that its version and encounter
+type are appropriate. The parent JSON does not supply missing dependencies.
+
+## The form is saved but absent from the patient chart
+
+The default patient-chart workflow lists published O3 JSON forms. Confirm that the form is published, not retired, and is
+configured for the relevant patient-chart workflow. Saving a draft does not publish it. If the distribution uses a
+different renderer, check [Form engine implementations](/docs/forms-in-o3/form-engine-implementations) and that
+distribution's configuration.
+
+## Preview and production look different
+
+- Confirm both environments use compatible versions of the Form Builder, React Form Engine, and schema.
+- Compare frontend configuration, registered extensions, data sources, and metadata.
+- Confirm translations and `formSessionIntent` are the same.
+- The builder preview is React-only. It does not test Angular Form Engine compatibility.
+
+When reporting a problem, include a minimized schema with real patient data and secrets removed, package versions, mode,
+intent, browser console errors, and the server response. State whether the failure occurs during parse, validation,
+preview, publication, initial-value loading, or submission.

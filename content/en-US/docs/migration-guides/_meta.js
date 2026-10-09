@@ -1,5 +1,6 @@
 export default {
   index: "Overview",
+  "migrate-to-core-v10": "Migrate to Core v10",
   "migrate-to-core-v9": "Migrate to Core v9",
   "migrate-to-rspack-and-vitest": "Migrate to Rspack and Vitest",
   "migrate-to-workspace-v2": "Migrate to Workspace v2",

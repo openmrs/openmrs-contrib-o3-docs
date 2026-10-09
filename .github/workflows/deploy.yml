@@ -38,6 +38,8 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      - run: pnpm check:forms-doc-ownership
+
       - run: pnpm build
         env:
           # Raises the GitHub API rate limit for the build-time release fetch.

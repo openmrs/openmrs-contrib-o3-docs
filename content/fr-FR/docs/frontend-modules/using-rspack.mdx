@@ -7,7 +7,7 @@ Les applications frontend OpenMRS sont construites avec [Rspack](https://rspack.
 Vous n'êtes pas obligé d'utiliser la configuration par défaut. Les applications peuvent fournir leur propre `rspack.config.js`. Elle reste toutefois fortement recommandée. Cette page explique comment fonctionne la configuration par défaut et quelles contraintes une configuration personnalisée doit quand même respecter.
 
 <Callout type="info">
-  Rspack accepte le format de configuration de Webpack. Tout ce qui est décrit sur cette page s'applique donc aussi aux applications qui utilisent encore Webpack. Les quelques applications qui n'ont pas encore migré récupèrent les mêmes valeurs par défaut via `@openmrs/webpack-config`. Voir [Vous utilisez encore Webpack ?](#vous-utilisez-encore-webpack) plus bas.
+  Rspack accepte le format de configuration de Webpack. Tout ce qui est décrit sur cette page s'applique donc aussi aux applications qui utilisent encore Webpack. Les quelques applications qui n'ont pas encore migré récupèrent les mêmes valeurs par défaut via `@openmrs/webpack-config`. Voir [Vous utilisez encore Webpack ?](#vous-utilisez-encore-webpack-) plus bas.
 </Callout>
 
 ## Mise en place
@@ -115,7 +115,7 @@ L'exception est `esm-patient-common-lib`, une bibliothèque partagée du patient
 
 #### `esm-form-entry-app`
 
-Le module frontend de saisie de formulaires est une application Angular qui encapsule le [moteur de formulaires Angular](/docs/key-repositories#moteur-de-formulaire-angular). Contrairement à tous les autres modules frontend, il se construit encore avec **Webpack** et non Rspack, car il dépend de [`@angular-architects/module-federation`](https://github.com/angular-architects/module-federation-plugin), qui n'a pas encore été porté vers Rspack. Le plugin modifie la [configuration workspace Angular](https://github.com/openmrs/openmrs-esm-patient-chart/blob/main/packages/esm-form-entry-app/angular.json) pour ajouter une propriété `extraWebpackConfig` aux cibles `build` et `serve`, pointant vers une [configuration Webpack personnalisée](https://github.com/openmrs/openmrs-esm-patient-chart/blob/main/packages/esm-form-entry-app/webpack.config.js) qui:
+Le module frontend de saisie de formulaires est une application Angular qui encapsule le [moteur de formulaires Angular](/docs/key-repositories#moteur-de-formulaires-angular). Contrairement à tous les autres modules frontend, il se construit encore avec **Webpack** et non Rspack, car il dépend de [`@angular-architects/module-federation`](https://github.com/angular-architects/module-federation-plugin), qui n'a pas encore été porté vers Rspack. Le plugin modifie la [configuration workspace Angular](https://github.com/openmrs/openmrs-esm-patient-chart/blob/main/packages/esm-form-entry-app/angular.json) pour ajouter une propriété `extraWebpackConfig` aux cibles `build` et `serve`, pointant vers une [configuration Webpack personnalisée](https://github.com/openmrs/openmrs-esm-patient-chart/blob/main/packages/esm-form-entry-app/webpack.config.js) qui:
 
 - Configure `ModuleFederationPlugin` pour exposer l'application form entry comme module remote.
 - Déclare les dépendances partagées à partir des `peerDependencies` de l'application form entry.

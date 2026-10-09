@@ -15,7 +15,7 @@ Les principales pages du constructeur de formulaires O3 sont:
 - Le `Tableau de bord des formulaires` - où vous verrez une liste tabulaire des schémas de formulaires enregistrés sur votre serveur. Vous pouvez rechercher parmi les formulaires disponibles et les filtrer par statut `Active`, `All`, `Published`, `Unpublished` ou `Retired`. Le tableau de bord utilise `Active` par défaut. Vous pouvez également cliquer sur le nom d'un formulaire ou sur l'action d'édition à côté de chaque formulaire pour le lancer dans l'éditeur de formulaires, où vous pouvez y apporter des modifications.
 - `L'Éditeur de formulaires` - où vous pouvez créer un nouveau schéma de formulaire ou en modifier un existant. L'éditeur de formulaires se compose des éléments suivants:
 
-  - `Éditeur de schéma` - contient un éditeur JSON intégré qui utilise la bibliothèque [React Ace](https://github.com/securingsincity/react-ace). Vous pouvez importer un schéma, charger un schéma d'exemple lors de la création d'un nouveau formulaire, copier ou télécharger le schéma actuel, puis cliquer sur `Rendre les modifications` pour synchroniser les modifications JSON manuelles avec l'aperçu. Le code JSON saisi dans l'éditeur doit correspondre au [schéma de formulaire O3 standard](https://github.com/openmrs/openmrs-contrib-json-schemas/blob/main/form.schema.json). Lisez la [documentation du moteur de formulaires React](https://openmrs.atlassian.net/wiki/spaces/projects/pages/68747273/O3+Form+Docs) pour en savoir plus sur les propriétés de schéma disponibles.
+  - `Éditeur de schéma` - contient un éditeur JSON intégré qui utilise la bibliothèque [React Ace](https://github.com/securingsincity/react-ace). Vous pouvez importer un schéma, charger un schéma d'exemple lors de la création d'un nouveau formulaire, copier ou télécharger le schéma actuel, puis cliquer sur `Rendre les modifications` pour synchroniser les modifications JSON manuelles avec l'aperçu. Le code JSON saisi dans l'éditeur doit correspondre au [schéma de formulaire O3 standard](https://github.com/openmrs/openmrs-contrib-json-schemas/blob/main/form.schema.json). Consultez la [référence du schéma de formulaire O3](/docs/forms-in-o3/form-schema-reference) pour comprendre l'articulation entre le schéma et les contrats de l'environnement React.
   - `Aperçu` - un aperçu en direct du formulaire qui rend le schéma du formulaire en utilisant le [moteur de formulaires React](https://github.com/openmrs/openmrs-esm-form-engine-lib) comme vous le verriez dans votre DME. L'aperçu se met à jour automatiquement depuis le Constructeur interactif et après avoir cliqué sur `Rendre les modifications` pour les modifications de l'Éditeur de schéma. Vous pouvez également choisir la langue de l'aperçu lorsque le formulaire contient des traductions.
   - `Constructeur interactif` - une interface utilisateur interactive qui vous permet de construire vos schémas de formulaires sans écrire de code JSON. Les modifications apportées à votre schéma sont synchronisées avec l'Éditeur de schéma et l'Aperçu lorsque vous construisez votre formulaire. Vous pouvez utiliser le Constructeur interactif pour ajouter des pages, des sections et des questions à votre formulaire.
   - `Translation Builder` - une interface utilisateur pour ajouter et modifier les traductions du schéma, qui peuvent ensuite être prévisualisées depuis le sélecteur de langue de l'éditeur.
@@ -59,7 +59,7 @@ Les questions peuvent être rendues de différentes manières selon la propriét
 - **Traductions** - Stocker les traductions dans le schéma et prévisualiser le formulaire dans une langue sélectionnée
 - **Actions post-soumission** - Exécuter des actions après la soumission du formulaire (par exemple, inscription à un programme)
 
-Pour une documentation complète sur toutes les fonctionnalités disponibles, les types de rendu, les options de validation et les capacités avancées, consultez la [documentation du moteur de formulaires React](https://openmrs.atlassian.net/wiki/spaces/projects/pages/68747273/O3+Form+Docs).
+Consultez la référence locale pour les [types de champs et rendus](/docs/forms-in-o3/field-types-and-renderings), les [expressions et la validation](/docs/forms-in-o3/expressions-validation-and-logic) et les [capacités avancées](/docs/forms-in-o3/advanced-form-capabilities). Ces pages distinguent ce que propose le Constructeur interactif de ce qu'implémente l'environnement d'exécution.
 
 ## Configurer le constructeur de formulaires
 
@@ -201,7 +201,16 @@ Finalement, lorsque vous avez terminé de modifier votre formulaire, vous voudre
 
 ## Ressources utiles
 
-- [Documentation du moteur de formulaires React](https://openmrs.atlassian.net/wiki/spaces/projects/pages/68747273/O3+Form+Docs) - guide complet du moteur de formulaires React qui alimente l'aperçu et le rendu du constructeur de formulaires
+- [Référence du schéma de formulaire O3](/docs/forms-in-o3/form-schema-reference) - structure du formulaire et limite entre schéma normatif et environnement d'exécution
+- [Types de champs et rendus React](/docs/forms-in-o3/field-types-and-renderings) - prise en charge distincte dans le constructeur et à l'exécution
+- [Expressions, validation et logique](/docs/forms-in-o3/expressions-validation-and-logic) - portée des expressions et comportement exact des validateurs
+- [Capacités avancées des formulaires React](/docs/forms-in-o3/advanced-form-capabilities) - extensions, sources de données, sous-formulaires, intentions et sécurité
+- [Dépannage des formulaires JSON O3](/docs/forms-in-o3/forms-troubleshooting) - diagnostiquer les échecs d'analyse, d'aperçu, de métadonnées et de soumission
+
+## Pour aller plus loin
+
+- Suivez en anglais le [cours OpenMRS Academy sur le constructeur de formulaires O3](https://openmrs.org/academy/form-builder-course/).
+- Regardez les vidéos du cours en [anglais](https://youtube.com/playlist?list=PL5jj7JoBifSkI_MBt1uKGTCEkk11KuZAL&feature=shared), en [français](https://youtube.com/playlist?list=PL5jj7JoBifSngWK-rhEBgyHOFclbszZ2X&feature=shared) ou en [espagnol](https://youtube.com/playlist?list=PL5jj7JoBifSljb-Eoj8tK2zRm0mQVV4LX&feature=shared).
 - [Dépôt de l'application Form Builder](https://github.com/openmrs/openmrs-esm-form-builder)
 - [Dépôt de la bibliothèque du moteur de formulaires React](https://github.com/openmrs/openmrs-esm-form-engine-lib)
 - Tutoriel vidéo: Démonstration de Form Builder (libellés d'ancienne interface, toujours utile pour le flux principal)

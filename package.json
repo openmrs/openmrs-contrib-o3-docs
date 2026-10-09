@@ -9,6 +9,7 @@
     "prebuild": "node scripts/fetch-releases.mjs",
     "build": "next build",
     "postbuild": "pagefind --site out --output-path out/_pagefind && node scripts/post-export.mjs",
+    "check:forms-doc-ownership": "node --test scripts/check-forms-doc-ownership.test.mjs && node scripts/check-forms-doc-ownership.mjs",
     "lint": "next lint"
   },
   "repository": {

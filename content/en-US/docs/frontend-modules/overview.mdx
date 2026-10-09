@@ -65,9 +65,11 @@ Quick anatomy (at a glance):
   <FileTree.Folder name="packages" defaultOpen>
     <FileTree.Folder name="esm-active-visits-app" />
     <FileTree.Folder name="esm-appointments-app" />
-    <FileTree.Folder name="esm-outpatient-app" />
-    <FileTree.Folder name="esm-patient-list-app" />
+    <FileTree.Folder name="esm-bed-management-app" />
+    <FileTree.Folder name="esm-home-app" />
+    <FileTree.Folder name="esm-patient-list-management-app" />
     <FileTree.Folder name="esm-patient-registration-app" />
+    <FileTree.Folder name="esm-service-queues-app" />
     <FileTree.Folder name="esm-ward-app" />
     <FileTree.Folder name="esm-patient-search-app" defaultOpen>
       <FileTree.Folder name="src" defaultOpen>
@@ -151,9 +153,6 @@ Each frontend module has a root-level `package.json` file that defines its depen
     "prettier": "prettier --config prettier.config.js --write \"src/**/*.{ts,tsx,css,scss}\"",
     "postinstall": "husky install"
   },
-  "dependencies": {
-    "@carbon/react": "^1.83.0"
-  },
   "peerDependencies": {
     "@carbon/react": "1.x",
     "@openmrs/esm-framework": "*",
@@ -166,6 +165,7 @@ Each frontend module has a root-level `package.json` file that defines its depen
     "swr": "2.x"
   },
   "devDependencies": {
+    "@carbon/react": "^1.83.0",
     "openmrs": "next",
     "@openmrs/eslint-config": "^2.0.0",
     "@openmrs/esm-framework": "next",
@@ -189,6 +189,7 @@ Some key things to note from looking at this file include:
 - The `browser` property which points to the entry point of the built bundle that gets served (what the app shell loads at runtime).
 - The `main` property which defines the [entry point](#the-application-entry-point-indexts) of the frontend module’s source code, which is typically `src/index.ts`.
 - The OpenMRS runtime packages are usually peer dependencies for consumers and `next` dev dependencies for local development.
+- `@carbon/react` is a `1.x` peer dependency so that the build shares the app shell's copy instead of bundling its own. A copy in `devDependencies` provides types and lets tests run.
 - The Rspack config and CLI packages are dev dependencies because they are build-time tooling, not runtime modules loaded by the app shell.
 - ESLint 9 and `@openmrs/eslint-config` are dev dependencies. Shared rules and repository-specific ignores live in the root `eslint.config.mjs`; see [Linting](/docs/frontend-modules/development#linting).
 - Current React frontend modules use Rspack and Vitest by default. Older modules may still have Webpack or Jest scripts while they are being migrated.
@@ -314,5 +315,5 @@ If you’re building or debugging modules, these concepts will save you time:
 - **Translations** – Modules provide translations via `importTranslation` in `src/index.ts`, usually loading JSON files from a `translations/` directory. If this is missing or misconfigured, strings won’t localize.
 - **Sync vs async lifecycles** – `getSyncLifecycle` bundles code into the main chunk, while `getAsyncLifecycle` code-splits and loads on demand. Use each appropriately for performance. See the [Frontend modules testing guide](/docs/frontend-modules/unit-and-integration-testing) for examples and the performance notes in [Coding conventions](/docs/coding-conventions/performance).
 - **Backend requirements** – `routes.json` can declare backend module dependencies and versions. If they’re not met, O3 will warn administrators.
-- **Devtools overrides** – Local development usually relies on import map and route map overrides. See [Development](/docs/frontend-modules/development#import-map-overrides).
+- **Devtools overrides** – Local development usually relies on import map and route map overrides. See [Development](/docs/frontend-modules/development#using-import-map-overrides).
 - **Versioning strategy** – `latest` is the most recent release, `next` is pre‑release. Pin versions for stability in production, use `next` for testing and early access.

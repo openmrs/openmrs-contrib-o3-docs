@@ -1,0 +1,90 @@
+import { Steps } from "nextra/components";
+
+# Migrating to Core v10
+
+This guide is for migrating frontend modules to Core v10 and above. Core v10 is the framework version that ships with Reference Application 3.7.0.
+
+For most frontend modules, the code change is small: bump the framework and move the `@openmrs/esm-framework` peer dependency to `10.x`. The breaking changes in this release mostly affect how you work with running O3 instances, so it's worth reading the background even if your module builds cleanly.
+
+## Background
+
+Core v10 has two breaking changes.
+
+### Import map and route overrides only work in development mode
+
+Core v10 drops the single-spa [import-map-overrides](https://github.com/single-spa/import-map-overrides) library, introduced in [this pull request](https://github.com/openmrs/openmrs-esm-core/pull/1743). The framework now reads and writes overrides itself, and the app shell only honors them when `window.spaEnv` is `development`.
+
+In practice, this means:
+
+- `openmrs develop` (and `yarn start` in a frontend module repository) always runs the app shell in development mode, so local overrides keep working as before.
+- Production builds, including the Reference Application's Docker image and the community dev3, test3 and o3 servers, ignore import map and route overrides stored in `localStorage`. A production app shell no longer loads code from arbitrary URLs.
+
+If you previously overrode a module on a deployed server to test a change, run the module locally against that server's backend instead:
+
+```sh
+yarn start --sources 'packages/esm-my-app' --backend "https://test3.openmrs.org"
+```
+
+See [Development](/docs/frontend-modules/development#using-import-map-overrides) for how to override several modules at once against a locally running app shell.
+
+### Login only redirects to same-origin URLs
+
+The login app now validates the `returnToUrl` query parameter, and the redirect state it receives from other pages, before navigating after login. This was introduced in [this pull request](https://github.com/openmrs/openmrs-esm-core/pull/1763) to close an open redirect.
+
+Only URLs on the same origin as the O3 instance are followed. Anything else falls back to the URL in the login app's `links.loginSuccess` configuration property, which defaults to `${openmrsSpaBase}/home`.
+
+If your distribution links into the O3 login page with a `returnToUrl` pointing at another host, that link will now land on the home page instead. Serve the target from the same origin, or point users at it after login using `links.loginSuccess`.
+
+## Migration steps
+
+<Steps>
+
+### Bump core dependencies
+
+Bump core dependencies to Core v10:
+
+```bash
+yarn up openmrs@^10.0.0 @openmrs/esm-framework@^10.0.0
+```
+
+### Update the framework peer dependency
+
+Update the `@openmrs/esm-framework` peer dependency in each frontend module's `package.json`:
+
+```json
+{
+  "peerDependencies": {
+    "@openmrs/esm-framework": "10.x"
+  }
+}
+```
+
+### Check your development workflow
+
+If you or your team rely on Devtools overrides on a shared server, move that workflow to `openmrs develop` with the `--backend` flag, as described above.
+
+### Check login links
+
+Search your distribution's configuration and any links into O3 for `returnToUrl` values that point at another origin:
+
+```bash
+rg -n "returnToUrl" .
+```
+
+</Steps>
+
+After completing the steps above, verify everything works:
+
+- Run tests: `yarn test`
+- Run a development build: `yarn start`
+- Run a production build: `yarn build`
+
+## Other changes worth knowing about
+
+- `useAppContext` now returns the current value on the first render, and returns `undefined` when the namespace hasn't been registered yet. If a component assumed the first render was always empty, check that it handles both cases.
+- `openmrs develop` has a new `--packages` flag that runs modules by package name, resolved from the repository's Yarn workspaces, instead of by source directory. For example, `yarn start --packages @openmrs/esm-patient-vitals-app`.
+
+## Migration examples
+
+- [Patient chart](https://github.com/openmrs/openmrs-esm-patient-chart/pull/3367)
+- [Patient management](https://github.com/openmrs/openmrs-esm-patient-management/pull/2569)

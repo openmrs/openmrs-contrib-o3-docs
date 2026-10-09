@@ -24,7 +24,7 @@ Si vous utilisez déjà Core v6 ou supérieur, vous n'avez pas besoin de migrer.
 
 ## Contexte : Pourquoi cette migration était nécessaire
 
-Core v5 souffrait d'un problème critique du système de build : **les builds séquentiels ralentissaient considérablement ou échouaient complètement** en raison de l'épuisement de la mémoire. Cela rendait les workflows de développement peu fiables et forçait les développeurs à utiliser des [contournements](/docs/frontend-modules/development#im-running-into-memory-issues-when-building-core) comme vider les caches entre les builds ou redémarrer les processus Node.
+Core v5 souffrait d'un problème critique du système de build : **les builds séquentiels ralentissaient considérablement ou échouaient complètement** en raison de l'épuisement de la mémoire. Cela rendait les workflows de développement peu fiables et forçait les développeurs à utiliser des [contournements](/docs/frontend-modules/development#je-rencontre-des-problèmes-de-mémoire-en-construisant-core) comme vider les caches entre les builds ou redémarrer les processus Node.
 
 Suite à la [version v3.4.0](https://openmrs.atlassian.net/wiki/spaces/docs/pages/384696321/Release+Notes+3.4+2025-05), nous avons entrepris une mise à niveau majeure de l'outillage qui [a abouti à cette PR](https://github.com/openmrs/openmrs-esm-core/pull/1346). Cela représente un changement fondamental dans la façon dont nous construisons, exécutons et testons les modules frontend sous O3.
 
