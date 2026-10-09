@@ -242,9 +242,11 @@ Définissez des colonnes personnalisées ou remplacez les colonnes intégrées :
 
 Par défaut, la colonne d'actions affiche un bouton **Call** et un menu de débordement contenant `move`, `edit`, `remove` et `undo`. **Call** n'apparaît que pour les entrées ayant le statut d'attente. Pour les autres entrées, la première action disponible du menu de débordement (`move` par défaut) devient le bouton. `undo` n'apparaît que lorsque l'entrée a une entrée de file précédente vers laquelle revenir.
 
+Si vous remplacez la colonne `actions` dans `columnDefinitions`, listez explicitement `overflowMenu`, comme le fait l'exemple ci-dessus. Sinon, sa valeur par défaut est `edit`, `remove` et `undo`, sans `move`.
+
 **Options de configuration des colonnes** :
 - `id` - Identifiant unique de la colonne
-- `columnType` - Type de colonne (si différent de l'ID)
+- `columnType` - Type de colonne. Définissez-le sur chaque colonne que vous définissez, même lorsqu'il est identique à `id`. Une colonne sans `columnType` lève une erreur « Unknown column type from configuration ».
 - `header` - Texte d'en-tête (sera traduit s'il s'agit d'une clé de traduction valide)
 - `config` - Configuration spécifique à la colonne :
   - Pour `patient-identifier` : `identifierTypeUuid` - UUID du type d'identifiant

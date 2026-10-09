@@ -242,9 +242,11 @@ Define custom columns or override built-in columns:
 
 By default, the actions column shows a **Call** button and an overflow menu with `move`, `edit`, `remove` and `undo`. **Call** only appears for entries in the waiting status. For other entries, the first available overflow action (`move` by default) becomes the button instead. `undo` only appears when the entry has a previous queue entry to return to.
 
+If you override the `actions` column in `columnDefinitions`, list `overflowMenu` explicitly, as the example above does. Otherwise it defaults to `edit`, `remove` and `undo`, without `move`.
+
 **Column configuration options**:
 - `id` - Unique identifier for the column
-- `columnType` - Type of column (if different from ID)
+- `columnType` - Type of column. Set it on every column you define, even when it's the same as `id`. A column without `columnType` throws an "Unknown column type from configuration" error.
 - `header` - Header text (will be translated if it's a valid translation key)
 - `config` - Column-specific configuration:
   - For `patient-identifier`: `identifierTypeUuid` - UUID of identifier type

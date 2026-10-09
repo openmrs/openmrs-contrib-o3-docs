@@ -1,0 +1,121 @@
+import { Callout, Steps } from "nextra/components";
+
+# Exporter des paquets de métadonnées
+
+Le module [metadataexport](https://github.com/openmrs/openmrs-module-metadataexport) lit les métadonnées d'un serveur OpenMRS en fonctionnement et les écrit au format que charge le module [Initializer](https://github.com/mekomsolutions/openmrs-module-initializer). Vous pouvez l'utiliser pour capturer la configuration d'un serveur, comme ses concepts, ses lieux, ses types de rencontre et ses rôles, puis la charger sur un autre serveur.
+
+Vous définissez un **paquet** qui liste les domaines de métadonnées à exporter, puis vous le **construisez**. Chaque construction produit un fichier zip que vous pouvez télécharger.
+
+## Prérequis
+
+- Le module backend metadataexport, version 1.0.0 ou ultérieure. Il nécessite OpenMRS Platform 2.8.3 ou ultérieure, Initializer 2.12.1 ou ultérieur et REST Web Services 3.1.0 ou ultérieur.
+- Le module frontend `@openmrs/esm-metadataexport-app` des [Admin Tools](https://github.com/openmrs/openmrs-esm-admin-tools), qui ajoute la page O3 de gestion des paquets.
+
+La Reference Application inclut les deux à partir de la version 3.8.0.
+
+## Privilèges
+
+| Privilège | Permet |
+| --- | --- |
+| `Get Metadata Export Packages` | Consulter les paquets et les constructions, et voir la carte **Metadata Export** sur la page d'administration système |
+| `Manage Metadata Export Packages` | Créer, modifier et supprimer des paquets, et lancer des constructions |
+| `Download Metadata Export Packages` | Télécharger les constructions terminées |
+
+Accordez `Manage Metadata Export Packages` et `Download Metadata Export Packages` avec `Get Metadata Export Packages`. Les deux ont besoin de pouvoir lire le paquet.
+
+La Reference Application n'accorde ces privilèges à aucun rôle : par défaut, seuls les super-utilisateurs les ont. Ajoutez-les à un rôle avant de donner l'accès à d'autres administrateurs.
+
+## Créer un paquet
+
+<Steps>
+
+### Ouvrir Metadata Export
+
+Allez sur la page d'administration système et choisissez la carte **Metadata Export**.
+
+### Ajouter un paquet
+
+Cliquez sur **New package**. Saisissez un **Package name** et, si vous le souhaitez, une **Description**.
+
+### Choisir les domaines
+
+Cochez les domaines à exporter, ou **Select all** pour exporter tout ce que le serveur peut exporter. Les domaines de base, comme les concepts, les lieux, les types de rencontre, les rôles et privilèges, et les propriétés globales, sont toujours listés. D'autres, comme les files d'attente, la facturation, la génération d'identifiants et la hiérarchie d'adresses, n'apparaissent que lorsque leur module est en cours d'exécution.
+
+### Enregistrer
+
+Cliquez sur **Create package**.
+
+</Steps>
+
+Une construction exporte chaque élément des domaines choisis, ainsi que tout ce dont ces éléments dépendent. Pour modifier ou supprimer un paquet, cliquez sur **View** sur sa ligne et utilisez **Edit** ou **Delete**. La suppression retire le paquet, qui n'apparaît alors plus dans la liste.
+
+<Callout type="info">
+  La page O3 exporte des domaines entiers. Pour exporter des éléments précis, comme les lieux d'un seul site, créez
+  le paquet via l'[API REST](#utiliser-lapi-rest) et listez les UUID des éléments. La page O3 enregistre des domaines
+  entiers : continuez donc à modifier ce paquet via REST.
+</Callout>
+
+## Construire et télécharger un paquet
+
+Cliquez sur **View** sur le paquet, puis sur **Trigger new build**. Les constructions sont numérotées à partir de 1 pour chaque paquet, et chacune passe de **Queued** à **Running**, puis à **Completed** ou **Failed**. La liste s'actualise toutes les deux secondes jusqu'à la fin de la construction, et une construction en échec affiche son erreur.
+
+Une seule construction d'un paquet peut s'exécuter à la fois. Si le serveur redémarre pendant une construction, celle-ci est marquée comme échouée.
+
+Lorsqu'une construction est terminée, les utilisateurs disposant de `Download Metadata Export Packages` voient un lien **Download** à côté.
+
+## Contenu d'une construction
+
+Chaque construction est un fichier zip nommé `metadataexport-<nom-du-paquet>-v<construction>.zip`, organisé comme un paquet de contenu OpenMRS :
+
+- `configuration/backend_configuration/` contient un dossier de fichiers Initializer pour chaque domaine exporté, comme `encountertypes` ou `locations`.
+- `content.properties` enregistre le nom du paquet, et le numéro de construction comme `version`.
+- `metadataexport-manifest.json` enregistre tout ce que la construction a exporté, y compris les dépendances incluses. Pour chaque domaine exporté en entier, il liste aussi les lignes laissées de côté et la raison.
+
+Les éléments retirés sont exportés avec leur indicateur de retrait. Certaines lignes sont toujours laissées de côté, car Initializer ne pourrait pas les charger sur un autre serveur, comme les files d'attente retirées et les versions de formulaire remplacées. Si un paquet désigne l'une de ces lignes par son UUID, la construction échoue et indique pourquoi.
+
+## Charger un paquet sur un autre serveur
+
+Initializer charge les dossiers de domaine qu'il trouve dans le répertoire `configuration` du répertoire de données de l'application OpenMRS au démarrage du serveur. Pour charger une construction, copiez les dossiers de `configuration/backend_configuration/` du zip dans ce répertoire sur le serveur cible, puis redémarrez-le.
+
+Avant cela, vérifiez deux cas qui demandent une configuration supplémentaire sur le serveur cible :
+
+- Les sources distantes de génération d'identifiants sont exportées avec un paramètre fictif `property:idgen.remote.password.<uuid>` au lieu du mot de passe. Définissez cette propriété sur le serveur cible.
+- Les prix d'articles de caisse qui font référence à des articles de stock ne se chargent que sur un serveur qui possède déjà ces articles de stock.
+
+## Utiliser l'API REST
+
+Les ressources REST du module se trouvent sous `/ws/rest/v1/metadataexport` et utilisent les mêmes privilèges que la page O3.
+
+| Méthode et chemin | Rôle |
+| --- | --- |
+| `GET /domains` | Lister les domaines que ce serveur peut exporter |
+| `GET /packages`, `GET /packages/{uuid}` | Lister ou lire des paquets (ajoutez `includeAll=true` pour inclure les paquets retirés) |
+| `POST /packages` | Créer un paquet |
+| `POST /packages/{uuid}` | Mettre à jour un paquet. `entries` remplace la liste existante |
+| `DELETE /packages/{uuid}?reason=` | Retirer un paquet |
+| `POST /builds` | Lancer une construction avec `{"package": "<uuid-du-paquet>"}` |
+| `GET /builds?package=<uuid-du-paquet>` | Lister les constructions d'un paquet, de la plus récente à la plus ancienne |
+| `GET /builds/{uuid}/download` | Télécharger une construction terminée |
+
+Chaque entrée de `entries` désigne un domaine et, si besoin, les UUID des éléments à exporter. Une liste `itemUuids` vide exporte le domaine entier, et une liste `entries` vide exporte tous les domaines :
+
+```json
+{
+  "name": "Site A locations",
+  "description": "Locations for Site A",
+  "entries": [
+    { "domain": "LOCATIONS", "itemUuids": ["<location-uuid>"] }
+  ]
+}
+```
+
+Ces points de terminaison ne sont pas protégés contre la falsification de requêtes intersites (CSRF) : n'accordez donc ces privilèges qu'à des administrateurs de confiance.
+
+## Limites
+
+- Les fichiers zip des constructions restent sur le serveur sous `<app data dir>/metadataexport/packages/` jusqu'à ce que vous les supprimiez. Supprimez les anciennes constructions si l'espace disque compte.
+- Certains domaines qu'Initializer peut charger ne peuvent pas être exportés, notamment les formulaires Bahmni, les formulaires HTML, les correspondances de filtres de données, Liquibase, les fichiers clé-valeur JSON, les importations OCL et les dispositions.
+- Les UUID des descriptions de concepts et les noms de termes d'index ne sont pas conservés.
+- Une construction n'inclut que les dépendances des domaines que le module peut exporter.
+
+Le module peut aussi exporter tous les domaines à chaque démarrage. Définissez la propriété globale `metadataexport.exportOnStartup` sur `true` pour écrire les fichiers dans `<app data dir>/metadata_export/configuration/`. Cette fonction est distincte des paquets et ne produit pas de fichier zip.
