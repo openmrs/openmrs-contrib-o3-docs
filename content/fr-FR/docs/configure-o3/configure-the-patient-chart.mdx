@@ -525,7 +525,7 @@ Les versions 3.7.0 et 3.7.1 de la Reference Application utilisent patient-chart 
 
 La valeur par défaut est `a22733fa-3501-4020-a520-da024eeff088`.
 
-Les visites hors ligne et ce paramètre ont été supprimés de la branche `main` de patient-chart dans [openmrs-esm-patient-chart#3689](https://github.com/openmrs/openmrs-esm-patient-chart/pull/3689). Lors de la mise à niveau vers une version de patient-chart qui inclut ce changement, supprimez `offlineVisitTypeUuid` de votre configuration. Ces versions ignorent le paramètre et consignent une erreur « Unknown config key ».
+Patient-chart 13.0.0 a supprimé les visites hors ligne et ce paramètre dans [openmrs-esm-patient-chart#3689](https://github.com/openmrs/openmrs-esm-patient-chart/pull/3689). Lors de la mise à niveau vers la version 13.0.0 ou ultérieure, supprimez `offlineVisitTypeUuid` de votre configuration. Ces versions ignorent le paramètre et consignent une erreur « Unknown config key ». Elles dépendent aussi de Core v11, qui a [supprimé le support hors ligne](/docs/app-shell#support-hors-ligne) du framework.
 
 ### UUID du type de commande de médicament
 
