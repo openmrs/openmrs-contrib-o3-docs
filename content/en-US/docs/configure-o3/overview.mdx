@@ -50,7 +50,7 @@ Metadata can be provided in three ways:
 - The Initializer module uses checksums to track file changes—files are only reprocessed if their checksum changes, improving performance
 
 **Docker-specific note**: In Docker deployments, configuration files packaged with the backend are baked into the backend Docker image during build. To update metadata without rebuilding, you can:
-- Mount your configuration files or folders into `/openmrs/distribution/openmrs_config/`, for example `./my-config/globalproperties/my-gp.xml:/openmrs/distribution/openmrs_config/globalproperties/my-gp.xml`. The backend copies this folder into `/openmrs/data/configuration/` on every start, so changes take effect on the next restart. Mount individual files or subfolders rather than the whole folder, which holds the configuration built into the image. Don't place or mount files in `/openmrs/data/configuration/` itself: it is rebuilt on every start.
+- Mount your configuration files or folders into `/openmrs/distribution/openmrs_config/`, for example `./my-config/globalproperties/my-gp.xml:/openmrs/distribution/openmrs_config/globalproperties/my-gp.xml`. The backend copies this folder into `/openmrs/data/configuration/` on every start, so changes take effect on the next restart. Mount individual files, or mount a folder as a new subfolder of a domain folder (for example `./my-config/globalproperties:/openmrs/distribution/openmrs_config/globalproperties/my-site`). Mounting over a folder the image already has, such as `openmrs_config/` itself or a domain folder like `globalproperties/`, hides the configuration built into the image. Don't place or mount files in `/openmrs/data/configuration/` itself: it is rebuilt on every start.
 - Or rebuild the backend image (see the [Setting up an O3 instance](/docs/recipes/set-up-o3-instance#updating-metadata) guide)
 
 SDK deployments can update either backend-packaged configuration (requires WAR rebuild) or the application data directory (requires restart only).
@@ -88,7 +88,7 @@ Global properties are configured using XML files in the Initializer module. Plac
 
 1. **Content packages** - In the package's backend configuration tree. In current Reference Application content packages, this is `configuration/backend_configuration/globalproperties/`.
 2. **Distro configuration directory** - In `distro/configuration/globalproperties/` directory
-3. **Application data directory** - In `~/.OpenMRS/configuration/globalproperties/` with the SDK. In Docker, in `/openmrs/distribution/openmrs_config/globalproperties/`, which is copied into `/openmrs/data/configuration/globalproperties/` on every start
+3. **Application data directory** - In `~/.OpenMRS/configuration/globalproperties/` with the SDK. In Docker, in `/openmrs/distribution/openmrs_config/globalproperties/`, which is copied into `/openmrs/data/configuration/globalproperties/` on every start (see the Docker-specific note above for how to mount files there without hiding the image's configuration)
 
 **XML file format**:
 
