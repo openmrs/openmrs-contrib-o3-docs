@@ -37,7 +37,7 @@ Les métadonnées peuvent être fournies de trois façons :
 
 2. **Répertoire de configuration empaqueté avec la distribution** - Fichiers de configuration dans votre dépôt de distribution que votre build copie dans le package backend. Initializer attend un dossier `configuration/` organisé par domaine (par exemple, `configuration/concepts/`, `configuration/locations/` et `configuration/globalproperties/`). L'application de référence actuelle ne garde pas d'arborescence `distro/configuration` dans le dépôt de distribution ; elle référence plutôt des packages de contenu depuis `distro.properties`.
 
-3. **Répertoire de données d'application** - Fichiers de configuration placés dans le répertoire de données d'application d'OpenMRS (généralement `/openmrs/data/configuration/` ou `~/.OpenMRS/configuration/`). Cela permet des mises à jour à l'exécution sans reconstruction. Le module Initializer traite les fichiers de ce répertoire s'il existe, ce qui est utile pour les mises à jour de métadonnées post-déploiement.
+3. **Répertoire de données d'application** - Fichiers de configuration dans le répertoire de données d'application d'OpenMRS (`~/.OpenMRS/configuration/` avec le SDK, `/openmrs/data/configuration/` dans Docker). Cela permet des mises à jour à l'exécution sans reconstruction. Dans Docker, `/openmrs/data/configuration/` est reconstruit à partir de `/openmrs/distribution/openmrs_config/` à chaque démarrage : ajoutez donc vos fichiers dans ce dernier (voir la note spécifique à Docker ci-dessous). Le module Initializer traite les fichiers de ce répertoire s'il existe, ce qui est utile pour les mises à jour de métadonnées post-déploiement.
 
 **Ordre de chargement et précédence** :
 1. **Packages de contenu** sont chargés en premier (dans l'ordre spécifié dans `distro.properties`)
@@ -50,7 +50,7 @@ Les métadonnées peuvent être fournies de trois façons :
 - Le module Initializer utilise des sommes de contrôle pour suivre les changements de fichiers—les fichiers ne sont retraités que si leur somme de contrôle change, améliorant les performances
 
 **Note spécifique à Docker** : Dans les déploiements Docker, les fichiers de configuration empaquetés avec le backend sont intégrés dans l'image Docker backend pendant la construction. Pour mettre à jour les métadonnées sans reconstruire, vous pouvez :
-- Monter le répertoire de données d'application comme volume et y placer les fichiers de configuration
+- Monter vos fichiers ou dossiers de configuration dans `/openmrs/distribution/openmrs_config/`, par exemple `./my-config/globalproperties/my-gp.xml:/openmrs/distribution/openmrs_config/globalproperties/my-gp.xml`. Le backend copie ce dossier dans `/openmrs/data/configuration/` à chaque démarrage, donc les modifications prennent effet au redémarrage suivant. Montez des fichiers ou sous-dossiers individuels plutôt que le dossier entier, qui contient la configuration intégrée à l'image. Ne placez ni ne montez de fichiers dans `/openmrs/data/configuration/` lui-même : il est reconstruit à chaque démarrage.
 - Ou reconstruire l'image backend (voir le guide [Configuration d'une instance O3](/docs/recipes/set-up-o3-instance#mise-à-jour-des-métadonnées))
 
 Les déploiements SDK peuvent mettre à jour soit la configuration empaquetée avec le backend (nécessite une reconstruction WAR), soit le répertoire de données d'application (nécessite uniquement un redémarrage).
@@ -88,7 +88,7 @@ Les propriétés globales sont configurées à l'aide de fichiers XML dans le mo
 
 1. **Packages de contenu** - Dans l'arborescence de configuration backend du package. Dans les packages de contenu actuels de l'application de référence, il s'agit de `configuration/backend_configuration/globalproperties/`.
 2. **Répertoire de configuration de la distribution** - Dans le répertoire `distro/configuration/globalproperties/`
-3. **Répertoire de données d'application** - Dans `/openmrs/data/configuration/globalproperties/` ou `~/.OpenMRS/configuration/globalproperties/`
+3. **Répertoire de données d'application** - Dans `~/.OpenMRS/configuration/globalproperties/` avec le SDK. Dans Docker, dans `/openmrs/distribution/openmrs_config/globalproperties/`, qui est copié dans `/openmrs/data/configuration/globalproperties/` à chaque démarrage
 
 **Format de fichier XML** :
 
