@@ -117,7 +117,7 @@ The default order is: `["demographics", "contact", "relationships"]`.
 
 #### Defining Custom Fields
 
-Custom fields can be defined as either **person attributes** or **observations (obs)**:
+Custom fields can be defined as **person attributes**, **observations (obs)**, or **text**:
 
 ```json
 {
@@ -150,9 +150,9 @@ Custom fields can be defined as either **person attributes** or **observations (
 **Field Definition Properties**:
 
 - `id` - Unique identifier for the field (required)
-- `type` - Either `"person attribute"` or `"obs"` (required)
-- `uuid` - UUID of the person attribute type (for person attributes) or concept UUID (for obs) (required)
-- `label` - Custom label for the field (optional, defaults to metadata display name)
+- `type` - One of `"person attribute"`, `"obs"`, or `"text"` (required)
+- `uuid` - UUID of the person attribute type (for person attributes) or concept UUID (for obs) (required, except for text fields)
+- `label` - Custom label for the field (optional, defaults to metadata display name). For a text field, the text to display
 - `placeholder` - Placeholder text for the input (optional)
 - `showHeading` - Whether to show a heading above the field (default: `false`)
 - `validation` - Validation rules:
@@ -173,6 +173,39 @@ Custom fields can be defined as either **person attributes** or **observations (
 - `allowPastDates` - (For date fields) Allow past dates (default: `true`)
 
 **Important**: If you use fields of type `"obs"`, you **must** configure `registrationObs.encounterTypeUuid` (see below).
+
+#### Displaying Text in a Section
+
+A field of type `"text"` saves nothing. It displays its `label` wherever it is placed in a section's `fields`, keeping any line breaks. Use it for text the user should read, such as a consent statement shown above the consent fields:
+
+```json
+{
+  "@openmrs/esm-patient-registration-app": {
+    "fieldDefinitions": [
+      {
+        "id": "studyConsentStatement",
+        "type": "text",
+        "label": "I consent to being a part of the study.\nI understand I may withdraw at any time."
+      },
+      {
+        "id": "studyConsent",
+        "type": "obs",
+        "uuid": "5622AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      }
+    ],
+    "sections": ["demographics", "contact", "consent", "relationships"],
+    "sectionDefinitions": [
+      {
+        "id": "consent",
+        "name": "Consent",
+        "fields": ["studyConsentStatement", "studyConsent"]
+      }
+    ]
+  }
+}
+```
+
+The label can be translated under the key `<id>Text`, for example `studyConsentStatementText`.
 
 #### Overriding Built-in Fields
 
