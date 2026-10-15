@@ -80,8 +80,7 @@ Créez un fichier `spa-build-config.json` qui configure les propriétés d'exéc
   "configUrls": [],
   "defaultLocale": "en",
   "importmap": "./spa/importmap.json",
-  "routes": "./spa/routes.registry.json",
-  "supportOffline": false
+  "routes": "./spa/routes.registry.json"
 }
 ```
 
@@ -164,6 +163,15 @@ openmrs build --build-config spa-build-config.json --target ./spa
 </Callout>
 
 <Callout emoji="⚠️" type="warning">
+  **Gardez le shell de l'application au moins aussi récent que vos modules frontaux.** À partir de Core v11, les modules
+  frontaux construits avec l'outillage v11 chargent le runtime Module Federation depuis le shell de l'application, et
+  refusent de démarrer sous un shell de l'application plus ancien. Les modules construits avec un outillage plus ancien
+  continuent de fonctionner sous un shell de l'application plus récent. Lors d'une mise à niveau, mettez donc à jour en
+  premier la version d'`openmrs` utilisée pour la construction, ou faites-le en même temps que vos modules frontaux. Ce
+  changement a été introduit dans [cette pull request](https://github.com/openmrs/openmrs-esm-core/pull/1853).
+</Callout>
+
+<Callout emoji="⚠️" type="warning">
   **Important**: L'étape `assemble` doit s'exécuter avant `build`, et les deux commandes doivent utiliser le même répertoire `--target`. L'étape de construction lit les fichiers `importmap.json` et `routes.registry.json` créés par l'étape d'assemblage.
 </Callout>
 
@@ -188,6 +196,8 @@ Vous pouvez également spécifier des options supplémentaires:
 - `--fresh`: Nettoyer le répertoire de sortie avant l'exécution
 - `--manifest`: Générer un fichier manifeste avec les informations de version
 - `--mode config`: Utiliser le mode fichier de configuration. Sans cette option, le CLI démarre le questionnaire interactif.
+- `--ensure-entrypoints`: Faire échouer l'exécution si un module frontal n'a pas son `routes.json` ou le point d'entrée JavaScript vers lequel pointe son entrée dans la carte d'importation. Cette option est activée par défaut à partir de Core v11. Passez `--no-ensure-entrypoints` pour signaler ces problèmes sous forme d'avertissements à la place.
+- `--application-version <version>`: Enregistrer la version de votre distribution dans le registre des routes (Core v11 et ultérieur). Le shell de l'application l'expose sous `window.applicationVersion`, et la barre de navigation ainsi que la page de connexion l'affichent. La valeur spéciale `prerelease` affiche à la place un libellé traduit « Prerelease ».
 
 Le fichier peut ressembler à ce qui suit:
 
@@ -251,8 +261,7 @@ Le fichier `spa-build-config.json` doit inclure:
   "configUrls": ["/openmrs/spa/config.json"],
   "defaultLocale": "en",
   "importmap": "./spa/importmap.json",
-  "routes": "./spa/routes.registry.json",
-  "supportOffline": false
+  "routes": "./spa/routes.registry.json"
 }
 ```
 
@@ -263,7 +272,7 @@ Le fichier `spa-build-config.json` doit inclure:
 - `defaultLocale`: Code de langue par défaut (par exemple, `en`, `fr`)
 - `importmap`: Chemin, URL ou JSON inline pour la carte d'importation créée par `assemble`. Les chemins relatifs sont résolus depuis le répertoire où vous exécutez la commande.
 - `routes`: Chemin, URL ou JSON inline pour le registre des routes créé par `assemble`. Les chemins relatifs sont résolus depuis le répertoire où vous exécutez la commande.
-- `supportOffline`: S'il faut activer le support hors ligne via un service worker
+- `supportOffline`: S'il faut activer le support hors ligne via un service worker (Core v10 et antérieur). Core v11 a supprimé le support hors ligne et ignore cette propriété.
 
 La CLI OpenMRS lit `spa-build-config.json` comme du JSON littéral. Elle ne développe pas les variables d'environnement
 shell dans ce fichier pendant `openmrs build`. Si vous construisez directement des fichiers statiques, placez les URLs
@@ -293,13 +302,31 @@ openmrs build --build-config spa-build-config.json --target ./spa
 Options de construction supplémentaires:
 - `--target <répertoire>`: Le répertoire cible (doit correspondre au répertoire cible d'assemblage)
 - `--fresh`: Nettoyer le répertoire de sortie avant la construction
-- `--support-offline`: Activer le support hors ligne (peut remplacer le fichier de configuration)
+- `--support-offline`: Activer le support hors ligne (peut remplacer le fichier de configuration). Core v10 et antérieur uniquement.
+- `--no-compress`: Ne pas écrire de fichiers précompressés (Core v11 et ultérieur, voir ci-dessous)
+- `--no-compress-gzip` et `--no-compress-brotli`: Ignorer uniquement les fichiers gzip (`.gz`) ou brotli (`.br`)
 
 Après une construction réussie, votre répertoire `./spa` contiendra:
 - `index.html` - Le fichier HTML principal pour la SPA
 - `importmap.json` - La carte d'importation créée par l'étape d'assemblage
 - `routes.registry.json` - Le registre des routes créé par l'étape d'assemblage
 - Les bundles JavaScript et autres actifs nécessaires pour exécuter l'application
+- À partir de Core v11, des copies `.gz` et `.br` de chaque fichier JavaScript, CSS, JSON, SVG et HTML d'au moins 1 Ko
+
+### Fichiers précompressés
+
+À partir de Core v11, `openmrs build` écrit une copie gzip et une copie brotli à côté de chaque fichier compressible du répertoire cible, y compris les modules frontaux rassemblés par `assemble`. Les fichiers compressibles sont les fichiers JavaScript, CSS, JSON, SVG et HTML d'au moins 1 Ko. Les source maps ne sont pas précompressées. Par exemple, `openmrs.js` obtient `openmrs.js.gz` et `openmrs.js.br`. Votre serveur web peut alors envoyer ces fichiers directement au lieu de les compresser à chaque requête. La construction supprime également les fichiers précompressés dont l'original n'existe plus.
+
+Vous pouvez désactiver ce comportement, ou le limiter à un seul format, avec les drapeaux ci-dessus ou avec les propriétés `compress`, `compressGzip` et `compressBrotli` de `spa-build-config.json`. Les valeurs de la configuration de construction ont priorité sur les drapeaux de la ligne de commande:
+
+```json filename="spa-build-config.json"
+{
+  "compress": true,
+  "compressBrotli": false
+}
+```
+
+Les fichiers précompressés ne sont utiles que si votre serveur web sait les servir. Consultez [Servir les fichiers précompressés](#servir-les-fichiers-précompressés).
 
 <Callout emoji="✅" type="success">
   **Vérification de la construction**: Après avoir exécuté la commande de construction, vérifiez que `./spa/index.html` existe. S'il n'existe pas, la construction a échoué. Vérifiez les journaux de construction pour les erreurs.
@@ -346,6 +373,12 @@ server {
     }
 }
 ```
+
+### Servir les fichiers précompressés
+
+L'exemple nginx de base ci-dessus sert chaque fichier sans compression. Pour servir les fichiers `.br` et `.gz` écrits par `openmrs build`, nginx doit choisir le bon fichier pour chaque requête en fonction de l'en-tête `Accept-Encoding` du navigateur, et définir les en-têtes `Content-Encoding` et `Vary` correspondants.
+
+Le [nginx.conf frontend](https://github.com/openmrs/openmrs-distro-referenceapplication/blob/main/frontend/nginx.conf) de l'application de référence le fait en n'utilisant que les directives natives de nginx, il fonctionne donc avec l'image `nginx:alpine` standard. Il privilégie brotli, se rabat sur gzip, puis sur le fichier non compressé. Il met aussi en cache pendant un an les fichiers JavaScript et la feuille de style principale du styleguide, et demande aux navigateurs de revalider les autres fichiers CSS, JSON et SVG. Nous recommandons de partir de ce fichier plutôt que d'écrire le vôtre.
 
 ### Test local
 

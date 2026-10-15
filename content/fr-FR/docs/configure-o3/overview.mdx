@@ -369,7 +369,7 @@ Le fichier de configuration de génération de la SPA peut spécifier les propri
 - `configUrls` - un tableau d'URLs pointant vers des fichiers de configuration JSON qui seront chargés dans votre SPA à l'exécution. Ces URLs peuvent utiliser des variables de modèle comme `${openmrsSpaBase}` ou `${openmrsBase}` qui seront interpolées à l'exécution en utilisant la fonction `interpolateUrl()`. Par exemple, `${openmrsSpaBase}/config.json` sera résolu en `/openmrs/spa/config.json`.
 - `configPaths` - un tableau de fichiers JSON de configuration locaux à copier dans la sortie de build. La commande build ajoute le nom de chaque fichier copié à `configUrls`, afin que la SPA puisse le récupérer à l'exécution.
 - `defaultLocale` - la locale par défaut dans laquelle votre SPA sera servie. La construction de l'app shell utilise `en` par défaut lorsqu'aucune locale par défaut n'est fournie. Le script de démarrage Docker de l'application de référence remplace un `SPA_DEFAULT_LOCALE` vide par `en_GB` (note : utilise un underscore, pas un tiret).
-- `supportOffline` - valeur booléenne déterminant si votre SPA pourra fonctionner hors ligne ou non. Par défaut : `false`.
+- `supportOffline` - valeur booléenne déterminant si votre SPA pourra fonctionner hors ligne ou non. Par défaut : `false`. Core v11 a supprimé le support hors ligne et ignore cette propriété.
 - `pageTitle` - le titre de page par défaut qui sera utilisé par votre SPA. Par défaut : `OpenMRS`.
 - `importmap` - URL ou chemin vers la carte d'importation (généralement `$SPA_PATH/importmap.json`).
 - `routes` - URL ou chemin vers le registre des routes (généralement `$SPA_PATH/routes.registry.json`).
@@ -388,3 +388,4 @@ Pour des tâches de configuration spécifiques, consultez ces guides détaillés
 - **[Configurer la gestion des patients](/docs/configure-o3/configure-patient-management)** - Personnaliser l'enregistrement, la recherche, les rendez-vous, les files d'attente, les salles et plus encore
 - **[Configurer les files d'attente de service](/docs/configure-o3/configure-service-queues)** - Guide détaillé pour la configuration des files d'attente de service
 - **[Configurer la gestion des salles](/docs/configure-o3/configure-ward-management)** - Guide détaillé pour la configuration de la gestion des salles
+- **[Configurer l'authentification à deux facteurs](/docs/configure-o3/configure-two-factor-authentication)** - Activer la connexion avec une application d'authentification

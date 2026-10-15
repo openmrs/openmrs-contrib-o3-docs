@@ -369,7 +369,7 @@ The SPA build configuration file can specify the following properties:
 - `configUrls` - an array of URLs pointing to JSON configuration files that will be loaded into your SPA at runtime. These URLs can use template variables like `${openmrsSpaBase}` or `${openmrsBase}` which will be interpolated at runtime using the `interpolateUrl()` function. For example, `${openmrsSpaBase}/config.json` will resolve to `/openmrs/spa/config.json`.
 - `configPaths` - an array of local JSON configuration files to copy into the build output. The build command appends each copied file's basename to `configUrls`, so the SPA can fetch it at runtime.
 - `defaultLocale` - the default locale that your SPA will be served in. The app shell build defaults to `en` when no default locale is provided. The Reference Application Docker startup script defaults an empty `SPA_DEFAULT_LOCALE` to `en_GB` (note: uses underscore, not hyphen).
-- `supportOffline` - boolean value that determines whether or not your SPA will be able to function offline. Defaults to `false`.
+- `supportOffline` - boolean value that determines whether or not your SPA will be able to function offline. Defaults to `false`. Core v11 removed offline support and ignores this property.
 - `pageTitle` - the default page title that will be used by your SPA. Defaults to `OpenMRS`.
 - `importmap` - URL or path to the import map (typically `$SPA_PATH/importmap.json`).
 - `routes` - URL or path to the routes registry (typically `$SPA_PATH/routes.registry.json`).
@@ -388,3 +388,4 @@ For specific configuration tasks, see these detailed guides:
 - **[Configure patient management](/docs/configure-o3/configure-patient-management)** - Customize patient registration, search, appointments, queues, wards, and more
 - **[Configure service queues](/docs/configure-o3/configure-service-queues)** - Detailed guide for service queue configuration
 - **[Configure ward management](/docs/configure-o3/configure-ward-management)** - Detailed guide for ward management configuration
+- **[Configure two-factor authentication](/docs/configure-o3/configure-two-factor-authentication)** - Turn on sign-in with an authenticator app

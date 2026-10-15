@@ -1,3 +1,5 @@
+import { Callout } from "nextra/components";
+
 # React expressions, validation, and logic
 
 React Form Engine expressions are evaluated by the O3 framework expression evaluator with a controlled context. They are
@@ -51,7 +53,7 @@ The following names are instance members of `CommonExpressionHelpers` and are pr
 | `calcAgeBasedOnDate(date?)` | Patient birth year subtracted from the target year; month and day are intentionally ignored. |
 | `calcBSA(height, weight)` | Mosteller BSA rounded to two decimals, or `null`. |
 | `calcGravida(term, abortion)` | Integer sum; throws for a non-integer number or a non-numeric string. A numeric string is truncated to an integer. |
-| `calcWeightForHeightZscore(height, weight)` | WHO-derived score string, `-4` outside 45–110 cm, or `null` when input/reference data is missing. |
+| `calcWeightForHeightZscore(height, weight)` | WHO-derived score string, or `null` when height is outside 45–110 cm or input/reference data is missing. Form engine versions before 4.3.0 return `-4` outside 45–110 cm. |
 | `calcBMIForAgeZscore(height, weight)` / `calcHeightForAgeZscore(height)` | WHO-derived score string or `null`. |
 | `calcTimeDifference(date, unit)` | Rounded absolute difference to today in `d`, `w`, `m`, or `y`; `0` when no date is supplied. |
 
@@ -117,6 +119,26 @@ value review when a value is returned; accepting or changing that value still fo
 The expression context also exposes the previous encounter through `HD.getObject` behavior used internally by the
 historical data service. Test historical expressions with real encounter data because availability depends on processor
 context and encounter history.
+
+## Null-safe expressions
+
+Reading a property of `null` or `undefined` is an error, as it is in JavaScript, so an expression that runs before its data has loaded needs a guard. In Core v11 and later, optional chaining works as it does in JavaScript, and `&&`, `||` and `??` short-circuit, so the right-hand side isn't evaluated when the left-hand side decides the result. Any of these work:
+
+```js
+patient?.birthDate ? age < 5 : false
+visit && visit.visitType.uuid === 'some-visit-type-uuid'
+myValue ?? 0
+```
+
+Optional chaining stops the whole chain, so `a?.b.c` is `undefined` when `a` is nullish. It doesn't cover a property that's genuinely missing: `a?.b.c` still throws when `a` is `{}`.
+
+Before Core v11, `a?.b` still threw when `a` was `undefined`, and `&&` evaluated both sides, so use a ternary such as `a ? a.b : undefined` on older cores.
+
+<Callout type="warning">
+  Before Core v11, a missing property could resolve to a variable with the same name. For example, `obs.value` would
+  return the `value` field's current value if `obs` had no `value` property. From Core v11, it returns `undefined`. If
+  a form relied on this, refer to the field ID directly.
+</Callout>
 
 ## Security boundary
 

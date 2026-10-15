@@ -55,7 +55,7 @@ L’app shell est l’application hôte qui démarre O3 et coordonne le chargeme
 il gère :
 
 - **Démarrage :** rend `index.html`, charge la carte d’importation et le registre des routes, puis connecte le chargement et le routage des modules.
-- **Services d’exécution :** définit points d’arrêt, abonnements (modales, toasts, notifications) et le mode hors ligne.
+- **Services d’exécution :** définit points d’arrêt, abonnements (modales, toasts, notifications) et, dans Core v10 et antérieur, le mode hors ligne.
 - **Couplage plateforme :** initialise l’état global et met en place configuration et extensions.
 
 Au démarrage, l’app shell n’exécute pas immédiatement tous les modules frontend. Il met en place les services UI de base,
@@ -203,7 +203,7 @@ Les éléments les plus importants sont :
   vie comme `getSyncLifecycle` et `getAsyncLifecycle`, et utilitaires qui adaptent les composants React aux cycles de vie
   single-spa.
 - **Services UX partagés :** composants du styleguide, navigation et fil d’Ariane, modales, workspaces, toasts,
-  snackbars, notifications, traductions et prise en charge du mode hors ligne.
+  snackbars, notifications, traductions et, dans Core v10 et antérieur, prise en charge du mode hors ligne.
 
 Pour les auteurs de modules, la règle pratique est d’utiliser le framework pour les comportements transversaux d’O3 au
 lieu d’inventer localement des wrappers de fetch, de l’état global, du câblage d’extensions, du chargement de configuration

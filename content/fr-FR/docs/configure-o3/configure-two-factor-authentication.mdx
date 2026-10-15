@@ -1,0 +1,108 @@
+import { Callout, Steps } from "nextra/components";
+
+# Configuration de l'authentification à deux facteurs
+
+O3 prend en charge l'authentification à deux facteurs avec des mots de passe à usage unique basés sur le temps (TOTP). Les utilisateurs qui s'inscrivent scannent un code QR avec une application d'authentification, comme Google Authenticator, Microsoft Authenticator ou Authy. Ensuite, à chaque connexion, ils saisissent après leur mot de passe le code à 6 chiffres affiché par l'application. Les utilisateurs qui ne se sont pas inscrits continuent de se connecter avec leur seul mot de passe.
+
+L'authentification à deux facteurs est désactivée par défaut. Pour l'activer, il faut configurer le backend et le frontend.
+
+## Prérequis
+
+- Le module backend [authentication](https://github.com/openmrs/openmrs-module-authentication), version 2.4.0 ou ultérieure. Les versions antérieures n'ont pas les points de terminaison d'inscription qu'utilise l'application de connexion O3.
+- `@openmrs/esm-login-app` 11.0.0 ou ultérieur, de Core v11.
+
+La Reference Application inclut les deux à partir de la version 3.8.0, mais ne configure pas l'authentification à deux facteurs.
+
+## Configurer le backend
+
+Le module authentication lit ses paramètres dans le fichier des propriétés d'exécution (runtime properties) d'OpenMRS, et non dans les propriétés globales. Ajoutez-y ces lignes :
+
+```properties filename="openmrs-runtime.properties"
+authentication.scheme=2fa
+authentication.scheme.2fa.type=org.openmrs.module.authentication.web.TwoFactorAuthenticationScheme
+authentication.scheme.2fa.config.primaryOptions=basic
+authentication.scheme.2fa.config.secondaryOptions=totp
+authentication.scheme.basic.type=org.openmrs.module.authentication.web.BasicWebAuthenticationScheme
+authentication.scheme.basic.config.loginPage=/spa/login
+authentication.scheme.totp.type=org.openmrs.module.authentication.web.TotpAuthenticationScheme
+authentication.scheme.totp.config.loginPage=/spa/login/totp-challenge
+```
+
+- `2fa` et `basic` sont des identifiants de schéma que vous pouvez renommer, à condition de renommer chaque ligne qui les utilise. Le schéma TOTP doit garder l'identifiant `totp`, car l'application de connexion O3 l'utilise.
+- Les deux paramètres `loginPage` dirigent les utilisateurs vers les pages de connexion O3. Sans eux, le module utilise ses valeurs par défaut, qui pointent vers des pages de l'ancienne interface.
+
+Redémarrez OpenMRS après avoir modifié ces paramètres.
+
+<Callout type="info">
+  Dans l'image Docker de la Reference Application, le fichier des propriétés d'exécution est
+  `/openmrs/data/openmrs-runtime.properties`, sur le volume de données du backend, et il est conservé entre les
+  redémarrages. Modifiez ce fichier. N'utilisez pas les variables d'environnement `OMRS_EXTRA_*` pour ces paramètres :
+  l'image met leurs noms en minuscules, alors que le module cherche des clés en casse mixte comme `primaryOptions` et
+  `loginPage`.
+</Callout>
+
+## Configurer le frontend
+
+Activez la page d'inscription dans votre configuration frontend :
+
+```json
+{
+  "@openmrs/esm-login-app": {
+    "twoFactorAuth": {
+      "enabled": true
+    }
+  }
+}
+```
+
+Cela ajoute au menu utilisateur un lien **Two-Factor Authentication**, qui ouvre la page d'inscription. Vous pouvez changer le titre de la page avec `twoFactorAuth.dashboardTitle`. La page où les utilisateurs saisissent leur code à la connexion ne dépend pas de ce paramètre.
+
+## S'inscrire
+
+<Steps>
+
+### Ouvrir la page d'inscription
+
+Dans le menu utilisateur (**My Account**), choisissez **Two-Factor Authentication**.
+
+### Configurer l'application d'authentification
+
+Sous **Authenticator App**, cliquez sur **Set up**. Scannez le code QR avec une application d'authentification, ou saisissez la clé de configuration affichée en dessous.
+
+### Confirmer
+
+Saisissez le code à 6 chiffres de l'application et cliquez sur **Confirm and enable authenticator app**. La page indique alors l'application d'authentification comme **Enabled**.
+
+</Steps>
+
+## Se connecter
+
+Lorsqu'un utilisateur inscrit a saisi son mot de passe, O3 affiche la page **Two-Factor Verification**. Il saisit le code à 6 chiffres actuel de son application et clique sur **Verify**, puis choisit un lieu comme d'habitude. Si le code est erroné, il reste sur la page et peut réessayer.
+
+### Se souvenir de cet appareil
+
+La page de vérification comporte une case **Remember this device**, cochée par défaut. Elle n'a d'effet que si vous l'activez dans le backend :
+
+```properties filename="openmrs-runtime.properties"
+authentication.scheme.2fa.config.rememberMeEnabled=true
+```
+
+Avec ce paramètre, un utilisateur qui coche la case reçoit un cookie qui lui évite l'étape du code sur ce navigateur pendant 30 jours. Le cookie est marqué `Secure` : il n'est donc envoyé qu'en HTTPS. Le [README du module authentication](https://github.com/openmrs/openmrs-module-authentication#readme) liste les autres paramètres de cette fonction, comme sa durée.
+
+## Réinitialiser l'inscription d'un utilisateur
+
+Les utilisateurs ne peuvent pas encore supprimer leur propre inscription : le bouton **Remove** de la page d'inscription est désactivé. Si un utilisateur perd l'accès à son application d'authentification, un administrateur peut vider deux propriétés utilisateur, `authentication.secondaryType` et `authentication.totp.secret`. L'utilisateur peut alors se connecter avec son seul mot de passe et s'inscrire à nouveau.
+
+Pour le faire via l'API REST, lisez les propriétés actuelles de l'utilisateur, videz ces deux propriétés et renvoyez l'ensemble complet. La mise à jour de `userProperties` remplace toutes les propriétés de l'utilisateur : n'envoyer que les deux clés supprimerait donc les autres, comme `defaultLocale`.
+
+```bash
+# Lire les propriétés de l'utilisateur
+curl -u admin:password "https://your-server/openmrs/ws/rest/v1/user/<user-uuid>?v=custom:(userProperties)"
+
+# Les renvoyer avec les deux propriétés TOTP vidées
+curl -u admin:password -H "Content-Type: application/json" \
+  -d '{"userProperties": {"defaultLocale": "en", "authentication.secondaryType": "", "authentication.totp.secret": ""}}' \
+  "https://your-server/openmrs/ws/rest/v1/user/<user-uuid>"
+```
+
+Incluez toutes les propriétés renvoyées par la première requête, pas seulement `defaultLocale`.
