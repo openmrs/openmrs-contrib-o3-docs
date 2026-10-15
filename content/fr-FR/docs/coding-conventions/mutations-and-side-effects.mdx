@@ -63,6 +63,60 @@
   };
   ```
 
+  Un filtre de clé ne peut pas rafraîchir les listes chargées avec [`useOpenmrsInfinite`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useOpenmrsInfinite.md) ou [`useOpenmrsFetchAll`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useOpenmrsFetchAll.md). Ces deux hooks reposent sur `useSWRInfinite`, et SWR ignore les entrées de cache de `useSWRInfinite` lorsqu'il applique un filtre de clé. Le filtre ci-dessus ne rafraîchit donc rien pour ces listes. Parcourir `cache.keys()` et appeler `mutate` sur la clé de l'une de ces listes ne suffit pas non plus, car seule la première page est récupérée à nouveau et les pages suivantes restent périmées. À la place :
+
+  - Dans le composant qui charge la liste, appelez la fonction `mutate` renvoyée par `useOpenmrsInfinite` ou `useOpenmrsFetchAll`. Appelée sans argument, elle récupère à nouveau toutes les pages chargées.
+  - Si le rafraîchissement doit se faire ailleurs, par exemple dans une modale ou une autre extension, transmettez-lui cette fonction `mutate` (par exemple, en tant que prop de la modale), ou chargez la liste avec une seule clé `useSWR` et un fetcher qui suit les liens `next`. Un filtre de clé peut correspondre à cette clé, et sa revalidation récupère à nouveau toutes les pages.
+
+  ```tsx
+  import { openmrsFetch, restBaseUrl } from '@openmrs/esm-framework';
+  import useSWR from 'swr';
+
+  interface PaginatedResponse<T> {
+    results: Array<T>;
+    links?: Array<{ rel: string; uri: string }>;
+  }
+
+  // Suit les liens `next` jusqu'à ce que toutes les pages soient chargées
+  async function fetchAllPages<T>(url: string): Promise<Array<T>> {
+    const results: Array<T> = [];
+    let nextUrl: string | null = url;
+
+    while (nextUrl) {
+      const response = await openmrsFetch<PaginatedResponse<T>>(nextUrl);
+      results.push(...(response.data?.results ?? []));
+      nextUrl = getNextPageUrl(response.data?.links);
+    }
+
+    return results;
+  }
+
+  function getNextPageUrl(links: PaginatedResponse<unknown>['links']): string | null {
+    const uri = links?.find((link) => link.rel === 'next')?.uri;
+    if (!uri) {
+      return null;
+    }
+
+    // Les liens `next` sont absolus, donc utiliser l'origine courante pour que les proxys frontend continuent de fonctionner
+    const nextUrl = new URL(uri);
+    nextUrl.host = window.location.host;
+    nextUrl.protocol = window.location.protocol;
+    return nextUrl.toString();
+  }
+
+  // Une seule clé de cache pour toute la liste, afin que le filtre de clé ci-dessus rafraîchisse toutes les pages
+  export function usePatientVisits(patientUuid: string) {
+    const url = `${restBaseUrl}/visit?patient=${patientUuid}&v=custom:(uuid,display,startDatetime)`;
+    return useSWR<Array<Visit>>(url, fetchAllPages<Visit>);
+  }
+  ```
+
+  [`useOpenmrsPagination`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useOpenmrsPagination.md) repose sur `useSWR`, donc un filtre de clé peut atteindre ses entrées de cache. Ses clés de cache sont toutefois des URLs absolues dont la chaîne de requête est réencodée. Faites donc correspondre le chemin de la ressource avec `includes` plutôt qu'avec `startsWith` :
+
+  ```tsx
+  await mutate((key) => typeof key === 'string' && key.includes(`${restBaseUrl}/visit?patient=${patientUuid}`));
+  ```
+
 - Lors de la mutation de données qui apparaissent à plusieurs endroits dans votre application, assurez-vous de mettre à jour toutes les entrées de cache pertinentes. Vous pouvez utiliser la fonction `mutate` avec un matcher de clé pour cibler des entrées de cache spécifiques. Voici un exemple de mise à jour des données d'adhésion à une cohorte :
 
   ```tsx

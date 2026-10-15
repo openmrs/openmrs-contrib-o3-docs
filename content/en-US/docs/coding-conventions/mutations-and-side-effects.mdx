@@ -63,6 +63,60 @@
   };
   ```
 
+  A key filter can't refresh lists loaded with [`useOpenmrsInfinite`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useOpenmrsInfinite.md) or [`useOpenmrsFetchAll`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useOpenmrsFetchAll.md). Both hooks are built on `useSWRInfinite`, and SWR skips `useSWRInfinite` cache entries when it matches a key filter, so the filter above refreshes nothing for those lists. Looping over `cache.keys()` and calling `mutate` on one of those lists' keys isn't enough either, because it refetches only the first page and leaves later pages stale. Instead:
+
+  - In the component that loads the list, call the `mutate` function returned by `useOpenmrsInfinite` or `useOpenmrsFetchAll`. Called with no arguments, it refetches every loaded page.
+  - If the refresh has to happen somewhere else, such as a modal or another extension, either pass that `mutate` function to it (for example, as a modal prop), or load the list with a single `useSWR` key and a fetcher that follows `next` links. A key filter can match that key, and revalidating it refetches every page.
+
+  ```tsx
+  import { openmrsFetch, restBaseUrl } from '@openmrs/esm-framework';
+  import useSWR from 'swr';
+
+  interface PaginatedResponse<T> {
+    results: Array<T>;
+    links?: Array<{ rel: string; uri: string }>;
+  }
+
+  // Follows `next` links until every page has loaded
+  async function fetchAllPages<T>(url: string): Promise<Array<T>> {
+    const results: Array<T> = [];
+    let nextUrl: string | null = url;
+
+    while (nextUrl) {
+      const response = await openmrsFetch<PaginatedResponse<T>>(nextUrl);
+      results.push(...(response.data?.results ?? []));
+      nextUrl = getNextPageUrl(response.data?.links);
+    }
+
+    return results;
+  }
+
+  function getNextPageUrl(links: PaginatedResponse<unknown>['links']): string | null {
+    const uri = links?.find((link) => link.rel === 'next')?.uri;
+    if (!uri) {
+      return null;
+    }
+
+    // `next` links are absolute, so use the current origin to keep frontend proxies working
+    const nextUrl = new URL(uri);
+    nextUrl.host = window.location.host;
+    nextUrl.protocol = window.location.protocol;
+    return nextUrl.toString();
+  }
+
+  // One cache key for the whole list, so the key filter above refreshes every page
+  export function usePatientVisits(patientUuid: string) {
+    const url = `${restBaseUrl}/visit?patient=${patientUuid}&v=custom:(uuid,display,startDatetime)`;
+    return useSWR<Array<Visit>>(url, fetchAllPages<Visit>);
+  }
+  ```
+
+  [`useOpenmrsPagination`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useOpenmrsPagination.md) is built on `useSWR`, so a key filter can reach its cache entries. Its cache keys are absolute URLs with a re-encoded query string, though, so match the resource path with `includes` rather than `startsWith`:
+
+  ```tsx
+  await mutate((key) => typeof key === 'string' && key.includes(`${restBaseUrl}/visit?patient=${patientUuid}`));
+  ```
+
 - When mutating data that appears in multiple places in your application, make sure to update all relevant cache entries. You can use the `mutate` function with a key matcher to target specific cache entries. Here's an example of updating cohort membership data:
 
   ```tsx

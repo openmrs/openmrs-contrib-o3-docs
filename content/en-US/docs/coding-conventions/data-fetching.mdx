@@ -113,6 +113,42 @@ Unbounded retries and refresh loops cause unpredictable latency and load.
   });
   ```
 
+## Paginated endpoints
+
+If an endpoint can return more than one page of results, don't fetch it with a single `openmrsFetch`, `useSWR` or `useOpenmrsSWR` call. That call only reads the first page, and the UI silently drops the rest.
+
+Most OpenMRS REST list and search endpoints are paginated. The server returns up to `webservices.rest.maxResultsDefault` results per request (a global property that defaults to 50), and adds a link with `rel: "next"` to the response when more results exist. See the [REST module documentation](https://openmrs.atlassian.net/wiki/spaces/docs/pages/25469882/REST+Module) for details.
+
+Pick a hook from `@openmrs/esm-framework` based on what the UI needs:
+
+- [`useOpenmrsPagination`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useOpenmrsPagination.md) for a table that shows one page at a time. It fetches only the current page, and sets `limit`, `startIndex` and `totalCount` on the URL for you.
+- [`useOpenmrsInfinite`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useOpenmrsInfinite.md) for infinite scroll. It fetches the next page each time you call `loadMore`.
+- [`useOpenmrsFetchAll`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useOpenmrsFetchAll.md) when the UI needs the complete set, for example to filter, group, or count results on the client. It follows `next` links until every page has loaded. By default, `data` is `undefined` and `isLoading` is `true` until the last page arrives. Set the `partialData` option to get results as each page loads. This hook requests every page up front, so prefer server-side filtering or `useOpenmrsPagination` when the UI doesn't need every result.
+
+[`useFhirPagination`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useFhirPagination.md), [`useFhirInfinite`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useFhirInfinite.md) and [`useFhirFetchAll`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useFhirFetchAll.md) do the same for FHIR endpoints.
+
+<Callout emoji="⚠️" type="warning">
+  **Don't raise `limit` to avoid paging**: If `limit` exceeds `webservices.rest.maxResultsAbsolute` (100 by default), the server rejects the request with an error instead of capping it. A bigger page is still just one page, so you still need one of the hooks above. Keep `pageSize` in `useOpenmrsPagination`, and any `limit` you set yourself, within that limit.
+</Callout>
+
+  ```tsx
+  import { type Encounter, type Location, restBaseUrl, useOpenmrsFetchAll, useOpenmrsPagination } from '@openmrs/esm-framework';
+
+  // A table that shows one page at a time
+  export function useLocations(pageSize: number) {
+    const url = `${restBaseUrl}/location?v=custom:(uuid,display)`;
+    return useOpenmrsPagination<Location>(url, pageSize);
+  }
+
+  // A list the UI groups on the client, so it needs every page
+  export function usePatientEncounters(patientUuid: string) {
+    const url = `${restBaseUrl}/encounter?patient=${patientUuid}&v=custom:(uuid,encounterDatetime,encounterType:(uuid,display))`;
+    return useOpenmrsFetchAll<Encounter>(url);
+  }
+  ```
+
+To refresh these lists after a mutation, call the `mutate` function returned by the hook. A `useSWRConfig().mutate` key filter can't refresh lists loaded with `useOpenmrsInfinite` or `useOpenmrsFetchAll`. See [Mutations and side effects](/docs/coding-conventions/mutations-and-side-effects) for details.
+
 ## Prefer narrow hooks over generic hooks
 
 Design hooks so they're hard to use incorrectly:
@@ -126,19 +162,15 @@ Design hooks so they're hard to use incorrectly:
 
   ```tsx
   // Good - narrow, specific hook
-  import { restBaseUrl, useOpenmrsSWR } from '@openmrs/esm-framework';
+  import { restBaseUrl, useOpenmrsFetchAll, type Visit } from '@openmrs/esm-framework';
   import type { SWRConfiguration } from 'swr';
-
-  interface VisitSearchResponse {
-    results: Array<Visit>;
-  }
 
   export function usePatientVisits(patientUuid?: string) {
     const url = patientUuid ? `${restBaseUrl}/visit?patient=${patientUuid}` : null;
-    const { data: response, error, isLoading } = useOpenmrsSWR<VisitSearchResponse>(url);
+    const { data, error, isLoading } = useOpenmrsFetchAll<Visit>(url);
 
     return {
-      visits: response?.data?.results ?? [],
+      visits: data ?? [],
       error,
       isLoading,
     };
@@ -196,10 +228,11 @@ These decisions belong in the hook (the resource boundary), not scattered across
 
   ```tsx
   // Good - defaults are explicit in the hook
-  export function usePatientVisits(patientUuid: string) {
+  export function usePatientVisits(patientUuid: string, pageSize: number) {
     const url = patientUuid ? `/ws/rest/v1/visit?patient=${patientUuid}` : null;
-    
-    return useOpenmrsSWR<VisitSearchResponse>(url, {
+
+    // Explicit pagination policy: one page at a time
+    return useOpenmrsPagination<Visit>(url, pageSize, {
       swrConfig: {
         // Explicit retry policy
         errorRetryCount: 3,

@@ -113,6 +113,42 @@ Les nouvelles tentatives et les boucles de rafraîchissement non bornées causen
   });
   ```
 
+## Points de terminaison paginés
+
+Si un point de terminaison peut renvoyer plus d'une page de résultats, ne le récupérez pas avec un seul appel à `openmrsFetch`, `useSWR` ou `useOpenmrsSWR`. Cet appel ne lit que la première page, et l'interface utilisateur ignore silencieusement le reste.
+
+La plupart des points de terminaison REST d'OpenMRS qui renvoient des listes ou des résultats de recherche sont paginés. Le serveur renvoie au plus `webservices.rest.maxResultsDefault` résultats par requête (une propriété globale qui vaut 50 par défaut), et ajoute à la réponse un lien avec `rel: "next"` lorsqu'il reste d'autres résultats. Consultez la [documentation du module REST](https://openmrs.atlassian.net/wiki/spaces/docs/pages/25469882/REST+Module) pour plus de détails.
+
+Choisissez un hook de `@openmrs/esm-framework` en fonction des besoins de l'interface utilisateur :
+
+- [`useOpenmrsPagination`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useOpenmrsPagination.md) pour un tableau qui affiche une page à la fois. Il ne récupère que la page courante, et définit pour vous `limit`, `startIndex` et `totalCount` dans l'URL.
+- [`useOpenmrsInfinite`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useOpenmrsInfinite.md) pour le défilement infini. Il récupère la page suivante à chaque appel de `loadMore`.
+- [`useOpenmrsFetchAll`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useOpenmrsFetchAll.md) lorsque l'interface utilisateur a besoin de l'ensemble complet, par exemple pour filtrer, regrouper ou compter les résultats côté client. Il suit les liens `next` jusqu'à ce que toutes les pages soient chargées. Par défaut, `data` vaut `undefined` et `isLoading` vaut `true` jusqu'à l'arrivée de la dernière page. Définissez l'option `partialData` pour obtenir les résultats au fur et à mesure du chargement des pages. Ce hook demande toutes les pages d'emblée. Préférez donc le filtrage côté serveur ou `useOpenmrsPagination` lorsque l'interface utilisateur n'a pas besoin de tous les résultats.
+
+[`useFhirPagination`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useFhirPagination.md), [`useFhirInfinite`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useFhirInfinite.md) et [`useFhirFetchAll`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useFhirFetchAll.md) font de même pour les points de terminaison FHIR.
+
+<Callout emoji="⚠️" type="warning">
+  **N'augmentez pas `limit` pour éviter la pagination** : Si `limit` dépasse `webservices.rest.maxResultsAbsolute` (100 par défaut), le serveur rejette la requête avec une erreur au lieu de plafonner la valeur. Une page plus grande reste une seule page, et vous avez donc toujours besoin de l'un des hooks ci-dessus. Gardez le `pageSize` de `useOpenmrsPagination`, ainsi que toute valeur de `limit` que vous définissez vous-même, dans cette limite.
+</Callout>
+
+  ```tsx
+  import { type Encounter, type Location, restBaseUrl, useOpenmrsFetchAll, useOpenmrsPagination } from '@openmrs/esm-framework';
+
+  // Un tableau qui affiche une page à la fois
+  export function useLocations(pageSize: number) {
+    const url = `${restBaseUrl}/location?v=custom:(uuid,display)`;
+    return useOpenmrsPagination<Location>(url, pageSize);
+  }
+
+  // Une liste que l'interface regroupe côté client, et qui a donc besoin de toutes les pages
+  export function usePatientEncounters(patientUuid: string) {
+    const url = `${restBaseUrl}/encounter?patient=${patientUuid}&v=custom:(uuid,encounterDatetime,encounterType:(uuid,display))`;
+    return useOpenmrsFetchAll<Encounter>(url);
+  }
+  ```
+
+Pour rafraîchir ces listes après une mutation, appelez la fonction `mutate` renvoyée par le hook. Un filtre de clé passé à `useSWRConfig().mutate` ne peut pas rafraîchir les listes chargées avec `useOpenmrsInfinite` ou `useOpenmrsFetchAll`. Consultez [Mutations et effets secondaires](/docs/coding-conventions/mutations-and-side-effects) pour plus de détails.
+
 ## Préférer les hooks étroits aux hooks génériques
 
 Concevez les hooks pour qu'ils soient difficiles à utiliser incorrectement :
@@ -126,19 +162,15 @@ Concevez les hooks pour qu'ils soient difficiles à utiliser incorrectement :
 
   ```tsx
   // Bon - hook étroit et spécifique
-  import { restBaseUrl, useOpenmrsSWR } from '@openmrs/esm-framework';
+  import { restBaseUrl, useOpenmrsFetchAll, type Visit } from '@openmrs/esm-framework';
   import type { SWRConfiguration } from 'swr';
-
-  interface VisitSearchResponse {
-    results: Array<Visit>;
-  }
 
   export function usePatientVisits(patientUuid?: string) {
     const url = patientUuid ? `${restBaseUrl}/visit?patient=${patientUuid}` : null;
-    const { data: response, error, isLoading } = useOpenmrsSWR<VisitSearchResponse>(url);
+    const { data, error, isLoading } = useOpenmrsFetchAll<Visit>(url);
 
     return {
-      visits: response?.data?.results ?? [],
+      visits: data ?? [],
       error,
       isLoading,
     };
@@ -196,10 +228,11 @@ Ces décisions appartiennent au hook (la limite de ressource), pas dispersées d
 
   ```tsx
   // Bon - les valeurs par défaut sont explicites dans le hook
-  export function usePatientVisits(patientUuid: string) {
+  export function usePatientVisits(patientUuid: string, pageSize: number) {
     const url = patientUuid ? `/ws/rest/v1/visit?patient=${patientUuid}` : null;
-    
-    return useOpenmrsSWR<VisitSearchResponse>(url, {
+
+    // Politique de pagination explicite : une page à la fois
+    return useOpenmrsPagination<Visit>(url, pageSize, {
       swrConfig: {
         // Politique de nouvelle tentative explicite
         errorRetryCount: 3,
