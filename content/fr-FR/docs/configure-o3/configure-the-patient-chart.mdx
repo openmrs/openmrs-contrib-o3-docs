@@ -513,7 +513,7 @@ Cette valeur est transmise à `openmrsFetch`, qui ajoute automatiquement le chem
 
 ### Type de visite hors ligne
 
-Vous pouvez configurer quel type de visite est utilisé pour les visites hors ligne créées automatiquement :
+Les versions 3.7.0 et 3.7.1 de la Reference Application utilisent patient-chart 12.3.4, qui prend encore en charge `offlineVisitTypeUuid` pour les visites hors ligne créées automatiquement :
 
 ```json
 {
@@ -524,6 +524,8 @@ Vous pouvez configurer quel type de visite est utilisé pour les visites hors li
 ```
 
 La valeur par défaut est `a22733fa-3501-4020-a520-da024eeff088`.
+
+Patient-chart 13.0.0 a supprimé les visites hors ligne et ce paramètre dans [openmrs-esm-patient-chart#3689](https://github.com/openmrs/openmrs-esm-patient-chart/pull/3689). Lors de la mise à niveau vers la version 13.0.0 ou ultérieure, supprimez `offlineVisitTypeUuid` de votre configuration. Ces versions ignorent le paramètre et consignent une erreur « Unknown config key ». Elles dépendent aussi de Core v11, qui a [supprimé le support hors ligne](/docs/app-shell#support-hors-ligne) du framework.
 
 ### UUID du type de commande de médicament
 

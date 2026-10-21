@@ -513,7 +513,7 @@ This value is passed to `openmrsFetch`, so the OpenMRS base path is added automa
 
 ### Offline Visit Type
 
-You can configure which visit type is used for automatically created offline visits:
+Reference Application 3.7.0 and 3.7.1 use patient-chart 12.3.4, which still supports `offlineVisitTypeUuid` for automatically created offline visits:
 
 ```json
 {
@@ -524,6 +524,8 @@ You can configure which visit type is used for automatically created offline vis
 ```
 
 The default is `a22733fa-3501-4020-a520-da024eeff088`.
+
+Patient-chart 13.0.0 removed offline visits and this setting in [openmrs-esm-patient-chart#3689](https://github.com/openmrs/openmrs-esm-patient-chart/pull/3689). When upgrading to 13.0.0 or later, remove `offlineVisitTypeUuid` from your configuration. Those versions ignore the setting and log an "Unknown config key" error. They also depend on Core v11, which [removed offline support](/docs/app-shell#offline-support) from the framework.
 
 ### Drug Order Type UUID
 
