@@ -7,6 +7,11 @@ This guide is for migrating frontend modules to Core v11 and above. v11 has seve
 - A [major re-write of the extension system internals](https://github.com/openmrs/openmrs-esm-core/pull/1856)
 - [Using Browserslist](https://github.com/openmrs/openmrs-esm-core/pull/1868) when compiling to JS
 - [Not using CSS-in-JS](https://github.com/openmrs/openmrs-esm-core/pull/1869) in production builds (RFC-0033)
+- [Upgrading to SWR 2.5.1](https://github.com/openmrs/openmrs-esm-core/pull/1873) and sharing it through Module Federation
+- [Removing offline support and rxjs](https://github.com/openmrs/openmrs-esm-core/pull/1894) from the framework
+- [Removing workspace v1](https://github.com/openmrs/openmrs-esm-core/pull/1893)
+
+Core v11 is the framework version that ships with Reference Application 3.8.0. Some changes also affect distributions rather than individual modules. See [For distribution maintainers](#for-distribution-maintainers).
 
 ## Background
 
@@ -25,6 +30,35 @@ yarn up openmrs@next @openmrs/esm-framework@next
 ```
 
 If this replaces `next` with concrete prerelease versions in `devDependencies`, set `openmrs` and `@openmrs/esm-framework` back to `next` and run `yarn` before committing. Keep any intentional changes and the peer dependency ranges your repo already uses. See [Development](/docs/frontend-modules/development#i-see-errors-about-missing-apis-when-i-run-the-app) for more.
+
+### Update the framework peer dependency
+
+Update the `@openmrs/esm-framework` peer dependency in each frontend module's `package.json`:
+
+```json
+{
+  "peerDependencies": {
+    "@openmrs/esm-framework": "11.x"
+  }
+}
+```
+
+### Share SWR
+
+Make sure `swr` is a peer dependency of each frontend module, and pin the development copy to the version the app shell provides:
+
+```json
+{
+  "peerDependencies": {
+    "swr": "2.x"
+  },
+  "devDependencies": {
+    "swr": "2.5.1"
+  }
+}
+```
+
+See [SWR 2.5.1](#swr-251) for why this matters.
 
 ### Perform necessary migrations
 
@@ -180,3 +214,149 @@ One pattern we've sometimes seen is using react-to-print and rendering a rule li
 ```
 
 To try to remove the default padding when printing. For these cases, `react-to-print` accepts a `pageStyle` parameter that allows you to define these kinds of global rules and that should be preferred because it is restricted to `react-to-print`'s `iframe` and does not affect other rendering. A rule like the one above also fails the production build check, since `html` and `body` have no class to scope them, even inside `@media print`.
+
+### SWR 2.5.1
+
+Core v11 upgrades SWR from 2.2.5 to 2.5.1 and shares it through Module Federation, so every frontend module uses the app shell's copy. Core v10 shared only SWR's internals, which hold its cache. From SWR 2.3.0, `swr` loads its internals in a way that this sharing doesn't catch, so a module that bundles `swr` keeps its own cache. It no longer sees `mutate()` calls made by other modules, and the framework's SWR defaults don't apply to it.
+
+A module only shares `swr` if it lists `swr` in `peerDependencies`, as shown in [Share SWR](#share-swr). If your module already has the peer dependency, bump the development copy:
+
+```bash
+yarn up --exact swr@2.5.1
+```
+
+The SWR APIs O3 modules use, such as `useSWR`, `useSWRInfinite`, `mutate`, `isLoading` and `keepPreviousData`, are still available in 2.5.1.
+
+### Offline support and rxjs
+
+Core v11 removes offline support from the framework, along with the service worker, the offline tools app and the framework's dependency on rxjs.
+
+- **Remove offline setup.** Delete calls to `setupOfflineSync`, `setupDynamicOfflineDataHandler`, `subscribePrecacheStaticDependencies` and `messageOmrsServiceWorker`, usually found in `startupApp` or an `offline.ts` file. These are still exported as deprecated no-ops so that older modules keep loading, but they'll be removed in a future version. `useConnectivity()` is also kept, and always returns `true`.
+- **Remove the rest of the offline API.** Functions such as `queueSynchronizationItem`, `getSynchronizationItem`, `syncOfflinePatientData`, `getOfflinePatientDataStore`, `generateOfflineUuid`, `isOfflineUuid`, `isOnline`, `getCurrentOfflineMode` and `subscribeConnectivity` are no longer exported. `fetchCurrentPatient` no longer takes an `includeOfflinePatients` argument.
+- **Remove `online` and `offline` from `routes.json`.** The framework ignores them.
+- **Add rxjs yourself if you still use it.** The app shell no longer shares rxjs and the framework no longer depends on it, so a module that uses rxjs must declare it as its own dependency.
+
+Several framework functions now return Promises instead of rxjs Observables:
+
+| Function | Core v10 | Core v11 |
+| --- | --- | --- |
+| `getCurrentUser()` | Observable that emits each time the session changes | Promise that resolves once |
+| `getLocations()` | Observable | `Promise<Array<Location>>` |
+| `getVisitTypes()` | Observable | `Promise<Array<VisitType>>` |
+| `openmrsObservableFetch()` | Observable | Removed. Use `openmrsFetch()` |
+
+To keep reacting to session changes, use `useSession()` in React components, or subscribe to the session store. Unlike `getCurrentUser()` in Core v10, the store's `subscribe` only calls you when the session changes, so read the current session with `getState()` as well:
+
+```ts
+// Core v10
+const subscription = getCurrentUser({ includeAuthStatus: false }).subscribe(setUser);
+return () => subscription.unsubscribe();
+
+// Core v11
+const store = getSessionStore();
+const unsubscribe = store.subscribe(({ loaded, session }) => {
+  if (loaded) {
+    setUser(session?.user ?? null);
+  }
+});
+const { loaded, session } = store.getState();
+if (loaded) {
+  setUser(session?.user ?? null);
+}
+return unsubscribe;
+```
+
+```ts
+// Core v10
+return openmrsObservableFetch<FHIRAllergy>(url).pipe(map(({ data }) => mapAllergy(data)));
+
+// Core v11
+const { data } = await openmrsFetch<FHIRAllergy>(url);
+return mapAllergy(data);
+```
+
+The framework's test mock of `getCurrentUser` now returns a Promise too, so tests that mocked it with rxjs `of()` need updating.
+
+### Workspace v1
+
+Core v11 removes the workspace v1 API, including `launchWorkspace`, `launchWorkspaceGroup`, `closeWorkspace`, `navigateAndLaunchWorkspace`, `useWorkspaces`, `WorkspaceContainer`, `ActionMenuButton` and types such as `DefaultWorkspaceProps`. If a module's `routes.json` still declares `workspaces` or `workspaceGroups`, the framework logs a warning and doesn't register them.
+
+Follow [Migrate to Workspace v2](/docs/migration-guides/migrate-to-workspace-v2) to move to `workspaces2`, `workspaceWindows2` and `workspaceGroups2`.
+
+### Store state from useStore
+
+In Core v10, `useStore`, `useStoreWithActions` and `createUseStore` returned a new object on every render, made by spreading the store's state and any bound actions. In Core v11, unless you pass actions, they return the store's state, or your selector's result, itself.
+
+- Don't change the returned value in place. It's the store's own state, so changing it changes the store without notifying subscribers. Update the store with `setState` or with actions instead.
+- Effects and memoized values that depend on the result now only re-run when the state changes, not on every render.
+- Selectors can return arrays and primitive values. Core v10 spread the result into an object, so an array came back as an object with numeric keys.
+
+### Pagination hooks
+
+- `goTo`, `goToNext` and `goToPrevious` from `usePagination` and `useOpenmrsPagination` no longer change identity when the data or the current page changes. If you relied on them changing to reset the page, for example `useEffect(() => goTo(1), [goTo])`, add the value that should trigger the reset, such as a search term, to the effect's dependencies.
+- `useOpenmrsPagination` returns `currentPageSize` as a number instead of a ref. Replace `currentPageSize.current` with `currentPageSize`.
+- `useOpenmrsPagination` returns to page 1 by itself when its URL changes.
+- `goTo` from `usePagination` ignores page numbers that aren't positive integers, such as `0` or `2.5`, and logs a warning. Core v10 went to page 1 for numbers below 1, and used fractions as given. Numbers past the last page still go to the last page.
+
+### Expressions
+
+Core v11 changes how the framework's expression evaluator works. This affects display expressions, both `displayExpression` in `routes.json` and `Display conditions` in configuration, and React Form Engine expressions.
+
+- `&&`, `||` and `??` short-circuit, and optional chaining works as it does in JavaScript.
+- Reading a property of `null` throws, as it does in JavaScript. Core v10 returned `undefined`. For example, when `visit` is `null`, `!visit.stopDatetime` used to be `true`, and now throws. Use optional chaining instead: `!visit?.stopDatetime`.
+- A missing property no longer falls back to a variable with the same name. In Core v10, `obs.value` returned the `value` variable when `obs` had no `value` property.
+- Expressions can't use built-in object and function properties other than `toString`, `valueOf` and `hasOwnProperty`, so calls such as `fn.call(...)` or `Math.max.apply(...)` now throw.
+- Computed property access with a variable key, such as `obj[key]`, now reads the property. Core v10 returned the value of `key` itself.
+- Properties of strings, such as `name.length`, now work.
+
+When a display expression throws, O3 hides the extension and logs an error. Check the display expressions in your `routes.json` files and configuration for the patterns above.
+
+### `navigate` only accepts HTTP and HTTPS URLs
+
+`navigate()` now throws if the target's protocol isn't `http:` or `https:`, for example `mailto:`, `tel:` or `javascript:`. Relative paths still work. `ConfigurableLink` calls `navigate()` when clicked, so the same applies to it. Use a plain `<a href>` for other kinds of links.
+
+## For distribution maintainers
+
+### Upgrade the app shell first
+
+Modules built with Core v11 tooling (`openmrs`, `@openmrs/webpack-config` or `@openmrs/rspack-config` 11.0.0) load the Module Federation runtime from the app shell, and refuse to start under an older app shell. Modules built with older tooling still load under the Core v11 app shell, but they break if they use APIs that Core v11 removed, described above. Build your distribution with `openmrs@11` before, or at the same time as, you upgrade to frontend modules built with Core v11 tooling. This was introduced in [this pull request](https://github.com/openmrs/openmrs-esm-core/pull/1853).
+
+### `openmrs assemble` fails on broken modules
+
+`openmrs assemble` now fails if a frontend module is missing its `routes.json`, or the JavaScript entrypoint its import map entry points at. Pass `--no-ensure-entrypoints` to report these problems as warnings instead. This was introduced in [this pull request](https://github.com/openmrs/openmrs-esm-core/pull/1795).
+
+### Serve the precompressed assets
+
+`openmrs build` now writes gzip (`.gz`) and brotli (`.br`) copies of each JavaScript, CSS, JSON, SVG and HTML file of 1 KB or more. Configure your web server to serve them; the Reference Application's [frontend nginx.conf](https://github.com/openmrs/openmrs-distro-referenceapplication/blob/main/frontend/nginx.conf) shows how. To skip writing them, pass `--no-compress` to `openmrs build`, or set `"compress": false` in `spa-build-config.json`. See [Create a distribution](/docs/recipes/create-a-distribution).
+
+### Remove offline settings
+
+`openmrs build` and `openmrs develop` no longer accept `--support-offline`, and `openmrs build` ignores `supportOffline` in `spa-build-config.json`. The offline tools app is gone.
+
+### Check display expressions in your configuration
+
+The [expression changes](#expressions) also apply to `Display conditions` expressions in your distribution's configuration. An expression that now throws hides its extension.
+
+### Update login location settings
+
+The login app no longer has a `chooseLocation.numberToShow` setting; it was already ignored. If your configuration still sets it, remove it to clear the "Unknown config key" error. `chooseLocation.locationsPerRequest` now takes effect: it sets how many locations the location picker loads at a time.
+
+### Show your distribution's version (optional)
+
+`openmrs assemble --application-version <version>` records your distribution's version in the routes registry. The navigation bar and login page show it.
+
+## Other changes worth knowing about
+
+- `<Workspace2>` no longer renders the workspace header itself. It reports the workspace's `title` and `hasUnsavedChanges`, and the framework renders the header around it. Keep wrapping workspace content in `<Workspace2>`.
+- A `workspaces2` entry can set its own `width`, which overrides its window's width while that workspace is on top, and workspaces receive their `meta` as `workspaceMeta`. Extensions can read their own metadata with `useExtensionContext`.
+- `scopePattern` for workspace groups is matched against the path relative to the SPA base, such as `/home/gastrodynamics`. Patterns written against the full path still work.
+- The webpack and Rspack configs now honor a module's own Browserslist configuration, in `package.json` or `.browserslistrc`. Without one, they use `browserslist-config-openmrs`.
+- `useLocations` now returns every page of locations, as REST objects in the default representation. Core v10 returned the first page, mapped to `uuid` and `display`.
+- `PageHeader` renders its title as an `h1`.
+- The default `diagnosisTags` colors changed: primary diagnoses are now blue and secondary diagnoses gray, instead of red and blue. Colors your distribution configures still apply. `DiagnosisTags` also has a new `showCertainty` prop.
+
+## Migration examples
+
+- Patient chart: [peer dependency](https://github.com/openmrs/openmrs-esm-patient-chart/pull/3768), [offline removal](https://github.com/openmrs/openmrs-esm-patient-chart/pull/3689), [SWR](https://github.com/openmrs/openmrs-esm-patient-chart/pull/3675)
+- Patient management: [peer dependency](https://github.com/openmrs/openmrs-esm-patient-management/pull/2815), [offline removal](https://github.com/openmrs/openmrs-esm-patient-management/pull/2776), [SWR](https://github.com/openmrs/openmrs-esm-patient-management/pull/2762)
+- Form builder: [peer dependency](https://github.com/openmrs/openmrs-esm-form-builder/pull/1392), [SWR](https://github.com/openmrs/openmrs-esm-form-builder/pull/1347)
