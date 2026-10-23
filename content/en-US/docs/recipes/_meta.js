@@ -4,6 +4,7 @@ export default {
   "create-a-frontend-module": "Create a frontend module",
   "create-a-distribution": "Create a distribution",
   "deploy-to-production": "Deploy O3 to production",
+  "export-metadata-packages": "Export metadata packages",
   "add-a-left-panel-to-o3": "Add a left panel to O3",
   "add-links-to-the-home-page-left-panel": "Add links to the home page left panel",
   "retrieve-and-post-data": "Retrieve and post data",

@@ -7,4 +7,5 @@ export default {
   "configure-ward-management": "Configure Ward Management",
   "configure-translations": "Configure translations",
   "configure-calendars": "Configure calendars",
+  "configure-two-factor-authentication": "Configure two-factor authentication",
 };
