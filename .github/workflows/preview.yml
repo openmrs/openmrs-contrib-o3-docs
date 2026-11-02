@@ -36,6 +36,8 @@ jobs:
         if: github.event.action != 'closed'
       - run: pnpm check:forms-doc-ownership
         if: github.event.action != 'closed'
+      - run: node --test scripts/preview-changed-pages.test.mjs
+        if: github.event.action != 'closed'
       - run: pnpm build
         if: github.event.action != 'closed'
         env:
@@ -46,8 +48,19 @@ jobs:
       # PR-authored code to our Pages origin (shared with production) is a
       # trust/phishing risk that secret isolation alone does not address.
       - uses: rossjrw/pr-preview-action@v1
+        id: preview
         if: github.event.pull_request.head.repo.full_name == github.repository
         with:
           source-dir: out
           preview-branch: gh-pages
           umbrella-dir: pr-preview
+
+      - name: Link changed pages in the preview comment
+        if: steps.preview.outputs.deployment-action == 'deploy'
+        uses: actions/github-script@v8
+        env:
+          PREVIEW_URL: ${{ steps.preview.outputs.preview-url }}
+        with:
+          script: |
+            const { updatePreviewComment } = await import(`${process.env.GITHUB_WORKSPACE}/scripts/preview-changed-pages.mjs`);
+            await updatePreviewComment({ github, context, previewUrl: process.env.PREVIEW_URL });
