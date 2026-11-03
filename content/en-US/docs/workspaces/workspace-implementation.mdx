@@ -52,9 +52,21 @@ export function WorkspaceDebugPanel() {
 
 The lower-level workspace store is an implementation detail. Prefer the public launch, close, group, and context APIs unless you are working inside the framework itself. If a component needs to close the entire window instead of only itself and its child workspaces, call `closeWorkspace({ closeWindow: true })`.
 
+## Rendering a Workspace Outside the Workspace Window
+
+`<ExportedWorkspace>` renders the content of a registered workspace (the children of its `<Workspace2>`) inside your own component tree, independent of the global workspace window system. It emulates the window that contains the workspace, so `launchChildWorkspace` and `closeWorkspace` navigate within the component, using a local store. It renders no chrome (no title bar, maximize, hide, close, or icon), so callers can render their own.
+
+```tsx copy
+import { ExportedWorkspace } from '@openmrs/esm-framework';
+
+<ExportedWorkspace name="gastrodynamics-form-workspace" workspaceProps={{ patientUuid }} />;
+```
+
+Changing `name`, `workspaceProps`, `windowProps` or `groupProps` discards the current workspaces without prompting for unsaved changes and opens `name` afresh. Use `onWindowChanged` to observe the emulated window's state.
+
 ## Unsaved Changes
 
-Workspace v2 does not use `promptBeforeClosing`. Instead, pass `hasUnsavedChanges` to the `<Workspace2>` wrapper:
+Pass `hasUnsavedChanges` to the `<Workspace2>` wrapper:
 
 ```tsx copy
 <Workspace2 title={t('editVisit', 'Edit visit')} hasUnsavedChanges={formState.isDirty}>
