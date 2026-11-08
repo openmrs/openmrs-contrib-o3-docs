@@ -1,0 +1,158 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1000" viewBox="0 0 1200 1000" role="img" aria-labelledby="title desc">
+  <title id="title">How the O3 Reference Application fits together</title>
+  <desc id="desc">A diagram in two lanes. At build time, distro.properties pins the core WAR, backend modules and content packages, which the OpenMRS SDK fetches from Maven and packs into the backend image; spa-assemble-config.json lists frontend modules and their version tags, which openmrs assemble and build fetch from npm and pack into the frontend image together with config-core_demo.json; a gateway image is built alongside. At run time, the browser talks to the gateway, which sends /openmrs/spa requests to the frontend container and /openmrs requests to the backend container. The backend copies its modules and configuration into its data directory, starts openmrs-core and the modules, and Initializer loads the configuration into the MariaDB database.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth">
+      <path d="M0 0 L8 4 L0 8 Z" fill="#293845" />
+    </marker>
+    <marker id="arrow-dashed" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth">
+      <path d="M0 0 L8 4 L0 8 Z" fill="#546576" />
+    </marker>
+    <style>
+      .page { fill: #f6f8fb; }
+      .panel { fill: #ffffff; stroke: #c8d1dc; stroke-width: 2; rx: 8; }
+      .box { fill: #ffffff; stroke: #293845; stroke-width: 2; rx: 8; }
+      .artifact { fill: #ecf6ff; stroke: #1d6fa5; }
+      .runtime { fill: #eefaf4; stroke: #25845d; }
+      .dev { fill: #fff8e6; stroke: #9d6a00; }
+      .heading { fill: #1f2933; font: 700 22px Arial, sans-serif; }
+      .title { fill: #1f2933; font: 700 28px Arial, sans-serif; }
+      .label { fill: #1f2933; font: 700 17px Arial, sans-serif; }
+      .small-label { fill: #1f2933; font: 700 15px Arial, sans-serif; }
+      .body { fill: #344454; font: 14px Arial, sans-serif; }
+      .tiny { fill: #546576; font: 12px Arial, sans-serif; }
+      .arrow { fill: none; stroke: #293845; stroke-width: 2.5; marker-end: url(#arrow); }
+      .dash { fill: none; stroke: #546576; stroke-width: 2.5; stroke-dasharray: 6 6; marker-end: url(#arrow-dashed); }
+    </style>
+  </defs>
+
+  <rect class="page" x="0" y="0" width="1200" height="1000" />
+  <text class="title" x="600" y="42" text-anchor="middle">How the O3 Reference Application fits together</text>
+
+  <!-- Build time -->
+  <rect class="panel" x="40" y="76" width="1120" height="410" />
+  <text class="heading" x="600" y="112" text-anchor="middle">Build time</text>
+  <text class="tiny" x="185" y="140" text-anchor="middle">in openmrs-distro-referenceapplication</text>
+
+  <rect class="box artifact" x="70" y="150" width="230" height="86" />
+  <text class="label" x="185" y="178" text-anchor="middle">distro.properties</text>
+  <text class="body" x="185" y="203" text-anchor="middle">core WAR, backend modules</text>
+  <text class="body" x="185" y="222" text-anchor="middle">and content packages</text>
+
+  <rect class="box artifact" x="70" y="256" width="230" height="86" />
+  <text class="label" x="185" y="284" text-anchor="middle">spa-assemble-config.json</text>
+  <text class="body" x="185" y="309" text-anchor="middle">frontend modules and</text>
+  <text class="body" x="185" y="328" text-anchor="middle">their version tags</text>
+
+  <rect class="box artifact" x="70" y="362" width="230" height="86" />
+  <text class="label" x="185" y="390" text-anchor="middle">config-core_demo.json</text>
+  <text class="body" x="185" y="415" text-anchor="middle">frontend configuration</text>
+  <text class="body" x="185" y="434" text-anchor="middle">for the demo</text>
+
+  <rect class="box" x="350" y="150" width="220" height="86" />
+  <text class="label" x="460" y="178" text-anchor="middle">Maven repository</text>
+  <text class="body" x="460" y="203" text-anchor="middle">openmrs.war, .omod modules,</text>
+  <text class="body" x="460" y="222" text-anchor="middle">content package zips</text>
+
+  <rect class="box" x="350" y="256" width="220" height="86" />
+  <text class="label" x="460" y="284" text-anchor="middle">npm registry</text>
+  <text class="body" x="460" y="309" text-anchor="middle">published frontend</text>
+  <text class="body" x="460" y="328" text-anchor="middle">module packages</text>
+
+  <rect class="box dev" x="350" y="362" width="220" height="86" />
+  <text class="tiny" x="460" y="384" text-anchor="middle">Content packages also contain a</text>
+  <text class="tiny" x="460" y="402" text-anchor="middle">frontend_configuration folder.</text>
+  <text class="tiny" x="460" y="420" text-anchor="middle">The Reference Application's</text>
+  <text class="tiny" x="460" y="438" text-anchor="middle">frontend image doesn't use it.</text>
+
+  <rect class="box" x="620" y="150" width="230" height="86" />
+  <text class="label" x="735" y="178" text-anchor="middle">SDK build-distro</text>
+  <text class="body" x="735" y="203" text-anchor="middle">fetches artifacts, merges</text>
+  <text class="body" x="735" y="222" text-anchor="middle">content config by domain</text>
+
+  <rect class="box" x="620" y="256" width="230" height="86" />
+  <text class="label" x="735" y="284" text-anchor="middle">openmrs assemble + build</text>
+  <text class="body" x="735" y="309" text-anchor="middle">import map, routes registry</text>
+  <text class="body" x="735" y="328" text-anchor="middle">and app shell</text>
+
+  <rect class="box" x="620" y="362" width="230" height="86" />
+  <text class="label" x="735" y="390" text-anchor="middle">gateway image</text>
+  <text class="body" x="735" y="415" text-anchor="middle">nginx that routes /openmrs</text>
+  <text class="body" x="735" y="434" text-anchor="middle">and /openmrs/spa</text>
+
+  <rect class="box artifact" x="900" y="150" width="230" height="86" />
+  <text class="label" x="1015" y="178" text-anchor="middle">backend image</text>
+  <text class="body" x="1015" y="203" text-anchor="middle">/openmrs/distribution: war,</text>
+  <text class="body" x="1015" y="222" text-anchor="middle">modules, openmrs_config</text>
+
+  <rect class="box artifact" x="900" y="256" width="230" height="86" />
+  <text class="label" x="1015" y="284" text-anchor="middle">frontend image</text>
+  <text class="body" x="1015" y="309" text-anchor="middle">nginx serving the built SPA</text>
+  <text class="body" x="1015" y="328" text-anchor="middle">and config-core_demo.json</text>
+
+  <path class="arrow" d="M300 193 L348 193" />
+  <path class="arrow" d="M570 193 L618 193" />
+  <path class="arrow" d="M850 193 L898 193" />
+  <path class="arrow" d="M300 299 L348 299" />
+  <path class="arrow" d="M570 299 L618 299" />
+  <path class="arrow" d="M850 299 L898 299" />
+  <path class="arrow" d="M185 448 L185 468 L1015 468 L1015 344" />
+
+  <!-- Lane connector -->
+  <path class="dash" d="M600 486 L600 528" />
+  <text class="tiny" x="612" y="512">docker compose up runs the three images plus MariaDB</text>
+
+  <!-- Run time -->
+  <rect class="panel" x="40" y="530" width="1120" height="420" />
+  <text class="heading" x="600" y="566" text-anchor="middle">Run time</text>
+
+  <rect class="box" x="70" y="640" width="230" height="120" />
+  <text class="label" x="185" y="670" text-anchor="middle">Browser</text>
+  <text class="body" x="185" y="695" text-anchor="middle">the app shell loads</text>
+  <text class="body" x="185" y="714" text-anchor="middle">frontend modules, which</text>
+  <text class="body" x="185" y="733" text-anchor="middle">call REST and FHIR</text>
+
+  <rect class="box runtime" x="360" y="655" width="190" height="90" />
+  <text class="label" x="455" y="685" text-anchor="middle">gateway :80</text>
+  <text class="body" x="455" y="710" text-anchor="middle">one origin for</text>
+  <text class="body" x="455" y="729" text-anchor="middle">frontend and backend</text>
+
+  <rect class="box runtime" x="620" y="595" width="320" height="76" />
+  <text class="label" x="780" y="623" text-anchor="middle">frontend container</text>
+  <text class="body" x="780" y="648" text-anchor="middle">index.html, import map, routes, bundles</text>
+
+  <rect class="panel runtime" x="620" y="700" width="320" height="236" />
+  <text class="label" x="780" y="726" text-anchor="middle">backend container</text>
+
+  <rect class="box" x="640" y="738" width="280" height="56" />
+  <text class="small-label" x="780" y="760" text-anchor="middle">1. Startup script</text>
+  <text class="tiny" x="780" y="781" text-anchor="middle">copies modules and config into /openmrs/data</text>
+
+  <rect class="box" x="640" y="804" width="280" height="56" />
+  <text class="small-label" x="780" y="826" text-anchor="middle">2. openmrs-core and modules start</text>
+  <text class="tiny" x="780" y="847" text-anchor="middle">REST /ws/rest/v1 and FHIR /ws/fhir2/R4</text>
+
+  <rect class="box" x="640" y="870" width="280" height="56" />
+  <text class="small-label" x="780" y="892" text-anchor="middle">3. Initializer loads configuration</text>
+  <text class="tiny" x="780" y="913" text-anchor="middle">only files whose checksum changed</text>
+
+  <rect class="box runtime" x="990" y="773" width="150" height="90" />
+  <text class="label" x="1065" y="803" text-anchor="middle">MariaDB</text>
+  <text class="body" x="1065" y="828" text-anchor="middle">db-data</text>
+  <text class="body" x="1065" y="847" text-anchor="middle">volume</text>
+
+  <path class="arrow" d="M300 700 L358 700" />
+  <path class="arrow" d="M550 685 L618 637" />
+  <text class="tiny" x="612" y="630" text-anchor="end">/openmrs/spa/*</text>
+  <path class="arrow" d="M550 715 L618 790" />
+  <text class="tiny" x="575" y="772" text-anchor="end">/openmrs/*</text>
+  <path class="arrow" d="M940 818 L988 818" />
+
+  <!-- Legend -->
+  <rect class="box artifact" x="70" y="967" width="16" height="16" style="rx: 3" />
+  <text class="tiny" x="94" y="980">configuration you edit or images it produces</text>
+  <rect class="box runtime" x="400" y="967" width="16" height="16" style="rx: 3" />
+  <text class="tiny" x="424" y="980">running containers</text>
+  <rect class="box dev" x="580" y="967" width="16" height="16" style="rx: 3" />
+  <text class="tiny" x="604" y="980">worth knowing</text>
+</svg>
