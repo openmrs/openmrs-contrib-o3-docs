@@ -1,0 +1,16 @@
+# Overview
+
+O3 is only the frontend: every patient, encounter, concept and form it shows comes from an OpenMRS backend over HTTP. This section explains that backend from the frontend developer's point of view: what it's made of, which APIs it exposes, how it decides who may call what, how its metadata gets there, and how to run one on your machine.
+
+- [Backend architecture](/docs/backend/architecture) - openmrs-core, modules, the REST and FHIR layers, and where the code lives
+- [Data model](/docs/backend/data-model) - patients, visits, encounters, observations, concepts and orders, and how they fit together
+- [REST API](/docs/backend/rest-api) - base URL, sessions and authentication, representations, paging, search and errors
+- [FHIR API](/docs/backend/fhir-api) - what the FHIR2 module supports, how resources map to OpenMRS objects, and when to use it
+- [Privileges and roles](/docs/backend/privileges-and-roles) - how privileges gate backend calls and how the frontend uses the same privileges
+- [Metadata and Initializer](/docs/backend/metadata-and-initializer) - concepts, locations, global properties, forms and the files that load them
+- [Run a local backend](/docs/backend/local-backend) - the Reference Application backend with Docker or the SDK, and pointing your dev server at it
+- [Key backend repositories](/docs/backend/key-repositories) - where openmrs-core, each module, the distribution and the content packages live
+
+If you're new to OpenMRS, start with the diagram in [How a distribution fits together](/docs/backend/architecture#how-a-distribution-fits-together), then read the pages in order. If you're here because a request failed, start with [REST API](/docs/backend/rest-api#errors) or [Privileges and roles](/docs/backend/privileges-and-roles).
+
+If you get stuck, ask on [OpenMRS Talk](https://om.rs/talk) or in the [OpenMRS Slack](https://om.rs/slack).

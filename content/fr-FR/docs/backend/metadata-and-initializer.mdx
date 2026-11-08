@@ -1,0 +1,180 @@
+import { Callout } from "nextra/components";
+
+# Metadata and Initializer
+
+Most of what the frontend renders is shaped by metadata in the backend database: concepts, locations, encounter types, visit types, forms, identifier types, roles, and the global properties that configure modules. The [Initializer module](https://github.com/mekomsolutions/openmrs-module-initializer), or Iniz, loads that metadata from CSV, JSON and XML files on startup. Keeping it in files means it can be reviewed, version-controlled and shipped with a distribution instead of being clicked into place on each server.
+
+This page explains what counts as metadata, how the files are organized, where they go for a local backend and for a distribution, and the behaviours that catch people out.
+
+## Metadata, data and configuration (why the distinction matters)
+
+OpenMRS distinguishes three things, and the distinction decides how you change them.
+
+- **Metadata** describes the system: encounter types, concepts, locations, forms, identifier types, roles. It's retired rather than deleted, and Initializer owns it.
+- **Data** is about patients: encounters, observations, visits, orders. It's voided rather than deleted, and it comes from clinical use, demo data generators such as `referencedemodata`, or imports. Initializer doesn't load it.
+- **Configuration** is settings. Backend settings are global properties, which Initializer also loads. Frontend settings are the O3 configuration system's JSON, which is a separate mechanism described under [Configuration system](/docs/configuration-system).
+
+When a widget shows the wrong encounter type or a dropdown is empty, the fix is usually a metadata file, not frontend code.
+
+## Where Initializer reads from
+
+Initializer looks in `configuration/` under the OpenMRS application data directory. One subfolder per domain, named after the domain:
+
+```
+configuration/
+├── concepts/
+│   └── diagnoses.csv
+├── encountertypes/
+│   └── encountertypes.csv
+├── globalproperties/
+│   └── gp.xml
+├── locations/
+│   └── locations.csv
+└── ampathforms/
+    └── vitals.json
+```
+
+- **Reference Application Docker image**: the application data directory is `/openmrs/data`, and the configuration folder is `/openmrs/data/configuration`, rebuilt on every start from `/openmrs/distribution/openmrs_config`
+- **OpenMRS SDK**: the application data directory is `~/openmrs/<serverId>`, and the configuration folder is `~/openmrs/<serverId>/configuration`
+
+In Docker, don't write into `/openmrs/data/configuration` yourself. The startup script deletes and re-copies it from `/openmrs/distribution/openmrs_config` on every start, and refuses to start if something is mounted inside it. Mount individual files into `/openmrs/distribution/openmrs_config/<domain>/` instead. [Run a local backend](/docs/backend/local-backend) shows the Compose syntax.
+
+## Domains
+
+Initializer processes domains in a fixed order, so that a concept exists before the form that references it. The full list is the `Domain` enum in the module, and each domain has a page under [`readme/`](https://github.com/mekomsolutions/openmrs-module-initializer/tree/main/readme) in the repository. The ones a frontend developer most often touches, in loading order:
+
+- **`jsonkeyvalues`** (JSON): arbitrary key-value pairs for backend code
+- **`conceptclasses`, `conceptsources`** (CSV): classes and sources concepts refer to
+- **`visittypes`** (CSV): visit types
+- **`patientidentifiertypes`** (CSV): identifier types
+- **`locationtags`** (CSV): tags such as `Login Location`, `Visit Location` and `Admission Location`
+- **`privileges`** (CSV): privileges
+- **`encountertypes`, `encounterroles`** (CSV): encounter types and the roles providers take in them
+- **`roles`** (CSV): roles and the privileges they hold
+- **`globalproperties`** (XML): backend settings
+- **`attributetypes`** (CSV): attribute types for locations, visits, providers and others
+- **`locations`** (CSV): locations with their tags and hierarchy
+- **`ocl`** (ZIP): Open Concept Lab collection exports, the usual way to load CIEL-sourced concepts
+- **`concepts`, `conceptsets`** (CSV): concepts defined by hand
+- **`programs`, `programworkflows`, `programworkflowstates`** (CSV): programs
+- **`personattributetypes`** (CSV): person attribute types
+- **`idgen`, `autogenerationoptions`** (CSV): identifier sources and which identifier type each generates
+- **`drugs`, `orderfrequencies`, `ordertypes`** (CSV): orderables
+- **`queues`** (CSV): service queues
+- **`fhirconceptsources`, `fhirpatientidentifiersystems`** (CSV): how FHIR2 maps concept sources and identifier types to URIs
+- **`ampathforms`, `ampathformstranslations`** (JSON): React form engine schemas and their translations
+
+Several domains load only when the module they need is installed: `idgen`, `queues`, `fhirconceptsources`, `htmlforms`, `appointment*`, `billableservices` and others. A file in a domain whose module is absent is ignored. `messageproperties/` holds translation files that Initializer serves as a message source; it isn't a persisted domain.
+
+## CSV conventions
+
+The CSV domains share a format:
+
+- **`Uuid`** identifies the row. Leave it blank and Initializer generates one; set it and Initializer creates the object with that UUID or updates the existing one. Keep UUIDs stable, because the frontend configuration and other metadata reference them.
+- When `Uuid` is blank, most domains fall back to matching by **name**, so a row with the name of an existing object updates it.
+- **`Void/Retire`** set to `true` retires or voids the object and skips the rest of the row.
+- **`_order:<n>`** in a header sets the order in which files within the same domain load. Files without it load last.
+- **`Display:<locale>`** columns, such as `Display:fr`, provide translated names.
+- Lists inside a cell are separated with `;`.
+- **`_version:<n>`** selects an alternative parser for domains that have more than one format.
+
+Rows that reference something not yet created are retried in further passes over the same file, so order within a file rarely matters. Rows that still fail are logged with an error summary.
+
+A location file, for example:
+
+```csv
+Uuid,Void/Retire,Name,Description,Parent,Tag|Login Location,Tag|Visit Location,Tag|Facility Location,_order:1000
+f47ac10b-58cc-4372-a567-0e02b2c3d479,,Ubuntu Hospital,Ubuntu Hospital,,,TRUE,,
+44c3efb0-…,,Outpatient Clinic,,Ubuntu Hospital,TRUE,,TRUE,
+```
+
+Tags are one `Tag|<name>` column each, set to `TRUE` for the tags the location carries.
+
+## Global properties
+
+Global properties are backend settings stored as key-value pairs. They configure modules (`webservices.rest.maxResultsDefault`, `fhir2.paging.default`), core behavior (`default_locale`, `patient.identifierRegex`) and clinical conventions (`concept.true`, `emr.primaryIdentifierType`). The `globalproperties/` domain loads them from XML:
+
+```xml
+<config>
+  <globalProperties>
+    <globalProperty>
+      <property>default_locale</property>
+      <value>en_GB</value>
+    </globalProperty>
+    <globalProperty>
+      <property>webservices.rest.maxResultsAbsolute</property>
+      <value>500</value>
+    </globalProperty>
+  </globalProperties>
+</config>
+```
+
+Every file in the folder is applied, in alphabetical path order, so on a fresh start a later file overwrites an earlier one; the Reference Application ships several, and a site file named `zz-site.xml` sorts after them. On later starts only files whose checksum changed are applied, so avoid setting one property in more than one file; the module's documentation calls the result undefined. A property set this way is reapplied on every restart in which the file's checksum has changed, which means a value edited in the admin UI survives restarts until the file changes.
+
+The frontend reads a global property through the REST `systemsetting` resource, as shown in [REST API](/docs/backend/rest-api#reading-global-properties). The emrapi module exposes its own configuration, which `useEmrConfiguration()` in `@openmrs/esm-framework` fetches.
+
+## Forms
+
+The `ampathforms/` domain loads React form engine schemas. Each JSON file needs `name`, `version`, `published` and `retired`. An encounter form, which is any form without a `processor` or with `EncounterFormProcessor`, also needs an `encounter` whose value is the **name** of an existing encounter type. The Form Builder doesn't add `encounter`, so add it before you drop an exported schema into the folder. `description` is optional.
+
+Initializer stores the schema as a `Form` with a `FormResource` named `JSON schema`, which is what the form engine fetches. The form's UUID is derived from its name and version, and the `uuid` inside the JSON is ignored. Loading a new version of a form with an existing name retires the old form and creates a new one.
+
+`ampathformstranslations/` holds one JSON file per form and language, with `form` set to the form name and `language` to the locale. Translations reload whenever their form does.
+
+See [Forms in O3](/docs/forms-in-o3) for the schema itself.
+
+## Checksums and reloading
+
+Initializer records an MD5 checksum of every file it processes in `configuration_checksums/`, mirroring the domain folders. On the next start it skips any file whose checksum is unchanged. That makes restarts fast, but it has two consequences:
+
+- Editing a file changes its checksum, so the file is reprocessed. Editing the database by hand doesn't, so the file won't reassert its values until it changes.
+- With the default error handling, a file that fails still gets its checksum written, so it isn't retried on the next start. Fix the file, or delete its `.checksum`, to make Initializer try again.
+
+To force a full reload, delete `configuration_checksums/` or the files inside it for the domain you care about. Row-level checksums for CSV files can be enabled with `initializer.row.checksums.enabled=true`, after which only changed rows are reprocessed.
+
+## Runtime properties
+
+A few properties in `openmrs-runtime.properties` control Initializer:
+
+- **`initializer.startup.load`**: `continue_on_error` (default), `fail_on_error` to abort startup on the first failure, or `disabled`
+- **`initializer.domains`**: a comma-separated list of domains to load, or a list prefixed with `!` to exclude
+- **`initializer.exclude.<domain>`**: file name patterns to skip in one domain
+- **`initializer.skip.checksums`**: `true` to reprocess every file on every start
+- **`initializer.logging.enabled`**, **`initializer.logging.location`**, **`initializer.logging.level`**: the Initializer log, on by default, written to `initializer.log` in the application data directory at `WARN`
+
+The log file is the first place to look when metadata doesn't appear. The module also ships a standalone validator jar that dry-runs a configuration folder without a server; see [`readme/validator.md`](https://github.com/mekomsolutions/openmrs-module-initializer/blob/main/readme/validator.md).
+
+## Content packages
+
+A content package is a versioned zip of Initializer files. Its repository has a `pom.xml`, a `content.properties` naming the package and version, and optionally the module versions it needs, and a `configuration/` folder with two halves:
+
+```
+configuration/
+├── backend_configuration/   # Initializer domain folders
+│   ├── concepts/
+│   ├── locations/
+│   └── …
+└── frontend_configuration/
+    └── config.json          # an O3 frontend configuration file
+```
+
+The Reference Application references three in `distro.properties`: a showcase package, and these two:
+
+- [`openmrs-content-referenceapplication`](https://github.com/openmrs/openmrs-content-referenceapplication) is the minimum to run O3: location tags, OCL collections of CIEL-sourced concepts, concept sources, privileges, and the global properties the frontend expects.
+- [`openmrs-content-referenceapplication-demo`](https://github.com/openmrs/openmrs-content-referenceapplication-demo) is the starter kit: demo locations, encounter and visit types, identifier sources, forms, programs, queues and more, plus a frontend configuration that wires extension slots.
+
+Initializer itself knows nothing about content packages. The distribution build, through the SDK's `build-distro` goal, unpacks each package's `backend_configuration` into the `openmrs_config` folder that becomes the backend's configuration directory. The Reference Application's frontend image doesn't use the frontend half; it serves its own `frontend/config-core_demo.json`. If you need to change what the Reference Application ships, the change belongs in one of those repositories.
+
+## A local workflow that works
+
+1. Write or export the file and place it in the right domain folder.
+2. Restart the backend and watch the log, or the Initializer log file, for the domain.
+3. Check the result through the REST API, for example `GET /ws/rest/v1/encountertype?v=full`, or the legacy admin UI at `/openmrs/admin`.
+4. Reference the new object from the frontend by UUID, never by name.
+
+## Useful links
+
+- [Configure O3: Overview](/docs/configure-o3/overview#configuration-des-métadonnées-et-des-paramètres-backend) covers Initializer from the implementer's side, including the Docker mount paths
+- [Set up an instance of O3: Updating metadata](/docs/recipes/set-up-o3-instance#mise-à-jour-des-métadonnées) walks through rebuilding the Docker image with new configuration
+- [Key repositories: Content packages](/docs/key-repositories#packages-de-contenu) lists the content package repositories
+- The Initializer [README](https://github.com/mekomsolutions/openmrs-module-initializer#readme) and its [CSV conventions](https://github.com/mekomsolutions/openmrs-module-initializer/blob/main/readme/csv_conventions.md) are the reference for every domain

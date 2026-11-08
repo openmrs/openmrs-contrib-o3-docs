@@ -1,0 +1,50 @@
+# Key backend repositories
+
+The backend that O3 talks to is spread across a number of community-maintained GitHub repositories, in the same way the frontend is. Each one is focused on a particular concern: openmrs-core owns the data model and services, each module adds an API or a feature on top, and the distribution and content repositories decide what ships together. This page lists the ones you're likely to open while working on a frontend module. [Key repositories](/docs/key-repositories) covers the frontend side.
+
+## Core and the APIs
+
+- [openmrs-core](https://github.com/openmrs/openmrs-core) - the API and web application: the data model, the service layer, the module framework, and the Liquibase changesets that build the database. Start here when you need to know what a privilege gates or how an object is validated.
+- [REST Web Services](https://github.com/openmrs/openmrs-module-webservices.rest) - the REST API at `/ws/rest/v1`. The `@Resource` classes under `omod/src/main/java` define every representation and every creatable property.
+- [FHIR2](https://github.com/openmrs/openmrs-module-fhir2) - the FHIR R4 API at `/ws/fhir2/R4`. Resource providers and translators live under `api/src/main/java`.
+- [Initializer](https://github.com/mekomsolutions/openmrs-module-initializer) - loads metadata and configuration from files on startup. The `readme/` folder has one document per domain.
+
+## Modules the Reference Application ships
+
+The current list is in [`distro/distro.properties`](https://github.com/openmrs/openmrs-distro-referenceapplication/blob/main/distro/distro.properties) and the versions are in [`distro/pom.xml`](https://github.com/openmrs/openmrs-distro-referenceapplication/blob/main/distro/pom.xml). The ones frontend modules depend on most:
+
+- [EMR API](https://github.com/openmrs/openmrs-module-emrapi) - higher-level clinical operations and the EMR API configuration that `useEmrConfiguration()` fetches, such as the primary identifier type and the admission encounter type.
+- [ID Generator](https://github.com/openmrs/openmrs-module-idgen) - patient identifier generation, used by patient registration.
+- [Queue](https://github.com/openmrs/openmrs-module-queue) - outpatient queue management behind the service queues app.
+- [Appointments](https://github.com/Bahmni/openmrs-module-appointments) - Bahmni's appointment scheduling module, behind the appointments app.
+- [O3 Forms](https://github.com/openmrs/openmrs-module-o3forms) - REST endpoints that return a form schema with its subforms, translations and concept metadata resolved, for the React form engine.
+- [Cohort](https://github.com/openmrs/openmrs-module-cohort) - the enhanced cohort data model behind patient lists.
+- [Patient Flags](https://github.com/openmrs/openmrs-module-patientflags) - flags that mark a patient record with a message, shown just below the patient banner when the `patient-flags` feature flag is on.
+- [Attachments](https://github.com/openmrs/openmrs-module-attachments) - upload, storage and retrieval of files attached to a patient.
+- [Patient Documents](https://github.com/openmrs/openmrs-module-patientdocuments) - printable documents such as patient reports, summaries and receipts, built on the Reporting module.
+- [Bed Management](https://github.com/openmrs/openmrs-module-bedmanagement) - beds, admission locations and the rest of the inpatient data model behind the ward app.
+- [Stock Management](https://github.com/openmrs/openmrs-module-stockmanagement) and [Billing](https://github.com/openmrs/openmrs-module-billing) - the backends for the stock management and billing apps.
+- [Order Templates](https://github.com/openmrs/openmrs-module-ordertemplates) - REST services for order templates, used by the medication order form when the `ordertemplates-module` feature flag is on.
+- [Reporting](https://github.com/openmrs/openmrs-module-reporting) and [Reporting REST](https://github.com/openmrs/openmrs-module-reportingrest) - report definitions and the REST layer over them.
+- [Tasks](https://github.com/openmrs/openmrs-module-tasks) - the FHIR-backed task list.
+- [Authentication](https://github.com/openmrs/openmrs-module-authentication) - extended authentication such as two-factor login.
+- [Open Concept Lab](https://github.com/openmrs/openmrs-module-openconceptlab) - imports concept collections from OCL, which is how the Reference Application loads CIEL-sourced concepts.
+- [Address Hierarchy](https://github.com/openmrs/openmrs-module-addresshierarchy) - constrained address fields and the hierarchy behind the address form.
+- [Metadata Mapping](https://github.com/openmrs/openmrs-module-metadatamapping) - metadata sets and term mappings that other modules look up by code rather than UUID.
+- [Reference Demo Data](https://github.com/openmrs/openmrs-module-referencedemodata) - generates the demo patients, visits and observations on a fresh server.
+- [Legacy UI](https://github.com/openmrs/openmrs-module-legacyui) - the server-rendered administration pages at `/openmrs/admin`.
+
+## Distribution and metadata
+
+- [Reference Application distro](https://github.com/openmrs/openmrs-distro-referenceapplication) - pins the backend modules and content packages, builds the Docker images, and holds the `docker-compose.yml` that runs the whole stack.
+- [Content: Reference Application](https://github.com/openmrs/openmrs-content-referenceapplication) - the minimum metadata to run O3.
+- [Content: Reference Application demo](https://github.com/openmrs/openmrs-content-referenceapplication-demo) - the starter-kit metadata: locations, encounter types, forms, programs and queues, plus a frontend configuration that the Reference Application's own frontend image doesn't use.
+
+## Tooling and documentation
+
+- [OpenMRS SDK](https://github.com/openmrs/openmrs-sdk) - the Maven plugin that sets up and runs OpenMRS servers locally. Its documentation is on the [wiki](https://om.rs/sdk).
+- [OpenMRS Add Ons](https://om.rs/modules) - the directory of published modules, for anything the Reference Application doesn't ship.
+- [REST API docs](https://github.com/openmrs/openmrs-contrib-rest-api-docs) - the source of [rest.openmrs.org](https://rest.openmrs.org).
+- [OpenAPI Maven plugin](https://github.com/openmrs/openmrs-contrib-openapi-maven-plugin) - generates an OpenAPI 3.1 document for any module's REST resources at build time. Still in development.
+- [OpenMRS data model reference](https://om.rs/dm) - a browsable reference for the tables and their columns, generated from the database schema.
+- [OpenMRS FHIR documentation](https://om.rs/fhir) - the community's FHIR strategy, the FHIR squad and the FHIR2 module's history.

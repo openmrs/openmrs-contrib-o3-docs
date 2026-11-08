@@ -1,0 +1,115 @@
+import { Callout } from "nextra/components";
+
+# FHIR API
+
+The [FHIR2 module](https://github.com/openmrs/openmrs-module-fhir2) exposes clinical data as [HL7 FHIR R4](https://hl7.org/fhir/R4/) resources at `/openmrs/ws/fhir2/R4`. It's built on [HAPI FHIR](https://hapifhir.io), so the request and response conventions are the standard FHIR ones, and the module's job is to translate between FHIR resources and OpenMRS objects. The [OpenMRS FHIR documentation](https://om.rs/fhir) covers the community's FHIR strategy and the module's history.
+
+O3 prefers FHIR endpoints where they exist. FHIR is a standard other systems speak, the resource shapes are documented outside OpenMRS, and the ambient `fhir` TypeScript types from `@types/fhir`, which `@openmrs/esm-globals` depends on, give you typed responses for free. The REST API remains the right choice for anything administrative or anything FHIR doesn't model, such as encounter types, forms, or the session.
+
+## Base URL and authentication
+
+`fhirBaseUrl` from `@openmrs/esm-framework` is `/ws/fhir2/R4`. `openmrsFetch` prefixes it with `window.openmrsBase`, the backend's context path such as `/openmrs`, and, for FHIR paths, adds `_summary=data` to the query string when you haven't set `_summary` yourself. That strips the generated narrative from each resource, which keeps responses small.
+
+```ts
+import { fhirBaseUrl, useOpenmrsSWR } from "@openmrs/esm-framework";
+
+const { data } = useOpenmrsSWR<fhir.Patient>(`${fhirBaseUrl}/Patient/${patientUuid}`);
+```
+
+The module also serves an R3 (STU3) endpoint at `/ws/fhir2/R3`. O3 doesn't use it, and any other version segment returns `404`.
+
+FHIR requests use the same OpenMRS session as REST. If you're logged in, the `JSESSIONID` cookie authenticates you. A request with an `Authorization: Basic` header and no session is authenticated on the spot. Every request except `/metadata` and `/.well-known` is rejected with `401` when there's no authenticated user, and the body is the servlet container's error page rather than a FHIR `OperationOutcome`.
+
+Privileges are enforced on FHIR calls too. The module's data access objects carry the same `@Authorized` annotations as openmrs-core's services, using core privileges such as `Get Patients` and `Add Allergies`. See [Privileges and roles](/docs/backend/privileges-and-roles).
+
+## Supported resources (and what each one can do)
+
+Each resource is served by a `*FhirResourceProvider` class under `api/src/main/java/org/openmrs/module/fhir2/providers/r4/` in the module repository. The table shows what each one supports on the current `master` branch.
+
+| Resource | Read | Search | Create | Update | Delete | Patch | Operations |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| AllergyIntolerance | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | |
+| Condition | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | |
+| DiagnosticReport | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | |
+| Encounter | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `$everything` |
+| EpisodeOfCare | ✓ | | | | | | |
+| Group | ✓ | ✓ | ✓ | ✓ | ✓ | | `$members` |
+| Immunization | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | |
+| Location | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | |
+| Medication | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | |
+| MedicationDispense | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | |
+| MedicationRequest | ✓ | ✓ | | | | ✓ | |
+| Observation | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `$lastn`, `$lastn-encounters` |
+| Patient | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | `$everything` |
+| Person | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | |
+| Practitioner | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | |
+| RelatedPerson | ✓ | ✓ | | | | | |
+| ServiceRequest | ✓ | ✓ | | | | | |
+| Task | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | |
+| ValueSet | ✓ | ✓ | | | | | |
+
+Patch accepts JSON Patch, JSON Merge Patch (`application/merge-patch+json`) and XML Patch. No resource supports history.
+
+## How FHIR resources map to OpenMRS objects
+
+The module is built in four layers. A resource provider receives the HTTP request, a `Fhir*Service` applies the business rules, a translator converts between the FHIR resource and the OpenMRS object, and a DAO runs the Hibernate query. When you need to know why a field is missing or named differently, the translator is the class to read: for example `PatientTranslatorImpl` for `Patient`, or `ObservationTranslatorImpl` for `Observation`.
+
+Most resources map to one OpenMRS class, but a few are worth knowing about because the mapping isn't one to one:
+
+- **Encounter** covers both OpenMRS encounters and visits. A read tries the encounter first, then the visit. A search returns both unless you narrow it with `_tag`, and each resource carries a `meta.tag` with system `http://fhir.openmrs.org/ext/encounter-tag` and code `encounter` or `visit`.
+- **Condition** covers both the `Condition` table and encounter diagnoses. Searching with `category=encounter-diagnosis` returns diagnoses, `category=problem-list-item` returns conditions, and no category returns both.
+- **Practitioner** covers both providers and users, and a search merges the two.
+- **Observation** maps to `Obs`. An obs group becomes an `Observation` whose `hasMember` array references each member, and `has-member` is a search parameter you can `_include`.
+- **Immunization** is stored as obs groups under a dedicated encounter type.
+- **DiagnosticReport** and **Task** are stored in the module's own tables (`fhir_diagnostic_report`, `fhir_task`), not in core tables.
+- **Group** maps to `Cohort`, **EpisodeOfCare** to `PatientProgram`, **Medication** to `Drug`, **MedicationRequest** to `DrugOrder`, **ServiceRequest** to `TestOrder`, **RelatedPerson** to `Relationship`, and **ValueSet** to `Concept`.
+
+## Searching
+
+Each provider declares the search parameters it accepts. The ones you will use most:
+
+- **Patient**: `name`, `given`, `family`, `identifier`, `gender`, `birthdate`, `death-date`, `deceased`, the `address-*` parameters, `_id`, `_lastUpdated` and `_sort`. A second search, `_query=openmrsPatients`, takes `q` and runs the OpenMRS patient search. O3's patient search uses the REST `patient` resource instead.
+- **Observation**: `patient` or `subject`, `encounter`, `code`, `category`, `date`, the `value-*` parameters, `has-member`, `_id`, `_lastUpdated` and `_sort`.
+- **Encounter**: `patient` or `subject`, `date`, `location`, `participant`, `type`, `_tag`, `_id`, `_lastUpdated` and `_sort`. A second search, `_query=encountersWithMedicationRequests`, exists for the dispensing app.
+- **Condition**: `patient` or `subject`, `code`, `clinical-status`, `onset-date`, `onset-age`, `recorded-date`, `category`, `_id`, `_lastUpdated` and `_sort`.
+
+Reference parameters support chaining, so `Observation?patient.identifier=100GEJ` works. `_include` and `_revinclude` are supported for the references each provider lists, for example `Encounter?patient=...&_revinclude=Observation:encounter`. `_has` reverse chaining is supported.
+
+The operations on the table above are what they sound like: `Patient/{uuid}/$everything` returns a patient and everything linked to them, and `Observation/$lastn?max=2&category=laboratory&code=5242` returns the most recent N observations per code.
+
+### Paging
+
+Searches return a `Bundle`. `_count` sets the page size; the default is 10 and the maximum is 100, set by the global properties `fhir2.paging.default` and `fhir2.paging.maximum`. `Bundle.total` is the full match count. To get the next page, follow the `link` entry whose `relation` is `next` rather than building the URL yourself. The server keeps the search in memory, so a `next` link stops working after a restart or once a hundred newer searches have displaced it, and in a multi-node deployment it's only valid on the node that ran the search.
+
+`@openmrs/esm-framework` wraps this for you: `useFhirInfinite` and `useFhirFetchAll` follow the `next` links, while `useFhirPagination` builds each page URL itself with `_count` and `_getpagesoffset`.
+
+`_summary=count` returns only the total.
+
+## Writing data
+
+Create with `POST /Patient`, update with `PUT /Patient/{uuid}`, and delete with `DELETE /Patient/{uuid}`. Most providers overwrite the body's `id` with the one in the URL; `Condition`, `DiagnosticReport`, `Encounter`, `Location` and `Task` reject a mismatch with `400`. Deleting voids or retires the OpenMRS object; it doesn't purge it, and a later read returns `410 Gone`. A successful delete returns an `OperationOutcome` with an informational issue.
+
+`PUT` to a missing id normally fails. For `Location`, `Medication`, `Practitioner` and `Task` it creates the resource instead when that resource name is listed in the global property `fhir2.upsert.supported.resources`.
+
+Validation failures from openmrs-core come back as `422` with an `OperationOutcome`. Malformed requests are `400`, unknown ids are `404`. Read and search responses carry `Cache-Control: no-store`.
+
+## Global properties the module reads
+
+- **`fhir2.paging.default`**, **`fhir2.paging.maximum`**: default and maximum page size, 10 and 100
+- **`fhir2.uriPrefix`**: overrides the server base URL in bundle links when the module can't detect it behind a proxy
+- **`fhir2.immunizationsEncounterTypeUuid`**, **`fhir2.administeringEncounterRoleUuid`**: encounter type and role used to store immunizations
+- **`fhir2.personContactPointAttributeTypeUuid`**, **`fhir2.locationContactPointAttributeTypeUuid`**, **`fhir2.providerContactPointAttributeTypeUuid`**: attribute types that back `telecom` on Person, Location and Practitioner
+- **`fhir2.locationTypeAttributeTypeUuid`**: location attribute type used for `Location.type`
+- **`fhir2.upsert.supported.resources`**: resources for which `PUT` to a missing id creates it
+- **`fhir2.narrativesOverridePropertyFile`**: custom narrative templates
+
+## Useful links
+
+- The module's [README](https://github.com/openmrs/openmrs-module-fhir2#readme) explains the layered design and the development principles.
+- The [OpenMRS FHIR wiki](https://om.rs/fhir) covers the FHIR strategy, the squad and the module history.
+- `GET /openmrs/ws/fhir2/R4/metadata` returns the server's `CapabilityStatement`, generated by HAPI from the providers, and needs no authentication.
+- [Retrieve and post data](/docs/recipes/retrieve-and-post-data#fhir) shows the frontend hooks for FHIR calls.
+
+<Callout emoji="ℹ️" type="info">
+  **Minimum core version**: the module's `config.xml` declares 2.4.0, but the current code builds against core 2.8 and has dropped its compatibility shims for older versions. Treat 2.8 as the practical minimum.
+</Callout>

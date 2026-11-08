@@ -1,0 +1,119 @@
+import { Callout } from "nextra/components";
+
+# Data model
+
+Almost every widget in O3 reads or writes a handful of OpenMRS objects: patients, visits, encounters, observations, concepts and orders. If you know how those fit together, most REST and FHIR responses stop being surprising. This page walks through the model from a frontend developer's point of view. It describes the objects as the APIs expose them, not the database tables, because the APIs are the contract your code depends on.
+
+The classes live in `api/src/main/java/org/openmrs/` in [openmrs-core](https://github.com/openmrs/openmrs-core), and the [OpenMRS data model reference](https://om.rs/dm) documents the tables and their columns if you need them.
+
+## Patients and people
+
+A **patient** is a **person** with identifiers. In the code, `Patient` extends `Person`, and both share the same row id, so a patient's UUID and its person's UUID are the same.
+
+The person carries the demographics:
+
+- **Names** (`PersonName`), one of which is preferred
+- **Addresses** (`PersonAddress`)
+- **Attributes** (`PersonAttribute`), typed by a `PersonAttributeType`, for things like a phone number or a mother's name
+- `gender`, `birthdate`, `birthdateEstimated`, `dead`, `deathDate` and `causeOfDeath`
+
+The patient adds **identifiers** (`PatientIdentifier`), each with a `PatientIdentifierType` and optionally a location. One is preferred, and a patient's `display` in REST responses is that identifier followed by the person's full name.
+
+Users and providers point at a person too, which is why a clinician who is also registered as a patient is still one person. In the REST API these are `/patient` and `/person`, with names, addresses, attributes and identifiers as subresources.
+
+## Visits, encounters and observations
+
+Clinical data is nested three levels deep.
+
+- A **visit** is a patient's attendance at a facility: an outpatient visit, an inpatient stay, an emergency visit. It has a `visitType`, a `location`, a `startDatetime` and a `stopDatetime`. A visit with no stop time is active, and that's the visit O3 shows as the patient's current visit.
+- An **encounter** is one interaction within a visit, such as a vitals check, a consultation or a lab result entry. It has an `encounterType`, an `encounterDatetime`, a `location`, optionally the `form` used to capture it, and `encounterProviders`, each pairing a provider with an encounter role such as "Clinician". An encounter holds the observations, orders, diagnoses, conditions and allergies recorded during it.
+- An **observation** (`Obs`) is one fact: a weight, a blood pressure reading, a test result, an answer to a form question. Every observation is a **concept** plus **one value**.
+
+### Observation values
+
+An observation stores its value in the column that fits its concept's datatype: `valueNumeric`, `valueCoded` (another concept), `valueText`, `valueDatetime` (shared by the `Date`, `Time` and `Datetime` datatypes) or `valueComplex` (a file, such as an image, stored outside the database). A coded answer that names a specific drug also fills `valueDrug`.
+
+Booleans don't have their own column. They're stored as a coded value pointing at the concepts named by the global properties `concept.true` and `concept.false`, and the Reference Application's base content package sets those two properties.
+
+The REST API flattens all of this into one `value` property whose shape depends on the datatype:
+
+```json
+{ "display": "Total protein: 137.0", "value": 137.0 }
+{ "display": "Text of encounter note: …", "value": "Vel turpis nunc…" }
+{ "display": "Covid 19 Signs and Symptom in past 14 days: Cough", "value": { "uuid": "143264AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", "display": "Cough", … } }
+```
+
+A coded `value` is the whole answer concept, trimmed here to two of its fields. So check the concept's datatype, or the type of `value`, before you render it.
+
+### Observation groups
+
+Related observations are grouped under a parent observation. The parent has a concept whose datatype is `N/A` and whose class is usually `ConvSet` or `LabSet`, its own `value` is null, and its `groupMembers` hold the children. A lab panel such as CD4 and a repeating form section are typical obs groups. O3's vitals app doesn't group blood pressure; it saves systolic and diastolic as separate observations. In the REST response the group's `display` lists the member values, and `groupMembers`, which the default representation includes, holds them individually. Name it explicitly if you use a custom representation.
+
+### Editing creates a new observation
+
+Observations aren't updated in place. When you save a changed observation, the backend voids the old one and saves a new one whose `previousVersion` points at it. The UUID changes, so don't hold on to an observation's UUID across an edit. Each observation also has a `status` (`PRELIMINARY`, `FINAL` or `AMENDED`) and an optional `interpretation` such as `NORMAL`, `HIGH` or `CRITICALLY_LOW`.
+
+## Concepts
+
+Concepts are how OpenMRS represents meaning. Questions, answers, diagnoses, tests, drugs, symptoms and units are all concepts, and the concept dictionary is what lets a form, a lab system and a report agree that they're talking about the same thing.
+
+Each concept has:
+
+- A **datatype**, which decides what an observation of it can hold: `Numeric`, `Coded`, `Text`, `N/A`, `Document`, `Date`, `Time`, `Datetime`, `Boolean`, `Rule`, `Structured Numeric` or `Complex`.
+- A **class**, which says what kind of thing it is: `Diagnosis`, `Drug`, `Test`, `Finding`, `Question`, `Procedure`, `Misc`, `ConvSet`, `LabSet` and others. Widgets often filter by class, for example to search only diagnoses.
+- **Names**, one or more per locale. Each name is `FULLY_SPECIFIED`, `SHORT`, an `INDEX_TERM` used only for search, or a synonym with no type, and one per locale is marked preferred. That's why the same concept displays as "Weight (kg)" in English and "Poids (kg)" in French.
+- **Answers**, for coded concepts: the list of concepts a coded observation of it may take.
+- **Set members**, for concepts that group others, such as a lab panel.
+- **Ranges and units**, for numeric concepts: `hiAbsolute`, `hiCritical`, `hiNormal`, the matching low values, `units` and `allowDecimal`. The patient chart uses these to flag abnormal results and to validate input.
+- **Mappings** to reference terms in other terminologies such as CIEL, SNOMED CT, LOINC and ICD-10.
+
+Many implementations, including the Reference Application, load their concepts from [CIEL](https://om.rs/ciel), the Columbia International eHealth Laboratory dictionary, through Open Concept Lab. Concepts imported from CIEL keep CIEL's UUIDs, which are the CIEL number padded with `A` to 36 characters. `5089AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA` is weight in kilograms on every server that uses CIEL, which is what makes it safe to put concept UUIDs in frontend configuration.
+
+<Callout emoji="ℹ️" type="info">
+  **Reference concepts by UUID**: names change between locales and between dictionary versions, and ids differ between servers. A UUID is the only identifier that means the same thing everywhere.
+</Callout>
+
+## Orders
+
+An **order** is an instruction to do something for a patient: give a drug, run a test, refer to another service. Each order has an `orderType`, a `careSetting` (outpatient or inpatient), an `orderer` (a provider), the `encounter` it was placed in, an `orderNumber`, a `dateActivated`, an optional `autoExpireDate`, and an `urgency` of `ROUTINE`, `STAT` or `ON_SCHEDULED_DATE`.
+
+The subclasses add what's specific to each kind:
+
+- **`DrugOrder`** adds the drug, dose, units, frequency, route, duration and quantity.
+- **`TestOrder`** is a lab or radiology order. Laboratory apps track it through `fulfillerStatus` (`RECEIVED`, `IN_PROGRESS`, `COMPLETED` and others).
+- **`ReferralOrder`** is a referral to another service.
+
+Like observations, orders aren't edited. Each change is a new order with an `action` of `NEW`, `REVISE`, `DISCONTINUE` or `RENEW`, and a `previousOrder` pointing at the one it replaces. When a revision is saved, the backend stops the previous order. To find a patient's current medications, ask for active orders rather than walking the chain yourself.
+
+## Conditions, diagnoses and allergies
+
+- A **condition** belongs to the patient's problem list and persists across encounters. Its `clinicalStatus` is `ACTIVE`, `INACTIVE`, `HISTORY_OF`, `RECURRENCE`, `RELAPSE`, `REMISSION` or `RESOLVED`.
+- A **diagnosis** is made during an encounter. It's either coded or free text, has a `certainty` of `PROVISIONAL` or `CONFIRMED`, and a `rank` that marks primary and secondary diagnoses. A diagnosis can be linked to a condition but doesn't have to be.
+- An **allergy** records an allergen, its severity and its reactions.
+
+The FHIR API serves both conditions and diagnoses as `Condition` resources, distinguished by category. See [FHIR API](/docs/backend/fhir-api#how-fhir-resources-map-to-openmrs-objects).
+
+## Programs
+
+A **program** is a long-running course of care such as HIV treatment or antenatal care. A patient is enrolled through a `PatientProgram`, and moves through states, such as "On treatment" or "Lost to follow-up", defined by the program's workflows. Each state change is a `PatientState` with its own start and end dates.
+
+## Locations, providers and users
+
+- A **location** can have a parent, which gives you a facility hierarchy. **Tags** say what a location is for, such as `Login Location`, `Visit Location` or `Admission Location`, and the frontend filters by them, for example to decide which locations appear in the login location picker.
+- A **provider** is a clinical identity, the person who appears on an encounter or signs an order. It usually points at a person.
+- A **user** is a login account with roles and privileges. It also points at a person.
+
+One person can be both a user and a provider, which is the normal case for a clinician. The session's `currentProvider` is the provider record of the logged-in user's person, and it's only set when there's exactly one.
+
+## Attributes: extending the model without schema changes
+
+Most implementations need to record something core doesn't have a field for, such as a visit's payment method or a location's facility code. Rather than change the schema, OpenMRS uses typed attributes. `Visit`, `Location`, `Provider`, `Order`, `Diagnosis`, `Concept`, `Program` enrollments and others each accept attributes whose types an implementer defines, with a datatype that controls validation. Person attributes predate this design and work slightly differently, but serve the same purpose.
+
+The REST resources for visits, locations, providers, concepts, program enrollments and people return them as an `attributes` array; the order and diagnosis resources don't expose them yet. When you need a field that isn't there, check whether an attribute type already holds it before asking for a backend change.
+
+## Next steps
+
+- [REST API](/docs/backend/rest-api) explains how to fetch these objects and ask for exactly the fields you need
+- [FHIR API](/docs/backend/fhir-api) shows how each object maps onto a FHIR resource
+- [Metadata and Initializer](/docs/backend/metadata-and-initializer) explains where encounter types, concepts, locations and attribute types come from
+- [Run a local backend](/docs/backend/local-backend#inspecting-the-database) shows how to look at the tables directly when you need to debug

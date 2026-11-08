@@ -1,0 +1,131 @@
+import Image from "next/image";
+import { Callout } from "nextra/components";
+
+# Backend architecture
+
+The OpenMRS backend is a Java web application. [openmrs-core](https://github.com/openmrs/openmrs-core) provides the data model, the service layer and the module framework. Everything else, including the REST and FHIR APIs that O3 calls, is a module. A distribution such as the [Reference Application](https://github.com/openmrs/openmrs-distro-referenceapplication) chooses which backend modules, which frontend modules and which metadata ship together.
+
+This page gives you the map you need to read a stack trace, find the code behind an endpoint, or work out which module to install.
+
+## openmrs-core
+
+The repository is a Maven project with a handful of modules. The two you will read most are:
+
+- **`api`** holds the domain classes (`org.openmrs.Patient`, `Encounter`, `Obs`, `Concept`, and so on), the service interfaces in `org.openmrs.api`, their implementations in `org.openmrs.api.impl`, the Hibernate data access objects in `org.openmrs.api.db.hibernate`, the module framework in `org.openmrs.module`, and the Liquibase changesets that create and migrate the database.
+- **`webapp`** packages the `openmrs.war` that Tomcat runs. The `web` module holds the servlet filters and the setup wizard it depends on.
+
+### The service layer
+
+Every operation on data goes through a service. `PatientService`, `PersonService`, `EncounterService`, `ObsService`, `ConceptService`, `OrderService`, `VisitService`, `LocationService`, `FormService`, `ProgramWorkflowService`, `ProviderService`, `UserService` and `AdministrationService` are the ones you will meet. Code reaches them statically through `Context`, for example `Context.getPatientService().getPatientByUuid(uuid)`.
+
+The services are Spring beans with method-level security. Most methods declare the privilege they need, with `@Authorized` on the 2.x line and Spring Security's `@PreAuthorize` on `master`, and an interceptor checks the current user before the method runs. That is where authorization happens, so the REST and FHIR layers above inherit it for free. [Privileges and roles](/docs/backend/privileges-and-roles) covers this in detail.
+
+Under each service is a DAO interface and a Hibernate implementation, for example `PatientDAO` and `HibernatePatientDAO`. You rarely need to go that deep, but when a search behaves unexpectedly the query is in the DAO.
+
+### The data model
+
+Every persisted object implements `OpenmrsObject`, which gives it an integer `id` used for database joins and a `uuid` used everywhere else. The APIs identify objects by UUID, and the UUID is what the frontend stores and passes around.
+
+Two base classes matter because they decide how deletion works:
+
+- **Data** (`BaseOpenmrsData`): patients, encounters, observations, visits, orders. Data is **voided**, never deleted in normal operation. A voided object carries `voided`, `dateVoided`, `voidedBy` and `voidReason`, and is excluded from queries unless you ask for it.
+- **Metadata** (`BaseOpenmrsMetadata`): encounter types, locations, forms, roles, privileges, identifier types. Metadata is **retired**, as are other retirable objects such as `Concept`, which has its own base class. A retired object stays valid for existing references but shouldn't be used for new ones, so a retired encounter type still shows on old encounters but is hidden from the picker.
+
+Both kinds also carry `creator`, `dateCreated`, `changedBy` and `dateChanged`, which the REST API exposes as `auditInfo` in the `full` representation.
+
+Hibernate mappings are a mix of JPA annotations on the classes and `*.hbm.xml` files under `api/src/main/resources/org/openmrs/api/db/hibernate/`. The database schema is built by Liquibase changesets in `api/src/main/resources/org/openmrs/liquibase/`.
+
+[Data model](/docs/backend/data-model) explains the main objects and how they relate, and the [OpenMRS data model reference](https://om.rs/dm) documents the tables and their columns.
+
+## Modules
+
+A module is a jar with an `.omod` extension and a `config.xml` at its root. The descriptor declares the module's id, version, the core version it requires (`require_version`), the modules it depends on (`require_modules`), its activator class, and the privileges and global properties it adds. On start, openmrs-core gives each module its own class loader, runs its activator, and refreshes the Spring context so the module's beans and controllers join the application.
+
+Modules are loaded from the `modules` folder of the application data directory, which is `/openmrs/data` in the Reference Application's Docker image and `~/openmrs/<serverId>` with the SDK.
+
+The Reference Application pins its backend modules in [`distro/distro.properties`](https://github.com/openmrs/openmrs-distro-referenceapplication/blob/main/distro/distro.properties). The ones O3 depends on most:
+
+- **`webservices.rest`**: the REST API at `/ws/rest/v1`
+- **`fhir2`**: the FHIR R4 API at `/ws/fhir2/R4`
+- **`initializer`**: loads metadata and configuration from files on startup
+- **`idgen`**: generates patient identifiers
+- **`emrapi`**: higher-level clinical operations and the EMR API configuration the frontend reads
+- **`queue`**: service queues
+- **`appointments`**: appointment scheduling (Bahmni's module)
+- **`o3forms`**: REST endpoints that return a form schema with its subforms, translations and concept metadata resolved, for the React form engine
+- **`referencedemodata`**: generates demo patients and visits
+- **`legacyui`**: the old server-rendered admin pages at `/openmrs/admin`
+
+Other frontend modules depend on `cohort`, `patientflags`, `stockmanagement`, `billing`, `bedmanagement`, `attachments`, `patientdocuments`, `reporting` and `ordertemplates`. Check `distro.properties` for the current list and versions, and browse [OpenMRS Add Ons](https://om.rs/modules) for modules the Reference Application doesn't ship.
+
+### Declaring what your frontend module needs
+
+A frontend module declares the backend modules it needs in its `routes.json`:
+
+```json
+{
+  "backendDependencies": {
+    "webservices.rest": "^2.24.0",
+    "fhir2": "^1.2.0"
+  },
+  "optionalBackendDependencies": {
+    "queue": {
+      "version": "^2.0.0",
+      "feature": {
+        "flagName": "service-queues",
+        "label": "Service queues",
+        "description": "Enables the queues widgets when the queue module is installed"
+      }
+    }
+  }
+}
+```
+
+The app shell doesn't block a module whose required dependency is missing; the module loads and its requests fail. What the declaration does give you:
+
+- The **Implementer Tools** fetch `/ws/rest/v1/module?v=custom:(uuid,version)`, compare it against every loaded module's declarations, and show a notification and a "Backend modules" tab listing anything missing or at the wrong version.
+- An **optional dependency with a `feature`** turns on the named feature flag when the module is installed at a matching version. Extensions and pages gated on that flag then appear.
+
+See [Configure O3: Backend dependencies](/docs/configure-o3/overview#backend-dependencies) for the implementer's view.
+
+## REST and FHIR: the two API layers
+
+Both APIs are modules that sit on top of the service layer. Neither one bypasses it, so privileges and validation behave the same whichever you call.
+
+- The **REST module** maps each OpenMRS class to a resource class that decides which properties each representation exposes and which can be set. It covers nearly the whole data model, including administrative metadata. Read [REST API](/docs/backend/rest-api).
+- The **FHIR2 module** translates between OpenMRS objects and FHIR R4 resources, so it covers clinical data well and administrative data barely at all. Read [FHIR API](/docs/backend/fhir-api).
+
+`openmrsFetch` in `@openmrs/esm-framework` works with both. `restBaseUrl` is `/ws/rest/v1` and `fhirBaseUrl` is `/ws/fhir2/R4`, and both are relative to `window.openmrsBase`, which is `/openmrs` in a standard deployment.
+
+## How a distribution fits together
+
+The diagram below follows the Reference Application from the files in its distro repository to a running system. The top lane is what happens when the images are built, and the bottom lane is what happens when you run them.
+
+<div className="my-6">
+  <Image
+    src="/o3-distribution.svg"
+    alt="How the O3 Reference Application fits together, from distro.properties and spa-assemble-config.json at build time to the gateway, frontend and backend containers and the database at run time"
+    width={1200}
+    height={1000}
+    sizes="(max-width: 768px) 100vw, 800px"
+  />
+</div>
+
+A distribution is really two builds. The backend build reads `distro.properties`, resolves the core WAR, every module and every content package from Maven, and lays them out so that Tomcat finds the WAR, the module loader finds the `.omod` files, and Initializer finds the configuration. The frontend build reads `spa-assemble-config.json`, downloads each frontend module from npm, and produces the import map and routes registry the app shell loads.
+
+Content packages carry configuration for both halves. A package such as [`openmrs-content-referenceapplication`](https://github.com/openmrs/openmrs-content-referenceapplication) is a zip of Initializer files under `configuration/backend_configuration/` plus a frontend `config.json` under `configuration/frontend_configuration/`. In the Reference Application only the backend half is used, because the frontend image serves the distro's own `frontend/config-core_demo.json` instead. [Metadata and Initializer](/docs/backend/metadata-and-initializer) explains how the backend files load.
+
+## Which versions you're working against
+
+The Reference Application currently ships openmrs-core 2.8.x. The `master` branch of openmrs-core is 3.0.0-SNAPSHOT and has moved to Java 21, Spring 7, Hibernate 7 and the Jakarta servlet API. Module authors are tracking it, and the REST module's `master` already builds against it, but the released modules you run against today target the 2.x line. Where this section describes a mechanism that differs between the two, it says so.
+
+## Useful links
+
+- [openmrs-core](https://github.com/openmrs/openmrs-core): `api/src/main/java/org/openmrs/` for the domain classes, `api/src/main/java/org/openmrs/api/` for the services, `api/src/main/java/org/openmrs/util/PrivilegeConstants.java` for the privilege names
+- [openmrs-module-webservices.rest](https://github.com/openmrs/openmrs-module-webservices.rest): `omod/src/main/java/.../v1_0/resource/` for the resource classes
+- [openmrs-module-fhir2](https://github.com/openmrs/openmrs-module-fhir2): `api/src/main/java/.../providers/r4/` for the resource providers and `api/.../translators/` for the mappings
+- [openmrs-module-initializer](https://github.com/mekomsolutions/openmrs-module-initializer): `readme/` for one document per domain
+- [openmrs-distro-referenceapplication](https://github.com/openmrs/openmrs-distro-referenceapplication): `distro/distro.properties`, `docker-compose.yml` and `frontend/spa-assemble-config.json`
+- [OpenMRS data model reference](https://om.rs/dm)
+- [OpenMRS FHIR documentation](https://om.rs/fhir)
+- [Key backend repositories](/docs/backend/key-repositories) for the full list, and [Key repositories](/docs/key-repositories) for the frontend side

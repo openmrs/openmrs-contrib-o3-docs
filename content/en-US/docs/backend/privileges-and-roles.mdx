@@ -1,0 +1,117 @@
+import { Callout } from "nextra/components";
+
+# Privileges and roles
+
+OpenMRS authorizes by privilege. A privilege is a named permission such as `Get Patients` or `Add Encounters`. Roles bundle privileges, users hold roles, and roles can inherit from other roles. The backend checks privileges in the service layer, so every REST and FHIR call is gated by them whether or not the frontend hides the button. This page explains how that gating works, how to find the privilege an endpoint needs, and how the frontend uses the same privileges to decide what to render.
+
+## How privileges, roles and users relate
+
+- A **privilege** is a row in the `privilege` table with a name and a description. Names are compared case-insensitively.
+- A **role** has a name, a set of privileges, and a set of inherited roles. A role's effective privileges are its own plus those of every ancestor.
+- A **user** has a set of roles. `User.getAllRoles()` expands inheritance.
+
+Four roles are built in and created on startup:
+
+- **`System Developer`** is the superuser. Any user holding it, directly or by inheritance, passes every privilege check. The default `admin` user has it.
+- **`Authenticated`**: its privileges are granted to every logged-in user, in addition to their own roles.
+- **`Anonymous`**: its privileges are granted to every request, logged in or not.
+- **`Provider`** is a marker role for clinicians. It carries no special behavior in core.
+
+Because `System Developer` short-circuits every check, testing as `admin` never tells you whether a privilege is wired correctly. Test with a user who holds only the roles your feature expects.
+
+## Privilege names
+
+Core privileges are declared in `PrivilegeConstants` in openmrs-core and inserted on startup. They follow a pattern:
+
+- `Get X` to read (`Get Patients`, `Get Encounters`, `Get Observations`, `Get Concepts`, `Get Visits`, `Get Locations`, `Get Users`, `Get Global Properties`)
+- `Add X`, `Edit X`, `Delete X` for data (`Add Patients`, `Edit Encounters`, `Delete Observations`)
+- `Manage X` for metadata (`Manage Concepts`, `Manage Locations`, `Manage Forms`, `Manage Roles`, `Manage Global Properties`, `Manage Modules`)
+- `Purge X` for hard deletes (`Purge Patients`)
+
+Older databases also contain `View X` privileges such as `View Patients`. Those were the API read privileges before OpenMRS 2.0 renamed them to `Get X`; the 2.0 migration copied them onto the roles that had them, and the legacy UI still uses some. The service layer checks `Get X`.
+
+Modules add their own privileges through `config.xml`, an `@AddOnStartup` constants class, or Liquibase, so a module such as `appointments` or `queue` brings privileges with it. Implementations add application-level privileges through Initializer, typically prefixed to show their purpose, for example `App: Records Allergies`.
+
+## How the backend enforces them
+
+Most service methods in openmrs-core declare what they need; a few, such as `AdministrationService.getAllowedLocales`, are open to any caller. On the 2.x line that the Reference Application runs, the declaration is `@Authorized`:
+
+```java
+@Authorized({ PrivilegeConstants.ADD_PATIENTS, PrivilegeConstants.EDIT_PATIENTS })
+public Patient savePatient(Patient patient) throws APIException;
+```
+
+Several privileges mean **any** of them suffices, unless the annotation sets `requireAll = true`. A bare `@Authorized()` means the caller only has to be logged in. A Spring AOP interceptor, `AuthorizationAdvice`, runs before every service method, finds the annotation, and calls `Context.hasPrivilege` for each privilege. That check walks the user's roles, then the implicit `Authenticated` role, then `Anonymous`. A failure throws `APIAuthenticationException`.
+
+Daemon threads, which run scheduled tasks and module startup code, skip the check entirely.
+
+<Callout emoji="ℹ️" type="info">
+  **On openmrs-core `master`**: the 3.0.0-SNAPSHOT line has migrated the services to Spring Security's `@PreAuthorize`, for example `@PreAuthorize("hasPermission(#patient, 'Add Patients') or hasPermission(#patient, 'Edit Patients')")`. `@Authorized` is deprecated there. The privilege names and `Context.hasPrivilege` are unchanged, so nothing on this page about what a privilege means or which one you need is affected.
+</Callout>
+
+### What the frontend sees
+
+- **REST** turns `APIAuthenticationException` into `401` when nobody is logged in and `403` when someone is logged in but lacks the privilege. The body's `error.message` says which. `openmrsFetch` redirects to the login page on `401`, and on a `403` from the session endpoint itself, and rejects with an `OpenmrsFetchError` on any other `403`.
+- **FHIR** enforces the same core privileges, but on its data access objects rather than on the core services, and the resulting error is an `OperationOutcome`.
+
+### Finding the privilege an endpoint needs
+
+Start from the resource class behind the endpoint (see [REST API](/docs/backend/rest-api#finding-the-resource-class-behind-an-endpoint)). Its `save`, `getByUniqueId`, `delete` and `doSearch` methods call service methods. Open that service interface in openmrs-core and read the annotation on the method. For `GET /patient/{uuid}` the chain is `PatientResource1_8.getByUniqueId`, inherited by `PatientResource1_9` → `PatientService.getPatientByUuid` → `Get Patients`.
+
+If a resource belongs to another module, follow the same chain into that module's service.
+
+## How the frontend uses privileges
+
+The session response includes the user's privileges and roles, so the app shell and every frontend module can check access without another request. `useSession()` returns it:
+
+```ts
+import { useSession, userHasAccess } from "@openmrs/esm-framework";
+
+const session = useSession();
+const canEdit = userHasAccess("Edit Encounters", session.user);
+```
+
+`userHasAccess(privilege, user)` returns `true` when the user has a privilege whose `display` matches, or when the user holds the `System Developer` role directly; the backend also honors it through role inheritance, the frontend check doesn't. Pass an array and the user must have **all** of them. A falsy privilege always returns `true`.
+
+`<UserHasAccess privilege="Edit Encounters" fallback={…}>` wraps the same check around JSX.
+
+### Extensions
+
+An extension in `routes.json` can declare the privileges it needs:
+
+```json
+{
+  "name": "patient-vitals-widget",
+  "slot": "patient-chart-summary-dashboard-slot",
+  "component": "vitalsWidget",
+  "privileges": ["Get Observations"]
+}
+```
+
+The extension system filters it out of the slot when the user lacks any listed privilege. Implementers can override the list per slot through the `Display conditions` configuration, described in [Extension system: Role-based access control](/docs/extension-system#role-based-access-control-rbac).
+
+### Pages
+
+`privileges` on a page definition isn't enforced. A page declared with `privileges` still routes and renders for every user, so gate the page's content yourself with `UserHasAccess` or `userHasAccess`, and expose privileged entry points as extensions rather than bare links. [Migrate to Core v5](/docs/migration-guides/migrate-to-core-v5) says the same.
+
+### Frontend checks don't secure anything
+
+Frontend checks exist for a good experience, not for security. A user can call the REST API directly, so the backend's privilege on the service method is the real control. When you add a feature that writes data, confirm the backend requires an appropriate privilege for that call before you rely on hiding the button.
+
+## Defining privileges and roles
+
+Implementations define roles and privileges in Initializer CSV files, under `privileges/` and `roles/` in the configuration directory. A role row names the role, its description, the roles it inherits from and the privileges it holds, with semicolons separating list values:
+
+```csv
+Uuid,Role name,Description,Inherited roles,Privileges
+79e05171-…,Organizational: Clinician,A doctor having direct contact with patients,Application: Records Allergies;Application: Uses Patient Summary,Add Allergies;Add Patients
+```
+
+The Reference Application's base content package ships its privileges in [`openmrs-content-referenceapplication`](https://github.com/openmrs/openmrs-content-referenceapplication/tree/main/configuration/backend_configuration). See [Metadata and Initializer](/docs/backend/metadata-and-initializer) for how those files load, and the Initializer's [roles](https://github.com/mekomsolutions/openmrs-module-initializer/blob/main/readme/roles.md) and [privileges](https://github.com/mekomsolutions/openmrs-module-initializer/blob/main/readme/priv.md) documents for the formats.
+
+Roles and privileges can also be edited at runtime in the legacy admin UI under `/openmrs/admin`, and through the REST `role` and `privilege` resources, but files are the repeatable option.
+
+## Useful links
+
+- [Extension system: Role-based access control (RBAC)](/docs/extension-system#role-based-access-control-rbac) covers `privileges` in `routes.json` and the configuration override
+- [Configure the Patient Chart](/docs/configure-o3/configure-the-patient-chart#override-privileges-for-encounter-editing) shows a frontend module that takes privilege names as configuration

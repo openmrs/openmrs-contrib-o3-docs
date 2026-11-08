@@ -1,0 +1,174 @@
+import { Callout } from "nextra/components";
+
+# REST API
+
+The [REST Web Services module](https://github.com/openmrs/openmrs-module-webservices.rest) exposes most of the OpenMRS data model at `/openmrs/ws/rest/v1`. It's the API most of our frontend modules call, through `openmrsFetch` and `restBaseUrl` from `@openmrs/esm-framework`. This page explains the conventions every REST call shares, so that you can read an unfamiliar endpoint's response, ask for exactly the fields you need, and find the Java class that defines it.
+
+## Reference documentation
+
+The REST API is documented at [rest.openmrs.org](https://rest.openmrs.org). That site is written by hand, lives in [openmrs-contrib-rest-api-docs](https://github.com/openmrs/openmrs-contrib-rest-api-docs), and doesn't cover every resource or every module. When it's silent, the resource class is the source of truth; [finding the resource class](#finding-the-resource-class-behind-an-endpoint) below shows how.
+
+A generated reference is on its way. The [openmrs-contrib-openapi-maven-plugin](https://github.com/openmrs/openmrs-contrib-openapi-maven-plugin) builds an OpenAPI 3.1 document for any module at build time by calling the same resource methods the server calls when it serves a request, so the output can't drift from the code. It isn't yet published anywhere; when it's, this page will link to it in place of rest.openmrs.org.
+
+## Base URL
+
+`restBaseUrl` is `/ws/rest/v1`. `openmrsFetch` prefixes it with `window.openmrsBase`, so a call to `${restBaseUrl}/patient` reaches `/openmrs/ws/rest/v1/patient`. Never hard-code `/openmrs`; deployments can mount the backend elsewhere.
+
+```ts
+import { openmrsFetch, restBaseUrl } from "@openmrs/esm-framework";
+
+const { data } = await openmrsFetch(`${restBaseUrl}/patient/${uuid}?v=full`);
+```
+
+The `links[].uri` values in responses are absolute. The module builds them from the first request it sees, or from the global property `webservices.rest.uriPrefix` when one is set.
+
+Requests with an XML content type are rejected with `415`; everything else is JSON.
+
+## Sessions and authentication
+
+The session resource is the one endpoint every frontend module depends on, because the app shell reads it to learn who is logged in.
+
+- **`GET /session`** returns `authenticated`, `locale` and `allowedLocales`. When authenticated, it also returns `user`, `sessionLocation` and `currentProvider`.
+- **`GET /session` with an `Authorization: Basic …` header** authenticates with the username and password, then returns the session. This is how the login app logs you in.
+- **`POST /session` with `{"sessionLocation": "<uuid>"}` or `{"locale": "fr"}`** sets the session location or locale and returns the session.
+- **`DELETE /session`** logs out and invalidates the HTTP session. Returns `204`.
+
+The `user` object in the session carries `uuid`, `display`, `username`, `systemId`, `userProperties`, `person`, and the user's `privileges` and `roles` as `{uuid, display, name}` arrays. The frontend's `useSession` hook and `userHasAccess` helper read those arrays, so a privilege check on the frontend costs no request.
+
+Authentication is cookie-based: a filter on `/ws/rest/*` decodes an `Authorization: Basic` header if one is present and logs the user into the servlet session, and the servlet container issues the usual `JSESSIONID` cookie. Every later request carries the cookie and needs no header. `currentProvider` is only set when the user's person has exactly one provider record.
+
+A request that needs authentication and has none gets `401`, with a `WWW-Authenticate: Basic` header that would make a browser pop up its own login dialog. `openmrsFetch` sends `Disable-WWW-Authenticate: true` on REST requests to suppress that header, and on a `401` it redirects to the login page instead. A request from a user who is logged in but lacks the privilege gets `403`.
+
+## Representations: asking for the fields you need
+
+Every resource can be returned in several shapes, selected with the `v` query parameter.
+
+- **`ref`**: `uuid`, `display` and a `self` link. `retired` or `voided` is added only when the object is retired or voided.
+- **`default`**: the common properties, with nested objects typically as `ref`. Includes a `full` link.
+- **`full`**: everything in `default` plus `auditInfo`, with nested objects typically expanded one level further.
+- **`custom:(…)`**: exactly the properties you list.
+
+A single `GET /patient/{uuid}` defaults to `default`. A list or search such as `GET /patient?q=john` defaults to `ref`, which is why you so often see `v=` on list requests.
+
+What each nested object gets is decided per resource. A patient's `default` representation has `identifiers` as `ref` but `person` as `default`, and its `full` representation has `identifiers` as `default` and `person` as `full`.
+
+Custom representations are the right choice in production code. They keep responses small, and they make the contract between your component and the API explicit. The syntax is a comma-separated list of properties in parentheses, where a property can be followed by `:ref`, `:full` or a nested list:
+
+```
+v=custom:(uuid,display,identifiers:(identifier,identifierType:(name)),person:(gender,age,preferredName:ref))
+```
+
+Any word other than `ref` or `full` after the colon gives you `default`. The bare word `links` adds the `self` and `default` links. Every representation except `ref` also includes `resourceVersion`.
+
+`display` is a human-readable label the resource computes, such as a patient's identifier and name or a concept's name in the current locale. It isn't a stored field, and you can't set it.
+
+Define custom representations as module-level constants rather than inline strings, as the [data fetching conventions](/docs/coding-conventions/data-fetching) recommend.
+
+## Paging
+
+List and search endpoints return an envelope:
+
+```json
+{
+  "results": [ ... ],
+  "links": [{ "rel": "next", "uri": "http://localhost/openmrs/ws/rest/v1/patient?q=a&startIndex=50" }],
+  "totalCount": 312
+}
+```
+
+- `limit` sets the page size. The default is the global property `webservices.rest.maxResultsDefault` (50 out of the box), and the server refuses anything above `webservices.rest.maxResultsAbsolute` (100). Zero, negative or above the absolute limit fails with `500`, and a non-integer value is silently ignored.
+- `startIndex` is the offset. `links` contains `next` and `prev` entries only when there's a next or previous page, and they repeat your query string with the adjusted offset.
+- `totalCount` is included only when you ask for it with `totalCount=true`, because it costs a count query.
+- `includeAll=true` includes voided or retired objects in lists and searches.
+
+`@openmrs/esm-framework` handles this for you. `useOpenmrsPagination(url, pageSize)` sets `limit`, `startIndex` and `totalCount=true` and exposes page navigation, `useOpenmrsInfinite` follows the `next` link each time you call its `loadMore`, and `useOpenmrsFetchAll` follows them until there's nothing left. See [Retrieve and post data](/docs/recipes/retrieve-and-post-data) for examples.
+
+## Searching
+
+A `GET` on a resource with no query parameters calls the resource's `doGetAll`. Add a parameter and one of two things happens:
+
+1. The module looks for a **search handler** whose declared parameters match the ones you sent. Search handlers are classes that declare a `SearchConfig` naming the resource, the required parameters and the optional ones, and they are how most non-trivial searches are implemented. `GET /patient?identifier=100GEJ` reaches the `patientByIdentifier` handler, for example.
+2. If no handler matches, the resource's own `doSearch` runs. For most resources this reads `q` and runs a name or text search through the service. `GET /patient?q=john` and `GET /concept?q=weight` work this way.
+
+That has two consequences you'll notice. A parameter no handler knows about isn't rejected by the handler lookup; the request falls through to the resource's own `doSearch`, and what happens next varies by resource. Some return an empty list, some search on `q` alone and ignore the rest, and some fail with a `500`. `GET /location?foo=bar` is one of the last kind, because the location resource's `doSearch` reads only `tag` and `q` and breaks when neither is present. So a misspelled parameter isn't reported as one; depending on the resource, it's silently ignored or causes an error. And when more than one handler matches, the one whose id is `default` wins silently; only when there's no default does the request fail with `400` and a message asking you to pick one with `s=<handler id>`. You can also call a handler by id directly with `GET /{resource}/search/{id}`.
+
+The search handler classes live under `omod/src/main/java/.../v1_0/search/` in the module repository; search there for `VERSION_1 + "/patient"` to find the handlers for a resource.
+
+## Creating, updating and deleting
+
+- **`POST /{resource}`** creates. Returns `201` with the new object.
+- **`POST /{resource}/{uuid}`** updates the properties you send. Returns `200` with the object.
+- **`DELETE /{resource}/{uuid}`** voids data or retires metadata. An optional `reason` parameter records why. Returns `204`.
+- **`DELETE /{resource}/{uuid}?purge=true`** deletes the row. Only for data that has never been referenced, and it needs the type's `Purge` privilege, enforced by the core service. Returns `204`.
+- **`POST /{resource}/{uuid}` with `{"deleted": false}` as the only property** unvoids or unretires. With other properties present it's a normal update.
+
+Each resource declares which properties can be set on create and which on update. A property outside those lists is rejected with `400`. Nested objects are set by UUID, so a new encounter looks like:
+
+```json
+{
+  "patient": "5f6b2c1d-…",
+  "encounterType": "e22e39fd-…",
+  "location": "b1a8b05e-…",
+  "encounterDatetime": "2026-11-07T10:30:00.000+0300",
+  "obs": [{ "concept": "5089AAAA…", "value": 72 }]
+}
+```
+
+Validation failures come back as `400` with a `fieldErrors` map keyed by property name, each value an array of `{code, message}` objects, plus a `globalErrors` array. The patient registration app and the form engine both surface these in a snackbar rather than next to each field.
+
+### Subresources
+
+Some objects only exist inside a parent and are addressed through it: `/patient/{uuid}/identifier`, `/person/{uuid}/name`, `/person/{uuid}/attribute`, `/person/{uuid}/address`. They support the same verbs, nested one level deeper.
+
+## Errors
+
+Failures return a JSON body of this shape:
+
+```json
+{
+  "error": {
+    "message": "Object with given uuid doesn't exist [null]",
+    "code": "org.openmrs.module.webservices.rest.web.resource.impl.DelegatingCrudResource:52",
+    "detail": "…"
+  }
+}
+```
+
+`code` is the class and line that threw, not an error code. `detail` carries a stack trace when the global property `webservices.rest.enableStackTraceDetails` is `true`, which is the module's default. `openmrsFetch` rejects with an `OpenmrsFetchError` whose `responseBody` is this object, so `error.responseBody?.error?.message` is the string to show.
+
+- **`400`**: validation failed, a property isn't settable, a search is ambiguous, the body could not be parsed, or the resource doesn't support the operation
+- **`401`**: not logged in
+- **`403`**: logged in without the required privilege
+- **`404`**: unknown resource name, or no object with that UUID
+- **`405`**: wrong HTTP method
+- **`415`**: XML content type
+- **`500`**: anything else, including an invalid `limit`
+
+## Finding the resource class behind an endpoint
+
+Every endpoint is a class annotated `@Resource` or `@SubResource`. The `name` on the annotation is the path, so `/ws/rest/v1/patient` is `@Resource(name = RestConstants.VERSION_1 + "/patient", …)`. The quickest way to find it's to search the module repository for `VERSION_1 + "/patient"`.
+
+The class tells you everything the hand-written docs might not:
+
+- `getRepresentationDescription(Representation)` lists the properties in `ref`, `default` and `full`.
+- `getCreatableProperties()` and `getUpdatableProperties()` list what you can send on create and update.
+- `doSearch(RequestContext)` shows which query parameters the resource itself understands.
+- `@PropertyGetter("display")` shows how `display` is computed.
+
+Resource classes are versioned, which matters when you read the code. `supportedOpenmrsVersions` on the annotation says which core versions a class serves, and a resource can have several classes, for example `PatientResource1_8` for core 1.8 and `PatientResource1_9` for 1.9 and later. The module registers only the classes matching the running core, so when you read the code pick the newest class whose range includes your backend. The packages are named by version: `omod/src/main/java/org/openmrs/module/webservices/rest/web/v1_0/resource/openmrs2_8/` and so on.
+
+Other backend modules add resources with the same annotation. The queue module's `QueueResource` is `@Resource(name = RestConstants.VERSION_1 + "/queue", …)` in [openmrs-module-queue](https://github.com/openmrs/openmrs-module-queue), and appears at `/ws/rest/v1/queue` only when that module is installed. If an endpoint is missing on your backend, check which module provides it and whether the module is in `distro.properties`.
+
+## Reading global properties
+
+There's no framework helper for global properties, but the REST API exposes them as `systemsetting`, and the resource looks up by property name when the path segment isn't a UUID:
+
+```ts
+const { data } = await openmrsFetch(`${restBaseUrl}/systemsetting/default_locale?v=custom:(value)`);
+```
+
+Reading one requires the `Get Global Properties` privilege. [Metadata and Initializer](/docs/backend/metadata-and-initializer) explains how they are set.
+
+## Locale (why `display` changes per user)
+
+The module doesn't read `Accept-Language`. Responses are localized according to the session's locale, which comes from the user's `defaultLocale` property at login and can be changed with `POST /session {"locale": "…"}`. `display` values, error messages and concept names follow it.
