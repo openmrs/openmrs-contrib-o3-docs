@@ -103,7 +103,7 @@ The diagram below follows the Reference Application from the files in its distro
 
 <div className="my-6">
   <Image
-    src="/o3-distribution.svg"
+    src={`${process.env.NEXT_PUBLIC_BASE_PATH || ""}/o3-distribution.svg`}
     alt="How the O3 Reference Application fits together, from distro.properties and spa-assemble-config.json at build time to the gateway, frontend and backend containers and the database at run time"
     width={1200}
     height={1000}

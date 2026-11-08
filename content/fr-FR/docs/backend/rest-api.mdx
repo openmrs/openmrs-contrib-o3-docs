@@ -100,7 +100,7 @@ The search handler classes live under `omod/src/main/java/.../v1_0/search/` in t
 - **`POST /{resource}/{uuid}`** updates the properties you send. Returns `200` with the object.
 - **`DELETE /{resource}/{uuid}`** voids data or retires metadata. An optional `reason` parameter records why. Returns `204`.
 - **`DELETE /{resource}/{uuid}?purge=true`** deletes the row. Only for data that has never been referenced, and it needs the type's `Purge` privilege, enforced by the core service. Returns `204`.
-- **`POST /{resource}/{uuid}` with `{"deleted": false}` as the only property** unvoids or unretires. With other properties present it's a normal update.
+- **`POST /{resource}/{uuid}` with `{"deleted": "false"}` as the only property** unvoids or unretires. With other properties present it's a normal update.
 
 Each resource declares which properties can be set on create and which on update. A property outside those lists is rejected with `400`. Nested objects are set by UUID, so a new encounter looks like:
 
