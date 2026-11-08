@@ -129,7 +129,7 @@ Global properties are configured using XML files in the Initializer module. Plac
 - Global properties can be updated at runtime through the OpenMRS Administration UI (Advanced Settings), but using Initializer files ensures they're version-controlled and automatically applied on deployment
 - Changes to global properties packaged into the backend WAR require rebuilding the backend WAR
 - Changes to global properties in the application data directory take effect on the next backend restart (no rebuild needed)
-- For a comprehensive list of available global properties, see the [OpenMRS Global Properties documentation](https://wiki.openmrs.org/display/docs/Global+Properties) or check the documentation for specific modules
+- For how to read and set global properties, see [Global properties](/docs/backend/metadata-and-initializer#global-properties), or check the documentation for specific modules
 
 <Callout emoji="💡" type="info">
   **Concept dictionary management**: The recommended approach for managing concept dictionaries in OpenMRS is to set up your own organization and resources in [Open Concept Lab (OCL)](https://app.openconceptlab.org/). This allows you to standardize concept management across your implementation, create and maintain your own concept sets, and export them as ZIP files for inclusion in content packages. The [CIEL dictionary](https://app.openconceptlab.org/#/orgs/CIEL/sources/CIEL/) is the standard concept dictionary containing thousands of clinical concepts—you can reference CIEL concepts in your OCL resources or create organization-specific concepts. When configuring drugs, forms, or other metadata, you can search OCL to find concept UUIDs and manage your concept sets through your OCL organization.
