@@ -15,6 +15,7 @@ The Service Queues module manages patient queues in outpatient settings. You can
 - The clinic administrator screen
 - How often queue data refreshes
 - The Add patient to queue workspace
+- The visit summary in expanded queue table rows
 - Visit queue numbers
 - Patient chart URLs
 - Start Visit form integration
@@ -308,7 +309,9 @@ Define which columns appear in which tables:
   - Empty `queue` or `status` string means "all queues" or "all statuses"
   - If multiple table definitions match, the first one is used
 
-**Example**: The first table definition applies only to a specific queue and status combination. The second applies to all other queues and statuses, and matches the built-in default. Put specific definitions before the catch-all, because the first matching definition is used.
+**Example**: The first table definition applies only to a specific queue and status combination. The second applies to all other queues and statuses, and matches the built-in default. Put specific definitions before the catch-all, because the first matching definition is used. If no definition matches, Service Queues uses the built-in default.
+
+The Service Queues dashboard doesn't belong to a single queue or status, so it only uses definitions whose `queue` and `status` are both empty (or that have no `appliedTo`). Definitions for a specific queue or status apply to the per-queue page at `${openmrsSpaBase}home/service-queues/queue-table-by-status/<queue-uuid>`, which shows one table for each status.
 
 ## Visit Queue Number Attribute
 
@@ -432,3 +435,24 @@ By default, the **Add patient to queue** workspace lists patients whose visit st
   }
 }
 ```
+
+## Expanded Queue Table Rows
+
+Expanding a row in a queue table shows a summary of the patient's current visit. Two settings control what it includes:
+
+```json
+{
+  "@openmrs/esm-service-queues-app": {
+    "appointmentStatuses": ["Scheduled", "CheckedIn", "Completed", "Missed"],
+    "visitAttributeTypes": [
+      { "uuid": "57ea0cbb-064f-4d09-8cf4-e8228700491c" },
+      { "uuid": "aac48226-d143-4274-80e0-264db4e368ee" }
+    ]
+  }
+}
+```
+
+- `appointmentStatuses` - The statuses of the patient's appointments for today to list in the summary. The options are `Requested`, `WaitList`, `Scheduled`, `Arrived`, `CheckedIn`, `Completed`, `Cancelled` and `Missed`. Set it to an empty array to hide today's appointments. The values above are the default.
+- `visitAttributeTypes` - The visit attribute types whose values show as tags in the summary, like the visit attribute tags in the patient banner. The default is the Punctuality and Insurance Policy Number types from the Reference Application's demo content.
+
+Service Queues 12.1.0 added `visitAttributeTypes` and changed the default `appointmentStatuses`. Earlier versions default to `Requested`, `Scheduled`, `CheckedIn`, `Completed`, `Cancelled` and `Missed`.

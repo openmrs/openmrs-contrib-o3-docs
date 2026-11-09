@@ -110,7 +110,7 @@ Vous pouvez désactiver les onglets du résumé de visite lorsqu'ils sont vides 
 }
 ```
 
-Cela concerne les onglets notes, tests, médicaments et formulaires complétés. Les onglets restent visibles, mais les utilisateurs ne peuvent pas sélectionner un onglet vide tant que des données n'existent pas.
+Cela concerne les onglets notes, tests, médicaments et formulaires complétés. Les onglets restent visibles, mais les utilisateurs ne peuvent pas sélectionner un onglet vide tant que des données n'existent pas. L'onglet des tests n'est désactivé que si la visite n'a aucune rencontre : une visite qui a des rencontres mais aucun résultat de test le laisse donc activé.
 
 ### Taille de page de la chronologie du résumé de visite
 
@@ -355,7 +355,7 @@ Vous pouvez activer un bouton d'impression dans l'en-tête du tableau de donnée
 
 Les utilisateurs disposant du privilège `App: Can generate a Visit Summary` voient une action **Print visit summary** sur chaque ligne de l'historique des visites du patient. Elle ouvre un aperçu d'un résumé PDF de la visite, que les utilisateurs peuvent télécharger. Le PDF est produit par le module backend [patientdocuments](https://github.com/openmrs/openmrs-module-patientdocuments), version 1.2.0 ou ultérieure. Elle n'a pas de propriété de configuration propre. Utilisez le privilège pour déterminer qui la voit, ou retirez l'extension `print-visit-summary-button` de l'emplacement `visit-detail-overview-actions` pour la masquer pour tout le monde.
 
-Les administrateurs peuvent choisir les sections qui apparaissent dans le PDF, et leur ordre, depuis la carte **Manage Visit Summary** de la page d'administration système. La page enregistre ces choix dans les propriétés globales `report.visitSummary.section.<key>.enabled` et `report.visitSummary.section.<key>.order`, si bien que la carte n'apparaît qu'aux utilisateurs disposant du privilège Manage Global Properties. Les utilisateurs qui ne l'ont pas et qui ouvrent la page directement peuvent voir les sections actuelles, mais ne peuvent pas les modifier. **Save & preview** enregistre les modifications et affiche un exemple de PDF avec les nouveaux paramètres.
+Les administrateurs peuvent choisir les sections qui apparaissent dans le PDF, et leur ordre, depuis la carte **Manage Visit Summary** de la page d'administration système. La page enregistre ces choix dans les propriétés globales `report.visitSummary.section.<key>.enabled` et `report.visitSummary.section.<key>.order`, si bien que la carte n'apparaît qu'aux utilisateurs disposant du privilège Manage Global Properties. Les utilisateurs qui ne l'ont pas et qui ouvrent la page directement peuvent voir les sections actuelles, mais ne peuvent pas les modifier, à condition d'avoir le privilège Get Global Properties. Sans lui, la page affiche une erreur à la place. **Save & preview** enregistre les modifications et affiche un exemple de PDF avec les nouveaux paramètres.
 
 ### Codes de couleur MUAC
 
@@ -494,7 +494,7 @@ Vous pouvez créer des widgets personnalisés qui affichent les observations au 
 - `graphOldestFirst` - (optionnel) S'il faut trier les valeurs du graphique du plus ancien au plus récent (par défaut : `false`, affiche le plus récent en premier)
 - `tableSortOldestFirst` - (optionnel) S'il faut trier initialement le tableau du plus ancien au plus récent (par défaut : `false`)
 - `interpretationSlot` - (optionnel) Nom de l'emplacement d'extension pour afficher les interprétations sous le graphique. Si spécifié, les extensions dans cet emplacement seront rendues sous la visualisation du graphique.
-- `fullWidth` - (optionnel) S'il faut que le widget occupe toute la largeur du tableau de bord au lieu de la moitié (par défaut : `false`)
+- `fullWidth` - (optionnel) S'il faut que le widget occupe toute la largeur du tableau de bord au lieu de la moitié (par défaut : `false`). Sur les écrans plus étroits, où le tableau de bord n'a qu'une colonne, tous les widgets occupent de toute façon toute la largeur.
 
 **Note** : La propriété `color` détermine la couleur de la ligne de données dans la visualisation du graphique. Choisissez des couleurs qui offrent un bon contraste et sont accessibles. Lors de l'utilisation de `graphGroup`, plusieurs concepts peuvent être affichés sur le même graphique, ce qui est utile pour les mesures connexes (par exemple, regrouper la tension artérielle systolique et diastolique ensemble).
 

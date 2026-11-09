@@ -65,13 +65,13 @@ Lorsqu'une construction est terminée, les utilisateurs disposant de `Download M
 
 ## Contenu d'une construction
 
-Chaque construction est un fichier zip nommé `metadataexport-<nom-du-paquet>-v<construction>.zip`, organisé comme un paquet de contenu OpenMRS :
+Chaque construction est un fichier zip nommé `metadataexport-<nom-du-paquet>-v<construction>.zip`, où le nom du paquet est mis en minuscules et où les caractères autres que les lettres, les chiffres, `.`, `_` et `-` sont remplacés par `-`. Il est organisé comme un paquet de contenu OpenMRS :
 
 - `configuration/backend_configuration/` contient un dossier de fichiers Initializer pour chaque domaine exporté, comme `encountertypes` ou `locations`.
 - `content.properties` enregistre le nom du paquet, et le numéro de construction comme `version`.
 - `metadataexport-manifest.json` enregistre tout ce que la construction a exporté, y compris les dépendances incluses. Pour chaque domaine exporté en entier, il liste aussi les lignes laissées de côté et la raison.
 
-Les éléments retirés sont exportés avec leur indicateur de retrait. Certaines lignes sont toujours laissées de côté, car Initializer ne pourrait pas les charger sur un autre serveur, comme les files d'attente retirées et les versions de formulaire remplacées. Si un paquet désigne l'une de ces lignes par son UUID, la construction échoue et indique pourquoi.
+Les éléments retirés sont en général exportés avec leur indicateur de retrait. Certaines lignes sont toujours laissées de côté, car Initializer ne pourrait pas les charger sur un autre serveur, comme les files d'attente retirées, les formulaires retirés et les versions de formulaire remplacées. Dans les domaines qu'Initializer associe par nom, comme les types de rencontre, les classes de concepts et les médicaments, un élément retiré est aussi laissé de côté si un autre élément porte le même nom. Si un paquet désigne l'une de ces lignes par son UUID, la construction échoue et indique pourquoi.
 
 ## Charger un paquet sur un autre serveur
 
@@ -82,7 +82,7 @@ Initializer charge les métadonnées au démarrage du serveur. Copiez les dossie
 
 Avant cela, vérifiez deux cas qui demandent une configuration supplémentaire sur le serveur cible :
 
-- Les sources distantes de génération d'identifiants sont exportées avec un paramètre fictif `property:idgen.remote.password.<uuid>` au lieu du mot de passe. Définissez cette propriété sur le serveur cible.
+- Les sources distantes de génération d'identifiants sont exportées avec un paramètre fictif `property:idgen.remote.password.<uuid>` au lieu du mot de passe. Définissez `idgen.remote.password.<uuid>` sur le serveur cible comme propriété d'exécution ou comme propriété système Java. Une propriété globale ne fonctionne pas.
 - Les prix d'articles de caisse qui font référence à des articles de stock ne se chargent que sur un serveur qui possède déjà ces articles de stock.
 
 ## Utiliser l'API REST
@@ -116,7 +116,7 @@ Ces points de terminaison ne sont pas protégés contre la falsification de requ
 
 ## Limites
 
-- Les fichiers zip des constructions restent sur le serveur sous `<app data dir>/metadataexport/packages/` jusqu'à ce que vous les supprimiez. Supprimez les anciennes constructions si l'espace disque compte.
+- Les constructions ne peuvent pas être supprimées depuis la page O3 ni via REST. Le zip de chaque construction, ainsi qu'une copie décompressée de son contenu, reste sur le serveur sous `<app data dir>/metadataexport/packages/<uuid-du-paquet>/<construction>/`. Si l'espace disque compte, supprimez vous-même les anciens dossiers de construction sur le serveur. Le téléchargement d'une construction dont les fichiers ont disparu échoue.
 - Certains domaines qu'Initializer peut charger ne peuvent pas être exportés, notamment les formulaires Bahmni, les formulaires HTML, les correspondances de filtres de données, Liquibase, les fichiers clé-valeur JSON, les importations OCL et les dispositions.
 - Les UUID des descriptions de concepts et les noms de termes d'index ne sont pas conservés.
 - Une construction n'inclut que les dépendances des domaines que le module peut exporter.

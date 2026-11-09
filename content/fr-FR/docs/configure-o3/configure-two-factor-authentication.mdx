@@ -36,9 +36,7 @@ Redémarrez OpenMRS après avoir modifié ces paramètres.
 <Callout type="info">
   Dans l'image Docker de la Reference Application, le fichier des propriétés d'exécution est
   `/openmrs/data/openmrs-runtime.properties`, sur le volume de données du backend, et il est conservé entre les
-  redémarrages. Modifiez ce fichier. N'utilisez pas les variables d'environnement `OMRS_EXTRA_*` pour ces paramètres :
-  l'image met leurs noms en minuscules, alors que le module cherche des clés en casse mixte comme `primaryOptions` et
-  `loginPage`.
+  redémarrages. Modifiez ce fichier.
 </Callout>
 
 ## Configurer le frontend
@@ -87,7 +85,7 @@ La page de vérification comporte une case **Remember this device**, cochée par
 authentication.scheme.2fa.config.rememberMeEnabled=true
 ```
 
-Avec ce paramètre, un utilisateur qui coche la case reçoit un cookie qui lui évite l'étape du code sur ce navigateur pendant 30 jours. Le cookie est marqué `Secure` : il n'est donc envoyé qu'en HTTPS. Le [README du module authentication](https://github.com/openmrs/openmrs-module-authentication#readme) liste les autres paramètres de cette fonction, comme sa durée.
+Avec ce paramètre, un utilisateur qui coche la case reçoit un cookie qui lui évite l'étape du code sur ce navigateur pendant 30 jours. Par défaut, le cookie est marqué `Secure` : il n'est donc envoyé qu'en HTTPS. Le [README du module authentication](https://github.com/openmrs/openmrs-module-authentication#readme) liste les autres paramètres de cette fonction, comme sa durée.
 
 ## Réinitialiser l'inscription d'un utilisateur
 
@@ -105,4 +103,4 @@ curl -u admin:password -H "Content-Type: application/json" \
   "https://your-server/openmrs/ws/rest/v1/user/<user-uuid>"
 ```
 
-Incluez toutes les propriétés renvoyées par la première requête, pas seulement `defaultLocale`.
+Incluez toutes les propriétés renvoyées par la première requête, pas seulement `defaultLocale`, sauf celles nommées `authentication.2fa.rememberMe.<id>` (avec l'identifiant de votre schéma à deux facteurs à la place de `2fa`). Chacune correspond à un navigateur sur lequel l'utilisateur a coché **Remember this device**. Laissez-les de côté pour que ces navigateurs doivent de nouveau saisir un code une fois que l'utilisateur se sera réinscrit.

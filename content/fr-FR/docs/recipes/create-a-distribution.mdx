@@ -198,8 +198,8 @@ Vous pouvez également spécifier des options supplémentaires:
 - `--fresh`: Nettoyer le répertoire de sortie avant l'exécution
 - `--manifest`: Générer un fichier manifeste avec les informations de version
 - `--mode config`: Utiliser le mode fichier de configuration. Sans cette option, le CLI démarre le questionnaire interactif.
-- `--ensure-entrypoints`: Faire échouer l'exécution si un module frontal n'a pas son `routes.json` ou le point d'entrée JavaScript vers lequel pointe son entrée dans la carte d'importation. Cette option est activée par défaut à partir de Core v11. Passez `--no-ensure-entrypoints` pour signaler ces problèmes sous forme d'avertissements à la place.
-- `--application-version <version>`: Enregistrer la version de votre distribution dans le registre des routes (Core v11 et ultérieur). Le shell de l'application l'expose sous `window.applicationVersion`, et la barre de navigation ainsi que la page de connexion l'affichent. La valeur spéciale `prerelease` affiche à la place un libellé traduit « Prerelease ».
+- `--ensure-entrypoints`: Faire échouer l'exécution si un module frontal n'a pas son `routes.json`, a un `routes.json` illisible, ou n'a pas le point d'entrée JavaScript vers lequel pointe son entrée dans la carte d'importation. Cette option est activée par défaut à partir de Core v11. Passez `--no-ensure-entrypoints` pour signaler ces problèmes sous forme d'avertissements à la place.
+- `--application-version <version>`: Enregistrer la version de votre distribution dans le registre des routes (Core v11 et ultérieur). Le shell de l'application l'expose sous `window.applicationVersion`, et la barre de navigation ainsi que la page de connexion l'affichent. La valeur spéciale `prerelease` affiche à la place un libellé traduit « Prerelease », ou « Local Build » lorsque le shell de l'application est lui-même une construction locale.
 
 Le fichier peut ressembler à ce qui suit:
 
@@ -304,7 +304,7 @@ openmrs build --build-config spa-build-config.json --target ./spa
 Options de construction supplémentaires:
 - `--target <répertoire>`: Le répertoire cible (doit correspondre au répertoire cible d'assemblage)
 - `--fresh`: Nettoyer le répertoire de sortie avant la construction
-- `--support-offline`: Activer le support hors ligne (peut remplacer le fichier de configuration). Core v10 et antérieur uniquement.
+- `--support-offline`: Activer le support hors ligne (peut remplacer le fichier de configuration). Core v10 et antérieur uniquement. Sur Core v11, `openmrs build` échoue avec une erreur d'argument inconnu si vous la passez.
 - `--no-compress`: Ne pas écrire de fichiers précompressés (Core v11 et ultérieur, voir ci-dessous)
 - `--no-compress-gzip` et `--no-compress-brotli`: Ignorer uniquement les fichiers gzip (`.gz`) ou brotli (`.br`)
 
@@ -317,7 +317,7 @@ Après une construction réussie, votre répertoire `./spa` contiendra:
 
 ### Fichiers précompressés
 
-À partir de Core v11, `openmrs build` écrit une copie gzip et une copie brotli à côté de chaque fichier compressible du répertoire cible, y compris les modules frontaux rassemblés par `assemble`. Les fichiers compressibles sont les fichiers JavaScript, CSS, JSON, SVG et HTML d'au moins 1 Ko. Les source maps ne sont pas précompressées. Par exemple, `openmrs.js` obtient `openmrs.js.gz` et `openmrs.js.br`. Votre serveur web peut alors envoyer ces fichiers directement au lieu de les compresser à chaque requête. La construction supprime également les fichiers précompressés dont l'original n'existe plus.
+À partir de Core v11, `openmrs build` écrit une copie gzip et une copie brotli à côté de chaque fichier compressible du répertoire cible, y compris les modules frontaux rassemblés par `assemble`. Les fichiers compressibles sont les fichiers JavaScript (y compris `.mjs` et `.cjs`), CSS, JSON, SVG et HTML d'au moins 1 Ko. Les source maps ne sont pas précompressées. Une copie n'est écrite que si elle est plus petite que l'original. Par exemple, `openmrs.js` obtient `openmrs.js.gz` et `openmrs.js.br`. Votre serveur web peut alors envoyer ces fichiers directement au lieu de les compresser à chaque requête. La construction supprime également les fichiers précompressés dont l'original n'existe plus.
 
 Vous pouvez désactiver ce comportement, ou le limiter à un seul format, avec les drapeaux ci-dessus ou avec les propriétés `compress`, `compressGzip` et `compressBrotli` de `spa-build-config.json`. Les valeurs de la configuration de construction ont priorité sur les drapeaux de la ligne de commande:
 
@@ -380,7 +380,7 @@ server {
 
 L'exemple nginx de base ci-dessus sert chaque fichier sans compression. Pour servir les fichiers `.br` et `.gz` écrits par `openmrs build`, nginx doit choisir le bon fichier pour chaque requête en fonction de l'en-tête `Accept-Encoding` du navigateur, et définir les en-têtes `Content-Encoding` et `Vary` correspondants.
 
-Le [nginx.conf frontend](https://github.com/openmrs/openmrs-distro-referenceapplication/blob/main/frontend/nginx.conf) de l'application de référence le fait en n'utilisant que les directives natives de nginx, il fonctionne donc avec l'image `nginx:alpine` standard. Il privilégie brotli, se rabat sur gzip, puis sur le fichier non compressé. Il met aussi en cache pendant un an les fichiers JavaScript et la feuille de style principale du styleguide, et demande aux navigateurs de revalider les autres fichiers CSS, JSON et SVG. Nous recommandons de partir de ce fichier plutôt que d'écrire le vôtre.
+Le [nginx.conf frontend](https://github.com/openmrs/openmrs-distro-referenceapplication/blob/main/frontend/nginx.conf) de l'application de référence le fait en n'utilisant que les directives natives de nginx, il fonctionne donc avec l'image `nginx:alpine` standard. Il privilégie brotli, se rabat sur gzip, puis sur le fichier non compressé. Il le fait pour les fichiers JavaScript, CSS, JSON et SVG, et sert `index.html` sans compression. Il met aussi en cache pendant un an les fichiers JavaScript et la feuille de style principale du styleguide, et demande aux navigateurs de revalider les autres fichiers CSS, JSON et SVG. Nous recommandons de partir de ce fichier plutôt que d'écrire le vôtre.
 
 ### Test local
 

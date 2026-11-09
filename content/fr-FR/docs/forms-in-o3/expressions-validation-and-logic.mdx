@@ -117,7 +117,7 @@ myValue ?? 0
 
 Le chaînage optionnel interrompt toute la chaîne : `a?.b.c` vaut donc `undefined` lorsque `a` vaut `null` ou `undefined`. Il ne couvre pas une propriété réellement absente : `a?.b.c` lève toujours une erreur lorsque `a` vaut `{}`.
 
-Avant Core v11, `a?.b` levait encore une erreur lorsque `a` valait `undefined`, et `&&` évaluait ses deux membres : utilisez donc un ternaire comme `a ? a.b : undefined` sur les versions plus anciennes de Core.
+Avant Core v11, `a?.b` levait encore une erreur lorsque `a` valait `undefined`, et lorsque `a` valait `null`, il pouvait renvoyer à la place une variable nommée `b` (voir l'avertissement ci-dessous). `&&` évaluait aussi ses deux membres. Utilisez donc un ternaire comme `a ? a.b : undefined` sur les versions plus anciennes de Core.
 
 <Callout type="warning">
   Avant Core v11, une propriété absente pouvait être résolue en une variable portant le même nom. Par exemple, `obs.value` renvoyait la valeur actuelle du champ `value` si `obs` n'avait pas de propriété `value`. À partir de Core v11, cette expression renvoie `undefined`. Si un formulaire s'appuyait sur ce comportement, référencez directement l'ID du champ.

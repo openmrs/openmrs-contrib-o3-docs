@@ -36,8 +36,7 @@ Restart OpenMRS after changing these settings.
 <Callout type="info">
   In the Reference Application's Docker image, the runtime properties file is
   `/openmrs/data/openmrs-runtime.properties`, on the backend's data volume, and it's kept between restarts. Edit
-  that file. Don't use `OMRS_EXTRA_*` environment variables for these settings: the image lowercases their names,
-  and the module looks up mixed-case keys such as `primaryOptions` and `loginPage`.
+  that file.
 </Callout>
 
 ## Configure the frontend
@@ -86,7 +85,7 @@ The verification page has a **Remember this device** checkbox, ticked by default
 authentication.scheme.2fa.config.rememberMeEnabled=true
 ```
 
-With this setting, a user who ticks the box gets a cookie that skips the code step on that browser for 30 days. The cookie is marked `Secure`, so it's only sent over HTTPS. The [authentication module's README](https://github.com/openmrs/openmrs-module-authentication#readme) lists the other remember-me settings, such as the duration.
+With this setting, a user who ticks the box gets a cookie that skips the code step on that browser for 30 days. By default, the cookie is marked `Secure`, so it's only sent over HTTPS. The [authentication module's README](https://github.com/openmrs/openmrs-module-authentication#readme) lists the other remember-me settings, such as the duration.
 
 ## Reset a user's enrollment
 
@@ -104,4 +103,4 @@ curl -u admin:password -H "Content-Type: application/json" \
   "https://your-server/openmrs/ws/rest/v1/user/<user-uuid>"
 ```
 
-Include every property the first request returned, not just `defaultLocale`.
+Include every property the first request returned, not just `defaultLocale`, except any named `authentication.2fa.rememberMe.<id>` (with your two-factor scheme ID in place of `2fa`). Each of those is a browser where the user ticked **Remember this device**. Leave them out, so those browsers have to enter a code again once the user re-enrolls.
