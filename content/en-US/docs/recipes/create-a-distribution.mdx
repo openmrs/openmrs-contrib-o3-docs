@@ -161,11 +161,12 @@ openmrs build --build-config spa-build-config.json --target ./spa
 </Callout>
 
 <Callout emoji="⚠️" type="warning">
-  **Keep the app shell at least as new as your frontend modules.** From Core v11, frontend modules built with the v11
-  tooling load the Module Federation runtime from the app shell, and refuse to start under an older app shell. Modules
-  built with older tooling keep working under a newer app shell. So when you upgrade, bump the `openmrs` version you
-  build with first, or at the same time as your frontend modules. This was introduced in [this pull
-  request](https://github.com/openmrs/openmrs-esm-core/pull/1853).
+  **Match the app shell to the Core tooling used to build your modules.** From Core v11, frontend modules built with
+  the v11 tooling load the Module Federation runtime from the app shell, and refuse to start under an older app shell.
+  Modules built with older tooling can still load under Core v11, but modules using APIs removed in v11, such as
+  `launchWorkspace`, must be migrated. See [Migrating to Core v11](/docs/migration-guides/migrate-to-core-v11).
+  When upgrading, bump the `openmrs` version you build with first, or at the same time as your frontend modules.
+  The runtime dependency was introduced in [this pull request](https://github.com/openmrs/openmrs-esm-core/pull/1853).
 </Callout>
 
 <Callout emoji="⚠️" type="warning">

@@ -163,12 +163,14 @@ openmrs build --build-config spa-build-config.json --target ./spa
 </Callout>
 
 <Callout emoji="⚠️" type="warning">
-  **Gardez le shell de l'application au moins aussi récent que vos modules frontaux.** À partir de Core v11, les modules
-  frontaux construits avec l'outillage v11 chargent le runtime Module Federation depuis le shell de l'application, et
-  refusent de démarrer sous un shell de l'application plus ancien. Les modules construits avec un outillage plus ancien
-  continuent de fonctionner sous un shell de l'application plus récent. Lors d'une mise à niveau, mettez donc à jour en
-  premier la version d'`openmrs` utilisée pour la construction, ou faites-le en même temps que vos modules frontaux. Ce
-  changement a été introduit dans [cette pull request](https://github.com/openmrs/openmrs-esm-core/pull/1853).
+  **Utilisez un shell compatible avec l'outillage Core de vos modules.** À partir de Core v11, les modules frontaux
+  construits avec l'outillage v11 chargent le runtime Module Federation depuis le shell de l'application, et refusent
+  de démarrer sous un shell plus ancien. Les modules construits avec un outillage plus ancien peuvent toujours se
+  charger sous Core v11, mais ceux qui utilisent des API supprimées dans v11, comme `launchWorkspace`, doivent être
+  migrés. Consultez [Migrer vers Core v11](/docs/migration-guides/migrate-to-core-v11).
+  Lors d'une mise à niveau, mettez d'abord à jour la version d'`openmrs` utilisée pour la construction, ou faites-le en
+  même temps que vos modules frontaux. La dépendance au runtime a été introduite dans
+  [cette pull request](https://github.com/openmrs/openmrs-esm-core/pull/1853).
 </Callout>
 
 <Callout emoji="⚠️" type="warning">

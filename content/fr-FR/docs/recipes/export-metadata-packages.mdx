@@ -75,7 +75,10 @@ Les éléments retirés sont exportés avec leur indicateur de retrait. Certaine
 
 ## Charger un paquet sur un autre serveur
 
-Initializer charge les dossiers de domaine qu'il trouve dans le répertoire `configuration` du répertoire de données de l'application OpenMRS au démarrage du serveur. Pour charger une construction, copiez les dossiers de `configuration/backend_configuration/` du zip dans ce répertoire sur le serveur cible, puis redémarrez-le.
+Initializer charge les métadonnées au démarrage du serveur. Copiez les dossiers de domaine exportés depuis `configuration/backend_configuration/` du zip vers l'emplacement adapté à votre déploiement, puis redémarrez le serveur :
+
+- **Déploiements avec le SDK ou sans Docker :** Utilisez le répertoire `configuration` du répertoire de données de l'application OpenMRS (`~/openmrs/<serverId>/configuration/` avec le SDK).
+- **Déploiements Docker :** Copiez ou montez les fichiers exportés dans `/openmrs/distribution/openmrs_config/`, en conservant les dossiers de domaine. Le backend copie ce répertoire dans `/openmrs/data/configuration/` à chaque démarrage. Ne placez pas les fichiers directement dans `/openmrs/data/configuration/`, car ce répertoire est reconstruit au démarrage. Pour les montages, suivez les [instructions de configuration des métadonnées avec Docker](/docs/configure-o3/overview#configuration-des-métadonnées-et-des-paramètres-backend) afin de ne pas masquer la configuration intégrée à l'image.
 
 Avant cela, vérifiez deux cas qui demandent une configuration supplémentaire sur le serveur cible :
 

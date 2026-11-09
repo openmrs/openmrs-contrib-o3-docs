@@ -75,7 +75,10 @@ Retired items are exported with their retired flag set. Some rows are always lef
 
 ## Load a package on another server
 
-Initializer loads the domain folders it finds in the `configuration` directory of the OpenMRS application data directory when the server starts. To load a build, copy the folders from the zip's `configuration/backend_configuration/` into that directory on the target server, then restart it.
+Initializer loads metadata when the server starts. Copy the exported domain folders from the zip's `configuration/backend_configuration/` to the location for your deployment, then restart the server:
+
+- **SDK or other non-Docker deployments:** Use the `configuration` directory in the OpenMRS application data directory (`~/openmrs/<serverId>/configuration/` with the SDK).
+- **Docker deployments:** Copy or mount the exported files into `/openmrs/distribution/openmrs_config/`, preserving the domain folders. The backend copies this directory into `/openmrs/data/configuration/` on every start. Don't place files directly in `/openmrs/data/configuration/`, because startup rebuilds that directory. When mounting files, follow the [Docker metadata configuration guidance](/docs/configure-o3/overview#configuring-metadata-and-backend-settings) to avoid hiding configuration bundled with the image.
 
 Before you do, check two cases that need extra setup on the target server:
 
