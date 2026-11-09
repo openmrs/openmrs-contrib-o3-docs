@@ -1,0 +1,362 @@
+import { Steps } from "nextra/components";
+
+# Migrer vers Core v11
+
+Ce guide concerne la migration des modules frontend vers Core v11 et supérieur. La v11 comporte plusieurs changements incompatibles, notamment :
+
+- Une [réécriture majeure des mécanismes internes du système d'extensions](https://github.com/openmrs/openmrs-esm-core/pull/1856)
+- [L'utilisation de Browserslist](https://github.com/openmrs/openmrs-esm-core/pull/1868) lors de la compilation en JS
+- [L'abandon du CSS-in-JS](https://github.com/openmrs/openmrs-esm-core/pull/1869) dans les builds de production (RFC-0033)
+- [Le passage à SWR 2.5.1](https://github.com/openmrs/openmrs-esm-core/pull/1873) et son partage via Module Federation
+- [La suppression du support hors ligne et de rxjs](https://github.com/openmrs/openmrs-esm-core/pull/1894) dans le framework
+- [La suppression de workspace v1](https://github.com/openmrs/openmrs-esm-core/pull/1893)
+
+Core v11 est la version du framework livrée avec la Reference Application 3.8.0. Certains changements concernent aussi les distributions plutôt que les modules individuels. Consultez [Pour les mainteneurs de distributions](#pour-les-mainteneurs-de-distributions).
+
+## Contexte
+
+Core v11 inclut ces changements incompatibles parce qu'ils amélioreront les performances, la stabilité et l'exactitude du frontend dans son ensemble. Même avec ces changements, nous nous attendons à ce que la plupart des applications continuent de fonctionner sans modification, ou avec de très petites modifications. Ce document sert à signaler les usages précis qui ne sont plus pris en charge.
+
+## Étapes de migration
+
+<Steps>
+
+### Mettre à jour les dépendances Core
+
+Mettez à jour les dépendances Core vers leurs dernières versions publiées sous le tag `next` :
+
+```bash
+yarn up openmrs@next @openmrs/esm-framework@next
+```
+
+Si cette commande remplace `next` par des versions préliminaires précises dans les `devDependencies`, remettez `openmrs` et `@openmrs/esm-framework` à `next` et exécutez `yarn` avant de committer. Conservez les modifications voulues et les plages de dépendances peer que votre dépôt utilise déjà. Consultez [Développement](/docs/frontend-modules/development#je-vois-des-erreurs-dapi-manquantes-quand-je-lance-lapp) pour en savoir plus.
+
+### Mettre à jour la dépendance peer du framework
+
+Mettez à jour la dépendance peer `@openmrs/esm-framework` dans le `package.json` de chaque module frontend :
+
+```json
+{
+  "peerDependencies": {
+    "@openmrs/esm-framework": "11.x"
+  }
+}
+```
+
+### Partager SWR
+
+Assurez-vous que `swr` est une dépendance peer de chaque module frontend, et fixez la copie de développement à la version fournie par l'app shell :
+
+```json
+{
+  "peerDependencies": {
+    "swr": "2.x"
+  },
+  "devDependencies": {
+    "swr": "2.5.1"
+  }
+}
+```
+
+Consultez [SWR 2.5.1](#swr-251) pour comprendre pourquoi c'est important.
+
+### Effectuer les migrations nécessaires
+
+Les migrations nécessaires sont détaillées ci-dessous, selon le cas d'usage.
+
+</Steps>
+
+Après avoir complété les étapes ci-dessus, vérifiez que tout fonctionne :
+
+- Exécuter les tests : `yarn test`
+- Exécuter un build de développement : `yarn start`
+- Exécuter un build de production : `yarn build`
+
+## Modèles de migration
+
+### Système d'extensions
+
+#### Extensions assignées et extensions candidates
+
+Le changement le plus important du système d'extensions concerne la notion d'`assignedExtensions`. Auparavant, `assignedExtensions` listait toutes les extensions à afficher dans un slot et était stocké dans le store des extensions. Malheureusement, comme chaque instance d'un slot peut avoir un état différent et que l'affichage d'une extension peut dépendre de cet état, il n'est pas tenable de conserver cette liste dans le store. Il existe deux remplacements :
+
+##### Métadonnées des extensions
+
+Dans certains cas, le store des extensions servait simplement à accéder aux extensions pour obtenir les informations `meta` associées à chacune, par exemple pour afficher des tableaux de bord. Dans ce cas, la bonne migration consiste simplement à utiliser le hook existant `useExtensionSlotMeta()`.
+
+##### Agir sur les extensions
+
+L'autre cas d'usage courant consiste à utiliser les `assignedExtensions` pour influencer l'affichage des extensions. Dans ce cas, le hook `useAssignedExtensions(slotName, state)` ou la fonction du framework `getAssignedExtensions(slotName, state)` est la manière à privilégier pour trouver les `assignedExtensions`. Passez l'état du rendu du slot qui vous intéresse. Ces fonctions ne chargent pas elles-mêmes l'état du slot : sans lui, les conditions d'affichage sont évaluées uniquement par rapport à la session, ce qui masque les extensions dont les conditions ont besoin de valeurs de l'état du slot.
+
+##### Ce que contient le store
+
+Au lieu de suivre toutes les `assignedExtensions`, le store suit désormais les `candidateExtensions`. Les `candidateExtensions` sont les extensions configurées pour s'afficher dans un slot, avant que leurs conditions d'affichage ne soient évaluées par rapport à l'état courant. Dans certaines circonstances, par exemple pour construire des tables de métadonnées, il peut être utile de les utiliser, car c'est généralement plus rapide que les appels à `getAssignedExtensions()` ou `useAssignedExtensions()`, qui évaluent les conditions d'affichage par rapport à l'état que vous passez. Si vous les utilisez, sachez toutefois que toutes les `candidateExtensions` ne seront pas forcément affichées.
+
+#### Les parcels doivent se monter en moins de 15 secondes
+
+Auparavant, les parcels qui ne se montaient pas étaient simplement attendues indéfiniment. Il existe désormais un délai strict de 15 secondes, après lequel toute parcel qui ne s'est pas montée est rejetée et retirée de l'application. Ce comportement ne peut pas encore être configuré extension par extension. Si votre extension met plus de 15 secondes à se monter, réécrivez-la pour qu'elle monte plus vite un squelette de type « Chargement » et diffère le travail de chargement.
+
+#### Les extensions ajoutées par la configuration conservent l'ordre défini dans la configuration
+
+Si vous avez configuré un slot pour y ajouter des extensions, par exemple :
+
+```json
+{
+  "@openmrs/esm-patient-chart-app": {
+    "extensionSlots": {
+      "main-slot": {
+        "add": [
+          "custom-extension#1",
+          "custom-extension#2"
+        ]
+      }
+    }
+  }
+}
+```
+
+Elles s'afficheront désormais, par défaut, dans cet ordre, mais après la plupart des extensions liées à ce slot. Pour fixer l'ordre des extensions, mettez à jour votre configuration pour définir l'ordre :
+
+```json
+{
+  "@openmrs/esm-patient-chart-app": {
+    "extensionSlots": {
+      "main-slot": {
+        "add": [
+          "custom-extension#1",
+          "custom-extension#2"
+        ],
+        "order": [
+          "custom-extension#2",
+          "default-extensions",
+          "custom-extension#1"
+        ]
+      }
+    }
+  }
+}
+```
+
+Pour en savoir plus sur ces mécanismes, consultez [la vue d'ensemble de la configuration d'O3](/docs/configure-o3/overview).
+
+### .swcrc avec Webpack
+
+Avant la v11, les builds Webpack prenaient en compte un fichier `.swcrc` placé à côté du `webpack.config.js` d'une app. Avec la v11, cette fonctionnalité a été supprimée pour rester cohérente avec la configuration Rspack, qui ne lit pas ce fichier. Si vous avez besoin d'une configuration supplémentaire, utilisez l'export `scriptRuleConfig`. Avec Webpack, placez vos options SWC dans `use` :
+
+```js filename="webpack.config.js"
+const configuration = require('openmrs/default-webpack-config');
+
+configuration.scriptRuleConfig.use = {
+  options: {
+    // Vos options SWC ici
+  },
+};
+
+module.exports = configuration;
+```
+
+La règle Webpack définit déjà `use`. Définir `scriptRuleConfig.options` à la place fait donc échouer le build avec l'erreur « A Rule must not have a 'options' property when it has a 'use' property ». Vos options sont fusionnées avec les options SWC par défaut.
+
+Avec Rspack, la règle définit directement les `options` du loader SWC, définissez-les donc à cet endroit :
+
+```js filename="rspack.config.js"
+const configuration = require('openmrs/default-rspack-config');
+
+configuration.scriptRuleConfig.options = {
+  // Vos options SWC ici
+};
+
+module.exports = configuration;
+```
+
+### Migration CSS
+
+Dans le cadre de l'abandon du CSS-in-JS, nous retirons aussi aux apps la possibilité de modifier les styles globaux. Cela a toujours été l'intention : lorsque différentes apps appliquent différents styles globaux, il devient vite difficile de retrouver l'origine des défauts de style. Pour les styles réellement globaux qu'une implémentation doit fournir, la commande `openmrs build` propose un argument `--asset` qui permet d'indiquer des fichiers à copier dans le build final et à inclure dans l'application. Répétez-le pour chaque fichier. Pour le reste du CSS, l'objectif est de s'assurer qu'il est toujours correctement délimité. « Correctement délimité » signifie que toute règle publiée par une app est délimitée de façon à ne pas affecter les modules en dehors de son arbre. Par exemple :
+
+```scss
+:global(.cds--btn) {
+  color: blue;
+}
+```
+
+Modifie la couleur de tous les boutons Carbon, mais :
+
+```scss
+.myComponent :global(.cds--btn) {
+  color: blue;
+}
+```
+
+Limite strictement les changements à la classe `.myComponent`, qui, avec notre configuration par défaut, sera correctement renommée à l'exécution.
+
+Les builds de production le vérifient. Dans Core v11, les configurations Webpack et Rspack font échouer un build de production si son CSS contient une règle qui s'applique à toute la page : un sélecteur ancré uniquement sur une classe Carbon, comme `:global(.cds--btn)`, ou un sélecteur sans classe ni id propre, comme `html, body`. L'erreur commence par « _votre module_ emits _n_ global CSS rule(s) ». Les builds de développement n'effectuent pas cette vérification. Exécutez donc `yarn build` pour trouver ces règles.
+
+Les sélecteurs Carbon arrivent généralement dans le CSS d'un module via une feuille de style de composant Carbon importée uniquement pour ses tokens. Importer la feuille de style émet aussi le CSS du composant. Importez donc plutôt ses tokens :
+
+```scss
+// Émet le CSS du bouton en plus de ses tokens
+@use '@carbon/styles/scss/components/button';
+
+// Uniquement les tokens
+@use '@carbon/styles/scss/components/button/tokens' as button;
+```
+
+Un modèle que nous avons parfois rencontré consiste à utiliser react-to-print et à écrire une règle comme :
+
+```scss
+@media print {
+  html,
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}
+```
+
+Pour tenter de supprimer les marges par défaut à l'impression. Dans ces cas, `react-to-print` accepte un paramètre `pageStyle` qui permet de définir ce genre de règles globales. Il est préférable, car il est limité à l'`iframe` de `react-to-print` et n'affecte pas le reste de l'affichage. Une règle comme celle ci-dessus fait aussi échouer la vérification du build de production, car `html` et `body` n'ont aucune classe qui les délimite, même dans `@media print`.
+
+### SWR 2.5.1
+
+Core v11 fait passer SWR de 2.2.5 à 2.5.1 et le partage via Module Federation, de sorte que chaque module frontend utilise la copie de l'app shell. Core v10 ne partageait que les mécanismes internes de SWR, qui contiennent son cache. Depuis SWR 2.3.0, `swr` charge ses mécanismes internes d'une manière que ce partage ne détecte pas. Un module qui embarque `swr` conserve donc son propre cache : il ne voit plus les appels à `mutate()` faits par les autres modules, et les valeurs par défaut SWR du framework ne s'y appliquent pas.
+
+Un module ne partage `swr` que s'il liste `swr` dans ses `peerDependencies`, comme indiqué dans [Partager SWR](#partager-swr). Si votre module a déjà la dépendance peer, mettez à jour la copie de développement :
+
+```bash
+yarn up --exact swr@2.5.1
+```
+
+Les APIs SWR utilisées par les modules O3, comme `useSWR`, `useSWRInfinite`, `mutate`, `isLoading` et `keepPreviousData`, sont toujours disponibles dans la 2.5.1.
+
+### Support hors ligne et rxjs
+
+Core v11 supprime le support hors ligne du framework, ainsi que le service worker, l'app des outils hors ligne et la dépendance du framework à rxjs.
+
+- **Supprimez la configuration hors ligne.** Supprimez les appels à `setupOfflineSync`, `setupDynamicOfflineDataHandler`, `subscribePrecacheStaticDependencies` et `messageOmrsServiceWorker`, qui se trouvent généralement dans `startupApp` ou dans un fichier `offline.ts`. Ces fonctions sont toujours exportées sous forme de no-ops dépréciés pour que les anciens modules continuent de se charger, mais elles seront supprimées dans une version future. `useConnectivity()` est aussi conservé et renvoie toujours `true`.
+- **Supprimez le reste de l'API hors ligne.** Des fonctions comme `queueSynchronizationItem`, `getSynchronizationItem`, `syncOfflinePatientData`, `getOfflinePatientDataStore`, `generateOfflineUuid`, `isOfflineUuid`, `isOnline`, `getCurrentOfflineMode` et `subscribeConnectivity` ne sont plus exportées. `fetchCurrentPatient` n'accepte plus d'argument `includeOfflinePatients`.
+- **Retirez `online` et `offline` de `routes.json`.** Le framework les ignore.
+- **Ajoutez rxjs vous-même si vous l'utilisez encore.** L'app shell ne partage plus rxjs et le framework n'en dépend plus. Un module qui utilise rxjs doit donc le déclarer comme sa propre dépendance.
+
+Plusieurs fonctions du framework renvoient désormais des Promises au lieu d'Observables rxjs :
+
+| Fonction | Core v10 | Core v11 |
+| --- | --- | --- |
+| `getCurrentUser()` | Observable qui émet à chaque changement de session | Promise résolue une seule fois |
+| `getLocations()` | Observable | `Promise<Array<Location>>` |
+| `getVisitTypes()` | Observable | `Promise<Array<VisitType>>` |
+| `openmrsObservableFetch()` | Observable | Supprimée. Utilisez `openmrsFetch()` |
+
+Pour continuer à réagir aux changements de session, utilisez `useSession()` dans les composants React, ou abonnez-vous au store de session. Contrairement à `getCurrentUser()` dans Core v10, le `subscribe` du store ne vous appelle que lorsque la session change. Lisez donc aussi la session courante avec `getState()` :
+
+```ts
+// Core v10
+const subscription = getCurrentUser({ includeAuthStatus: false }).subscribe(setUser);
+return () => subscription.unsubscribe();
+
+// Core v11
+const store = getSessionStore();
+const unsubscribe = store.subscribe(({ loaded, session }) => {
+  if (loaded) {
+    setUser(session?.user ?? null);
+  }
+});
+const { loaded, session } = store.getState();
+if (loaded) {
+  setUser(session?.user ?? null);
+}
+return unsubscribe;
+```
+
+```ts
+// Core v10
+return openmrsObservableFetch<FHIRAllergy>(url).pipe(map(({ data }) => mapAllergy(data)));
+
+// Core v11
+const { data } = await openmrsFetch<FHIRAllergy>(url);
+return mapAllergy(data);
+```
+
+Le mock de test de `getCurrentUser` fourni par le framework renvoie lui aussi une Promise. Les tests qui le simulaient avec `of()` de rxjs doivent donc être mis à jour.
+
+### Workspace v1
+
+Core v11 supprime l'API workspace v1, notamment `launchWorkspace`, `launchWorkspaceGroup`, `closeWorkspace`, `navigateAndLaunchWorkspace`, `useWorkspaces`, `WorkspaceContainer`, `ActionMenuButton` et des types comme `DefaultWorkspaceProps`. Si le `routes.json` d'un module déclare encore `workspaces` ou `workspaceGroups`, le framework affiche un avertissement et ne les enregistre pas.
+
+Suivez [Migrer vers Workspace v2](/docs/migration-guides/migrate-to-workspace-v2) pour passer à `workspaces2`, `workspaceWindows2` et `workspaceGroups2`.
+
+### État du store renvoyé par useStore
+
+Dans Core v10, `useStore`, `useStoreWithActions` et `createUseStore` renvoyaient un nouvel objet à chaque rendu, créé en étalant l'état du store et les actions liées. Dans Core v11, sauf si vous passez des actions, ils renvoient l'état du store lui-même, ou le résultat de votre sélecteur.
+
+- Ne modifiez pas la valeur renvoyée sur place. C'est l'état du store lui-même : le modifier modifie le store sans prévenir les abonnés. Mettez plutôt le store à jour avec `setState` ou avec des actions.
+- Les effets et les valeurs mémoïsées qui dépendent du résultat ne se réexécutent désormais que lorsque l'état change, et non à chaque rendu.
+- Les sélecteurs peuvent renvoyer des tableaux et des valeurs primitives. Core v10 étalait le résultat dans un objet, si bien qu'un tableau revenait sous forme d'objet à clés numériques.
+
+### Hooks de pagination
+
+- `goTo`, `goToNext` et `goToPrevious` de `usePagination` et `useOpenmrsPagination` ne changent plus d'identité quand les données ou la page courante changent. Si vous comptiez sur ce changement pour réinitialiser la page, par exemple `useEffect(() => goTo(1), [goTo])`, ajoutez aux dépendances de l'effet la valeur qui doit déclencher la réinitialisation, comme un terme de recherche.
+- `useOpenmrsPagination` renvoie `currentPageSize` sous forme de nombre au lieu d'une ref. Remplacez `currentPageSize.current` par `currentPageSize`.
+- `useOpenmrsPagination` revient de lui-même à la page 1 quand son URL change.
+- `goTo` de `usePagination` ignore les numéros de page qui ne sont pas des entiers positifs, comme `0` ou `2.5`, et affiche un avertissement. Core v10 allait à la page 1 pour les numéros inférieurs à 1, et utilisait les nombres décimaux tels quels. Les numéros au-delà de la dernière page mènent toujours à la dernière page.
+
+### Expressions
+
+Core v11 change le fonctionnement de l'évaluateur d'expressions du framework. Cela concerne les expressions d'affichage, à la fois `displayExpression` dans `routes.json` et `Display conditions` dans la configuration, ainsi que les expressions du React Form Engine.
+
+- `&&`, `||` et `??` court-circuitent, et le chaînage optionnel fonctionne comme en JavaScript.
+- Lire une propriété de `null` lève une erreur, comme en JavaScript. Core v10 renvoyait `undefined`. Par exemple, quand `visit` vaut `null`, `!visit.stopDatetime` valait `true`, et lève maintenant une erreur. Utilisez plutôt le chaînage optionnel : `!visit?.stopDatetime`.
+- Une propriété manquante ne se rabat plus sur une variable de même nom. Dans Core v10, `obs.value` renvoyait la variable `value` quand `obs` n'avait pas de propriété `value`.
+- Les expressions ne peuvent pas utiliser les propriétés intégrées des objets et des fonctions autres que `toString`, `valueOf` et `hasOwnProperty`. Des appels comme `fn.call(...)` ou `Math.max.apply(...)` lèvent donc maintenant une erreur.
+- L'accès calculé aux propriétés avec une clé variable, comme `obj[key]`, lit désormais la propriété. Core v10 renvoyait la valeur de `key` elle-même.
+- Les propriétés des chaînes, comme `name.length`, fonctionnent désormais.
+
+Quand une expression d'affichage lève une erreur, O3 masque l'extension et journalise une erreur. Vérifiez les expressions d'affichage de vos fichiers `routes.json` et de votre configuration pour repérer les modèles ci-dessus.
+
+### `navigate` n'accepte que les URLs HTTP et HTTPS
+
+`navigate()` lève désormais une erreur si le protocole de la cible n'est pas `http:` ou `https:`, par exemple `mailto:`, `tel:` ou `javascript:`. Les chemins relatifs fonctionnent toujours. `ConfigurableLink` appelle `navigate()` au clic, la même règle s'applique donc à lui. Utilisez un simple `<a href>` pour les autres types de liens.
+
+## Pour les mainteneurs de distributions
+
+### Mettre à jour l'app shell en premier
+
+Les modules construits avec l'outillage Core v11 (`openmrs`, `@openmrs/webpack-config` ou `@openmrs/rspack-config` 11.0.0) chargent le runtime Module Federation depuis l'app shell, et refusent de démarrer sous un app shell plus ancien. Les modules construits avec un outillage plus ancien se chargent toujours sous l'app shell Core v11, mais ils cessent de fonctionner s'ils utilisent des APIs supprimées par Core v11, décrites plus haut. Construisez votre distribution avec `openmrs@11` avant de passer à des modules frontend construits avec l'outillage Core v11, ou en même temps. Ce changement a été introduit dans [cette pull request](https://github.com/openmrs/openmrs-esm-core/pull/1853).
+
+### `openmrs assemble` échoue sur les modules défectueux
+
+`openmrs assemble` échoue désormais si un module frontend n'a pas de `routes.json`, ou s'il lui manque le point d'entrée JavaScript vers lequel pointe son entrée d'import map. Passez `--no-ensure-entrypoints` pour signaler ces problèmes sous forme d'avertissements. Ce changement a été introduit dans [cette pull request](https://github.com/openmrs/openmrs-esm-core/pull/1795).
+
+### Servir les fichiers précompressés
+
+`openmrs build` écrit désormais des copies gzip (`.gz`) et brotli (`.br`) de chaque fichier JavaScript, CSS, JSON, SVG et HTML de 1 Ko ou plus. Configurez votre serveur web pour les servir. Le [nginx.conf du frontend](https://github.com/openmrs/openmrs-distro-referenceapplication/blob/main/frontend/nginx.conf) de la Reference Application montre comment faire. Pour ne pas les écrire, passez `--no-compress` à `openmrs build`, ou définissez `"compress": false` dans `spa-build-config.json`. Consultez [Créer une distribution](/docs/recipes/create-a-distribution).
+
+### Supprimer les paramètres hors ligne
+
+`openmrs build` et `openmrs develop` n'acceptent plus `--support-offline`, et `openmrs build` ignore `supportOffline` dans `spa-build-config.json`. L'app des outils hors ligne a disparu.
+
+### Vérifier les expressions d'affichage de votre configuration
+
+Les [changements apportés aux expressions](#expressions) s'appliquent aussi aux expressions `Display conditions` de la configuration de votre distribution. Une expression qui lève désormais une erreur masque son extension.
+
+### Mettre à jour les paramètres d'emplacement de connexion
+
+L'app de connexion n'a plus de paramètre `chooseLocation.numberToShow`, qui était déjà ignoré. Si votre configuration le définit encore, supprimez-le pour faire disparaître l'erreur « Unknown config key ». `chooseLocation.locationsPerRequest` prend désormais effet : il définit combien d'emplacements le sélecteur d'emplacement charge à la fois.
+
+### Afficher la version de votre distribution (facultatif)
+
+`openmrs assemble --application-version <version>` enregistre la version de votre distribution dans le registre des routes. La barre de navigation et la page de connexion l'affichent.
+
+## Autres changements à connaître
+
+- `<Workspace2>` n'affiche plus lui-même l'en-tête du workspace. Il transmet le `title` du workspace et `hasUnsavedChanges`, et le framework affiche l'en-tête autour de lui. Continuez à envelopper le contenu du workspace dans `<Workspace2>`.
+- Une entrée `workspaces2` peut définir sa propre `width`, qui remplace la largeur de sa fenêtre tant que ce workspace est au premier plan, et les workspaces reçoivent leur `meta` sous le nom `workspaceMeta`. Les extensions peuvent lire leurs propres métadonnées avec `useExtensionContext`.
+- Le `scopePattern` des groupes de workspaces est comparé au chemin relatif à la base du SPA, comme `/home/gastrodynamics`. Les modèles écrits pour le chemin complet fonctionnent toujours.
+- Les configurations webpack et Rspack respectent désormais la configuration Browserslist propre à un module, dans `package.json` ou `.browserslistrc`. À défaut, elles utilisent `browserslist-config-openmrs`.
+- `useLocations` renvoie désormais toutes les pages d'emplacements, sous forme d'objets REST dans la représentation par défaut. Core v10 renvoyait la première page, réduite à `uuid` et `display`.
+- `PageHeader` affiche son titre dans un `h1`.
+- Les couleurs par défaut de `diagnosisTags` ont changé : les diagnostics principaux sont désormais en bleu et les diagnostics secondaires en gris, au lieu de rouge et bleu. Les couleurs configurées par votre distribution s'appliquent toujours. `DiagnosisTags` accepte aussi une nouvelle prop `showCertainty`.
+
+## Exemples de migration
+
+- Patient chart : [dépendance peer](https://github.com/openmrs/openmrs-esm-patient-chart/pull/3768), [suppression du hors ligne](https://github.com/openmrs/openmrs-esm-patient-chart/pull/3689), [SWR](https://github.com/openmrs/openmrs-esm-patient-chart/pull/3675)
+- Patient management : [dépendance peer](https://github.com/openmrs/openmrs-esm-patient-management/pull/2815), [suppression du hors ligne](https://github.com/openmrs/openmrs-esm-patient-management/pull/2776), [SWR](https://github.com/openmrs/openmrs-esm-patient-management/pull/2762)
+- Form Builder : [dépendance peer](https://github.com/openmrs/openmrs-esm-form-builder/pull/1392), [SWR](https://github.com/openmrs/openmrs-esm-form-builder/pull/1347)

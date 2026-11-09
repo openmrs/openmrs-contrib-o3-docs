@@ -4,6 +4,7 @@ Use these guides when updating an existing O3 frontend module or distribution to
 
 ## Which guide do I need?
 
+- **Core v11**: Use this when moving modules or distributions to Core v11, which ships with Reference Application 3.8.0. It covers the extension system rewrite, SWR 2.5.1, the removal of offline support, rxjs and workspace v1, and stricter CSS and expression handling.
 - **Core v10**: Use this when moving modules to Core v10, which ships with Reference Application 3.7.0. It covers development-only import map overrides and stricter login redirects.
 - **Core v9**: Use this when moving modules to the Core v9 framework baseline.
 - **Rspack and Vitest**: Use this when a module has already completed the Core v6 migration and needs to move from Webpack/Jest to Rspack/Vitest.
@@ -11,4 +12,4 @@ Use these guides when updating an existing O3 frontend module or distribution to
 - **Core v6**: Use this for older modules that still need the Core v6 framework updates before moving to the newer build and test tooling.
 - **Core v5**: Use this for legacy modules that still register pages, extensions, or dynamic metadata using pre-Core v5 patterns.
 
-For actively maintained modules, the usual path is Core v6, then Rspack and Vitest, then each newer framework migration in order: Core v9 and Core v10. Workspace v2 can be done independently when a module uses workspaces.
+For actively maintained modules, the usual path is Core v6, then Rspack and Vitest, then each newer framework migration in order: Core v9, Core v10 and Core v11. Workspace v2 can be done independently when a module uses workspaces, but it must be done before Core v11, which removes workspace v1.

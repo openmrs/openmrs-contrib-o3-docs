@@ -37,7 +37,7 @@ Metadata can be provided in three ways:
 
 2. **Distro-packaged configuration directory** - Configuration files in your distro repository that your build copies into the backend package. Initializer expects a `configuration/` folder organized by domain (for example, `configuration/concepts/`, `configuration/locations/`, and `configuration/globalproperties/`). The current Reference Application does not keep a `distro/configuration` tree in the distro repository; it references content packages from `distro.properties` instead.
 
-3. **Application data directory** - Configuration files placed in OpenMRS' application data directory (typically `/openmrs/data/configuration/` or `~/.OpenMRS/configuration/`). This allows runtime updates without rebuilding. The Initializer module processes files from this directory if it exists, making it useful for post-deployment metadata updates.
+3. **Application data directory** - Configuration files in OpenMRS' application data directory (`~/openmrs/<serverId>/configuration/` with the SDK, `/openmrs/data/configuration/` in Docker). This allows runtime updates without rebuilding. In Docker, `/openmrs/data/configuration/` is rebuilt from `/openmrs/distribution/openmrs_config/` on every start, so add your files there instead (see the Docker-specific note below). The Initializer module processes files from this directory if it exists, making it useful for post-deployment metadata updates.
 
 **Loading order and precedence**:
 1. **Content packages** are loaded first (in the order specified in `distro.properties`)
@@ -50,7 +50,7 @@ Metadata can be provided in three ways:
 - The Initializer module uses checksums to track file changes—files are only reprocessed if their checksum changes, improving performance
 
 **Docker-specific note**: In Docker deployments, configuration files packaged with the backend are baked into the backend Docker image during build. To update metadata without rebuilding, you can:
-- Mount the application data directory as a volume and place configuration files there
+- Mount your configuration files or folders into `/openmrs/distribution/openmrs_config/`, for example `./my-config/globalproperties/my-gp.xml:/openmrs/distribution/openmrs_config/globalproperties/zz-my-gp.xml`. The backend copies this folder into `/openmrs/data/configuration/` on every start, so changes take effect on the next restart. Mount individual files, or mount a folder as a new subfolder of a domain folder (for example `./my-config/globalproperties:/openmrs/distribution/openmrs_config/globalproperties/zz-my-site`). Initializer loads global-property XML files in full-path order. These `zz-` names sort after the image's bundled files, so site values take precedence on a new install. Address hierarchy and dispositions work differently. The Address Hierarchy module only reads an `addressConfiguration.xml` that sits directly in `addresshierarchy/`, so mount that file, and the CSV file it names, into that folder itself. The `dispositions/` folder takes exactly one file, subfolders included, so if the image has one, mount yours over it. Mounting over a folder the image already has, such as `openmrs_config/` itself or a domain folder like `globalproperties/`, hides the configuration built into the image. Don't place or mount files in `/openmrs/data/configuration/` itself: it is rebuilt on every start.
 - Or rebuild the backend image (see the [Setting up an O3 instance](/docs/recipes/set-up-o3-instance#updating-metadata) guide)
 
 SDK deployments can update either backend-packaged configuration (requires WAR rebuild) or the application data directory (requires restart only).
@@ -88,7 +88,7 @@ Global properties are configured using XML files in the Initializer module. Plac
 
 1. **Content packages** - In the package's backend configuration tree. In current Reference Application content packages, this is `configuration/backend_configuration/globalproperties/`.
 2. **Distro configuration directory** - In `distro/configuration/globalproperties/` directory
-3. **Application data directory** - In `/openmrs/data/configuration/globalproperties/` or `~/.OpenMRS/configuration/globalproperties/`
+3. **Application data directory** - In `~/openmrs/<serverId>/configuration/globalproperties/` with the SDK. In Docker, in `/openmrs/distribution/openmrs_config/globalproperties/`, which is copied into `/openmrs/data/configuration/globalproperties/` on every start (see the Docker-specific note above for how to mount files there without hiding the image's configuration)
 
 **XML file format**:
 
