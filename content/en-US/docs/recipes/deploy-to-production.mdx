@@ -230,6 +230,8 @@ This simple image serves files that were already built. If you want Reference Ap
 overrides for `$SPA_PATH`, `$API_URL`, or `$SPA_CONFIG_URLS`, include an entrypoint like the Reference Application
 frontend `startup.sh` that runs `envsubst`, or build the SPA with the final values in `spa-build-config.json`.
 
+For the `nginx.conf` itself, start from the Reference Application's [frontend nginx.conf](https://github.com/openmrs/openmrs-distro-referenceapplication/blob/main/frontend/nginx.conf). From Core v11, `openmrs build` writes precompressed `.br` and `.gz` copies of the frontend's assets, and that config serves them with the right headers. See [Serving precompressed assets](/docs/recipes/create-a-distribution#serving-precompressed-assets) for details.
+
 ### Method 3: Static hosting + API proxy
 
 For cloud deployments (AWS S3 + CloudFront, Azure Blob Storage, etc.):
