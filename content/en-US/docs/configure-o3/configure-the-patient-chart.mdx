@@ -525,7 +525,7 @@ Reference Application 3.7.0 and 3.7.1 use patient-chart 12.3.4, which still supp
 
 The default is `a22733fa-3501-4020-a520-da024eeff088`.
 
-Patient-chart 13.0.0 removed offline visits and this setting in [openmrs-esm-patient-chart#3689](https://github.com/openmrs/openmrs-esm-patient-chart/pull/3689). When upgrading to 13.0.0 or later, remove `offlineVisitTypeUuid` from your configuration. Those versions ignore the setting and log an "Unknown config key" error. They also depend on Core v11, which [removed offline support](/docs/app-shell#offline-support) from the framework.
+Patient-chart 13.0.0 removed offline visits and this setting in [openmrs-esm-patient-chart#3689](https://github.com/openmrs/openmrs-esm-patient-chart/pull/3689). Reference Application 3.8.0 uses patient-chart 13.0.1. When upgrading to 13.0.0 or later, remove `offlineVisitTypeUuid` from your configuration. Those versions ignore the setting and log an "Unknown config key" error. They also depend on Core v11, which [removed offline support](/docs/migration-guides/migrate-to-core-v11#offline-support-and-rxjs) from the framework.
 
 ### Drug Order Type UUID
 
