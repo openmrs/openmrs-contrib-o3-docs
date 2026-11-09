@@ -311,7 +311,7 @@ Définissez quelles colonnes apparaissent dans quels tableaux :
 
 **Exemple** : La première définition de tableau s'applique uniquement à une combinaison file/statut spécifique. La seconde s'applique à toutes les autres files et statuts, et correspond à la configuration intégrée par défaut. Placez les définitions spécifiques avant la définition générale, car la première définition correspondante est utilisée. Si aucune définition ne correspond, Service Queues utilise la définition intégrée par défaut.
 
-Le tableau de bord de Service Queues n'appartient pas à une seule file ni à un seul statut : il n'utilise donc que les définitions dont `queue` et `status` sont tous deux vides (ou qui n'ont pas de `appliedTo`). Les définitions propres à une file ou à un statut s'appliquent à la page de chaque file, à l'adresse `${openmrsSpaBase}home/service-queues/queue-table-by-status/<queue-uuid>`, qui affiche un tableau par statut.
+Le tableau de bord de Service Queues cherche ses colonnes sans file ni statut : il n'utilise donc que les définitions dont `queue` et `status` sont tous deux vides (ou qui n'ont pas de `appliedTo`). Une définition pour le statut d'attente ne s'y applique pas non plus, même si le tableau de bord ne liste que les patients en attente. Les définitions propres à une file ou à un statut s'appliquent à la page de chaque file, à l'adresse `${openmrsSpaBase}home/service-queues/queue-table-by-status/<queue-uuid>`. Elle affiche un tableau pour chaque statut autorisé par la file, sauf le statut « en service » (`defaultTransitionStatus`), dont les patients s'affichent sous forme de cartes au-dessus des tableaux.
 
 ## Attribut de numéro de file d'attente de visite
 

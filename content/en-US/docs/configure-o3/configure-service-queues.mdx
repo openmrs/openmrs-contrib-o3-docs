@@ -311,7 +311,7 @@ Define which columns appear in which tables:
 
 **Example**: The first table definition applies only to a specific queue and status combination. The second applies to all other queues and statuses, and matches the built-in default. Put specific definitions before the catch-all, because the first matching definition is used. If no definition matches, Service Queues uses the built-in default.
 
-The Service Queues dashboard doesn't belong to a single queue or status, so it only uses definitions whose `queue` and `status` are both empty (or that have no `appliedTo`). Definitions for a specific queue or status apply to the per-queue page at `${openmrsSpaBase}home/service-queues/queue-table-by-status/<queue-uuid>`, which shows one table for each status.
+The Service Queues dashboard looks up its columns without a queue or status, so it only uses definitions whose `queue` and `status` are both empty (or that have no `appliedTo`). A definition for the waiting status doesn't apply there either, even though the dashboard only lists waiting patients. Definitions for a specific queue or status apply to the per-queue page at `${openmrsSpaBase}home/service-queues/queue-table-by-status/<queue-uuid>`. It shows a table for each status the queue allows, except the in-service status (`defaultTransitionStatus`), whose patients show as cards above the tables.
 
 ## Visit Queue Number Attribute
 

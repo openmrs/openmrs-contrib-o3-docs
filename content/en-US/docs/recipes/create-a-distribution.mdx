@@ -376,7 +376,7 @@ server {
 
 The basic nginx example above serves every file uncompressed. To serve the `.br` and `.gz` files that `openmrs build` writes, nginx needs to pick the right file for each request based on the browser's `Accept-Encoding` header and set the matching `Content-Encoding` and `Vary` headers.
 
-The Reference Application's [frontend nginx.conf](https://github.com/openmrs/openmrs-distro-referenceapplication/blob/main/frontend/nginx.conf) does this using only core nginx directives, so it works with the stock `nginx:alpine` image. It prefers brotli, falls back to gzip, and then to the uncompressed file. It does this for JavaScript, CSS, JSON and SVG files, and serves `index.html` uncompressed. It also caches JavaScript files and the main styleguide stylesheet for a year, and asks browsers to revalidate other CSS, JSON and SVG files. We recommend starting from that file rather than writing your own.
+The Reference Application's [frontend nginx.conf](https://github.com/openmrs/openmrs-distro-referenceapplication/blob/main/frontend/nginx.conf) does this using only core nginx directives, so it works with the stock `nginx:alpine` image. It prefers brotli, falls back to gzip, and then to the uncompressed file. It does this for `.js`, CSS, JSON and SVG files. It serves `index.html`, and `.mjs` and `.cjs` files, uncompressed. It also caches `.js` files and the main styleguide stylesheet for a year, and asks browsers to revalidate other CSS, JSON and SVG files. We recommend starting from that file rather than writing your own.
 
 ### Testing Locally
 

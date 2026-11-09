@@ -65,7 +65,7 @@ Lorsqu'une construction est terminée, les utilisateurs disposant de `Download M
 
 ## Contenu d'une construction
 
-Chaque construction est un fichier zip nommé `metadataexport-<nom-du-paquet>-v<construction>.zip`, où le nom du paquet est mis en minuscules et où les caractères autres que les lettres, les chiffres, `.`, `_` et `-` sont remplacés par `-`. Il est organisé comme un paquet de contenu OpenMRS :
+Chaque construction est un fichier zip nommé `metadataexport-<nom-du-paquet>-v<construction>.zip`, où le nom du paquet est débarrassé de ses espaces de début et de fin et mis en minuscules, et où chaque suite de caractères autres que `a`-`z`, `0`-`9`, `.`, `_` et `-` est remplacée par un seul `-`. Il est organisé comme un paquet de contenu OpenMRS :
 
 - `configuration/backend_configuration/` contient un dossier de fichiers Initializer pour chaque domaine exporté, comme `encountertypes` ou `locations`.
 - `content.properties` enregistre le nom du paquet, et le numéro de construction comme `version`.

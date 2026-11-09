@@ -198,7 +198,7 @@ Vous pouvez également spécifier des options supplémentaires:
 - `--fresh`: Nettoyer le répertoire de sortie avant l'exécution
 - `--manifest`: Générer un fichier manifeste avec les informations de version
 - `--mode config`: Utiliser le mode fichier de configuration. Sans cette option, le CLI démarre le questionnaire interactif.
-- `--ensure-entrypoints`: Faire échouer l'exécution si un module frontal n'a pas son `routes.json`, a un `routes.json` illisible, ou n'a pas le point d'entrée JavaScript vers lequel pointe son entrée dans la carte d'importation. Cette option est activée par défaut à partir de Core v11. Passez `--no-ensure-entrypoints` pour signaler ces problèmes sous forme d'avertissements à la place.
+- `--ensure-entrypoints`: Faire échouer l'exécution si un module frontal n'a pas son `routes.json`, a un `routes.json` qui ne peut pas être analysé, ou n'a pas le point d'entrée JavaScript vers lequel pointe son entrée dans la carte d'importation. Cette option est activée par défaut à partir de Core v11. Passez `--no-ensure-entrypoints` pour signaler ces problèmes sous forme d'avertissements à la place.
 - `--application-version <version>`: Enregistrer la version de votre distribution dans le registre des routes (Core v11 et ultérieur). Le shell de l'application l'expose sous `window.applicationVersion`, et la barre de navigation ainsi que la page de connexion l'affichent. La valeur spéciale `prerelease` affiche à la place un libellé traduit « Prerelease », ou « Local Build » lorsque le shell de l'application est lui-même une construction locale.
 
 Le fichier peut ressembler à ce qui suit:
@@ -380,7 +380,7 @@ server {
 
 L'exemple nginx de base ci-dessus sert chaque fichier sans compression. Pour servir les fichiers `.br` et `.gz` écrits par `openmrs build`, nginx doit choisir le bon fichier pour chaque requête en fonction de l'en-tête `Accept-Encoding` du navigateur, et définir les en-têtes `Content-Encoding` et `Vary` correspondants.
 
-Le [nginx.conf frontend](https://github.com/openmrs/openmrs-distro-referenceapplication/blob/main/frontend/nginx.conf) de l'application de référence le fait en n'utilisant que les directives natives de nginx, il fonctionne donc avec l'image `nginx:alpine` standard. Il privilégie brotli, se rabat sur gzip, puis sur le fichier non compressé. Il le fait pour les fichiers JavaScript, CSS, JSON et SVG, et sert `index.html` sans compression. Il met aussi en cache pendant un an les fichiers JavaScript et la feuille de style principale du styleguide, et demande aux navigateurs de revalider les autres fichiers CSS, JSON et SVG. Nous recommandons de partir de ce fichier plutôt que d'écrire le vôtre.
+Le [nginx.conf frontend](https://github.com/openmrs/openmrs-distro-referenceapplication/blob/main/frontend/nginx.conf) de l'application de référence le fait en n'utilisant que les directives natives de nginx, il fonctionne donc avec l'image `nginx:alpine` standard. Il privilégie brotli, se rabat sur gzip, puis sur le fichier non compressé. Il le fait pour les fichiers `.js`, CSS, JSON et SVG. Il sert `index.html`, ainsi que les fichiers `.mjs` et `.cjs`, sans compression. Il met aussi en cache pendant un an les fichiers `.js` et la feuille de style principale du styleguide, et demande aux navigateurs de revalider les autres fichiers CSS, JSON et SVG. Nous recommandons de partir de ce fichier plutôt que d'écrire le vôtre.
 
 ### Test local
 

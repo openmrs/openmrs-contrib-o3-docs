@@ -65,7 +65,7 @@ When a build completes, users with `Download Metadata Export Packages` see a **D
 
 ## What's in a build
 
-Each build is a zip named `metadataexport-<package-name>-v<build>.zip`, where the package name is lowercased and characters other than letters, digits, `.`, `_` and `-` become `-`. It's laid out as an OpenMRS content package:
+Each build is a zip named `metadataexport-<package-name>-v<build>.zip`, where the package name is trimmed and lowercased, and each run of characters other than `a`-`z`, `0`-`9`, `.`, `_` and `-` becomes a single `-`. It's laid out as an OpenMRS content package:
 
 - `configuration/backend_configuration/` holds a folder of Initializer files for each exported domain, such as `encountertypes` or `locations`.
 - `content.properties` records the package name, and the build number as its `version`.

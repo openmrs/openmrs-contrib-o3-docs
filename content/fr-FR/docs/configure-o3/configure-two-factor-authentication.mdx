@@ -36,7 +36,9 @@ Redémarrez OpenMRS après avoir modifié ces paramètres.
 <Callout type="info">
   Dans l'image Docker de la Reference Application, le fichier des propriétés d'exécution est
   `/openmrs/data/openmrs-runtime.properties`, sur le volume de données du backend, et il est conservé entre les
-  redémarrages. Modifiez ce fichier.
+  redémarrages. Modifiez ce fichier. N'utilisez pas les variables d'environnement `OMRS_EXTRA_*` pour ces paramètres :
+  l'image de la Reference Application 3.8.0 met leurs noms en minuscules, alors que le module cherche des clés en
+  casse mixte comme `primaryOptions` et `loginPage`.
 </Callout>
 
 ## Configurer le frontend

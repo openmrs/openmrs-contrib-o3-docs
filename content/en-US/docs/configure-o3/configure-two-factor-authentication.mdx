@@ -36,7 +36,8 @@ Restart OpenMRS after changing these settings.
 <Callout type="info">
   In the Reference Application's Docker image, the runtime properties file is
   `/openmrs/data/openmrs-runtime.properties`, on the backend's data volume, and it's kept between restarts. Edit
-  that file.
+  that file. Don't use `OMRS_EXTRA_*` environment variables for these settings: the Reference Application 3.8.0
+  image lowercases their names, and the module looks up mixed-case keys such as `primaryOptions` and `loginPage`.
 </Callout>
 
 ## Configure the frontend
