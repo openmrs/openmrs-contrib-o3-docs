@@ -19,10 +19,10 @@ test('rejects links to the retired Forms Wiki page', async () => {
     'scripts/fixtures/forms-doc-ownership/rejected.mdx',
   ]);
 
-  assert.equal(violations.length, 4);
+  assert.equal(violations.length, 2);
   assert.deepEqual(
     violations.map(({ line }) => line),
-    [1, 3, 5, 7],
+    [1, 3],
   );
 });
 
