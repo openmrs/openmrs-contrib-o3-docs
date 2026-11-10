@@ -69,7 +69,7 @@
   - Si le rafraîchissement doit se faire ailleurs, par exemple dans une modale ou une autre extension, transmettez-lui cette fonction `mutate` (par exemple, en tant que prop de la modale), ou chargez la liste avec une seule clé `useSWR` et un fetcher qui suit les liens `next`. Un filtre de clé peut correspondre à cette clé, et sa revalidation récupère à nouveau toutes les pages.
 
   ```tsx
-  import { openmrsFetch, restBaseUrl } from '@openmrs/esm-framework';
+  import { openmrsFetch, restBaseUrl, type Visit } from '@openmrs/esm-framework';
   import useSWR from 'swr';
 
   interface PaginatedResponse<T> {

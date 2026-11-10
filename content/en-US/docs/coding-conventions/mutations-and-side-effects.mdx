@@ -69,7 +69,7 @@
   - If the refresh has to happen somewhere else, such as a modal or another extension, either pass that `mutate` function to it (for example, as a modal prop), or load the list with a single `useSWR` key and a fetcher that follows `next` links. A key filter can match that key, and revalidating it refetches every page.
 
   ```tsx
-  import { openmrsFetch, restBaseUrl } from '@openmrs/esm-framework';
+  import { openmrsFetch, restBaseUrl, type Visit } from '@openmrs/esm-framework';
   import useSWR from 'swr';
 
   interface PaginatedResponse<T> {

@@ -113,9 +113,11 @@ Les nouvelles tentatives et les boucles de rafraîchissement non bornées causen
   });
   ```
 
-## Points de terminaison paginés
+## Pagination des données
 
-Si un point de terminaison peut renvoyer plus d'une page de résultats, ne le récupérez pas avec un seul appel à `openmrsFetch`, `useSWR` ou `useOpenmrsSWR`. Cet appel ne lit que la première page, et l'interface utilisateur ignore silencieusement le reste.
+Lorsque vous récupérez une liste de résultats, préférez la paginer. Des pages plus petites se chargent plus vite, sollicitent moins le serveur et sont plus faciles à parcourir pour les utilisateurs qu'une longue liste.
+
+Si un point de terminaison peut renvoyer plus d'une page de résultats, ne le récupérez pas avec un seul appel à `openmrsFetch`, `useSWR` ou `useOpenmrsSWR`. Ces appels ne renvoient que la première page de résultats et ignorent silencieusement le reste.
 
 La plupart des points de terminaison REST d'OpenMRS qui renvoient des listes ou des résultats de recherche sont paginés. Le serveur renvoie au plus `webservices.rest.maxResultsDefault` résultats par requête (une propriété globale qui vaut 50 par défaut), et ajoute à la réponse un lien avec `rel: "next"` lorsqu'il reste d'autres résultats. Consultez la [documentation du module REST](https://openmrs.atlassian.net/wiki/spaces/docs/pages/25469882/REST+Module) pour plus de détails.
 
@@ -128,7 +130,7 @@ Choisissez un hook de `@openmrs/esm-framework` en fonction des besoins de l'inte
 [`useFhirPagination`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useFhirPagination.md), [`useFhirInfinite`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useFhirInfinite.md) et [`useFhirFetchAll`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useFhirFetchAll.md) font de même pour les points de terminaison FHIR.
 
 <Callout emoji="⚠️" type="warning">
-  **N'augmentez pas `limit` pour éviter la pagination** : Si `limit` dépasse `webservices.rest.maxResultsAbsolute` (100 par défaut), le serveur rejette la requête avec une erreur au lieu de plafonner la valeur. Une page plus grande reste une seule page, et vous avez donc toujours besoin de l'un des hooks ci-dessus. Gardez le `pageSize` de `useOpenmrsPagination`, ainsi que toute valeur de `limit` que vous définissez vous-même, dans cette limite.
+  **N'augmentez pas `limit` pour éviter la pagination** : Si `limit` dépasse `webservices.rest.maxResultsAbsolute` (100 par défaut), le serveur rejette la requête avec une erreur au lieu de plafonner la valeur. Une page plus grande reste une seule page, et vous avez donc toujours besoin de l'un des hooks ci-dessus. Des pages plus grandes mettent aussi plus de temps à se charger et à s'afficher, et les utilisateurs attendent donc plus longtemps avant de voir quoi que ce soit. Gardez le `pageSize` de `useOpenmrsPagination`, ainsi que toute valeur de `limit` que vous définissez vous-même, dans cette limite.
 </Callout>
 
   ```tsx

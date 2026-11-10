@@ -113,9 +113,11 @@ Unbounded retries and refresh loops cause unpredictable latency and load.
   });
   ```
 
-## Paginated endpoints
+## Data pagination
 
-If an endpoint can return more than one page of results, don't fetch it with a single `openmrsFetch`, `useSWR` or `useOpenmrsSWR` call. That call only reads the first page, and the UI silently drops the rest.
+When you fetch a list of results, prefer paginating it. Smaller pages load faster, put less load on the server, and are easier for users to scan than one long list.
+
+If an endpoint can return more than one page of results, don't fetch it with a single `openmrsFetch`, `useSWR` or `useOpenmrsSWR` call. Those calls only return the first page of results, silently dropping the rest.
 
 Most OpenMRS REST list and search endpoints are paginated. The server returns up to `webservices.rest.maxResultsDefault` results per request (a global property that defaults to 50), and adds a link with `rel: "next"` to the response when more results exist. See the [REST module documentation](https://openmrs.atlassian.net/wiki/spaces/docs/pages/25469882/REST+Module) for details.
 
@@ -128,7 +130,7 @@ Pick a hook from `@openmrs/esm-framework` based on what the UI needs:
 [`useFhirPagination`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useFhirPagination.md), [`useFhirInfinite`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useFhirInfinite.md) and [`useFhirFetchAll`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useFhirFetchAll.md) do the same for FHIR endpoints.
 
 <Callout emoji="⚠️" type="warning">
-  **Don't raise `limit` to avoid paging**: If `limit` exceeds `webservices.rest.maxResultsAbsolute` (100 by default), the server rejects the request with an error instead of capping it. A bigger page is still just one page, so you still need one of the hooks above. Keep `pageSize` in `useOpenmrsPagination`, and any `limit` you set yourself, within that limit.
+  **Don't raise `limit` to avoid paging**: If `limit` exceeds `webservices.rest.maxResultsAbsolute` (100 by default), the server rejects the request with an error instead of capping it. A bigger page is still just one page, so you still need one of the hooks above. Bigger pages also take longer to load and render, so users wait longer before they see anything. Keep `pageSize` in `useOpenmrsPagination`, and any `limit` you set yourself, within that limit.
 </Callout>
 
   ```tsx
