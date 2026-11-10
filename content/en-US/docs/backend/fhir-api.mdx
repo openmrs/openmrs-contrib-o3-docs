@@ -57,7 +57,7 @@ The module is built in four layers. A resource provider receives the HTTP reques
 Most resources map to one OpenMRS class, but a few are worth knowing about because the mapping isn't one to one:
 
 - **Encounter** covers both OpenMRS encounters and visits. A read tries the encounter first, then the visit. A search returns both unless you narrow it with `_tag`, and each resource carries a `meta.tag` with system `http://fhir.openmrs.org/ext/encounter-tag` and code `encounter` or `visit`.
-- **Condition** covers both the `Condition` table and encounter diagnoses. Searching with `category=encounter-diagnosis` returns diagnoses, `category=problem-list-item` returns conditions, and no category returns both.
+- **Condition** covers both the `Condition` table and encounter diagnoses. Searching with `category=http://terminology.hl7.org/CodeSystem/condition-category%7Cencounter-diagnosis` returns diagnoses, `category=http://terminology.hl7.org/CodeSystem/condition-category%7Cproblem-list-item` returns conditions, and no category returns both. The system is required, so a bare `category=encounter-diagnosis` matches nothing. `%7C` is the `|` between system and code, encoded because some servers reject a raw `|`.
 - **Practitioner** covers both providers and users, and a search merges the two.
 - **Observation** maps to `Obs`. An obs group becomes an `Observation` whose `hasMember` array references each member, and `has-member` is a search parameter you can `_include`.
 - **Immunization** is stored as obs groups under a dedicated encounter type.
@@ -73,9 +73,9 @@ Each provider declares the search parameters it accepts. The ones you will use m
 - **Encounter**: `patient` or `subject`, `date`, `location`, `participant`, `type`, `_tag`, `_id`, `_lastUpdated` and `_sort`. A second search, `_query=encountersWithMedicationRequests`, exists for the dispensing app.
 - **Condition**: `patient` or `subject`, `code`, `clinical-status`, `onset-date`, `onset-age`, `recorded-date`, `category`, `_id`, `_lastUpdated` and `_sort`.
 
-Reference parameters support chaining, so `Observation?patient.identifier=100GEJ` works. `_include` and `_revinclude` are supported for the references each provider lists, for example `Encounter?patient=...&_revinclude=Observation:encounter`. `_has` reverse chaining is limited: on `Patient` it only supports Group membership, as in `Patient?_has:Group:member:id=<uuid>`.
+Reference parameters support chaining, so `Observation?patient.identifier=100GEJ` works. `_include` and `_revinclude` are supported for the references each provider lists, for example `Encounter?patient=...&_revinclude=Observation:encounter`. `_has` reverse chaining is limited to two forms: `Patient?_has:Group:member:id=<uuid>` and `Encounter?_tag=encounter&_has:MedicationRequest:encounter:intent=order`. Any other `_has` is ignored without an error, so the search returns every resource.
 
-The operations on the table above are what they sound like: `Patient/{uuid}/$everything` returns a patient with the `Observation`, `AllergyIntolerance`, `DiagnosticReport`, `Encounter`, `MedicationRequest`, `ServiceRequest` and `ProcedureRequest` resources that reference them, but not conditions or medication dispenses, and `Observation/$lastn?max=2&category=laboratory&code=5242` returns the most recent N observations per code.
+The operations on the table above are what they sound like: `Patient/{uuid}/$everything` returns a patient with the `Observation`, `AllergyIntolerance`, `DiagnosticReport`, `Encounter`, `MedicationRequest` and `ServiceRequest` resources that reference them, but not conditions or medication dispenses, and `Observation/$lastn?max=2&category=laboratory&code=5242` returns the most recent N observations per code.
 
 ### Paging
 

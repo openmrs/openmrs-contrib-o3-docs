@@ -8,7 +8,7 @@ Developing a frontend module means running it against a backend. The dev server 
 
 **Docker** means cloning the distro repository and running one command. You get the full stack: gateway, frontend, backend and database, with the backend at `http://localhost` through the gateway. Pick it when you want the same images as production, or a clean slate.
 
-**The SDK** means installing Maven and Java, then running a setup wizard that can use H2, your own MySQL or PostgreSQL server, or a MySQL container it starts in Docker. You get the backend WAR in an embedded Tomcat with the SPA built in, at `http://localhost:8080`. Pick it when you want to debug backend modules in an IDE or work on backend code.
+**The SDK** means installing Maven and Java, then running a setup wizard that can use your own MySQL or PostgreSQL server, or a MySQL container it starts in Docker. You get the backend WAR in an embedded Tomcat with the SPA built in, at `http://localhost:8080`. Pick it when you want to debug backend modules in an IDE or work on backend code.
 
 ## Docker
 
@@ -106,7 +106,7 @@ If you'd rather use a GUI client, publish the port by adding `ports: ["3306:3306
 
 ## The OpenMRS SDK
 
-The [OpenMRS SDK](https://om.rs/sdk) is a Maven plugin that sets up and runs OpenMRS servers under `~/openmrs/<serverId>`. It needs Java and Maven, and a database: H2, your own MySQL or PostgreSQL server, or Docker, which the wizard can use to start a MySQL container.
+The [OpenMRS SDK](https://om.rs/sdk) is a Maven plugin that sets up and runs OpenMRS servers under `~/openmrs/<serverId>`. It needs Java and Maven, and a database: your own MySQL or PostgreSQL server, or Docker, which the wizard can use to start a MySQL container.
 
 ```bash
 mvn org.openmrs.maven.plugins:openmrs-sdk-maven-plugin:setup-sdk

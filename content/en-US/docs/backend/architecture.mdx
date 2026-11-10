@@ -29,7 +29,7 @@ Persisted objects implement `OpenmrsObject`, which gives most of them an integer
 Two base classes matter because they decide how deletion works:
 
 - **Data** (`BaseOpenmrsData`): patients, encounters, observations, visits, orders. Data is **voided**, never deleted in normal operation. A voided object carries `voided`, `dateVoided`, `voidedBy` and `voidReason`, and is excluded from queries unless you ask for it.
-- **Metadata** (`BaseOpenmrsMetadata`): encounter types, locations, forms, roles, privileges, identifier types. Metadata is **retired**, as are other retirable objects such as `Concept`, which has its own base class. A retired object stays valid for existing references but shouldn't be used for new ones, so a retired encounter type still shows on old encounters but is hidden from the picker.
+- **Metadata** (`BaseOpenmrsMetadata`): encounter types, locations, forms, identifier types. Metadata is **retired**, as are other retirable objects such as `Concept`, which has its own base class. A retired object stays valid for existing references but shouldn't be used for new ones, so a retired encounter type still shows on old encounters but is hidden from the picker. Roles and privileges extend `BaseOpenmrsMetadata` too, but they can't be retired, only deleted.
 
 Both kinds also carry `creator`, `dateCreated`, `changedBy` and `dateChanged`, which the REST API exposes as `auditInfo` in the `full` representation.
 
