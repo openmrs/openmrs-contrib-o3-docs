@@ -2,7 +2,7 @@ import { Callout } from "nextra/components";
 
 # Privileges and roles
 
-OpenMRS authorizes by privilege. A privilege is a named permission such as `Get Patients` or `Add Encounters`. Roles bundle privileges, users hold roles, and roles can inherit from other roles. The backend checks privileges in the service layer, so every REST and FHIR call is gated by them whether or not the frontend hides the button. This page explains how that gating works, how to find the privilege an endpoint needs, and how the frontend uses the same privileges to decide what to render.
+OpenMRS authorizes by privilege. A privilege is a named permission such as `Get Patients` or `Add Encounters`. Roles bundle privileges, users hold roles, and roles can inherit from other roles. The backend checks privileges on the server, in the core services for REST calls and in the FHIR2 module's data access objects for FHIR calls, so every REST and FHIR call is gated by them whether or not the frontend hides the button. This page explains how that gating works, how to find the privilege an endpoint needs, and how the frontend uses the same privileges to decide what to render.
 
 ## How privileges, roles and users relate
 

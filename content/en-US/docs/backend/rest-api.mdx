@@ -22,7 +22,7 @@ const { data } = await openmrsFetch(`${restBaseUrl}/patient/${uuid}?v=full`);
 
 The `links[].uri` values in responses are absolute. The module builds them from the first request it sees, or from the global property `webservices.rest.uriPrefix` when one is set.
 
-Requests with an XML content type are rejected with `415`; everything else is JSON.
+Requests with an XML content type are rejected with `415`. Requests and responses are JSON, apart from file transfers: form resource uploads use multipart, and complex observation values download as binary.
 
 ## Sessions and authentication
 
@@ -45,7 +45,7 @@ Every resource can be returned in several shapes, selected with the `v` query pa
 
 - **`ref`**: `uuid`, `display` and a `self` link. `retired` or `voided` is added only when the object is retired or voided.
 - **`default`**: the common properties, with nested objects typically as `ref`. Includes a `full` link.
-- **`full`**: everything in `default` plus `auditInfo`, with nested objects typically expanded one level further.
+- **`full`**: everything in `default`, typically plus `auditInfo`, with nested objects typically expanded one level further.
 - **`custom:(…)`**: exactly the properties you list.
 
 A single `GET /patient/{uuid}` defaults to `default`. A list or search such as `GET /patient?q=john` defaults to `ref`, which is why you so often see `v=` on list requests.
@@ -79,13 +79,13 @@ List and search endpoints return an envelope:
 - `limit` sets the page size. The default is the global property `webservices.rest.maxResultsDefault` (50 out of the box), and the server refuses anything above `webservices.rest.maxResultsAbsolute` (100). Zero, negative or above the absolute limit fails with `500`, and a non-integer value is silently ignored.
 - `startIndex` is the offset. `links` contains `next` and `prev` entries only when there's a next or previous page, and they repeat your query string with the adjusted offset.
 - `totalCount` is included only when you ask for it with `totalCount=true`, because it costs a count query.
-- `includeAll=true` includes voided or retired objects in lists and searches.
+- `includeAll=true` includes voided or retired objects in lists and in searches that honor it. Some search handlers ignore it.
 
 `@openmrs/esm-framework` handles this for you. `useOpenmrsPagination(url, pageSize)` sets `limit`, `startIndex` and `totalCount=true` and exposes page navigation, `useOpenmrsInfinite` follows the `next` link each time you call its `loadMore`, and `useOpenmrsFetchAll` follows them until there's nothing left. See [Retrieve and post data](/docs/recipes/retrieve-and-post-data) for examples.
 
 ## Searching
 
-A `GET` on a resource with no query parameters calls the resource's `doGetAll`. Add a parameter and one of two things happens:
+A `GET` on a resource with no query parameters calls the resource's `doGetAll`. Add a parameter other than the reserved ones (`v`, `limit`, `startIndex`, `includeAll`, `totalCount` and a few more) and one of two things happens:
 
 1. The module looks for a **search handler** whose declared parameters match the ones you sent. Search handlers are classes that declare a `SearchConfig` naming the resource, the required parameters and the optional ones, and they are how most non-trivial searches are implemented. `GET /patient?identifier=100GEJ` reaches the `patientByIdentifier` handler, for example.
 2. If no handler matches, the resource's own `doSearch` runs. For most resources this reads `q` and runs a name or text search through the service. `GET /patient?q=john` and `GET /concept?q=weight` work this way.
@@ -98,11 +98,11 @@ The search handler classes live under `omod/src/main/java/.../v1_0/search/` in t
 
 - **`POST /{resource}`** creates. Returns `201` with the new object.
 - **`POST /{resource}/{uuid}`** updates the properties you send. Returns `200` with the object.
-- **`DELETE /{resource}/{uuid}`** voids data or retires metadata. An optional `reason` parameter records why. Returns `204`.
+- **`DELETE /{resource}/{uuid}`** usually voids data or retires metadata. Some resources purge instead: `DELETE` on a `systemsetting` removes the global property. An optional `reason` parameter records why. Returns `204`.
 - **`DELETE /{resource}/{uuid}?purge=true`** deletes the row. Only for data that has never been referenced, and it needs the type's `Purge` privilege, enforced by the core service. Returns `204`.
 - **`POST /{resource}/{uuid}` with `{"deleted": "false"}` as the only property** unvoids or unretires. With other properties present it's a normal update.
 
-Each resource declares which properties can be set on create and which on update. A property outside those lists is rejected with `400`. Nested objects are set by UUID, so a new encounter looks like:
+Each resource declares which properties can be set on create and which on update. A property outside those lists is rejected with `400`, except the read-only `display`, `links`, `auditInfo` and `resourceVersion`, which are ignored. Nested objects are set by UUID, so a new encounter looks like:
 
 ```json
 {
@@ -146,7 +146,7 @@ Failures return a JSON body of this shape:
 
 ## Finding the resource class behind an endpoint
 
-Every endpoint is a class annotated `@Resource` or `@SubResource`. The `name` on the annotation is the path, so `/ws/rest/v1/patient` is `@Resource(name = RestConstants.VERSION_1 + "/patient", …)`. The quickest way to find it's to search the module repository for `VERSION_1 + "/patient"`.
+Most endpoints are a class annotated `@Resource` or `@SubResource`. A few, such as `session`, are plain Spring controllers. The `name` on the annotation is the path, so `/ws/rest/v1/patient` is `@Resource(name = RestConstants.VERSION_1 + "/patient", …)`. The quickest way to find it is to search the module repository for `VERSION_1 + "/patient"`.
 
 The class tells you everything the hand-written docs might not:
 

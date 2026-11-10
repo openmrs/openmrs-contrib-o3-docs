@@ -258,6 +258,36 @@ Before shipping a new page or extension, check whether `routes.json` should also
 - `featureFlags` and per-extension `featureFlag` values for work that should be hidden until enabled.
 - `online` and `offline` flags for components that should render differently when offline support is enabled.
 
+#### Declaring backend dependencies
+
+A frontend module declares the backend modules it needs in its `routes.json`:
+
+```json
+{
+  "backendDependencies": {
+    "webservices.rest": "^2.24.0",
+    "fhir2": "^1.2.0"
+  },
+  "optionalBackendDependencies": {
+    "queue": {
+      "version": "^2.0.0",
+      "feature": {
+        "flagName": "service-queues",
+        "label": "Service queues",
+        "description": "Enables the queues widgets when the queue module is installed"
+      }
+    }
+  }
+}
+```
+
+The app shell doesn't block a module whose required dependency is missing; the module loads and its requests fail. What the declaration does give you:
+
+- The **Implementer Tools** fetch `/ws/rest/v1/module?v=custom:(uuid,version)`, compare it against every loaded module's declarations, and show a notification and a "Backend modules" tab listing anything missing or at the wrong version.
+- An **optional dependency with a `feature`** turns on the named feature flag when the module is installed at a matching version. Extensions and pages gated on that flag then appear.
+
+See [Configure O3: Backend dependencies](/docs/configure-o3/overview#backend-dependencies) for the implementer's view.
+
 For deeper details on extension metadata, see the [Extension system](/docs/extension-system) guide. For distribution-level backend and config behavior, see the [Configuration overview](/docs/configure-o3/overview).
 
 ### Extensions and extension slots (how modules plug into each other)

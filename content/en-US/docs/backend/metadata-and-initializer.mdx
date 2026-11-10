@@ -125,7 +125,7 @@ See [Forms in O3](/docs/forms-in-o3) for the schema itself.
 
 ## Checksums and reloading
 
-Initializer records an MD5 checksum of every file it processes in `configuration_checksums/`, mirroring the domain folders. On the next start it skips any file whose checksum is unchanged. That makes restarts fast, but it has two consequences:
+Initializer records an MD5 checksum of each file it processes in `configuration_checksums/`, mirroring the domain folders. On the next start it skips any file whose checksum is unchanged. The `dispositions` domain is the exception: it's reprocessed on every start. That makes restarts fast, but it has two consequences:
 
 - Editing a file changes its checksum, so the file is reprocessed. Editing the database by hand doesn't, so the file won't reassert its values until it changes.
 - With the default error handling, a file that fails still gets its checksum written, so it isn't retried on the next start. Fix the file, or delete its `.checksum`, to make Initializer try again.

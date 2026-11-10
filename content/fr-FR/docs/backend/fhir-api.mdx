@@ -73,9 +73,9 @@ Each provider declares the search parameters it accepts. The ones you will use m
 - **Encounter**: `patient` or `subject`, `date`, `location`, `participant`, `type`, `_tag`, `_id`, `_lastUpdated` and `_sort`. A second search, `_query=encountersWithMedicationRequests`, exists for the dispensing app.
 - **Condition**: `patient` or `subject`, `code`, `clinical-status`, `onset-date`, `onset-age`, `recorded-date`, `category`, `_id`, `_lastUpdated` and `_sort`.
 
-Reference parameters support chaining, so `Observation?patient.identifier=100GEJ` works. `_include` and `_revinclude` are supported for the references each provider lists, for example `Encounter?patient=...&_revinclude=Observation:encounter`. `_has` reverse chaining is supported.
+Reference parameters support chaining, so `Observation?patient.identifier=100GEJ` works. `_include` and `_revinclude` are supported for the references each provider lists, for example `Encounter?patient=...&_revinclude=Observation:encounter`. `_has` reverse chaining is limited: on `Patient` it only supports Group membership, as in `Patient?_has:Group:member:id=<uuid>`.
 
-The operations on the table above are what they sound like: `Patient/{uuid}/$everything` returns a patient and everything linked to them, and `Observation/$lastn?max=2&category=laboratory&code=5242` returns the most recent N observations per code.
+The operations on the table above are what they sound like: `Patient/{uuid}/$everything` returns a patient with the `Observation`, `AllergyIntolerance`, `DiagnosticReport`, `Encounter`, `MedicationRequest`, `ServiceRequest` and `ProcedureRequest` resources that reference them, but not conditions or medication dispenses, and `Observation/$lastn?max=2&category=laboratory&code=5242` returns the most recent N observations per code.
 
 ### Paging
 

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1000" viewBox="0 0 1200 1000" role="img" aria-labelledby="title desc">
   <title id="title">How the O3 Reference Application fits together</title>
-  <desc id="desc">A diagram in two lanes. At build time, distro.properties pins the core WAR, backend modules and content packages, which the OpenMRS SDK fetches from Maven and packs into the backend image; spa-assemble-config.json lists frontend modules and their version tags, which openmrs assemble and build fetch from npm and pack into the frontend image together with config-core_demo.json; a gateway image is built alongside. At run time, the browser talks to the gateway, which sends /openmrs/spa requests to the frontend container and /openmrs requests to the backend container. The backend copies its modules and configuration into its data directory, starts openmrs-core and the modules, and Initializer loads the configuration into the MariaDB database.</desc>
+  <desc id="desc">A diagram in two lanes. At build time, distro.properties pins the core WAR, backend modules and content packages, which the OpenMRS SDK fetches from Maven and packs into the backend image; spa-assemble-config.json lists frontend modules and their version tags, which openmrs assemble and build fetch from npm and pack into the frontend image together with config-core_demo.json; a gateway image is built alongside. At run time, the browser talks to the gateway, which sends /openmrs/spa requests to the frontend container and /openmrs requests to the backend container. The backend copies its modules and configuration into its data directory, starts openmrs-core and the modules, and Initializer loads the configuration into the database.</desc>
   <defs>
     <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth">
       <path d="M0 0 L8 4 L0 8 Z" fill="#293845" />
@@ -100,7 +100,7 @@
 
   <!-- Lane connector -->
   <path class="dash" d="M600 486 L600 528" />
-  <text class="tiny" x="612" y="512">docker compose up runs the three images plus MariaDB</text>
+  <text class="tiny" x="612" y="512">docker compose up runs the three images plus a database</text>
 
   <!-- Run time -->
   <rect class="panel" x="40" y="530" width="1120" height="420" />
@@ -134,10 +134,10 @@
 
   <rect class="box" x="640" y="870" width="280" height="56" />
   <text class="small-label" x="780" y="892" text-anchor="middle">3. Initializer loads configuration</text>
-  <text class="tiny" x="780" y="913" text-anchor="middle">only files whose checksum changed</text>
+  <text class="tiny" x="780" y="913" text-anchor="middle">mostly files whose checksum changed</text>
 
   <rect class="box runtime" x="990" y="773" width="150" height="90" />
-  <text class="label" x="1065" y="803" text-anchor="middle">MariaDB</text>
+  <text class="label" x="1065" y="803" text-anchor="middle">Database</text>
   <text class="body" x="1065" y="828" text-anchor="middle">db-data</text>
   <text class="body" x="1065" y="847" text-anchor="middle">volume</text>
 

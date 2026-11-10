@@ -23,11 +23,11 @@ Users and providers point at a person too, which is why a clinician who is also 
 
 ## Visits, encounters and observations
 
-Clinical data is nested three levels deep.
+Clinical data is usually nested three levels deep, though an encounter doesn't have to belong to a visit and an observation doesn't have to belong to an encounter.
 
 - A **visit** is a patient's attendance at a facility: an outpatient visit, an inpatient stay, an emergency visit. It has a `visitType`, a `location`, a `startDatetime` and a `stopDatetime`. A visit with no stop time is active, and that's the visit O3 shows as the patient's current visit.
 - An **encounter** is one interaction within a visit, such as a vitals check, a consultation or a lab result entry. It has an `encounterType`, an `encounterDatetime`, a `location`, optionally the `form` used to capture it, and `encounterProviders`, each pairing a provider with an encounter role such as "Clinician". An encounter holds the observations, orders, diagnoses, conditions and allergies recorded during it.
-- An **observation** (`Obs`) is one fact: a weight, a blood pressure reading, a test result, an answer to a form question. Every observation is a **concept** plus **one value**.
+- An **observation** (`Obs`) is one fact: a weight, a blood pressure reading, a test result, an answer to a form question. An observation is a **concept** and an associated **value**.
 
 ### Observation values
 
@@ -43,11 +43,11 @@ The REST API flattens all of this into one `value` property whose shape depends 
 { "display": "Covid 19 Signs and Symptom in past 14 days: Cough", "value": { "uuid": "143264AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", "display": "Cough", … } }
 ```
 
-A coded `value` is the whole answer concept, trimmed here to two of its fields. So check the concept's datatype, or the type of `value`, before you render it.
+A coded `value` is the whole answer concept, trimmed here to two of its fields, or the drug when the answer names a specific drug. So check the concept's datatype, or the type of `value`, before you render it.
 
 ### Observation groups
 
-Related observations are grouped under a parent observation. The parent has a concept whose datatype is `N/A` and whose class is usually `ConvSet` or `LabSet`, its own `value` is null, and its `groupMembers` hold the children. A lab panel such as CD4 and a repeating form section are typical obs groups. O3's vitals app doesn't group blood pressure; it saves systolic and diastolic as separate observations. In the REST response the group's `display` lists the member values, and `groupMembers`, which the default representation includes, holds them individually. Name it explicitly if you use a custom representation.
+Related observations are grouped under a parent observation. The parent usually has a concept whose datatype is `N/A` and whose class is usually `ConvSet` or `LabSet`, its own `value` is null, and its `groupMembers` hold the children. A lab panel such as CD4 and a repeating form section are typical obs groups.
 
 ### Editing creates a new observation
 
@@ -59,18 +59,18 @@ Concepts are how OpenMRS represents meaning. Questions, answers, diagnoses, test
 
 Each concept has:
 
-- A **datatype**, which decides what an observation of it can hold: `Numeric`, `Coded`, `Text`, `N/A`, `Document`, `Date`, `Time`, `Datetime`, `Boolean`, `Rule`, `Structured Numeric` or `Complex`.
+- A **datatype**, which decides what an observation of it can hold, e.g., `Numeric`, `Coded`, `Text`, `N/A`, `Document`, `Date`, `Time`, `Datetime`, `Boolean`, `Rule`, `Structured Numeric` or `Complex`.
 - A **class**, which says what kind of thing it is: `Diagnosis`, `Drug`, `Test`, `Finding`, `Question`, `Procedure`, `Misc`, `ConvSet`, `LabSet` and others. Widgets often filter by class, for example to search only diagnoses.
-- **Names**, one or more per locale. Each name is `FULLY_SPECIFIED`, `SHORT`, an `INDEX_TERM` used only for search, or a synonym with no type, and one per locale is marked preferred. That's why the same concept displays as "Weight (kg)" in English and "Poids (kg)" in French.
+- **Names**, one or more per locale, which set the text the concept is displayed with. Each name has a type that relates to how it's used. A name with no type is treated as a normal name for the concept. A `FULLY_SPECIFIED` name is unique within its locale and fully describes the concept: a concept might have the name "Weight" and the fully specified name "Body Weight (kg)". A `SHORT` name is for confined displays, such as "Wt" for "Weight". An `INDEX_TERM` makes the concept searchable by a name that's never displayed, for example to link a drug's brand name to its chemical concept. One name per locale can be marked preferred, which makes it the default display name in that locale. The preferred name should be the fully specified name or one of the names with no type.
 - **Answers**, for coded concepts: the list of concepts a coded observation of it may take.
 - **Set members**, for concepts that group others, such as a lab panel.
 - **Ranges and units**, for numeric concepts: `hiAbsolute`, `hiCritical`, `hiNormal`, the matching low values, `units` and `allowDecimal`. The patient chart uses these to flag abnormal results and to validate input.
-- **Mappings** to reference terms in other terminologies such as CIEL, SNOMED CT, LOINC and ICD-10.
+- **Mappings** to link the concept to reference terms in standard terminologies such as SNOMED CT, LOINC and ICD-10.
 
-Many implementations, including the Reference Application, load their concepts from [CIEL](https://om.rs/ciel), the Columbia International eHealth Laboratory dictionary, through Open Concept Lab. Concepts imported from CIEL keep CIEL's UUIDs, which are the CIEL number padded with `A` to 36 characters. `5089AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA` is weight in kilograms on every server that uses CIEL, which is what makes it safe to put concept UUIDs in frontend configuration.
+Many implementations, including the Reference Application, load their concepts from [CIEL](https://om.rs/ciel), the Columbia International eHealth Laboratory dictionary, through Open Concept Lab. Concepts imported from CIEL keep CIEL's UUIDs. Older CIEL concepts have UUIDs made from the CIEL number padded with `A` to 36 characters, so `5089AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA` is weight in kilograms. Newer CIEL concepts, created since CIEL moved to Open Concept Lab, use standard random UUIDs.
 
 <Callout emoji="ℹ️" type="info">
-  **Reference concepts by UUID**: names change between locales and between dictionary versions, and ids differ between servers. A UUID is the only identifier that means the same thing everywhere.
+  **Reference concepts by a stable identifier**: names change between locales and between dictionary versions, and integer ids differ between servers. Use the concept's UUID, or a mapping such as `CIEL:5089`, which the backend resolves through `/ws/rest/v1/conceptreferences` and the React form engine uses.
 </Callout>
 
 ## Orders
@@ -83,7 +83,7 @@ The subclasses add what's specific to each kind:
 - **`TestOrder`** is a lab or radiology order. Laboratory apps track it through `fulfillerStatus` (`RECEIVED`, `IN_PROGRESS`, `COMPLETED` and others).
 - **`ReferralOrder`** is a referral to another service.
 
-Like observations, orders aren't edited. Each change is a new order with an `action` of `NEW`, `REVISE`, `DISCONTINUE` or `RENEW`, and a `previousOrder` pointing at the one it replaces. When a revision is saved, the backend stops the previous order. To find a patient's current medications, ask for active orders rather than walking the chain yourself.
+Like observations, orders aren't edited. Each clinical change is a new order with an `action` of `REVISE`, `DISCONTINUE` or `RENEW`, and a `previousOrder` pointing at the one it replaces. When a revision is saved, the backend stops the previous order. Fulfillment is the exception: when a lab updates an order's `fulfillerStatus`, comment or accession number, the existing order changes in place. To find a patient's current medications, ask for active orders rather than walking the chain yourself.
 
 ## Conditions, diagnoses and allergies
 
@@ -100,14 +100,14 @@ A **program** is a long-running course of care such as HIV treatment or antenata
 ## Locations, providers and users
 
 - A **location** can have a parent, which gives you a facility hierarchy. **Tags** say what a location is for, such as `Login Location`, `Visit Location` or `Admission Location`, and the frontend filters by them, for example to decide which locations appear in the login location picker.
-- A **provider** is a clinical identity, the person who appears on an encounter or signs an order. It usually points at a person.
+- A **provider** is a clinical identity, the person who appears on an encounter or signs an order. It's usually backed by a person for demographic details, but a provider can also be just a name.
 - A **user** is a login account with roles and privileges. It also points at a person.
 
-One person can be both a user and a provider, which is the normal case for a clinician. The session's `currentProvider` is the provider record of the logged-in user's person, and it's only set when there's exactly one.
+One person can be both a user and a provider, which is the normal case for a clinician. A provider doesn't have to be a user, though. An order can name a provider who never logs in, such as the doctor a patient is referred to. The session's `currentProvider` is the provider record of the logged-in user's person, and it's only set when there's exactly one.
 
 ## Attributes: extending the model without schema changes
 
-Most implementations need to record something core doesn't have a field for, such as a visit's payment method or a location's facility code. Rather than change the schema, OpenMRS uses typed attributes. `Visit`, `Location`, `Provider`, `Order`, `Diagnosis`, `Concept`, `Program` enrollments and others each accept attributes whose types an implementer defines, with a datatype that controls validation. Person attributes predate this design and work slightly differently, but serve the same purpose.
+Most implementations need to record something core doesn't have a field for, such as a visit's payment method or a location's facility code. Rather than change the schema, OpenMRS uses typed attributes. `Visit`, `Location`, `Provider`, `Order`, `Diagnosis`, `Concept`, `Program` enrollments and others each accept attributes whose types an implementer defines, with a datatype that controls validation. Person attributes predate this design and work slightly differently, but they're the ones you'll meet most in practice: a phone number, a mother's name or a place of birth is usually a person attribute, typed by a `PersonAttributeType`.
 
 The REST resources for visits, locations, providers, concepts, program enrollments and people return them as an `attributes` array; the order and diagnosis resources don't expose them yet. When you need a field that isn't there, check whether an attribute type already holds it before asking for a backend change.
 

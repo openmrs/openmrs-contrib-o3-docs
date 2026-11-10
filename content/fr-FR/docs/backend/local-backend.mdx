@@ -97,7 +97,7 @@ The tables join on integer ids, while the APIs and the frontend use UUIDs, so mo
 If you'd rather use a GUI client, publish the port by adding `ports: ["3306:3306"]` to the `db` service in `docker-compose.override.yml`.
 
 <Callout emoji="⚠️" type="warning">
-  **Read, don't write**: changes made directly in the database skip the validation and privilege checks in the service layer, and won't show up for objects the backend caches, such as concepts and global properties, until it restarts. Initializer also won't notice them, because it only reloads files whose checksum has changed. Make changes through the API, the admin UI or a metadata file instead.
+  **Read, don't write**: changes made directly in the database skip the validation and privilege checks in the service layer, and won't show up for objects the backend caches, such as concepts and global properties, until it restarts. Initializer also won't notice them, because it only reloads files whose checksum has changed, apart from dispositions. Make changes through the API, the admin UI or a metadata file instead.
 </Callout>
 
 ### Debugging the backend
@@ -142,7 +142,7 @@ Don't change metadata on a shared server beyond throwaway tests, and expect `dev
 - **`401` on every request after the backend restarts.** Your session cookie is stale. Reload the dev server's login page and log in again.
 - **Port already in use.** The dev server picks the next free port on its own unless you pass `--port`, so this error means the port you passed is taken, often by an SDK server on 8080. Pass a different port, or leave `--port` off.
 - **The app loads but a widget shows nothing.** Check the Implementer Tools "Backend modules" tab for missing or mismatched backend modules, and check the browser's network tab for `403` responses, which mean the logged-in user lacks a privilege.
-- **Metadata changes don't show up.** Initializer only reprocesses files whose checksum changed, and a file that failed to load isn't retried. Read `initializer.log` in the application data directory and delete the file's checksum to force a reload.
+- **Metadata changes don't show up.** Initializer only reprocesses files whose checksum changed, apart from dispositions, and a file that failed to load isn't retried. Read `initializer.log` in the application data directory and delete the file's checksum to force a reload.
 - **The first start seems stuck.** Wait for the health endpoint. Liquibase and the OCL concept import take minutes on a fresh database.
 
 ## Useful links

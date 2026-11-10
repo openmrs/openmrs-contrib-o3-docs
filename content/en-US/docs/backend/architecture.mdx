@@ -12,19 +12,19 @@ This page gives you the map you need to read a stack trace, find the code behind
 The repository is a Maven project with a handful of modules. The two you will read most are:
 
 - **`api`** holds the domain classes (`org.openmrs.Patient`, `Encounter`, `Obs`, `Concept`, and so on), the service interfaces in `org.openmrs.api`, their implementations in `org.openmrs.api.impl`, the Hibernate data access objects in `org.openmrs.api.db.hibernate`, the module framework in `org.openmrs.module`, and the Liquibase changesets that create and migrate the database.
-- **`webapp`** packages the `openmrs.war` that Tomcat runs. The `web` module holds the servlet filters and the setup wizard it depends on.
+- **`web`** holds the web layer: the startup listener, the dispatcher servlet that serves `/ws/*`, the servlet filters and the setup wizard. The `webapp` module packages it, with the legacy views, into the `openmrs.war` that Tomcat runs.
 
 ### The service layer
 
-Every operation on data goes through a service. `PatientService`, `PersonService`, `EncounterService`, `ObsService`, `ConceptService`, `OrderService`, `VisitService`, `LocationService`, `FormService`, `ProgramWorkflowService`, `ProviderService`, `UserService` and `AdministrationService` are the ones you will meet. Code reaches them statically through `Context`, for example `Context.getPatientService().getPatientByUuid(uuid)`.
+Every operation on data goes through a service. `PatientService`, `PersonService`, `EncounterService`, `ObsService`, `ConceptService`, `OrderService`, `VisitService`, `LocationService`, `FormService`, `ProgramWorkflowService`, `ProviderService`, `UserService` and `AdministrationService` are the ones you will meet.
 
-The services are Spring beans with method-level security. Most methods declare the privilege they need, with `@Authorized` on the 2.x line and Spring Security's `@PreAuthorize` on `master`, and an interceptor checks the current user before the method runs. That is where authorization happens, so the REST and FHIR layers above inherit it for free. [Privileges and roles](/docs/backend/privileges-and-roles) covers this in detail.
+The services are Spring beans with method-level security. Most methods declare the privilege they need, with `@Authorized` on the 2.x line and Spring Security's `@PreAuthorize` on `master`, and an interceptor checks the current user before the method runs. That is where authorization happens for anything that calls the services, including the REST API. The FHIR2 module applies the same privileges in its own data access objects, as described below. [Privileges and roles](/docs/backend/privileges-and-roles) covers this in detail.
 
 Under each service is a DAO interface and a Hibernate implementation, for example `PatientDAO` and `HibernatePatientDAO`. You rarely need to go that deep, but when a search behaves unexpectedly the query is in the DAO.
 
 ### The data model
 
-Every persisted object implements `OpenmrsObject`, which gives it an integer `id` used for database joins and a `uuid` used everywhere else. The APIs identify objects by UUID, and the UUID is what the frontend stores and passes around.
+Persisted objects implement `OpenmrsObject`, which gives most of them an integer `id` used for database joins and a `uuid` used everywhere else. A few, such as `Role`, are keyed by name instead. The APIs normally identify objects by UUID, and the UUID is what the frontend stores and passes around.
 
 Two base classes matter because they decide how deletion works:
 
@@ -41,7 +41,7 @@ Hibernate mappings are a mix of JPA annotations on the classes and `*.hbm.xml` f
 
 A module is a jar with an `.omod` extension and a `config.xml` at its root. The descriptor declares the module's id, version, the core version it requires (`require_version`), the modules it depends on (`require_modules`), its activator class, and the privileges and global properties it adds. On start, openmrs-core gives each module its own class loader, runs its activator, and refreshes the Spring context so the module's beans and controllers join the application.
 
-Modules are loaded from the `modules` folder of the application data directory, which is `/openmrs/data` in the Reference Application's Docker image and `~/openmrs/<serverId>` with the SDK.
+Modules are loaded from the `modules` folder of the application data directory, which is `/openmrs/data` in the Reference Application's Docker image and `~/openmrs/<serverId>` with the SDK. When nothing sets it, OpenMRS uses `~/.OpenMRS` on Linux and macOS, and on Windows `Application Data\OpenMRS` in the user's home folder if that exists, otherwise `%APPDATA%\OpenMRS`.
 
 The Reference Application pins its backend modules in [`distro/distro.properties`](https://github.com/openmrs/openmrs-distro-referenceapplication/blob/main/distro/distro.properties). The ones O3 depends on most:
 
@@ -53,44 +53,13 @@ The Reference Application pins its backend modules in [`distro/distro.properties
 - **`queue`**: service queues
 - **`appointments`**: appointment scheduling (Bahmni's module)
 - **`o3forms`**: REST endpoints that return a form schema with its subforms, translations and concept metadata resolved, for the React form engine
-- **`referencedemodata`**: generates demo patients and visits
 - **`legacyui`**: the old server-rendered admin pages at `/openmrs/admin`
 
-Other frontend modules depend on `cohort`, `patientflags`, `stockmanagement`, `billing`, `bedmanagement`, `attachments`, `patientdocuments`, `reporting` and `ordertemplates`. Check `distro.properties` for the current list and versions, and browse [OpenMRS Add Ons](https://om.rs/modules) for modules the Reference Application doesn't ship.
-
-### Declaring what your frontend module needs
-
-A frontend module declares the backend modules it needs in its `routes.json`:
-
-```json
-{
-  "backendDependencies": {
-    "webservices.rest": "^2.24.0",
-    "fhir2": "^1.2.0"
-  },
-  "optionalBackendDependencies": {
-    "queue": {
-      "version": "^2.0.0",
-      "feature": {
-        "flagName": "service-queues",
-        "label": "Service queues",
-        "description": "Enables the queues widgets when the queue module is installed"
-      }
-    }
-  }
-}
-```
-
-The app shell doesn't block a module whose required dependency is missing; the module loads and its requests fail. What the declaration does give you:
-
-- The **Implementer Tools** fetch `/ws/rest/v1/module?v=custom:(uuid,version)`, compare it against every loaded module's declarations, and show a notification and a "Backend modules" tab listing anything missing or at the wrong version.
-- An **optional dependency with a `feature`** turns on the named feature flag when the module is installed at a matching version. Extensions and pages gated on that flag then appear.
-
-See [Configure O3: Backend dependencies](/docs/configure-o3/overview#backend-dependencies) for the implementer's view.
+Other frontend modules depend on `cohort`, `patientflags`, `stockmanagement`, `billing`, `bedmanagement`, `attachments`, `patientdocuments`, `reporting` and `ordertemplates`. Check `distro.properties` for the current list and versions, and browse [OpenMRS Add Ons](https://om.rs/modules) for modules the Reference Application doesn't ship. A frontend module declares the backend modules it needs in its `routes.json`, as described in [Declaring backend dependencies](/docs/frontend-modules/overview#declaring-backend-dependencies).
 
 ## REST and FHIR: the two API layers
 
-Both APIs are modules that sit on top of the service layer. Neither one bypasses it, so privileges and validation behave the same whichever you call.
+Both APIs are modules on top of openmrs-core, but they reach the data differently. The REST module calls the core services, so it gets their privilege checks and business rules. The FHIR2 module has its own services and data access objects, which enforce core privileges but write through Hibernate directly, so core service rules, such as the patient service's identifier checks, don't run for FHIR writes.
 
 - The **REST module** maps each OpenMRS class to a resource class that decides which properties each representation exposes and which can be set. It covers nearly the whole data model, including administrative metadata. Read [REST API](/docs/backend/rest-api).
 - The **FHIR2 module** translates between OpenMRS objects and FHIR R4 resources, so it covers clinical data well and administrative data barely at all. Read [FHIR API](/docs/backend/fhir-api).
@@ -111,7 +80,7 @@ The diagram below follows the Reference Application from the files in its distro
   />
 </div>
 
-A distribution is really two builds. The backend build reads `distro.properties`, resolves the core WAR, every module and every content package from Maven, and lays them out so that Tomcat finds the WAR, the module loader finds the `.omod` files, and Initializer finds the configuration. The frontend build reads `spa-assemble-config.json`, downloads each frontend module from npm, and produces the import map and routes registry the app shell loads.
+The Reference Application builds its backend and frontend separately, as two images, so that each can be rebuilt on its own. That's a choice rather than a requirement: the SDK's `build-distro` goal can run the frontend assemble and build steps too. The backend build reads `distro.properties`, resolves the core WAR, every module and every content package from Maven, and lays them out so that Tomcat finds the WAR, the module loader finds the `.omod` files, and Initializer finds the configuration. The frontend build reads `spa-assemble-config.json`, downloads each frontend module from npm, and produces the import map and routes registry the app shell loads.
 
 Content packages carry configuration for both halves. A package such as [`openmrs-content-referenceapplication`](https://github.com/openmrs/openmrs-content-referenceapplication) is a zip of Initializer files under `configuration/backend_configuration/` plus a frontend `config.json` under `configuration/frontend_configuration/`. In the Reference Application only the backend half is used, because the frontend image serves the distro's own `frontend/config-core_demo.json` instead. [Metadata and Initializer](/docs/backend/metadata-and-initializer) explains how the backend files load.
 
