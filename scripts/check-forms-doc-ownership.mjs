@@ -10,7 +10,7 @@ const markdownExtensions = new Set(['.md', '.mdx']);
 const formsWikiPatterns = [
   /openmrs\.atlassian\.net\/wiki\/spaces\/[^/\s"'<>]+\/pages\/68747273(?:[/?#][^\s"'<>]*)?/i,
   /openmrs\.atlassian\.net\/wiki\/[^\s"'<>]*O3(?:\+|%20)+Form(?:\+|%20)+Docs(?:[^\s"'<>]*)?/i,
-  /(?<![\w.-])om\.rs\/o3forms(?![\w-])/i,
+  /(?<=^|[^\w./-]|:\/\/)om\.rs\/o3forms(?![\w-])/i,
 ];
 const locales = ['en-US', 'fr-FR'];
 const requiredEnginePackages = [
