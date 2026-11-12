@@ -6,7 +6,7 @@ To create a workspace, implement a React component and register it with the work
 
 Workspace v2 components receive `Workspace2DefinitionProps` from `@openmrs/esm-framework`. Custom launch props are available on `workspaceProps`; shared window and group context is available on `windowProps` and `groupProps`; and the component can close itself with `closeWorkspace`.
 
-The same props object also includes `launchChildWorkspace`, `workspaceName`, `windowName`, `isRootWorkspace`, and `showActionMenu`. If the workspace's `routes.json` entry defines `meta`, it is available as `workspaceMeta` (also via `useWorkspace2Context()`). Use `launchChildWorkspace` only from inside an open workspace when you want to push another workspace onto the same window's stack. Use `launchWorkspace2` for top-level launches from buttons, pages, or other app code.
+The same props object also includes `launchChildWorkspace`, `workspaceName`, `windowName`, `isRootWorkspace`, `showActionMenu`, and `workspaceMeta`, which holds the `meta` object from the workspace's `routes.json` entry (`{}` if it has none). Use `launchChildWorkspace` only from inside an open workspace when you want to push another workspace onto the same window's stack. Use `launchWorkspace2` for top-level launches from buttons, pages, or other app code.
 
 Wrap the workspace content in `<Workspace2>`. The wrapper owns the workspace header, title, maximize and close controls, and unsaved changes state.
 

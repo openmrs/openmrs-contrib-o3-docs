@@ -62,7 +62,7 @@ import { ExportedWorkspace } from '@openmrs/esm-framework';
 <ExportedWorkspace name="gastrodynamics-form-workspace" workspaceProps={{ patientUuid }} />;
 ```
 
-Changing `name`, `workspaceProps`, `windowProps` or `groupProps` discards the current workspaces without prompting for unsaved changes and opens `name` afresh. Use `onWindowChanged` to observe the emulated window's state.
+Changing `name`, `workspaceProps`, `windowProps` or `groupProps` (props are compared shallowly) discards the current workspaces without prompting for unsaved changes and opens `name` afresh. Use `onWindowChanged` to observe the emulated window's state.
 
 ## Unsaved Changes
 

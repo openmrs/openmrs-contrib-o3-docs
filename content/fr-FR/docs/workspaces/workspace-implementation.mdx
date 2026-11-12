@@ -62,7 +62,7 @@ import { ExportedWorkspace } from '@openmrs/esm-framework';
 <ExportedWorkspace name="gastrodynamics-form-workspace" workspaceProps={{ patientUuid }} />;
 ```
 
-Modifier `name`, `workspaceProps`, `windowProps` ou `groupProps` supprime les espaces de travail actuels sans demander de confirmation pour les changements non enregistrés, puis rouvre `name` à neuf. Utilisez `onWindowChanged` pour observer l'état de la fenêtre émulée.
+Modifier `name`, `workspaceProps`, `windowProps` ou `groupProps` (les props sont comparées superficiellement) supprime les espaces de travail actuels sans demander de confirmation pour les changements non enregistrés, puis rouvre `name` à neuf. Utilisez `onWindowChanged` pour observer l'état de la fenêtre émulée.
 
 ## Changements non enregistrés
 

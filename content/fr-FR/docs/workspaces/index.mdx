@@ -11,3 +11,5 @@ Workspace v2 utilise un modèle à trois niveaux :
 Un composant d'espace de travail est enregistré dans `routes.json` sous `workspaces2`. Chaque espace de travail pointe vers une entrée `workspaceWindows2`, et chaque fenêtre pointe vers une entrée `workspaceGroups2`. Les applications peuvent définir leur propre groupe ou rattacher des fenêtres à un groupe existant comme `patient-chart` ou `ward-patient`.
 
 Les composants d'espace de travail doivent rendre `<Workspace2>` comme conteneur principal. Lancez les espaces de travail avec `launchWorkspace2`, ou utilisez des helpers patient comme `useLaunchWorkspaceRequiringVisit` quand un flux nécessite une visite active.
+
+Core v11 a supprimé les API v1 des espaces de travail. Si vous mettez à jour du code plus ancien, consultez [Migrer vers Workspace v2](/docs/migration-guides/migrate-to-workspace-v2).

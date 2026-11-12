@@ -6,7 +6,7 @@ Pour créer un espace de travail, implémentez un composant React et enregistrez
 
 Les composants Workspace v2 reçoivent `Workspace2DefinitionProps` depuis `@openmrs/esm-framework`. Les props personnalisées passées au lancement sont disponibles dans `workspaceProps`; les contextes partagés de fenêtre et de groupe sont disponibles dans `windowProps` et `groupProps`; et le composant peut se fermer avec `closeWorkspace`.
 
-Le même objet de props inclut aussi `launchChildWorkspace`, `workspaceName`, `windowName`, `isRootWorkspace` et `showActionMenu`. Si l'entrée `routes.json` de l'espace de travail définit `meta`, elle est disponible sous `workspaceMeta` (également via `useWorkspace2Context()`). Utilisez `launchChildWorkspace` uniquement depuis un espace de travail ouvert lorsque vous voulez pousser un autre espace de travail dans la même pile de fenêtre. Utilisez `launchWorkspace2` pour les lancements de premier niveau depuis des boutons, des pages ou d'autres parties de l'app.
+Le même objet de props inclut aussi `launchChildWorkspace`, `workspaceName`, `windowName`, `isRootWorkspace`, `showActionMenu` et `workspaceMeta`, qui contient l'objet `meta` de l'entrée `routes.json` de l'espace de travail (`{}` s'il n'y en a pas). Utilisez `launchChildWorkspace` uniquement depuis un espace de travail ouvert lorsque vous voulez pousser un autre espace de travail dans la même pile de fenêtre. Utilisez `launchWorkspace2` pour les lancements de premier niveau depuis des boutons, des pages ou d'autres parties de l'app.
 
 Enveloppez le contenu de l'espace de travail dans `<Workspace2>`. Ce composant gère l'en-tête, le titre, les contrôles d'agrandissement et de fermeture, ainsi que l'état des changements non enregistrés.
 

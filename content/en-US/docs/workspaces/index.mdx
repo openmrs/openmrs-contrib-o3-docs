@@ -11,3 +11,5 @@ Workspace v2 uses a three-level model:
 A workspace component is registered in `routes.json` under `workspaces2`. Each workspace points to a `workspaceWindows2` entry, and each window points to a `workspaceGroups2` entry. Apps can either define their own group or attach windows to an existing group such as `patient-chart` or `ward-patient`.
 
 Workspace components should render `<Workspace2>` as their top-level container. Launch workspaces with `launchWorkspace2`, or use patient helpers such as `useLaunchWorkspaceRequiringVisit` when a workflow requires an active visit.
+
+Core v11 removed the v1 workspace APIs. If you're updating older code, see [Migrate to Workspace v2](/docs/migration-guides/migrate-to-workspace-v2).
