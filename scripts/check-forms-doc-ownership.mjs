@@ -3,12 +3,14 @@ import { pathToFileURL } from 'node:url';
 import path from 'node:path';
 
 const markdownExtensions = new Set(['.md', '.mdx']);
-// Match the retired React Form Engine wiki docs by their stable page id and by
-// the "O3 Form Docs" title slug. Intentionally not a bare `/Forms` match, which
+// Match the retired React Form Engine wiki docs by their stable page id, by
+// the "O3 Form Docs" title slug, and by the om.rs/o3forms short link, which
+// redirects to the same page. Intentionally not a bare `/Forms` match, which
 // would also flag unrelated wiki pages whose title merely contains "Forms".
 const formsWikiPatterns = [
   /openmrs\.atlassian\.net\/wiki\/spaces\/[^/\s"'<>]+\/pages\/68747273(?:[/?#][^\s"'<>]*)?/i,
   /openmrs\.atlassian\.net\/wiki\/[^\s"'<>]*O3(?:\+|%20)+Form(?:\+|%20)+Docs(?:[^\s"'<>]*)?/i,
+  /(?<=^|[^\w./-]|:\/\/)om\.rs\/o3forms(?![\w-])/i,
 ];
 const locales = ['en-US', 'fr-FR'];
 const requiredEnginePackages = [
