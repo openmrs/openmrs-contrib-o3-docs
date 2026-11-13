@@ -1,0 +1,153 @@
+import { Callout } from "nextra/components";
+
+# Run a local backend
+
+Developing a frontend module means running it against a backend. The dev server defaults to `https://dev3.openmrs.org`, and a shared server is fine for a lot of work, but a local backend lets you change metadata, add modules, inspect the database, log in as any user, and work offline. This page explains how to run the Reference Application backend on your machine with Docker or the OpenMRS SDK, and how to point the dev server at it.
+
+## Docker or the SDK?
+
+**Docker** means cloning the distro repository and running one command. You get the full stack: gateway, frontend, backend and database, with the backend at `http://localhost` through the gateway. Pick it when you want the same images as production, or a clean slate.
+
+**The SDK** means installing Maven and Java, then running a setup wizard that can use your own MySQL or PostgreSQL server, or a MySQL container it starts in Docker. You get the backend WAR in an embedded Tomcat with the SPA built in, at `http://localhost:8080`. Pick it when you want to debug backend modules in an IDE or work on backend code.
+
+## Docker
+
+The [openmrs-distro-referenceapplication](https://github.com/openmrs/openmrs-distro-referenceapplication) repository ships a `docker-compose.yml` with four services: an nginx **gateway** on port 80, the **frontend**, the **backend** and a MariaDB **db**.
+
+```bash
+git clone https://github.com/openmrs/openmrs-distro-referenceapplication.git
+cd openmrs-distro-referenceapplication
+docker compose up
+```
+
+The images default to the `qa` tag; set `TAG=nightly` or a release tag to pick another. Only the gateway publishes a port, so everything is reached through it:
+
+- **O3**: `http://localhost/openmrs/spa`
+- **REST API**: `http://localhost/openmrs/ws/rest/v1`
+- **FHIR API**: `http://localhost/openmrs/ws/fhir2/R4`
+- **Legacy admin UI**: `http://localhost/openmrs/admin`
+- **Startup health**: `http://localhost/openmrs/health/started` returns `200` once the backend has finished starting
+
+The backend's own port 8080 isn't published. The gateway proxies `/openmrs` to the backend and `/openmrs/spa` to the frontend, which is also why there are no CORS problems: everything is one origin.
+
+The first start takes several minutes while the backend creates the schema, runs Liquibase migrations, and Initializer loads the content packages. Later starts are much faster because Initializer skips unchanged files. On the first start, Tomcat reports that it started before that setup finishes, so poll the health URL rather than watching the logs.
+
+Log in with `admin` / `Admin123`, which the backend image sets as the default admin password, and choose a login location. The demo content package provides `Outpatient Clinic` and `Inpatient Ward`.
+
+### Pointing the dev server at it
+
+From your frontend module:
+
+```bash
+yarn start --backend http://localhost
+```
+
+`yarn start` is the module template's alias for `openmrs develop`. The dev server proxies `/openmrs` to the backend origin you give it, so pass the gateway's origin, not a path. Your module then runs at `http://localhost:8080/openmrs/spa` (the dev server's default port, or the next free one). The app shell comes from the local `@openmrs/esm-app-shell` package, the import map and routes registry come from `/openmrs/spa/` on that origin, which in the Docker stack is the frontend container, and your module is swapped in. If that fetch fails, the dev server falls back to dev3's import map and routes registry and logs a warning. It also loads only the configuration files you give it, so add `--config-url /openmrs/spa/config-core_demo.json` if you want the Reference Application's demo configuration.
+
+The dev server proxies your requests, so the backend's session cookie is set for `localhost`. Browsers share cookies across ports on the same host, so logging in or out through the dev server also logs you in or out of the stack at `http://localhost`, and the other way round.
+
+### Adding metadata or a module
+
+The backend image keeps its modules and configuration under `/openmrs/distribution/`. On every start it rebuilds `/openmrs/data/modules` and `/openmrs/data/configuration` from there, so bind-mount files into the distribution folder, one file at a time:
+
+```yaml
+services:
+  backend:
+    volumes:
+      - ./my-config/encountertypes.csv:/openmrs/distribution/openmrs_config/encountertypes/zz-my-encountertypes.csv
+      - ./my-modules/my-module-1.0.0.omod:/openmrs/distribution/openmrs_modules/my-module-1.0.0.omod
+```
+
+The repository already tracks a `docker-compose.override.yml` that Compose loads automatically; add the mounts there, or put them in a separate file and pass it with `-f`. To replace a module the image already ships, mount your file over its file name, because a second file with another version would leave both in the folder. Mounting over a whole folder replaces the image's copy of that folder, and mounting anything at `/openmrs/data/modules`, `/openmrs/data/configuration`, `/openmrs/data/owa` or `/openmrs/data/frontend` makes the backend refuse to start. [Metadata and Initializer](/docs/backend/metadata-and-initializer) covers the file formats, and [Configure O3](/docs/configure-o3/overview#configuring-metadata-and-backend-settings) has more mount examples.
+
+To change the set of modules permanently, list the module in `distro/distro.properties` and set its version and Maven dependency in `distro/pom.xml`, which is where the versions live, then rebuild the backend image with `docker compose build backend`. The [Set up an instance of O3](/docs/recipes/set-up-o3-instance#updating-metadata) recipe shows the same rebuild for metadata changes.
+
+### Resetting
+
+The database lives in the `db-data` volume and the backend's runtime files in `openmrs-data`. To start over:
+
+```bash
+docker compose down -v
+```
+
+That removes both volumes. The next `docker compose up` creates a fresh database and runs the full first start again.
+
+### Inspecting the database
+
+Sometimes the quickest way to understand why a search returns nothing, or which encounter type a widget is filtering on, is to look at the tables. The Compose file doesn't publish the database port, so connect from inside the `db` container:
+
+```bash
+docker compose exec db mariadb -uopenmrs -popenmrs openmrs
+```
+
+Those are the default credentials from `docker-compose.yml`. If you set `OMRS_DB_USER` or `OMRS_DB_PASSWORD`, use those instead. A query that lists a patient's most recent observations with their concept names:
+
+```sql
+SELECT o.obs_datetime, cn.name AS concept, o.value_numeric, o.value_coded, o.value_text
+FROM obs o
+JOIN person p ON p.person_id = o.person_id
+JOIN concept_name cn ON cn.concept_id = o.concept_id AND cn.locale = 'en' AND cn.locale_preferred = 1
+WHERE p.uuid = '<patient uuid>' AND o.voided = 0
+ORDER BY o.obs_datetime DESC
+LIMIT 20;
+```
+
+The tables join on integer ids, while the APIs and the frontend use UUIDs, so most queries start by finding the row whose `uuid` matches. Remember to filter out voided and retired rows, as the APIs do. [Data model](/docs/backend/data-model) explains what the main objects are.
+
+If you'd rather use a GUI client, publish the port by adding `ports: ["3306:3306"]` to the `db` service in `docker-compose.override.yml`.
+
+<Callout emoji="⚠️" type="warning">
+  **Read, don't write**: changes made directly in the database skip the validation and privilege checks in the service layer, and won't show up for objects the backend caches, such as concepts and global properties, until it restarts. Initializer also won't notice them, because it only reloads files whose checksum has changed, apart from dispositions. Make changes through the API, the admin UI or a metadata file instead.
+</Callout>
+
+### Debugging the backend
+
+`OMRS_DEV_DEBUG_PORT` in the backend's environment opens a Java debug port inside the container, and a matching `ports:` entry makes it reachable from your IDE. `docker compose -f docker-compose-no-volumes.yml up` runs only the backend and database with port 8080 published, no persistence and the `nightly` tag by default. The distribution's CI uses it to build its `nightly-with-data` images.
+
+## The OpenMRS SDK
+
+The [OpenMRS SDK](https://openmrs.atlassian.net/wiki/spaces/docs/pages/25476136/OpenMRS+SDK) is a Maven plugin that sets up and runs OpenMRS servers under `~/openmrs/<serverId>`. It needs Java and Maven, and a database: your own MySQL or PostgreSQL server, or Docker, which the wizard can use to start a MySQL container.
+
+```bash
+mvn org.openmrs.maven.plugins:openmrs-sdk-maven-plugin:setup-sdk
+mvn openmrs-sdk:setup
+```
+
+The setup wizard asks for a server id, which distribution to install (choose **Reference Application 3.x**), the port (`8080`), the database connection, and the JDK. It downloads the core WAR, the modules and the content packages, builds the SPA into the server, and writes `openmrs-server.properties` into the server folder; OpenMRS writes `openmrs-runtime.properties` there on first start. Then:
+
+```bash
+mvn openmrs-sdk:run -DserverId=<serverId>
+```
+
+The backend is at `http://localhost:8080/openmrs` and O3 at `http://localhost:8080/openmrs/spa`. The configuration folder for Initializer is `~/openmrs/<serverId>/configuration` and modules are in `~/openmrs/<serverId>/modules`; drop files in and restart. The database is the one you chose during setup, and `connection.url` in the server folder's `openmrs-server.properties` records which one, so connect to it with any client. `mvn openmrs-sdk:reset -DserverId=<serverId>` drops the database, deletes the server folder and runs setup again with the same distribution, and `mvn openmrs-sdk:deploy` installs a module or upgrades the distribution.
+
+Point the dev server at it with the port included:
+
+```bash
+yarn start --backend http://localhost:8080 --port 8081
+```
+
+The dev server also wants port 8080 by default; pass `--port` so the two don't collide, or let the dev server pick the next free port.
+
+The [Set up an instance of O3](/docs/recipes/set-up-o3-instance#using-the-openmrs-sdk) recipe has the full prompt-by-prompt walkthrough.
+
+## Shared servers
+
+You don't always need a local backend. `dev3.openmrs.org` tracks the latest frontend and backend builds, `test3.openmrs.org` the latest release candidates, and `o3.openmrs.org` the current release. Any of them works with `--backend`. A server that sits behind an IP allow-list or a corporate proxy may need a cookie forwarded with `--add-cookie`, as described in [Frontend module development](/docs/frontend-modules/development#how-can-i-develop-against-a-restricted-environment).
+
+Don't change metadata on a shared server beyond throwaway tests, and expect `dev3` to be reset or broken from time to time.
+
+## Troubleshooting
+
+- **`401` on every request after the backend restarts.** Your session cookie is stale. Reload the dev server's login page and log in again.
+- **Port already in use.** The dev server picks the next free port on its own unless you pass `--port`, so this error means the port you passed is taken, often by an SDK server on 8080. Pass a different port, or leave `--port` off.
+- **The app loads but a widget shows nothing.** Check the Implementer Tools "Backend modules" tab for missing or mismatched backend modules, and check the browser's network tab for `403` responses, which mean the logged-in user lacks a privilege.
+- **Metadata changes don't show up.** Initializer only reprocesses files whose checksum changed, apart from dispositions, and a file that failed to load isn't retried. Read `initializer.log` in the application data directory and delete the file's checksum to force a reload.
+- **The first start seems stuck.** Wait for the health endpoint. Liquibase and the OCL concept import take minutes on a fresh database.
+
+## Useful links
+
+- [Set up an instance of O3](/docs/recipes/set-up-o3-instance) has the full Docker and SDK walkthroughs, including running on top of an existing database
+- [Frontend module development](/docs/frontend-modules/development) covers the dev server's options
+- [Create a frontend module](/docs/recipes/create-a-frontend-module) shows `yarn start --backend`
+- [Migrate to Core v10](/docs/migration-guides/migrate-to-core-v10) explains why `openmrs develop --backend` replaced Devtools overrides

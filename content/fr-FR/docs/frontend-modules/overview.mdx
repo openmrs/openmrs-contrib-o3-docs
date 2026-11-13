@@ -250,6 +250,36 @@ Avant de livrer une nouvelle page ou extension, vérifiez si `routes.json` doit 
 - `featureFlags` et des valeurs `featureFlag` par extension pour les fonctionnalités à masquer tant qu'elles ne sont pas activées.
 - Les flags `online` et `offline` pour les composants qui doivent se comporter différemment quand le support hors ligne est activé.
 
+#### Déclarer les dépendances backend
+
+Un module frontend déclare les modules backend dont il a besoin dans son `routes.json` :
+
+```json
+{
+  "backendDependencies": {
+    "webservices.rest": "^2.24.0",
+    "fhir2": "^1.2.0"
+  },
+  "optionalBackendDependencies": {
+    "queue": {
+      "version": "^2.0.0",
+      "feature": {
+        "flagName": "service-queues",
+        "label": "Service queues",
+        "description": "Enables the queues widgets when the queue module is installed"
+      }
+    }
+  }
+}
+```
+
+L'app shell ne bloque pas un module dont une dépendance requise manque : le module se charge et ses requêtes échouent. Voici ce que la déclaration vous apporte :
+
+- Les **Implementer Tools** récupèrent `/ws/rest/v1/module?v=custom:(uuid,version)`, comparent le résultat aux déclarations de chaque module chargé, et affichent une notification ainsi qu'un onglet « Backend modules » qui liste tout module manquant ou dans une version incorrecte.
+- Une **dépendance optionnelle avec un `feature`** active le feature flag indiqué quand le module est installé dans une version compatible. Les extensions et les pages conditionnées par ce flag apparaissent alors.
+
+Consultez [Configurer O3 : dépendances backend](/docs/configure-o3/overview#dépendances-backend) pour le point de vue de l'implémenteur.
+
 Pour plus de détails sur les métadonnées d'extension, consultez le guide [Système d'extension](/docs/extension-system). Pour le comportement des dépendances backend et de la configuration côté distribution, consultez la [vue d'ensemble de la configuration](/docs/configure-o3/overview).
 
 ### Extensions et extension slots (comment les modules s’assemblent)

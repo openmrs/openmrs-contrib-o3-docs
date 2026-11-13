@@ -4,6 +4,8 @@ The code for O3 is hosted in a number of community-maintained GitHub repositorie
 
 The code in each repository is focused on a particular concern. For example, the [Patient Chart](https://github.com/openmrs/openmrs-esm-patient-chart) repository contains frontend modules for the features of the patient chart, such as allergies, appointments, conditions, forms, medications, notes, programs, test results, and vitals. This is an example of a monorepo, where multiple packages are contained in a single repository; most O3 repositories are structured in this way. The [Core](https://github.com/openmrs/openmrs-esm-core) repository is special. It contains a few frontend modules, but also the core application logic that loads frontend modules, as well as the [O3 tooling](https://github.com/openmrs/openmrs-esm-core/tree/main/packages/tooling/openmrs) and the [JavaScript API](/docs/framework-api-reference).
 
+For openmrs-core and the backend modules O3 depends on, see [Key backend repositories](/docs/backend/key-repositories).
+
 Repositories you should know in O3 include:
 
 - [Core](#core) - contains frontend modules for low-level concerns such as authentication. It also contains the app shell, the base application that loads and stitches together all frontend modules. Core also publishes the `@openmrs/esm-framework` JavaScript library, which provides essential cross-cutting concerns such as configuration, internationalization, feature flagging, and global state management. This repository also contains the tooling for O3.
