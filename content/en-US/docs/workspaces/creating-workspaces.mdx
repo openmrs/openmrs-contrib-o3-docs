@@ -6,7 +6,7 @@ To create a workspace, implement a React component and register it with the work
 
 Workspace v2 components receive `Workspace2DefinitionProps` from `@openmrs/esm-framework`. Custom launch props are available on `workspaceProps`; shared window and group context is available on `windowProps` and `groupProps`; and the component can close itself with `closeWorkspace`.
 
-The same props object also includes `launchChildWorkspace`, `workspaceName`, `windowName`, `isRootWorkspace`, and `showActionMenu`. Use `launchChildWorkspace` only from inside an open workspace when you want to push another workspace onto the same window's stack. Use `launchWorkspace2` for top-level launches from buttons, pages, or other app code.
+The same props object also includes `launchChildWorkspace`, `workspaceName`, `windowName`, `isRootWorkspace`, `showActionMenu`, and `workspaceMeta`, which holds the `meta` object from the workspace's `routes.json` entry (`{}` if it has none). Use `launchChildWorkspace` only from inside an open workspace when you want to push another workspace onto the same window's stack. Use `launchWorkspace2` for top-level launches from buttons, pages, or other app code.
 
 Wrap the workspace content in `<Workspace2>`. The wrapper owns the workspace header, title, maximize and close controls, and unsaved changes state.
 
@@ -107,7 +107,7 @@ If your app owns the group, declare it in `workspaceGroups2`:
 }
 ```
 
-Window `width` can be `narrow`, `wider`, or `extra-wide`. Adding `icon` to a window turns on the workspace group's action menu and registers the icon component as an extension in the slot named after the group.
+Window `width` can be `narrow`, `wider`, or `extra-wide`. A `workspaces2` entry can also set its own `width` (same values); it overrides the window's `width` while that workspace is the top-most one in its window, and the whole window, including any parent workspaces beneath it, renders at that width. A `workspaces2` entry can also define a `meta` object, which is passed to the component as `workspaceMeta`. Adding `icon` to a window turns on the workspace group's action menu and registers the icon component as an extension in the slot named after the group.
 
 Group `persistence` controls how long the group stays open and how the action menu behaves. The default behavior is app-wide: the group can keep multiple windows open and closes on an app change or scope change. Set `persistence` to `closable` for focused workflows that should show a group close button; when a different window in a closable group is launched, O3 checks for unsaved changes and then closes the other windows in that group.
 

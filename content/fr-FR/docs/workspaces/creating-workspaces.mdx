@@ -6,7 +6,7 @@ Pour créer un espace de travail, implémentez un composant React et enregistrez
 
 Les composants Workspace v2 reçoivent `Workspace2DefinitionProps` depuis `@openmrs/esm-framework`. Les props personnalisées passées au lancement sont disponibles dans `workspaceProps`; les contextes partagés de fenêtre et de groupe sont disponibles dans `windowProps` et `groupProps`; et le composant peut se fermer avec `closeWorkspace`.
 
-Le même objet de props inclut aussi `launchChildWorkspace`, `workspaceName`, `windowName`, `isRootWorkspace` et `showActionMenu`. Utilisez `launchChildWorkspace` uniquement depuis un espace de travail ouvert lorsque vous voulez pousser un autre espace de travail dans la même pile de fenêtre. Utilisez `launchWorkspace2` pour les lancements de premier niveau depuis des boutons, des pages ou d'autres parties de l'app.
+Le même objet de props inclut aussi `launchChildWorkspace`, `workspaceName`, `windowName`, `isRootWorkspace`, `showActionMenu` et `workspaceMeta`, qui contient l'objet `meta` de l'entrée `routes.json` de l'espace de travail (`{}` s'il n'y en a pas). Utilisez `launchChildWorkspace` uniquement depuis un espace de travail ouvert lorsque vous voulez pousser un autre espace de travail dans la même pile de fenêtre. Utilisez `launchWorkspace2` pour les lancements de premier niveau depuis des boutons, des pages ou d'autres parties de l'app.
 
 Enveloppez le contenu de l'espace de travail dans `<Workspace2>`. Ce composant gère l'en-tête, le titre, les contrôles d'agrandissement et de fermeture, ainsi que l'état des changements non enregistrés.
 
@@ -107,7 +107,7 @@ Si votre application possède le groupe, déclarez-le dans `workspaceGroups2` :
 }
 ```
 
-La valeur `width` d'une fenêtre peut être `narrow`, `wider` ou `extra-wide`. Ajouter `icon` à une fenêtre active le menu d'actions du groupe d'espaces de travail et enregistre le composant d'icône comme extension dans l'emplacement nommé d'après le groupe.
+La valeur `width` d'une fenêtre peut être `narrow`, `wider` ou `extra-wide`. Une entrée `workspaces2` peut aussi définir sa propre valeur `width` (mêmes valeurs) ; elle remplace celle de la fenêtre tant que cet espace de travail est celui du dessus dans sa fenêtre, et toute la fenêtre, y compris les espaces de travail parents situés en dessous, s'affiche à cette largeur. Une entrée `workspaces2` peut également définir un objet `meta`, transmis au composant sous `workspaceMeta`. Ajouter `icon` à une fenêtre active le menu d'actions du groupe d'espaces de travail et enregistre le composant d'icône comme extension dans l'emplacement nommé d'après le groupe.
 
 La propriété `persistence` du groupe contrôle la durée d'ouverture du groupe et le comportement du menu d'actions. Le comportement par défaut est app-wide : le groupe peut garder plusieurs fenêtres ouvertes et se ferme lors d'un changement d'app ou de portée. Utilisez `persistence: "closable"` pour les flux ciblés qui doivent afficher un bouton de fermeture du groupe; lorsqu'une autre fenêtre d'un groupe closable est lancée, O3 vérifie les changements non enregistrés puis ferme les autres fenêtres de ce groupe.
 

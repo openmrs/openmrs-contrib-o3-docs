@@ -52,9 +52,21 @@ export function WorkspaceDebugPanel() {
 
 Le store d'espaces de travail de bas niveau est un détail d'implémentation. Préférez les APIs publiques de lancement, fermeture, groupe et contexte sauf si vous travaillez dans le framework lui-même. Si un composant doit fermer toute la fenêtre au lieu de se fermer seulement lui-même avec ses espaces de travail enfants, appelez `closeWorkspace({ closeWindow: true })`.
 
+## Afficher un espace de travail en dehors de la fenêtre d'espace de travail
+
+`<ExportedWorkspace>` affiche le contenu d'un espace de travail enregistré (les enfants de son `<Workspace2>`) dans votre propre arbre de composants, indépendamment du système global de fenêtres d'espace de travail. Il émule la fenêtre qui contient l'espace de travail : `launchChildWorkspace` et `closeWorkspace` naviguent donc à l'intérieur du composant, à l'aide d'un store local. Il n'affiche aucun élément d'interface (ni barre de titre, ni agrandissement, masquage, fermeture ou icône) ; l'appelant peut donc afficher les siens.
+
+```tsx copy
+import { ExportedWorkspace } from '@openmrs/esm-framework';
+
+<ExportedWorkspace name="gastrodynamics-form-workspace" workspaceProps={{ patientUuid }} />;
+```
+
+Modifier `name`, `workspaceProps`, `windowProps` ou `groupProps` (les props sont comparées superficiellement) supprime les espaces de travail actuels sans demander de confirmation pour les changements non enregistrés, puis rouvre `name` à neuf. Utilisez `onWindowChanged` pour observer l'état de la fenêtre émulée.
+
 ## Changements non enregistrés
 
-Workspace v2 n'utilise pas `promptBeforeClosing`. À la place, transmettez `hasUnsavedChanges` au wrapper `<Workspace2>` :
+Transmettez `hasUnsavedChanges` au wrapper `<Workspace2>` :
 
 ```tsx copy
 <Workspace2 title={t('editVisit', 'Edit visit')} hasUnsavedChanges={formState.isDirty}>
