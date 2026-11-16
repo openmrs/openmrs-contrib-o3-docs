@@ -8,7 +8,7 @@ Les composants Workspace v2 reçoivent `Workspace2DefinitionProps` depuis `@open
 
 Le même objet de props inclut aussi `launchChildWorkspace`, `workspaceName`, `windowName`, `isRootWorkspace`, `showActionMenu` et `workspaceMeta`, qui contient l'objet `meta` de l'entrée `routes.json` de l'espace de travail (`{}` s'il n'y en a pas). Utilisez `launchChildWorkspace` uniquement depuis un espace de travail ouvert lorsque vous voulez pousser un autre espace de travail dans la même pile de fenêtre. Utilisez `launchWorkspace2` pour les lancements de premier niveau depuis des boutons, des pages ou d'autres parties de l'app.
 
-Enveloppez le contenu de l'espace de travail dans `<Workspace2>`. Ce composant gère l'en-tête, le titre, les contrôles d'agrandissement et de fermeture, ainsi que l'état des changements non enregistrés.
+Enveloppez le contenu de l'espace de travail dans `<Workspace2>` et passez-lui le `title` et le `hasUnsavedChanges` de l'espace de travail. O3 les utilise pour afficher l'en-tête de l'espace de travail, avec ses contrôles d'agrandissement et de fermeture, et pour avertir les utilisateurs des changements non enregistrés avant la fermeture de l'espace de travail.
 
 ```tsx copy
 // gastrodynamics.workspace.tsx
@@ -111,7 +111,7 @@ La valeur `width` d'une fenêtre peut être `narrow`, `wider` ou `extra-wide`. U
 
 La propriété `persistence` du groupe contrôle la durée d'ouverture du groupe et le comportement du menu d'actions. Le comportement par défaut est app-wide : le groupe peut garder plusieurs fenêtres ouvertes et se ferme lors d'un changement d'app ou de portée. Utilisez `persistence: "closable"` pour les flux ciblés qui doivent afficher un bouton de fermeture du groupe; lorsqu'une autre fenêtre d'un groupe closable est lancée, O3 vérifie les changements non enregistrés puis ferme les autres fenêtres de ce groupe.
 
-`scopePattern` est une expression régulière comparée aux pathnames de l'ancienne et de la nouvelle URL lors d'une navigation dans la même app. S'il est omis, le groupe ne se ferme que lors de la navigation vers une autre app. S'il est défini, O3 ferme le groupe lorsque l'une des deux URL ne correspond plus au pattern ; si le pattern contient des groupes de capture, O3 ferme aussi le groupe lorsque les valeurs capturées changent. Ancrez le pattern avec `^` lorsque le pattern ne doit correspondre qu'à un préfixe de route.
+`scopePattern` est une expression régulière comparée aux pathnames de l'ancienne et de la nouvelle URL lors d'une navigation dans la même app. À partir de Core v11, le pattern est comparé au pathname relatif à la base de la SPA, par exemple `/home/gastrodynamics` plutôt que `/openmrs/spa/home/gastrodynamics`, et les patterns écrits pour le pathname complet fonctionnent toujours. Core v10 et les versions antérieures ne comparent que le pathname complet. Si `scopePattern` est omis, le groupe ne se ferme que lors de la navigation vers une autre app. S'il est défini, O3 ferme le groupe lorsque l'une des deux URL ne correspond plus au pattern ; si le pattern contient des groupes de capture, O3 ferme aussi le groupe lorsque les valeurs capturées changent. Ancrez le pattern avec `^` lorsque le pattern ne doit correspondre qu'à un préfixe de route.
 
 Exportez ensuite le composant d'espace de travail depuis `index.ts` :
 

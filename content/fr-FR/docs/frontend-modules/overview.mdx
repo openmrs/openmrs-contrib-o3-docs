@@ -23,7 +23,7 @@ Voici quatre concepts clés qu'on oublie facilement:
 1. **Câblage de la distro (ce qui se charge réellement) :** `spa-assemble-config.json` définit quels modules frontend et quelles versions sont inclus dans votre distro. L'assemblage génère une import map pour les URLs du code et un registre de routes à partir du `routes.json` de chaque module. Si un module manque dans l'un des deux, son UI ne se rendra pas correctement.
 2. **Flux d’enregistrement (pourquoi pages/extensions s’affichent) :** `routes.json` déclare les pages, extensions, modals, workspaces, feature flags et conditions runtime. L'app shell enregistre d'abord ces métadonnées. Plus tard, quand une route ou un slot correspondant se rend, il charge l'export de lifecycle nommé depuis `src/index.ts`.
 3. **Tags de version (pourquoi vos changements ne sont pas visibles) :** `latest` et `next` sont différents. Votre distro ne charge que le tag indiqué dans `spa-assemble-config.json`.
-4. **Conditions runtime (pourquoi quelque chose se charge mais ne s'affiche pas):** `routes.json` peut déclarer des dépendances backend, des privilèges, des feature flags et un comportement online/offline. Un module peut être présent dans l'import map et ne pas afficher une extension si l'une de ces conditions n'est pas remplie.
+4. **Conditions runtime (pourquoi quelque chose se charge mais ne s'affiche pas):** `routes.json` peut déclarer des dépendances backend, des privilèges, des feature flags et, dans Core v10 et antérieur, un comportement online/offline. Un module peut être présent dans l'import map et ne pas afficher une extension si l'une de ces conditions n'est pas remplie.
 
 ## Modèle mental (comment les modules frontend fonctionnent réellement)
 
@@ -32,7 +32,7 @@ Si vous débutez avec O3, voici le modèle mental à garder en tête:
 1. **Un module frontend est un package npm.** Chaque module est publié indépendamment et possède son propre `package.json`, `src/index.ts` et `routes.json`.
 2. **L’app shell utilise deux artefacts de distro.** Il lit le registre de routes pour connaître les contributions UI et l'import map pour savoir où se trouve le bundle JavaScript de chaque module.
 3. **Les modules relient métadonnées et code à deux endroits:**
-   - **`routes.json`** déclare les pages, extensions, modals, workspaces, feature flags, dépendances backend, privilèges et conditions online/offline.
+   - **`routes.json`** déclare les pages, extensions, modals, workspaces, feature flags, dépendances backend, privilèges et, dans Core v10 et antérieur, conditions online/offline.
    - **`src/index.ts`** exporte les fonctions de lifecycle nommées par `routes.json`, ainsi que la configuration de démarrage optionnelle comme les schémas de config, breadcrumbs et traductions.
 4. **Pages et extensions ne sont pas la même chose.**
    - **Pages** = routes complètes (ex. `/patient/123/vitals`).
@@ -248,7 +248,7 @@ Avant de livrer une nouvelle page ou extension, vérifiez si `routes.json` doit 
 - `backendDependencies` ou `optionalBackendDependencies` pour les modules backend requis.
 - `privileges` pour l'accès par rôle à une extension.
 - `featureFlags` et des valeurs `featureFlag` par extension pour les fonctionnalités à masquer tant qu'elles ne sont pas activées.
-- Les flags `online` et `offline` pour les composants qui doivent se comporter différemment quand le support hors ligne est activé.
+- Les flags `online` et `offline` pour les composants qui doivent se comporter différemment quand le support hors ligne est activé (Core v10 et antérieur).
 
 Pour plus de détails sur les métadonnées d'extension, consultez le guide [Système d'extension](/docs/extension-system). Pour le comportement des dépendances backend et de la configuration côté distribution, consultez la [vue d'ensemble de la configuration](/docs/configure-o3/overview).
 

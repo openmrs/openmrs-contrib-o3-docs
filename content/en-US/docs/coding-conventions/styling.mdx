@@ -65,6 +65,8 @@ import { Callout } from "nextra/components";
   }
   ```
 
+  From Core v11, production builds enforce this. A build fails if the module emits CSS rules anchored only on a Carbon class, such as the first example above, or rules with no class or id at all, such as `p` or `html, body`. To fix a rule like that, scope it under one of the module's own classes, as the second example does.
+
   Benefits of scoped styles:
   - Prevents unintended style leaks
   - Makes it clear which component owns the styles

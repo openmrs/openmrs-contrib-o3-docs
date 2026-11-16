@@ -232,6 +232,8 @@ dans l'application de référence pour `$SPA_PATH`, `$API_URL` ou `$SPA_CONFIG_U
 `startup.sh` frontend de l'application de référence qui exécute `envsubst`, ou construisez la SPA avec les valeurs
 finales dans `spa-build-config.json`.
 
+Pour le `nginx.conf` lui-même, partez du [nginx.conf frontend](https://github.com/openmrs/openmrs-distro-referenceapplication/blob/main/frontend/nginx.conf) de l'application de référence. À partir de Core v11, `openmrs build` écrit des copies précompressées `.br` et `.gz` des assets du frontend, et cette configuration les sert avec les bons en-têtes. Consultez [Servir les fichiers précompressés](/docs/recipes/create-a-distribution#servir-les-fichiers-précompressés) pour plus de détails.
+
 ### Méthode 3: Hébergement statique + proxy API
 
 Pour les déploiements cloud, par exemple AWS S3 + CloudFront ou Azure Blob Storage:

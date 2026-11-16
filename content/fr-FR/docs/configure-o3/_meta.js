@@ -7,4 +7,5 @@ export default {
   "configure-ward-management": "Configuration de la gestion des salles",
   "configure-translations": "Configuration des traductions",
   "configure-calendars": "Configurer les calendriers",
+  "configure-two-factor-authentication": "Configurer l'authentification à deux facteurs",
 };
