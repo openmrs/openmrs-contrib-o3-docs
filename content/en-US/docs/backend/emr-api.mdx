@@ -1,0 +1,36 @@
+# EMR API
+
+The [EMR API module](https://github.com/openmrs/openmrs-module-emrapi) adds endpoints under `/openmrs/ws/rest/v1/emrapi` for questions the [REST](/docs/backend/rest-api) and [FHIR](/docs/backend/fhir-api) APIs don't answer directly. The ward app is built on it, and `useEmrConfiguration()` in `@openmrs/esm-framework` reads its configuration. This page explains why some endpoints live here, which ones O3 calls, and the server configuration they depend on.
+
+## Why some endpoints live here
+
+Two reasons come up.
+
+**One request instead of several.** `GET /emrapi/patient/{patientUuid}/visit` returns each of a patient's visits with its diagnoses and visit notes in one response. You choose the parts with a custom representation, so `v=custom:(visit,diagnoses)` leaves the notes out and skips the query for them. Its paging is unusual: the response is `{pageOfResults, totalCount}` rather than `{results}`, `totalCount` is the size of the page rather than the total, and as of emrapi 3.5.1 a `startIndex` above 0 can skip visits, return an empty page or fail with `500`, because the offset is applied twice. No O3 app calls this endpoint yet.
+
+**Answers that depend on server configuration.** "Which patients are admitted to this ward?" isn't a property of any one object. EMR API answers it from the encounters the server is configured to treat as admissions, transfers and discharges, and from disposition observations. The inpatient endpoints below work this way, so the same request can return different patients on two servers with the same data and different configuration.
+
+## Endpoints O3 calls
+
+- **`GET /emrapi/configuration`** returns the module's configuration, such as `admissionEncounterType`, `primaryIdentifierType`, the visit and encounter types it uses and the dispositions it has loaded. Metadata and concepts come back as `ref`s unless you ask for a custom representation. `useEmrConfiguration()` and the ward app read it.
+- **`GET /emrapi/inpatient/admission`** returns the patients admitted in an active visit, one entry per visit, with the first and latest admission or transfer encounters, the current inpatient location and any pending request. It takes `visitLocation`, `currentInpatientLocation`, `includeDischarged`, `patients` and `visits`; without `includeDischarged=true`, patients already discharged are left out. The ward app uses it to fill the ward.
+- **`GET /emrapi/inpatient/request`** returns, for each active visit, its latest disposition when that disposition asks for an admission, transfer or discharge and hasn't yet been followed by an admission, transfer or discharge encounter or denied by an admission decision. It takes `visitLocation`, `dispositionLocation`, `dispositionType` (`ADMIT`, `TRANSFER` or `DISCHARGE`), `patients` and `visits`. The ward app asks it for admission and transfer requests.
+- **`GET /emrapi/maternal/mothersAndChildren`** pairs mothers with their children. It takes `mother`, `child`, `requireMotherHasActiveVisit`, `requireChildHasActiveVisit` and `requireChildBornDuringMothersActiveVisit`. The ward app's maternal ward view uses it to show a mother and her newborn together.
+- **`GET /emrapi/locationThatSupportsVisits?location=<uuid>`** returns the location itself if it has the `Visit Location` tag, otherwise its nearest ancestor that does. The patient chart's visit form uses it to pick the visit location when its `restrictByVisitLocationTag` config is on.
+
+These are Spring controllers, not REST resources. `v` works where the endpoint reads it, and apart from the visit endpoint above, the list endpoints return the usual `results` and page with `limit`, `startIndex` and `totalCount=true`. The search handlers, `includeAll` and the create and update conventions from the [REST API page](/docs/backend/rest-api) don't apply. To read one, search the module for its path, such as `emrapi/inpatient/admission`; the controllers are in `omod/src/main/java/org/openmrs/module/emrapi/web/controller/`.
+
+EMR API also adds ordinary REST resources outside `/emrapi`, such as `/procedure` and `/proceduretype`, which the procedures app uses.
+
+## Configuration the inpatient endpoints depend on
+
+The inpatient endpoints only find what the server is configured to recognise. The module's [README](https://github.com/openmrs/openmrs-module-emrapi#inpatient-care-adt-and-dispositions) has the details. In short:
+
+- **Admissions, transfers and discharges** are encounters of the types mapped to `emr.admissionEncounterType`, `emr.transferWithinHospitalEncounterType` and `emr.exitFromInpatientEncounterType` in the `org.openmrs.module.emrapi` metadata source. These are metadata term mappings from the metadata mapping module, not global properties.
+- **Requests** come from disposition observations. They need concepts mapped in the `org.openmrs.module.emrapi` concept source (`Disposition Concept Set`, `Disposition`, `Admission Location` and `Internal Transfer Location`), and a disposition config file that lists each disposition with its `type`. Initializer loads that file from `configuration/dispositions`. A request stops appearing once an admission decision denies it, which needs the admission decision concepts the README describes.
+
+When the ward shows fewer patients than you expect, check these before the frontend. [Metadata and Initializer](/docs/backend/metadata-and-initializer) explains how Initializer loads configuration files like these.
+
+## Depending on the module from a frontend module
+
+Declare the module in your `routes.json`. The patient chart lists it under `optionalBackendDependencies` with a feature flag, and checks `useFeatureFlag('emrapi-module')` before it calls `locationThatSupportsVisits`, so the visit form still works on a backend without the module. The ward app lists it under `backendDependencies`, because it can't work without it.

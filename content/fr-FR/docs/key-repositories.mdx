@@ -4,6 +4,8 @@ Le code d'O3 est hébergé dans plusieurs dépôts GitHub maintenus par la commu
 
 Le code dans chaque dépôt est axé sur une préoccupation particulière. Par exemple, le dépôt [Patient Chart](https://github.com/openmrs/openmrs-esm-patient-chart) contient des modules frontend pour les fonctionnalités du dossier patient, telles que les allergies, les rendez-vous, les conditions, les formulaires, les médicaments, les notes, les programmes, les résultats de tests et les signes vitaux. C'est un exemple de monorepo, où plusieurs packages sont contenus dans un seul dépôt ; la plupart des dépôts O3 sont structurés de cette manière. Le dépôt [Core](https://github.com/openmrs/openmrs-esm-core) est spécial. Il contient quelques modules frontend, mais aussi la logique d'application de base qui charge les modules frontend, ainsi que les [outils O3](https://github.com/openmrs/openmrs-esm-core/tree/main/packages/tooling/openmrs) et l'[API JavaScript](/docs/framework-api-reference).
 
+Pour openmrs-core et les modules backend dont dépend O3, consultez [Dépôts backend essentiels](/docs/backend/key-repositories).
+
 Les dépôts que vous devez connaître dans O3 incluent :
 
 - [Core](#core) - contient des modules frontend pour les préoccupations de bas niveau telles que l'authentification. Il contient également l'app shell, l'application de base qui charge et assemble tous les modules frontend. Core publie aussi la bibliothèque JavaScript `@openmrs/esm-framework`, qui fournit des préoccupations transversales essentielles telles que la configuration, l'internationalisation, les indicateurs de fonctionnalités et la gestion de l'état global. Ce dépôt contient également les outils pour O3.

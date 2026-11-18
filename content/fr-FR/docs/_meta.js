@@ -35,6 +35,12 @@ export default {
       collapsed: true
     }
   },
+  backend: {
+    title: "Travailler avec le backend",
+    theme: {
+      collapsed: true
+    }
+  },
   "coding-conventions": {
     title: "Conventions de codage",
     theme: {
