@@ -71,7 +71,7 @@ const session = useSession();
 const canEdit = userHasAccess("Edit Encounters", session.user);
 ```
 
-`userHasAccess(privilege, user)` returns `true` when the user has a privilege whose `display` matches, or when the user holds the `System Developer` role directly; the backend also honors it through role inheritance, the frontend check doesn't. Pass an array and the user must have **all** of them. A falsy privilege always returns `true`.
+`userHasAccess(privilege, user)` returns `true` when the user has a privilege whose `display` matches exactly, case included, or when the user holds the `System Developer` role directly; the backend also honors it through role inheritance, the frontend check doesn't. The session's `privileges` only cover the user's own roles and their parents, not what the `Authenticated` and `Anonymous` roles grant, so `userHasAccess` returns `false` for a privilege that only those roles grant, even though the backend allows it. Pass an array and the user must have **all** of them. A falsy privilege always returns `true`.
 
 `<UserHasAccess privilege="Edit Encounters" fallback={…}>` wraps the same check around JSX.
 
@@ -104,10 +104,10 @@ Implementations define roles and privileges in Initializer CSV files, under `pri
 
 ```csv
 Uuid,Role name,Description,Inherited roles,Privileges
-79e05171-…,Organizational: Clinician,A doctor having direct contact with patients,Application: Records Allergies;Application: Uses Patient Summary,Add Allergies;Add Patients
+4ef1f0f9-fee6-414b-910d-28e17df345c2,Organizational: Doctor,Doctor,Application: Records Allergies; Application: Writes Clinical Notes; Application: Enters ADT Events; Application: Uses Patient Summary,App: Service Queues Clinician; App: Can generate a Visit Summary
 ```
 
-The Reference Application's base content package ships its privileges in [`openmrs-content-referenceapplication`](https://github.com/openmrs/openmrs-content-referenceapplication/tree/main/configuration/backend_configuration). See [Metadata and Initializer](/docs/backend/metadata-and-initializer) for how those files load, and the Initializer's [roles](https://github.com/mekomsolutions/openmrs-module-initializer/blob/main/readme/roles.md) and [privileges](https://github.com/mekomsolutions/openmrs-module-initializer/blob/main/readme/priv.md) documents for the formats.
+The Reference Application ships its roles and application privileges in the demo content package, [`openmrs-content-referenceapplication-demo`](https://github.com/openmrs/openmrs-content-referenceapplication-demo/tree/main/configuration/backend_configuration). See [Metadata and Initializer](/docs/backend/metadata-and-initializer) for how those files load, and the Initializer's [roles](https://github.com/mekomsolutions/openmrs-module-initializer/blob/main/readme/roles.md) and [privileges](https://github.com/mekomsolutions/openmrs-module-initializer/blob/main/readme/priv.md) documents for the formats.
 
 Roles and privileges can also be edited at runtime in the legacy admin UI under `/openmrs/admin`, and through the REST `role` and `privilege` resources, but files are the repeatable option.
 

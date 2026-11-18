@@ -4,7 +4,7 @@ import { Callout } from "nextra/components";
 
 The [FHIR2 module](https://github.com/openmrs/openmrs-module-fhir2) exposes clinical data as [HL7 FHIR R4](https://hl7.org/fhir/R4/) resources at `/openmrs/ws/fhir2/R4`. It's built on [HAPI FHIR](https://hapifhir.io), so the request and response conventions are the standard FHIR ones, and the module's job is to translate between FHIR resources and OpenMRS objects. The [OpenMRS FHIR documentation](https://om.rs/fhir) covers the community's FHIR strategy and the module's history.
 
-O3 prefers FHIR endpoints where they exist. FHIR is a standard other systems speak, the resource shapes are documented outside OpenMRS, and the ambient `fhir` TypeScript types from `@types/fhir`, which `@openmrs/esm-globals` depends on, give you typed responses for free. The REST API remains the right choice for anything administrative or anything FHIR doesn't model, such as encounter types, forms, or the session.
+O3 prefers FHIR endpoints where they exist. FHIR is a standard other systems speak, and the resource shapes are documented outside OpenMRS. The ambient `fhir` TypeScript types that `@openmrs/esm-globals` brings in are `@types/fhir` 0.0.31, which describes STU3 rather than R4, so check field shapes against the [R4 specification](https://hl7.org/fhir/R4/) rather than the types. The REST API remains the right choice for anything administrative or anything FHIR doesn't model, such as encounter types, forms, or the session.
 
 ## Base URL and authentication
 
@@ -58,7 +58,7 @@ Most resources map to one OpenMRS class, but a few are worth knowing about becau
 
 - **Encounter** covers both OpenMRS encounters and visits. A read tries the encounter first, then the visit. A search returns both unless you narrow it with `_tag`, and each resource carries a `meta.tag` with system `http://fhir.openmrs.org/ext/encounter-tag` and code `encounter` or `visit`.
 - **Condition** covers both the `Condition` table and encounter diagnoses. Searching with `category=http://terminology.hl7.org/CodeSystem/condition-category%7Cencounter-diagnosis` returns diagnoses, `category=http://terminology.hl7.org/CodeSystem/condition-category%7Cproblem-list-item` returns conditions, and no category returns both. On FHIR2 4.3.0, the version the Reference Application ships, the system is required, so a bare `category=encounter-diagnosis` matches nothing. `%7C` is the `|` between system and code, encoded because some servers reject a raw `|`.
-- **Practitioner** covers both providers and users, and a search merges the two.
+- **Practitioner** covers both providers and users, and a search merges the two. Users are never filtered: every user comes back whatever you search for, so a search that matches no provider still returns all users. On the provider side, FHIR2 4.3.0 filters by `identifier`, `_id` and `_lastUpdated`, ignores the `address-*` parameters, and fails with a `500` on `name`, `given` and `family`.
 - **Observation** maps to `Obs`. An obs group becomes an `Observation` whose `hasMember` array references each member, and `has-member` is a search parameter you can `_include`.
 - **Immunization** is stored as obs groups under a dedicated encounter type.
 - **DiagnosticReport** and **Task** are stored in the module's own tables (`fhir_diagnostic_report`, `fhir_task`), not in core tables.
@@ -87,7 +87,7 @@ Searches return a `Bundle`. `_count` sets the page size; the default is 10 and t
 
 ## Writing data
 
-Create with `POST /Patient`, update with `PUT /Patient/{uuid}`, and delete with `DELETE /Patient/{uuid}`. Most providers overwrite the body's `id` with the one in the URL; `Condition`, `DiagnosticReport`, `Encounter`, `Location` and `Task` reject a mismatch with `400`. Deleting voids or retires the OpenMRS object; it doesn't purge it, and a later read returns `410 Gone`. A successful delete returns an `OperationOutcome` with an informational issue.
+Create with `POST /Patient`, update with `PUT /Patient/{uuid}`, and delete with `DELETE /Patient/{uuid}`. A `PUT` body needs an `id` equal to the one in the URL: HAPI rejects a missing or different `id` with `400` before the module sees the request. Deleting voids or retires the OpenMRS object; it doesn't purge it, and a later read returns `410 Gone`. A successful delete returns an `OperationOutcome` with an informational issue.
 
 `PUT` to a missing id normally fails. For `Location`, `Medication`, `Practitioner` and `Task` it creates the resource instead when that resource name is listed in the global property `fhir2.upsert.supported.resources`.
 
@@ -99,7 +99,6 @@ Validation failures from openmrs-core come back as `422` with an `OperationOutco
 - **`fhir2.uriPrefix`**: overrides the server base URL in bundle links when the module can't detect it behind a proxy
 - **`fhir2.immunizationsEncounterTypeUuid`**, **`fhir2.administeringEncounterRoleUuid`**: encounter type and role used to store immunizations
 - **`fhir2.personContactPointAttributeTypeUuid`**, **`fhir2.locationContactPointAttributeTypeUuid`**, **`fhir2.providerContactPointAttributeTypeUuid`**: attribute types that back `telecom` on Person, Location and Practitioner
-- **`fhir2.locationTypeAttributeTypeUuid`**: location attribute type used for `Location.type`
 - **`fhir2.upsert.supported.resources`**: resources for which `PUT` to a missing id creates it
 - **`fhir2.narrativesOverridePropertyFile`**: custom narrative templates
 

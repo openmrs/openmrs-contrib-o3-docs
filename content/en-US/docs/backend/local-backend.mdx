@@ -127,20 +127,20 @@ Point the dev server at it with the port included:
 yarn start --backend http://localhost:8080 --port 8081
 ```
 
-The dev server also wants port 8080 by default; pass `--port` so the two don't collide, or let the dev server pick the next free port.
+The dev server also wants port 8080 by default, so pass `--port`. Don't rely on it picking the next free port: on macOS its check doesn't see a server listening on all addresses, as the SDK's Tomcat is, and it takes 8080 anyway.
 
 The [Set up an instance of O3](/docs/recipes/set-up-o3-instance#using-the-openmrs-sdk) recipe has the full prompt-by-prompt walkthrough.
 
 ## Shared servers
 
-You don't always need a local backend. `dev3.openmrs.org` tracks the latest frontend and backend builds, `test3.openmrs.org` the latest release candidates, and `o3.openmrs.org` the current release. Any of them works with `--backend`. A server that sits behind an IP allow-list or a corporate proxy may need a cookie forwarded with `--add-cookie`, as described in [Frontend module development](/docs/frontend-modules/development#how-can-i-develop-against-a-restricted-environment).
+You don't always need a local backend. `dev3.openmrs.org` tracks the latest frontend and backend builds, `test3.openmrs.org` the latest release candidates, and `o3.openmrs.org` the current release. Any of them works with `--backend`. If a server sits behind a single sign-on that checks a cookie, pass that cookie with `--add-cookie`, as described in [Frontend module development](/docs/frontend-modules/development#how-can-i-develop-against-a-restricted-environment).
 
 Don't change metadata on a shared server beyond throwaway tests, and expect `dev3` to be reset or broken from time to time.
 
 ## Troubleshooting
 
 - **`401` on every request after the backend restarts.** Your session cookie is stale. Reload the dev server's login page and log in again.
-- **Port already in use.** The dev server picks the next free port on its own unless you pass `--port`, so this error means the port you passed is taken, often by an SDK server on 8080. Pass a different port, or leave `--port` off.
+- **Port already in use.** The dev server picks the next free port on its own unless you pass `--port`, so this error means the port you passed is taken. Pass a different port. On macOS the check misses a server listening on all addresses, such as the SDK's Tomcat on 8080, so instead of this error the dev server takes `localhost:8080` itself. Pass `--port 8081` when an SDK server is running.
 - **The app loads but a widget shows nothing.** Check the Implementer Tools "Backend modules" tab for missing or mismatched backend modules, and check the browser's network tab for `403` responses, which mean the logged-in user lacks a privilege.
 - **Metadata changes don't show up.** Initializer only reprocesses files whose checksum changed, apart from dispositions, and a file that failed to load isn't retried. Read `initializer.log` in the application data directory and delete the file's checksum to force a reload.
 - **The first start seems stuck.** Wait for the health endpoint. Liquibase and the OCL concept import take minutes on a fresh database.

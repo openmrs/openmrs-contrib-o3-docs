@@ -70,8 +70,8 @@ Several domains load only when the module they need is installed: `idgen`, `queu
 
 The CSV domains share a format:
 
-- **`Uuid`** identifies the row. Leave it blank and Initializer generates one; set it and Initializer creates the object with that UUID or updates the existing one. Keep UUIDs stable, because the frontend configuration and other metadata reference them.
-- When `Uuid` is blank, most domains fall back to matching by **name**, so a row with the name of an existing object updates it.
+- **`Uuid`** identifies the row. Leave it blank and Initializer generates one. Set it and Initializer updates the object with that UUID, or creates the object with that UUID when none exists, unless the name lookup below finds an existing object first. Keep UUIDs stable, because the frontend configuration and other metadata reference them.
+- When no object has the row's UUID, many domains then look the row up by **name**, even when `Uuid` is set: encounter types, visit types, patient identifier types, encounter roles, roles, privileges, concept classes, concept sources, concept map types, drugs, order types, and the location, visit, provider, concept and program attribute types in the `attributetypes` domain. A row named like an existing object updates that object, which keeps its old UUID, so configuration that uses the UUID from the file finds nothing. Locations, location tags, concepts and person attribute types only match by name when `Uuid` is blank.
 - **`Void/Retire`** set to `true` retires or voids the object and skips the rest of the row.
 - **`_order:<n>`** in a header sets the order in which files within the same domain load. Files without it load last.
 - **`Display:<locale>`** columns, such as `Display:fr`, provide translated names.
@@ -92,7 +92,7 @@ Tags are one `Tag|<name>` column each, set to `TRUE` for the tags the location c
 
 ## Global properties
 
-Global properties are backend settings stored as key-value pairs. They configure modules (`webservices.rest.maxResultsDefault`, `fhir2.paging.default`), core behavior (`default_locale`, `patient.identifierRegex`) and clinical conventions (`concept.true`, `emr.primaryIdentifierType`). The `globalproperties/` domain loads them from XML:
+Global properties are backend settings stored as key-value pairs. They configure modules (`webservices.rest.maxResultsDefault`, `fhir2.paging.default`), core behavior (`default_locale`, `patient.identifierRegex`) and clinical conventions (`concept.true`, `concept.false`). The `globalproperties/` domain loads them from XML:
 
 ```xml
 <config>
@@ -139,7 +139,7 @@ A few properties in `openmrs-runtime.properties` control Initializer:
 - **`initializer.startup.load`**: `continue_on_error` (default), `fail_on_error` to abort startup on the first failure, or `disabled`
 - **`initializer.domains`**: a comma-separated list of domains to load, or a list prefixed with `!` to exclude
 - **`initializer.exclude.<domain>`**: file name patterns to skip in one domain
-- **`initializer.skip.checksums`**: `true` to reprocess every file on every start
+- **`initializer.skip.checksums`**: `true` stops Initializer writing checksums. It still reads the ones already saved, so to reprocess unchanged files, delete `configuration_checksums/` as well
 - **`initializer.logging.enabled`**, **`initializer.logging.location`**, **`initializer.logging.level`**: the Initializer log, on by default, written to `initializer.log` in the application data directory at `WARN`
 
 The log file is the first place to look when metadata doesn't appear. The module also ships a standalone validator jar that dry-runs a configuration folder without a server; see [`readme/validator.md`](https://github.com/mekomsolutions/openmrs-module-initializer/blob/main/readme/validator.md).

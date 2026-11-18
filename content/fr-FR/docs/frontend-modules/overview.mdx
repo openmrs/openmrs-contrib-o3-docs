@@ -257,12 +257,12 @@ Un module frontend déclare les modules backend dont il a besoin dans son `route
 ```json
 {
   "backendDependencies": {
-    "webservices.rest": "^2.24.0",
-    "fhir2": "^1.2.0"
+    "webservices.rest": ">=2.24.0",
+    "fhir2": ">=1.2.0"
   },
   "optionalBackendDependencies": {
     "queue": {
-      "version": "^2.0.0",
+      "version": ">=3.0.0",
       "feature": {
         "flagName": "service-queues",
         "label": "Service queues",
