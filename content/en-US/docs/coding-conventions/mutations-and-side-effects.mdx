@@ -65,7 +65,7 @@
   };
   ```
 
-  Since [openmrs-esm-core#2019](https://github.com/openmrs/openmrs-esm-core/pull/2019), the filter above also refreshes `useOpenmrsFetchAll` and `useFhirFetchAll`. Match the initial URL passed to the hook, including its query parameters. For FHIR, use the same pattern with the relevant `fhirBaseUrl` URL.
+  The filter above also refreshes `useOpenmrsFetchAll` and `useFhirFetchAll`. Match the initial URL passed to the hook, including its query parameters. For FHIR, use the same pattern with the relevant `fhirBaseUrl` URL.
 
   - Call the hook's returned `mutate()` to refresh all loaded pages. If you pass data, use SWR Infinite's array of page responses, not the flattened resource array.
   - From another component, use the prefix filter with `undefined` and `{ revalidate: true }`. This also clears matching cached data while the hook is unmounted, so every page refreshes on its next mount unless `revalidateOnMount` is disabled.
@@ -82,7 +82,7 @@
   }
   ```
 
-  A filtered global `mutate` still skips [`useOpenmrsInfinite`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useOpenmrsInfinite.md) and [`useFhirInfinite`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useFhirInfinite.md). Pass their returned `mutate()` to the modal or extension that needs it. Fetch-all hooks on framework versions before #2019 also need their returned `mutate()`.
+  A filtered global `mutate` skips [`useOpenmrsInfinite`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useOpenmrsInfinite.md) and [`useFhirInfinite`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useFhirInfinite.md). Pass their returned `mutate()` to the modal or extension that needs it.
 
   If a REST hook needs one `useSWR` entry for the whole collection, use `openmrsFetchAll` as its fetcher. Unwrap `response.data.results` if the hook caches a plain array. See [Data fetching](/docs/coding-conventions/data-fetching#data-pagination) for an example.
 

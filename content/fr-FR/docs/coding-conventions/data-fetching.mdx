@@ -121,8 +121,6 @@ Si un point de terminaison peut renvoyer plus d'une page de résultats, ne le r�
 
 La plupart des points de terminaison REST d'OpenMRS qui renvoient des listes ou des résultats de recherche sont paginés. Le serveur renvoie au plus `webservices.rest.maxResultsDefault` résultats par requête (une propriété globale qui vaut 50 par défaut), et ajoute à la réponse un lien avec `rel: "next"` lorsqu'il reste d'autres résultats. Consultez la [documentation du module REST](https://openmrs.atlassian.net/wiki/spaces/docs/pages/25469882/REST+Module) pour plus de détails.
 
-La fonction `openmrsFetchAll` et le rafraîchissement par préfixe d'URL décrits ci-dessous nécessitent [openmrs-esm-core#2019](https://github.com/openmrs/openmrs-esm-core/pull/2019), dans la dépendance de l'application comme dans le framework déployé.
-
 Choisissez un hook de `@openmrs/esm-framework` en fonction des besoins de l'interface utilisateur :
 
 - [`useOpenmrsPagination`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useOpenmrsPagination.md) pour un tableau qui affiche une page à la fois. Il ne récupère que la page courante, et définit pour vous `limit`, `startIndex` et `totalCount` dans l'URL.
@@ -179,7 +177,7 @@ Hors de React, utilisez [`openmrsFetchAll`](https://github.com/openmrs/openmrs-e
   }
   ```
 
-`openmrsFetchAll` attend les champs REST `results` et `links`. Utilisez `useFhirFetchAll` pour les bundles FHIR ; il n'existe pas encore d'équivalent FHIR utilisable hors des hooks.
+`openmrsFetchAll` attend les champs REST `results` et `links`. Utilisez `useFhirFetchAll` pour les bundles FHIR.
 
 Les deux hooks de chargement complet prennent en charge leur fonction `mutate()` liée et les filtres par préfixe d'URL via `useSWRConfig().mutate`. Pour `useOpenmrsInfinite` et `useFhirInfinite`, utilisez la fonction `mutate()` liée. Consultez les exemples dans [Mutations et effets secondaires](/docs/coding-conventions/mutations-and-side-effects).
 

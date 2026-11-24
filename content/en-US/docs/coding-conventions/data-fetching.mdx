@@ -121,8 +121,6 @@ If an endpoint can return more than one page of results, don't fetch it with a s
 
 Most OpenMRS REST list and search endpoints are paginated. The server returns up to `webservices.rest.maxResultsDefault` results per request (a global property that defaults to 50), and adds a link with `rel: "next"` to the response when more results exist. See the [REST module documentation](https://openmrs.atlassian.net/wiki/spaces/docs/pages/25469882/REST+Module) for details.
 
-The `openmrsFetchAll` helper and URL-prefix refresh support described below require [openmrs-esm-core#2019](https://github.com/openmrs/openmrs-esm-core/pull/2019) in both the application's framework dependency and the deployed framework.
-
 Pick a hook from `@openmrs/esm-framework` based on what the UI needs:
 
 - [`useOpenmrsPagination`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useOpenmrsPagination.md) for a table that shows one page at a time. It fetches only the current page, and sets `limit`, `startIndex` and `totalCount` on the URL for you.
@@ -179,7 +177,7 @@ Outside React, use [`openmrsFetchAll`](https://github.com/openmrs/openmrs-esm-co
   }
   ```
 
-`openmrsFetchAll` expects REST `results` and `links`. Use `useFhirFetchAll` for FHIR bundles; there is no non-hook FHIR equivalent yet.
+`openmrsFetchAll` expects REST `results` and `links`. Use `useFhirFetchAll` for FHIR bundles.
 
 Both fetch-all hooks support their returned `mutate()` and URL-prefix filters through `useSWRConfig().mutate`. For `useOpenmrsInfinite` and `useFhirInfinite`, use the returned `mutate()`. See [Mutations and side effects](/docs/coding-conventions/mutations-and-side-effects) for the refresh examples.
 
