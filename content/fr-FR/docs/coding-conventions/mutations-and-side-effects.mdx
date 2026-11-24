@@ -47,6 +47,8 @@
       // Mettre à jour les listes de visites en cache pour ce patient
       await mutate(
         (key) => typeof key === 'string' && key.startsWith(`${restBaseUrl}/visit?patient=${patientUuid}`),
+        undefined,
+        { revalidate: true },
       );
       
       // Mettre à jour les données de la visite spécifique
@@ -63,53 +65,26 @@
   };
   ```
 
-  Un filtre de clé ne peut pas rafraîchir les listes chargées avec [`useOpenmrsInfinite`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useOpenmrsInfinite.md) ou [`useOpenmrsFetchAll`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useOpenmrsFetchAll.md). Ces deux hooks reposent sur `useSWRInfinite`, et SWR ignore les entrées de cache de `useSWRInfinite` lorsqu'il applique un filtre de clé. Le filtre ci-dessus ne rafraîchit donc rien pour ces listes. Parcourir `cache.keys()` et appeler `mutate` sur la clé de l'une de ces listes ne suffit pas non plus, car seule la première page est récupérée à nouveau et les pages suivantes restent périmées. À la place :
+  Depuis [openmrs-esm-core#2019](https://github.com/openmrs/openmrs-esm-core/pull/2019), le filtre ci-dessus rafraîchit aussi `useOpenmrsFetchAll` et `useFhirFetchAll`. Faites correspondre l'URL initiale passée au hook, paramètres compris. Pour FHIR, utilisez le même modèle avec l'URL `fhirBaseUrl` appropriée.
 
-  - Dans le composant qui charge la liste, appelez la fonction `mutate` renvoyée par `useOpenmrsInfinite` ou `useOpenmrsFetchAll`. Appelée sans argument, elle récupère à nouveau toutes les pages chargées.
-  - Si le rafraîchissement doit se faire ailleurs, par exemple dans une modale ou une autre extension, transmettez-lui cette fonction `mutate` (par exemple, en tant que prop de la modale), ou chargez la liste avec une seule clé `useSWR` et un fetcher qui suit les liens `next`. Un filtre de clé peut correspondre à cette clé, et sa revalidation récupère à nouveau toutes les pages.
+  - Appelez la fonction `mutate()` renvoyée par le hook pour rafraîchir toutes les pages chargées. Si vous lui passez des données, utilisez le tableau de réponses paginées de SWR Infinite, pas le tableau aplati de ressources.
+  - Depuis un autre composant, utilisez le filtre par préfixe avec `undefined` et `{ revalidate: true }`. Cela efface aussi les données correspondantes en cache lorsque le hook est démonté, afin que chaque page soit rafraîchie au prochain montage, sauf si `revalidateOnMount` est désactivé.
+  - Les montages ordinaires, retours au premier plan et reconnexions suivent les options SWR. Pour rafraîchir chaque page lors d'une revalidation automatique activée, définissez `swrInfiniteConfig: { revalidateAll: true }` et testez ce comportement.
 
   ```tsx
-  import { openmrsFetch, restBaseUrl, type Visit } from '@openmrs/esm-framework';
-  import useSWR from 'swr';
+  import { restBaseUrl, useOpenmrsFetchAll, type Visit } from '@openmrs/esm-framework';
 
-  interface PaginatedResponse<T> {
-    results: Array<T>;
-    links?: Array<{ rel: string; uri: string }>;
-  }
-
-  // Suit les liens `next` jusqu'à ce que toutes les pages soient chargées
-  async function fetchAllPages<T>(url: string): Promise<Array<T>> {
-    const results: Array<T> = [];
-    let nextUrl: string | null = url;
-
-    while (nextUrl) {
-      const response = await openmrsFetch<PaginatedResponse<T>>(nextUrl);
-      results.push(...(response.data?.results ?? []));
-      nextUrl = getNextPageUrl(response.data?.links);
-    }
-
-    return results;
-  }
-
-  function getNextPageUrl(links: PaginatedResponse<unknown>['links']): string | null {
-    const uri = links?.find((link) => link.rel === 'next')?.uri;
-    if (!uri) {
-      return null;
-    }
-
-    // Les liens `next` sont absolus, donc utiliser l'origine courante pour que les proxys frontend continuent de fonctionner
-    const nextUrl = new URL(uri);
-    nextUrl.host = window.location.host;
-    nextUrl.protocol = window.location.protocol;
-    return nextUrl.toString();
-  }
-
-  // Une seule clé de cache pour toute la liste, afin que le filtre de clé ci-dessus rafraîchisse toutes les pages
-  export function usePatientVisits(patientUuid: string) {
-    const url = `${restBaseUrl}/visit?patient=${patientUuid}&v=custom:(uuid,display,startDatetime)`;
-    return useSWR<Array<Visit>>(url, fetchAllPages<Visit>);
+  export function usePatientVisits(patientUuid?: string) {
+    const url = patientUuid
+      ? `${restBaseUrl}/visit?patient=${patientUuid}&v=custom:(uuid,display,startDatetime)`
+      : null;
+    return useOpenmrsFetchAll<Visit>(url);
   }
   ```
+
+  Une mutation globale filtrée ignore toujours [`useOpenmrsInfinite`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useOpenmrsInfinite.md) et [`useFhirInfinite`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useFhirInfinite.md). Transmettez leur fonction `mutate()` liée à la modale ou à l'extension qui en a besoin. Les hooks de chargement complet nécessitent aussi leur fonction `mutate()` liée avec les versions du framework antérieures à #2019.
+
+  Si un hook REST a besoin d'une seule entrée `useSWR` pour toute la collection, utilisez `openmrsFetchAll` comme fetcher. Renvoyez `response.data.results` si le hook met en cache un simple tableau. Consultez l'exemple dans [Récupération de données](/docs/coding-conventions/data-fetching).
 
   [`useOpenmrsPagination`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useOpenmrsPagination.md) repose sur `useSWR`, donc un filtre de clé peut atteindre ses entrées de cache. Ses clés de cache sont toutefois des URLs absolues dont la chaîne de requête est réencodée. Faites donc correspondre le chemin de la ressource avec `includes` plutôt qu'avec `startsWith` :
 

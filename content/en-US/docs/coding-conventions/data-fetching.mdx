@@ -121,6 +121,8 @@ If an endpoint can return more than one page of results, don't fetch it with a s
 
 Most OpenMRS REST list and search endpoints are paginated. The server returns up to `webservices.rest.maxResultsDefault` results per request (a global property that defaults to 50), and adds a link with `rel: "next"` to the response when more results exist. See the [REST module documentation](https://openmrs.atlassian.net/wiki/spaces/docs/pages/25469882/REST+Module) for details.
 
+The `openmrsFetchAll` helper and URL-prefix refresh support described below require [openmrs-esm-core#2019](https://github.com/openmrs/openmrs-esm-core/pull/2019) in both the application's framework dependency and the deployed framework.
+
 Pick a hook from `@openmrs/esm-framework` based on what the UI needs:
 
 - [`useOpenmrsPagination`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useOpenmrsPagination.md) for a table that shows one page at a time. It fetches only the current page, and sets `limit`, `startIndex` and `totalCount` on the URL for you.
@@ -149,7 +151,37 @@ Pick a hook from `@openmrs/esm-framework` based on what the UI needs:
   }
   ```
 
-To refresh these lists after a mutation, call the `mutate` function returned by the hook. A `useSWRConfig().mutate` key filter can't refresh lists loaded with `useOpenmrsInfinite` or `useOpenmrsFetchAll`. See [Mutations and side effects](/docs/coding-conventions/mutations-and-side-effects) for details.
+For FHIR, use `useFhirFetchAll`:
+
+  ```tsx
+  import { fhirBaseUrl, useFhirFetchAll } from '@openmrs/esm-framework';
+
+  export function usePatientObservations(patientUuid?: string) {
+    const url = patientUuid
+      ? `${fhirBaseUrl}/Observation?patient=${patientUuid}&category=laboratory`
+      : null;
+    return useFhirFetchAll<fhir.Observation>(url);
+  }
+  ```
+
+Outside React, use [`openmrsFetchAll`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-api/src/openmrs-fetch-all.ts) to load every page of a REST collection. It returns a `FetchResponse` with all results in `data.results` and the first response's other metadata. Later requests keep the first request's origin and port. A failed page or repeated next link rejects the promise. Pass a custom fetcher to supply an abort signal:
+
+  ```ts
+  import { openmrsFetch, openmrsFetchAll, restBaseUrl, type Visit } from '@openmrs/esm-framework';
+
+  export async function getPatientVisits(patientUuid: string, signal?: AbortSignal) {
+    const url = `${restBaseUrl}/visit?patient=${patientUuid}&v=custom:(uuid,display,startDatetime)`;
+    const { data } = await openmrsFetchAll<Visit>(
+      url,
+      (pageUrl) => openmrsFetch(pageUrl, { signal }),
+    );
+    return data.results;
+  }
+  ```
+
+`openmrsFetchAll` expects REST `results` and `links`. Use `useFhirFetchAll` for FHIR bundles; there is no non-hook FHIR equivalent yet.
+
+Both fetch-all hooks support their returned `mutate()` and URL-prefix filters through `useSWRConfig().mutate`. For `useOpenmrsInfinite` and `useFhirInfinite`, use the returned `mutate()`. See [Mutations and side effects](/docs/coding-conventions/mutations-and-side-effects) for the refresh examples.
 
 ## Prefer narrow hooks over generic hooks
 
