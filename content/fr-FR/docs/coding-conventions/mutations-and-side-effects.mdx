@@ -68,8 +68,8 @@
   Le filtre ci-dessus rafraîchit aussi `useOpenmrsFetchAll` et `useFhirFetchAll`. Faites correspondre l'URL initiale passée au hook, paramètres compris. Pour FHIR, utilisez le même modèle avec l'URL `fhirBaseUrl` appropriée.
 
   - Appelez la fonction `mutate()` renvoyée par le hook pour rafraîchir toutes les pages chargées. Si vous lui passez des données, utilisez le tableau de réponses paginées de SWR Infinite, pas le tableau aplati de ressources.
-  - Depuis un autre composant, utilisez le filtre par préfixe avec `undefined` et `{ revalidate: true }`. Cela efface aussi les données correspondantes en cache lorsque le hook est démonté, afin que chaque page soit rafraîchie au prochain montage, sauf si `revalidateOnMount` est désactivé.
-  - Les montages ordinaires, retours au premier plan et reconnexions suivent les options SWR. Pour rafraîchir chaque page lors d'une revalidation automatique activée, définissez `swrInfiniteConfig: { revalidateAll: true }` et testez ce comportement.
+  - Depuis un autre composant, passez `undefined` et `{ revalidate: true }` avec le filtre par préfixe. Cela efface les données correspondantes en cache. Une liste de chargement complet qui n'est pas montée récupère donc à nouveau toutes ses pages au prochain montage, sauf si `revalidateOnMount` est désactivé. Les listes `useSWR` montées dont la clé correspond affichent leur état de chargement jusqu'à la fin de la nouvelle récupération.
+  - Par défaut, les remontages, retours au premier plan et reconnexions ne récupèrent à nouveau que la première page. Les pages suivantes peuvent donc rester périmées. Définissez `swrInfiniteConfig: { revalidateAll: true }` pour récupérer à nouveau toutes les pages lors de ces événements.
 
   ```tsx
   import { restBaseUrl, useOpenmrsFetchAll, type Visit } from '@openmrs/esm-framework';
@@ -84,7 +84,17 @@
 
   Une mutation globale filtrée ignore [`useOpenmrsInfinite`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useOpenmrsInfinite.md) et [`useFhirInfinite`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useFhirInfinite.md). Transmettez leur fonction `mutate()` liée à la modale ou à l'extension qui en a besoin.
 
-  Si un hook REST a besoin d'une seule entrée `useSWR` pour toute la collection, utilisez `openmrsFetchAll` comme fetcher. Renvoyez `response.data.results` si le hook met en cache un simple tableau. Consultez l'exemple dans [Récupération de données](/docs/coding-conventions/data-fetching).
+  Si un hook REST a besoin d'une seule entrée `useSWR` pour toute la collection, appelez `openmrsFetchAll` dans son fetcher. Cet exemple met en cache un simple tableau de visites :
+
+  ```tsx
+  import { openmrsFetchAll, restBaseUrl, type Visit } from '@openmrs/esm-framework';
+  import useSWR from 'swr';
+
+  export function usePatientVisitList(patientUuid: string) {
+    const url = `${restBaseUrl}/visit?patient=${patientUuid}&v=custom:(uuid,display,startDatetime)`;
+    return useSWR(url, async (key: string) => (await openmrsFetchAll<Visit>(key)).data.results);
+  }
+  ```
 
   [`useOpenmrsPagination`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useOpenmrsPagination.md) repose sur `useSWR`, donc un filtre de clé peut atteindre ses entrées de cache. Ses clés de cache sont toutefois des URLs absolues dont la chaîne de requête est réencodée. Faites donc correspondre le chemin de la ressource avec `includes` plutôt qu'avec `startsWith` :
 

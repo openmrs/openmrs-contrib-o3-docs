@@ -68,8 +68,8 @@
   The filter above also refreshes `useOpenmrsFetchAll` and `useFhirFetchAll`. Match the initial URL passed to the hook, including its query parameters. For FHIR, use the same pattern with the relevant `fhirBaseUrl` URL.
 
   - Call the hook's returned `mutate()` to refresh all loaded pages. If you pass data, use SWR Infinite's array of page responses, not the flattened resource array.
-  - From another component, use the prefix filter with `undefined` and `{ revalidate: true }`. This also clears matching cached data while the hook is unmounted, so every page refreshes on its next mount unless `revalidateOnMount` is disabled.
-  - Ordinary remounts, focus events and reconnects follow the SWR options. To refresh every page on enabled automatic revalidation, set `swrInfiniteConfig: { revalidateAll: true }` and test that behavior.
+  - From another component, pass `undefined` and `{ revalidate: true }` with the prefix filter. This clears matching cached data, so a fetch-all list that isn't mounted refetches every page on its next mount, unless `revalidateOnMount` is disabled. Mounted `useSWR` lists with matching keys show their loading state until the refetch finishes.
+  - By default, remounts, focus events and reconnects refetch only the first page, so later pages can stay stale. Set `swrInfiniteConfig: { revalidateAll: true }` to refetch every page on those events.
 
   ```tsx
   import { restBaseUrl, useOpenmrsFetchAll, type Visit } from '@openmrs/esm-framework';
@@ -84,7 +84,17 @@
 
   A filtered global `mutate` skips [`useOpenmrsInfinite`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useOpenmrsInfinite.md) and [`useFhirInfinite`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useFhirInfinite.md). Pass their returned `mutate()` to the modal or extension that needs it.
 
-  If a REST hook needs one `useSWR` entry for the whole collection, use `openmrsFetchAll` as its fetcher. Unwrap `response.data.results` if the hook caches a plain array. See [Data fetching](/docs/coding-conventions/data-fetching#data-pagination) for an example.
+  If a REST hook needs one `useSWR` entry for the whole collection, call `openmrsFetchAll` in its fetcher. This example caches a plain array of visits:
+
+  ```tsx
+  import { openmrsFetchAll, restBaseUrl, type Visit } from '@openmrs/esm-framework';
+  import useSWR from 'swr';
+
+  export function usePatientVisitList(patientUuid: string) {
+    const url = `${restBaseUrl}/visit?patient=${patientUuid}&v=custom:(uuid,display,startDatetime)`;
+    return useSWR(url, async (key: string) => (await openmrsFetchAll<Visit>(key)).data.results);
+  }
+  ```
 
   [`useOpenmrsPagination`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/useOpenmrsPagination.md) is built on `useSWR`, so a key filter can reach its cache entries. Its cache keys are absolute URLs with a re-encoded query string, though, so match the resource path with `includes` rather than `startsWith`:
 

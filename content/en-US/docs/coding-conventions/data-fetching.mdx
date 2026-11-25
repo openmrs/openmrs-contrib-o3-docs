@@ -162,7 +162,7 @@ For FHIR, use `useFhirFetchAll`:
   }
   ```
 
-Outside React, use [`openmrsFetchAll`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-api/src/openmrs-fetch-all.ts) to load every page of a REST collection. It returns a `FetchResponse` with all results in `data.results` and the first response's other metadata. Later requests keep the first request's origin and port. A failed page or repeated next link rejects the promise. Pass a custom fetcher to supply an abort signal:
+Outside React, use [`openmrsFetchAll`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/openmrsFetchAll.md) to load every page of a REST collection. It returns a `FetchResponse` with all results in `data.results` and the first response's other metadata. Later requests keep the first request's origin and port. A failed page or repeated next link rejects the promise. Pass a custom fetcher to supply an abort signal:
 
   ```ts
   import { openmrsFetch, openmrsFetchAll, restBaseUrl, type Visit } from '@openmrs/esm-framework';
