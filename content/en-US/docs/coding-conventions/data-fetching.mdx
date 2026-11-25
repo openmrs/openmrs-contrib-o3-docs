@@ -149,7 +149,37 @@ Pick a hook from `@openmrs/esm-framework` based on what the UI needs:
   }
   ```
 
-To refresh these lists after a mutation, call the `mutate` function returned by the hook. A `useSWRConfig().mutate` key filter can't refresh lists loaded with `useOpenmrsInfinite` or `useOpenmrsFetchAll`. See [Mutations and side effects](/docs/coding-conventions/mutations-and-side-effects) for details.
+For FHIR, use `useFhirFetchAll`:
+
+  ```tsx
+  import { fhirBaseUrl, useFhirFetchAll } from '@openmrs/esm-framework';
+
+  export function usePatientObservations(patientUuid?: string) {
+    const url = patientUuid
+      ? `${fhirBaseUrl}/Observation?patient=${patientUuid}&category=laboratory`
+      : null;
+    return useFhirFetchAll<fhir.Observation>(url);
+  }
+  ```
+
+Outside React, use [`openmrsFetchAll`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/openmrsFetchAll.md) to load every page of a REST collection. It returns a `FetchResponse` with all results in `data.results` and the first response's other metadata. Later requests keep the first request's origin and port. A failed page or repeated next link rejects the promise. Pass a custom fetcher to supply an abort signal:
+
+  ```ts
+  import { openmrsFetch, openmrsFetchAll, restBaseUrl, type Visit } from '@openmrs/esm-framework';
+
+  export async function getPatientVisits(patientUuid: string, signal?: AbortSignal) {
+    const url = `${restBaseUrl}/visit?patient=${patientUuid}&v=custom:(uuid,display,startDatetime)`;
+    const { data } = await openmrsFetchAll<Visit>(
+      url,
+      (pageUrl) => openmrsFetch(pageUrl, { signal }),
+    );
+    return data.results;
+  }
+  ```
+
+`openmrsFetchAll` expects REST `results` and `links`. Use `useFhirFetchAll` for FHIR bundles.
+
+Both fetch-all hooks support their returned `mutate()` and URL-prefix filters through `useSWRConfig().mutate`. For `useOpenmrsInfinite` and `useFhirInfinite`, use the returned `mutate()`. See [Mutations and side effects](/docs/coding-conventions/mutations-and-side-effects) for the refresh examples.
 
 ## Prefer narrow hooks over generic hooks
 

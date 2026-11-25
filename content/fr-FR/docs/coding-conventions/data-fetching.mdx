@@ -149,7 +149,37 @@ Choisissez un hook de `@openmrs/esm-framework` en fonction des besoins de l'inte
   }
   ```
 
-Pour rafraîchir ces listes après une mutation, appelez la fonction `mutate` renvoyée par le hook. Un filtre de clé passé à `useSWRConfig().mutate` ne peut pas rafraîchir les listes chargées avec `useOpenmrsInfinite` ou `useOpenmrsFetchAll`. Consultez [Mutations et effets secondaires](/docs/coding-conventions/mutations-and-side-effects) pour plus de détails.
+Pour FHIR, utilisez `useFhirFetchAll` :
+
+  ```tsx
+  import { fhirBaseUrl, useFhirFetchAll } from '@openmrs/esm-framework';
+
+  export function usePatientObservations(patientUuid?: string) {
+    const url = patientUuid
+      ? `${fhirBaseUrl}/Observation?patient=${patientUuid}&category=laboratory`
+      : null;
+    return useFhirFetchAll<fhir.Observation>(url);
+  }
+  ```
+
+Hors de React, utilisez [`openmrsFetchAll`](https://github.com/openmrs/openmrs-esm-core/blob/main/packages/framework/esm-framework/docs/functions/openmrsFetchAll.md) pour charger toutes les pages d'une collection REST. Elle renvoie une `FetchResponse` avec tous les résultats dans `data.results` et les autres métadonnées de la première réponse. Les requêtes suivantes conservent l'origine et le port de la première requête. Une page en échec ou un lien suivant répété entraîne le rejet de la promesse. Passez un fetcher personnalisé pour transmettre un signal d'annulation :
+
+  ```ts
+  import { openmrsFetch, openmrsFetchAll, restBaseUrl, type Visit } from '@openmrs/esm-framework';
+
+  export async function getPatientVisits(patientUuid: string, signal?: AbortSignal) {
+    const url = `${restBaseUrl}/visit?patient=${patientUuid}&v=custom:(uuid,display,startDatetime)`;
+    const { data } = await openmrsFetchAll<Visit>(
+      url,
+      (pageUrl) => openmrsFetch(pageUrl, { signal }),
+    );
+    return data.results;
+  }
+  ```
+
+`openmrsFetchAll` attend les champs REST `results` et `links`. Utilisez `useFhirFetchAll` pour les bundles FHIR.
+
+Les deux hooks de chargement complet prennent en charge leur fonction `mutate()` liée et les filtres par préfixe d'URL via `useSWRConfig().mutate`. Pour `useOpenmrsInfinite` et `useFhirInfinite`, utilisez la fonction `mutate()` liée. Consultez les exemples dans [Mutations et effets secondaires](/docs/coding-conventions/mutations-and-side-effects).
 
 ## Préférer les hooks étroits aux hooks génériques
 
